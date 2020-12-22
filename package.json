@@ -1,0 +1,43 @@
+{
+    "name": "reverseword",
+    "displayName": "ReverseWord",
+    "description": "Reverse a word",
+    "version": "0.0.1",
+    "publisher": "rebornix",
+    "engines": {
+        "vscode": "^1.32.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension",
+    "contributes": {
+        "commands": [
+            {
+                "command": "extension.reverseWord",
+                "title": "Reverse Word"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "lint": "eslint . --ext .ts,.tsx",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/current-git-branch": "^1.1.1",
+        "@types/node": "^12.12.0",
+        "@types/vscode": "^1.32.0",
+        "@typescript-eslint/eslint-plugin": "^3.0.2",
+        "@typescript-eslint/parser": "^3.0.2",
+        "eslint": "^7.1.0",
+        "typescript": "^4.0.2"
+    },
+    "dependencies": {
+        "current-git-branch": "^1.1.0"
+    }
+}
