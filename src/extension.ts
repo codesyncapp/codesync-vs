@@ -1,7 +1,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as FS from 'fs';
+import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 
 import { diff_match_patch } from 'diff-match-patch';
@@ -10,7 +10,6 @@ import * as dateFormat from "dateformat";
 
 // TODO: Move to separate file
 const CODESYNC_ROOT = '/usr/local/bin/.codesync';
-const CODESYNC_BUFFER = `${CODESYNC_ROOT}/buffer.yml`;
 const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs`;
 
 // TODO: Move to separate file
@@ -35,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const repoPath = vscode.workspace.rootPath;
 	const branch = getBranchName({ altPath: repoPath });
 	
-	if (!branch || !repoName || !editor) { return; }
+	if (!repoName || !editor) { return; }
 	
 	console.log(`repoPath: ${repoPath}, branchName: ${branch}`);
 	vscode.workspace.onDidChangeTextDocument(changeEvent => {
@@ -47,15 +46,15 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!repoPath) { return; }
 		const relPath = filePath.split(`${repoPath}/`)[1];
 		const shadowPath = `${CODESYNC_ROOT}/${repoName}/${branch}/${relPath}`;
-		const shadowExists = FS.existsSync(shadowPath);
+		const shadowExists = fs.existsSync(shadowPath);
 		if (!shadowExists) { 
 			// TODO: Create shadow file?
 			return;
 		}
 		// Read shadow file 
-		const shadowText = FS.readFileSync(shadowPath, "utf8");
+		const shadowText = fs.readFileSync(shadowPath, "utf8");
 		// Update shadow file 
-		FS.writeFile(shadowPath, text, function (err) {
+		fs.writeFile(shadowPath, text, function (err) {
 			if (err) throw err;
 		});
 		// Compute diffs
@@ -68,12 +67,12 @@ export function activate(context: vscode.ExtensionContext) {
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
 		newDiff.repo = repoName;
-		newDiff.branch = branch;
+		newDiff.branch = branch || 'default';
 		newDiff.file = relPath;
 		newDiff.diff = diffs;
 		newDiff.created_at = dateFormat(new Date(), 'UTC:yyyy-mm-dd HH:MM:ss.l');
 		// Append new diff in the buffer
-		FS.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));	
+		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));	
 	});			
 	// context.subscriptions.push(disposable);
 }
