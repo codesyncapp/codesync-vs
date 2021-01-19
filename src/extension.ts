@@ -11,12 +11,9 @@ import * as dateFormat from "dateformat";
 // TODO: Move to separate file
 const CODESYNC_ROOT = '/usr/local/bin/.codesync';
 const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs`;
+const CONFIG_PATH = `${CODESYNC_ROOT}/config.yml`;
 
 // TODO: Move to separate file
-interface IBuffer {
-	data: IDiff[]
-}
-
 interface IDiff {
 	repo: string;
 	branch: string;
@@ -35,11 +32,24 @@ export function activate(context: vscode.ExtensionContext) {
 	const branch = getBranchName({ altPath: repoPath });
 	
 	if (!repoName || !editor) { return; }
+
+	// TODO: Show some alert to user
+	// If config.yml does not exists, return
+	const configExists = fs.existsSync(CONFIG_PATH);
+	if (!configExists) { return; }
+	// Return if user hasn't synced the repo
+	try {
+		const config = yaml.load(fs.readFileSync(CONFIG_PATH, "utf8"));
+		if (!(repoName in config['repos']) || config['repos'][repoName].path !== repoPath) {
+			return;
+		}
+	} catch (e) {
+		return;
+	}
 	
 	console.log(`repoPath: ${repoPath}, branchName: ${branch}`);
 	vscode.workspace.onDidChangeTextDocument(changeEvent => {
 		if (!changeEvent.contentChanges.length) { return; }
-		const time = new Date().getTime();
 		// If you only care about changes to the active editor's text,
 		//  just check to see if changeEvent.document matches the active editor's document.
 		const editor = vscode.window.activeTextEditor;
@@ -51,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 		const filePath = changeEvent.document.fileName;
 		const text = changeEvent.document.getText();
 		if (!repoPath) { 
-			console.log(`Skipping ${time} because of no repoPath`);
+			console.log(`Skipping: No repoPath`);
 			return; 
 		}
 		const relPath = filePath.split(`${repoPath}/`)[1];
@@ -59,18 +69,18 @@ export function activate(context: vscode.ExtensionContext) {
 		const shadowExists = fs.existsSync(shadowPath);
 		if (!shadowExists) { 
 			// TODO: Create shadow file?
-			console.log(`Skipping ${time} because shadow does not exist`);
+			console.log(`Skipping: Shadow does not exist`);
 			return;
 		}
 		// Read shadow file 
 		const shadowText = fs.readFileSync(shadowPath, "utf8");
 		// If shadow text is same as current content, no need to compute diffs
 		if (shadowText === text) {
-			console.log(`Skipping ${time} because shadow is same as text`);
+			console.log(`Skipping: Shadow is same as text`);
 			return;
 		}
 		if (!shadowText) {
-			console.log(`Skipping ${time} because shadow is empty`);
+			console.log(`Skipping: Shadow is empty`);
 			return;
 		}
 		// Update shadow file 
@@ -84,7 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
 		const diffs = dmp.patch_toText(patches);
 		// Skip empty diffs
 		if (!diffs) { 
-			console.log(`Skipping ${time} because of empty diffs`);
+			console.log(`Skipping: Empty diffs`);
 			return;
 		}
 		// Add new diff in the buffer
