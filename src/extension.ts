@@ -11,17 +11,21 @@ import * as dateFormat from "dateformat";
 // TODO: Move to separate file
 const CODESYNC_ROOT = '/usr/local/bin/.codesync';
 const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs`;
+const ORIGINALS_REPO = `${CODESYNC_ROOT}/.originals`;
 const CONFIG_PATH = `${CODESYNC_ROOT}/config.yml`;
+const DIFF_SOURCE = 'vs-code';
 
 // TODO: Move to separate file
 interface IDiff {
 	repo: string;
 	branch: string;
-	file: string;
+	file_relative_path: string;
 	created_at: string;
-	diff: string;
+	source: string;
+	diff?: string;
 	is_binary?: boolean;
 	is_rename?: boolean;
+	is_new_file?: boolean;
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -79,14 +83,12 @@ export function activate(context: vscode.ExtensionContext) {
 			console.log(`Skipping: Shadow is same as text`);
 			return;
 		}
-		if (!shadowText) {
-			console.log(`Skipping: Shadow is empty`);
-			return;
-		}
+		// if (!shadowText) {
+		// 	console.log(`Skipping: Shadow is empty`);
+		// 	return;
+		// }
 		// Update shadow file 
-		fs.writeFile(shadowPath, text, function (err) {
-			if (err) throw err;
-		});
+		fs.writeFileSync(shadowPath, text);
 		// Compute diffs
 		const dmp = new diff_match_patch();
 		const patches = dmp.patch_make(shadowText, text);
@@ -101,11 +103,55 @@ export function activate(context: vscode.ExtensionContext) {
 		const newDiff = <IDiff>{};
 		newDiff.repo = repoName;
 		newDiff.branch = branch || 'default';
-		newDiff.file = relPath;
+		newDiff.file_relative_path = relPath;
 		newDiff.diff = diffs;
+		newDiff.source = DIFF_SOURCE;
 		newDiff.created_at = dateFormat(new Date(), 'UTC:yyyy-mm-dd HH:MM:ss.l');
 		// Append new diff in the buffer
 		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
-	});			
+	});
+	
+	vscode.workspace.onDidCreateFiles(changeEvent => {
+		/*
+		changeEvent looks like
+			Object
+				files: Array[1]
+					0:Object
+						$mid:1
+						fsPath:"/Users/basit/projects/codesync/codesync/codesync/new.py"
+						external:"file:///Users/basit/projects/codesync/codesync/codesync/new.py"
+						path:"/Users/basit/projects/codesync/codesync/codesync/new.py"
+						scheme:"file"
+		
+		*/
+		const filePath = changeEvent.files[0].path;
+		console.log(`FileCreated: ${filePath}`);
+		const relPath = filePath.split(`${repoPath}/`)[1];
+		const destOriginals = `${ORIGINALS_REPO}/${repoName}/${branch}/${relPath}`;
+		const destOriginalsPathSplit = destOriginals.split("/");
+		const destOrignalsBasePath = destOriginalsPathSplit.slice(0, destOriginalsPathSplit.length-1).join("/");
+		const destShadow = `${CODESYNC_ROOT}/${repoName}/${branch}/${relPath}`;
+		const destShadowPathSplit = destShadow.split("/");
+		const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length-1).join("/");
+
+		// Add file in originals repo
+		fs.mkdirSync(destOrignalsBasePath, { recursive: true });
+		// File destination will be created or overwritten by default.
+		fs.copyFileSync(filePath, destOriginals);
+		// Add file in shadow repo
+		fs.mkdirSync(destShadowBasePath, { recursive: true });
+		// File destination will be created or overwritten by default.
+		fs.copyFileSync(filePath, destShadow);  
+		// Add new diff in the buffer
+		const newDiff = <IDiff>{};
+		newDiff.repo = repoName;
+		newDiff.branch = branch || 'default';
+		newDiff.file_relative_path = relPath;
+		newDiff.is_new_file = true;
+		newDiff.source = DIFF_SOURCE;
+		newDiff.created_at = dateFormat(new Date(), 'UTC:yyyy-mm-dd HH:MM:ss.l');
+		// Append new diff in the buffer
+		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+	});
 	// context.subscriptions.push(disposable);
 }
