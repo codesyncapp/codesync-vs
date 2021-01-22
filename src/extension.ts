@@ -124,34 +124,37 @@ export function activate(context: vscode.ExtensionContext) {
 						scheme:"file"
 		
 		*/
-		const filePath = changeEvent.files[0].path;
-		console.log(`FileCreated: ${filePath}`);
-		const relPath = filePath.split(`${repoPath}/`)[1];
-		const destOriginals = `${ORIGINALS_REPO}/${repoName}/${branch}/${relPath}`;
-		const destOriginalsPathSplit = destOriginals.split("/");
-		const destOrignalsBasePath = destOriginalsPathSplit.slice(0, destOriginalsPathSplit.length-1).join("/");
-		const destShadow = `${CODESYNC_ROOT}/${repoName}/${branch}/${relPath}`;
-		const destShadowPathSplit = destShadow.split("/");
-		const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length-1).join("/");
-
-		// Add file in originals repo
-		fs.mkdirSync(destOrignalsBasePath, { recursive: true });
-		// File destination will be created or overwritten by default.
-		fs.copyFileSync(filePath, destOriginals);
-		// Add file in shadow repo
-		fs.mkdirSync(destShadowBasePath, { recursive: true });
-		// File destination will be created or overwritten by default.
-		fs.copyFileSync(filePath, destShadow);  
-		// Add new diff in the buffer
-		const newDiff = <IDiff>{};
-		newDiff.repo = repoName;
-		newDiff.branch = branch || 'default';
-		newDiff.file_relative_path = relPath;
-		newDiff.is_new_file = true;
-		newDiff.source = DIFF_SOURCE;
-		newDiff.created_at = dateFormat(new Date(), 'UTC:yyyy-mm-dd HH:MM:ss.l');
-		// Append new diff in the buffer
-		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+		// TODO: Handle multiple files
+		changeEvent.files.forEach((file) => {
+			const filePath = file.path;
+			console.log(`FileCreated: ${filePath}`);
+			const relPath = filePath.split(`${repoPath}/`)[1];
+			const destOriginals = `${ORIGINALS_REPO}/${repoName}/${branch}/${relPath}`;
+			const destOriginalsPathSplit = destOriginals.split("/");
+			const destOrignalsBasePath = destOriginalsPathSplit.slice(0, destOriginalsPathSplit.length-1).join("/");
+			const destShadow = `${CODESYNC_ROOT}/${repoName}/${branch}/${relPath}`;
+			const destShadowPathSplit = destShadow.split("/");
+			const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length-1).join("/");
+	
+			// Add file in originals repo
+			fs.mkdirSync(destOrignalsBasePath, { recursive: true });
+			// File destination will be created or overwritten by default.
+			fs.copyFileSync(filePath, destOriginals);
+			// Add file in shadow repo
+			fs.mkdirSync(destShadowBasePath, { recursive: true });
+			// File destination will be created or overwritten by default.
+			fs.copyFileSync(filePath, destShadow);  
+			// Add new diff in the buffer
+			const newDiff = <IDiff>{};
+			newDiff.repo = repoName;
+			newDiff.branch = branch || 'default';
+			newDiff.file_relative_path = relPath;
+			newDiff.is_new_file = true;
+			newDiff.source = DIFF_SOURCE;
+			newDiff.created_at = dateFormat(new Date(), 'UTC:yyyy-mm-dd HH:MM:ss.l');
+			// Append new diff in the buffer
+			fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));	
+		});
 	});
 	// context.subscriptions.push(disposable);
 }
