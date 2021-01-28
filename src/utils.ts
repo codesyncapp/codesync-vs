@@ -124,12 +124,6 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent, repoName
 		const filePath = file.path;
 		console.log(`FileDeleted: ${filePath}`);
 		const relPath = filePath.split(`${repoPath}/`)[1];
-		const shadowPath = `${CODESYNC_ROOT}/${repoName}/${branch}/${relPath}`;
-		const shadowExists = fs.existsSync(shadowPath);
-		if (!shadowExists) { 
-			console.log(`Skipping: Shadow does not exist`);
-			return;
-		}
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
 		newDiff.repo = repoName;
