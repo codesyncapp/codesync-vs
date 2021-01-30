@@ -136,3 +136,35 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent, repoName
 		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
 	});
 }
+
+export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent, repoName: string, repoPath: string, branch: string) {
+	/*
+	changeEvent looks like
+		Object
+			files:Array[1]
+				0:Object
+					$mid:1
+					fsPath:"/Users/basit/projects/codesync/codesync/4.py"
+					external:"file:///Users/basit/projects/codesync/codesync/4.py"
+					path:"/Users/basit/projects/codesync/codesync/4.py"
+					scheme:"file"	
+	*/
+	changeEvent.files.forEach((file) => {
+		const oldAbsPath = file.oldUri.path;
+		const newAbsPath = file.newUri.path;
+		console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
+		const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
+		const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
+		// Add new diff in the buffer
+		const newDiff = <IDiff>{};
+		newDiff.repo = repoName;
+		newDiff.branch = branch || DEFAULT_BRANCH;
+		newDiff.file_relative_path = newRelPath;
+		newDiff.is_rename = true;
+		newDiff.source = DIFF_SOURCE;
+		newDiff.created_at = dateFormat(new Date(), DATETIME_FORMAT);
+		newDiff.diff = JSON.stringify({ old_abs_path: oldAbsPath, new_abs_path: newAbsPath, old_rel_path: oldRelPath, new_rel_path: newRelPath});
+		// Append new diff in the buffer
+		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+	});
+}

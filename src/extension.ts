@@ -6,7 +6,7 @@ import * as yaml from 'js-yaml';
 import * as getBranchName from 'current-git-branch';
 
 import { DEFAULT_BRANCH, CONFIG_PATH} from "./constants";
-import { handleChangeEvent, handleFilesCreated, handleFilesDeleted } from "./utils";
+import { handleChangeEvent, handleFilesCreated, handleFilesDeleted, handleFilesRenamed } from "./utils";
 
 export function activate(context: vscode.ExtensionContext) {
 	// Get the active text editor
@@ -44,6 +44,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	vscode.workspace.onDidDeleteFiles(changeEvent => {
 		handleFilesDeleted(changeEvent, repoName, repoPath, branch || DEFAULT_BRANCH);
+	});
+
+	vscode.workspace.onDidRenameFiles(changeEvent => {
+		handleFilesRenamed(changeEvent, repoName, repoPath, branch || DEFAULT_BRANCH);
 	});
 
 	// context.subscriptions.push(disposable);
