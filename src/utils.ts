@@ -142,12 +142,19 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent, repoName
 	changeEvent looks like
 		Object
 			files:Array[1]
-				0:Object
-					$mid:1
-					fsPath:"/Users/basit/projects/codesync/codesync/4.py"
-					external:"file:///Users/basit/projects/codesync/codesync/4.py"
-					path:"/Users/basit/projects/codesync/codesync/4.py"
-					scheme:"file"	
+				0:
+					oldUri:
+						$mid:1
+						fsPath:"/Users/basit/projects/codesync/codesync/4.py"
+						external:"file:///Users/basit/projects/codesync/codesync/4.py"
+						path:"/Users/basit/projects/codesync/codesync/4.py"
+						scheme:"file"	
+					newUri:
+						$mid:1
+						fsPath:"/Users/basit/projects/codesync/codesync/5.py"
+						external:"file:///Users/basit/projects/codesync/codesync/5.py"
+						path:"/Users/basit/projects/codesync/codesync/5.py"
+						scheme:"file
 	*/
 	changeEvent.files.forEach((file) => {
 		const oldAbsPath = file.oldUri.path;
