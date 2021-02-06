@@ -3,9 +3,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
-import * as getBranchName from 'current-git-branch';
 
-import { DEFAULT_BRANCH, CONFIG_PATH} from "./constants";
+import { CONFIG_PATH} from "./constants";
 import { handleChangeEvent, handleFilesCreated, handleFilesDeleted, handleFilesRenamed } from "./utils";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -13,10 +12,8 @@ export function activate(context: vscode.ExtensionContext) {
 	const editor = vscode.window.activeTextEditor;
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath) { return; }
-	const branch = getBranchName({ altPath: repoPath });
-	
-	if (!repoName || !editor) { return; }
+
+	if (!repoPath || !repoName || !editor) { return; }
 
 	// TODO: Show some alert to user
 	// If config.yml does not exists, return
@@ -32,22 +29,22 @@ export function activate(context: vscode.ExtensionContext) {
 		return;
 	}
 	
-	console.log(`repoPath: ${repoPath}, branchName: ${branch}`);
+	console.log(`Configured repo: ${repoPath}`);
 
 	vscode.workspace.onDidChangeTextDocument(changeEvent => {
-		handleChangeEvent(changeEvent, repoName, repoPath, branch || DEFAULT_BRANCH);
+		handleChangeEvent(changeEvent);
 	});
 	
 	vscode.workspace.onDidCreateFiles(changeEvent => {
-		return handleFilesCreated(changeEvent, repoName, repoPath, branch || DEFAULT_BRANCH);
+		return handleFilesCreated(changeEvent);
 	});
 
 	vscode.workspace.onDidDeleteFiles(changeEvent => {
-		handleFilesDeleted(changeEvent, repoName, repoPath, branch || DEFAULT_BRANCH);
+		handleFilesDeleted(changeEvent);
 	});
 
 	vscode.workspace.onDidRenameFiles(changeEvent => {
-		handleFilesRenamed(changeEvent, repoName, repoPath, branch || DEFAULT_BRANCH);
+		handleFilesRenamed(changeEvent);
 	});
 
 	// context.subscriptions.push(disposable);

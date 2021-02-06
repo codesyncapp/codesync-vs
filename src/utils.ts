@@ -3,16 +3,25 @@ import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 import * as dateFormat from "dateformat";
 import { diff_match_patch } from 'diff-match-patch';
+import * as getBranchName from 'current-git-branch';
 
 import { IDiff } from "./interface";
 import { CODESYNC_ROOT, DIFFS_REPO, ORIGINALS_REPO, DIFF_SOURCE, DEFAULT_BRANCH, DATETIME_FORMAT } from "./constants";
 
-export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent, repoName: string, repoPath: string, branch: string) {
+export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
+	const repoName = vscode.workspace.name;
+	const repoPath = vscode.workspace.rootPath;
+	if (!repoPath || !repoName) { return; }
+
 	if (!changeEvent.contentChanges.length) { return; }
+	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	// If you only care about changes to the active editor's text,
 	//  just check to see if changeEvent.document matches the active editor's document.
 	const editor = vscode.window.activeTextEditor;
-	if (!editor) { return; }
+	if (!editor) {
+		console.log("Outside IDE");
+		return;
+	}
 	if (editor.document !== changeEvent.document) {
 		console.log("Skipping InActive Editor's document");
 		return;
@@ -28,7 +37,7 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent, r
 	const shadowExists = fs.existsSync(shadowPath);
 	if (!shadowExists) { 
 		// TODO: Create shadow file?
-		console.log(`Skipping: Shadow does not exist`);
+		console.log(`Skipping: Shadow does not exist, ${filePath}`);
 		return;
 	}
 	// Read shadow file 
@@ -62,7 +71,7 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent, r
 	fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
 }
 
-export function handleFilesCreated(changeEvent: vscode.FileCreateEvent, repoName: string, repoPath: string, branch: string) {
+export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 	/*
 	changeEvent looks like
 		Object
@@ -76,6 +85,11 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent, repoName
 	
 	*/
 
+	const repoName = vscode.workspace.name;
+	const repoPath = vscode.workspace.rootPath;
+	if (!repoPath || !repoName) { return; }
+
+	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
 		console.log(`FileCreated: ${filePath}`);
@@ -108,7 +122,7 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent, repoName
 	});
 }
 
-export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent, repoName: string, repoPath: string, branch: string) {
+export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 	/*
 	changeEvent looks like
 		Object
@@ -120,6 +134,11 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent, repoName
 					path:"/Users/basit/projects/codesync/codesync/4.py"
 					scheme:"file"	
 	*/
+	const repoName = vscode.workspace.name;
+	const repoPath = vscode.workspace.rootPath;
+	if (!repoPath || !repoName) { return; }
+
+	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
 		console.log(`FileDeleted: ${filePath}`);
@@ -137,7 +156,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent, repoName
 	});
 }
 
-export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent, repoName: string, repoPath: string, branch: string) {
+export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 	/*
 	changeEvent looks like
 		Object
@@ -156,6 +175,11 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent, repoName
 						path:"/Users/basit/projects/codesync/codesync/5.py"
 						scheme:"file
 	*/
+	const repoName = vscode.workspace.name;
+	const repoPath = vscode.workspace.rootPath;
+	if (!repoPath || !repoName) { return; }
+
+	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	changeEvent.files.forEach((file) => {
 		const oldAbsPath = file.oldUri.path;
 		const newAbsPath = file.newUri.path;
