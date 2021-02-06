@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	
 	vscode.workspace.onDidCreateFiles(changeEvent => {
-		return handleFilesCreated(changeEvent);
+		handleFilesCreated(changeEvent);
 	});
 
 	vscode.workspace.onDidDeleteFiles(changeEvent => {

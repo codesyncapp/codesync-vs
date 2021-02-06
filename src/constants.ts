@@ -4,4 +4,5 @@ export const ORIGINALS_REPO = `${CODESYNC_ROOT}/.originals`;
 export const CONFIG_PATH = `${CODESYNC_ROOT}/config.yml`;
 export const DIFF_SOURCE = 'vs-code';
 export const DEFAULT_BRANCH = 'default';
+export const GIT_REPO = '.git/';
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';

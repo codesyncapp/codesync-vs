@@ -6,7 +6,7 @@ import { diff_match_patch } from 'diff-match-patch';
 import * as getBranchName from 'current-git-branch';
 
 import { IDiff } from "./interface";
-import { CODESYNC_ROOT, DIFFS_REPO, ORIGINALS_REPO, DIFF_SOURCE, DEFAULT_BRANCH, DATETIME_FORMAT } from "./constants";
+import { CODESYNC_ROOT, DIFFS_REPO, ORIGINALS_REPO, DIFF_SOURCE, DEFAULT_BRANCH, DATETIME_FORMAT, GIT_REPO } from "./constants";
 
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	const repoName = vscode.workspace.name;
@@ -14,6 +14,10 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	if (!repoPath || !repoName) { return; }
 
 	if (!changeEvent.contentChanges.length) { return; }
+	const filePath = changeEvent.document.fileName;
+	if (isGitFile(filePath)) {
+		return;
+	}
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	// If you only care about changes to the active editor's text,
 	//  just check to see if changeEvent.document matches the active editor's document.
@@ -26,7 +30,6 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 		console.log("Skipping InActive Editor's document");
 		return;
 	}
-	const filePath = changeEvent.document.fileName;
 	const text = changeEvent.document.getText();
 	if (!repoPath) { 
 		console.log(`Skipping: No repoPath`);
@@ -89,10 +92,13 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath || !repoName) { return; }
 
-	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
+		if (isGitFile(filePath)) {
+			return;
+		}	
 		console.log(`FileCreated: ${filePath}`);
+		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		const relPath = filePath.split(`${repoPath}/`)[1];
 		const destOriginals = `${ORIGINALS_REPO}/${repoName}/${branch}/${relPath}`;
 		const destOriginalsPathSplit = destOriginals.split("/");
@@ -138,10 +144,13 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath || !repoName) { return; }
 
-	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
+		if (isGitFile(filePath)) {
+			return;
+		}
 		console.log(`FileDeleted: ${filePath}`);
+		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		const relPath = filePath.split(`${repoPath}/`)[1];
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
@@ -178,14 +187,16 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath || !repoName) { return; }
-
-	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	changeEvent.files.forEach((file) => {
 		const oldAbsPath = file.oldUri.path;
 		const newAbsPath = file.newUri.path;
 		console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
 		const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
 		const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
+		if (isGitFile(oldRelPath)) {
+			return;
+		}
+		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
 		newDiff.repo = repoName;
@@ -198,4 +209,8 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 		// Append new diff in the buffer
 		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
 	});
+}
+
+export function isGitFile(path: string) {
+	return path.startsWith(GIT_REPO);
 }
