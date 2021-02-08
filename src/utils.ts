@@ -6,7 +6,7 @@ import { diff_match_patch } from 'diff-match-patch';
 import * as getBranchName from 'current-git-branch';
 
 import { IDiff } from "./interface";
-import { CODESYNC_ROOT, DIFFS_REPO, ORIGINALS_REPO, DIFF_SOURCE, DEFAULT_BRANCH, DATETIME_FORMAT, GIT_REPO } from "./constants";
+import { SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO, DIFF_SOURCE, DEFAULT_BRANCH, DATETIME_FORMAT, GIT_REPO } from "./constants";
 
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	const repoName = vscode.workspace.name;
@@ -36,7 +36,7 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 		return; 
 	}
 	const relPath = filePath.split(`${repoPath}/`)[1];
-	const shadowPath = `${CODESYNC_ROOT}/${repoName}/${branch}/${relPath}`;
+	const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${relPath}`;
 	const shadowExists = fs.existsSync(shadowPath);
 	if (!shadowExists) { 
 		// TODO: Create shadow file?
@@ -103,7 +103,7 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 		const destOriginals = `${ORIGINALS_REPO}/${repoName}/${branch}/${relPath}`;
 		const destOriginalsPathSplit = destOriginals.split("/");
 		const destOriginalsBasePath = destOriginalsPathSplit.slice(0, destOriginalsPathSplit.length-1).join("/");
-		const destShadow = `${CODESYNC_ROOT}/${repoName}/${branch}/${relPath}`;
+		const destShadow = `${SHADOW_REPO}/${repoName}/${branch}/${relPath}`;
 		const destShadowPathSplit = destShadow.split("/");
 		const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length-1).join("/");
 
