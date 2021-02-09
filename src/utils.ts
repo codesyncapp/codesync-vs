@@ -97,7 +97,6 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 		if (isGitFile(filePath)) {
 			return;
 		}	
-		console.log(`FileCreated: ${filePath}`);
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		const relPath = filePath.split(`${repoPath}/`)[1];
 		const destOriginals = `${ORIGINALS_REPO}/${repoName}/${branch}/${relPath}`;
@@ -106,7 +105,8 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 		const destShadow = `${SHADOW_REPO}/${repoName}/${branch}/${relPath}`;
 		const destShadowPathSplit = destShadow.split("/");
 		const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length-1).join("/");
-
+		if (fs.existsSync(destOriginals)) { return; }
+		console.log(`FileCreated: ${filePath}`);
 		// Add file in originals repo
 		fs.mkdirSync(destOriginalsBasePath, { recursive: true });
 		// File destination will be created or overwritten by default.
