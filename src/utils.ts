@@ -197,6 +197,12 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 			return;
 		}
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+		const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${newRelPath}`;
+		const shadowPathSplit = shadowPath.split("/");
+		const shadowBasePath = shadowPathSplit.slice(0, shadowPathSplit.length-1).join("/");
+		// Add file in shadow repo
+		fs.mkdirSync(shadowBasePath, { recursive: true });
+		fs.copyFileSync(newAbsPath, shadowPath);
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
 		newDiff.repo = repoName;
