@@ -44,6 +44,7 @@
         "current-git-branch": "^1.1.0",
         "dateformat": "^4.4.1",
         "diff-match-patch": "^1.0.5",
+        "ignore": "^5.1.8",
         "js-yaml": "^3.14.1"
     }
 }

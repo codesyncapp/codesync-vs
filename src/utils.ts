@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import * as dateFormat from "dateformat";
 import { diff_match_patch } from 'diff-match-patch';
 import * as getBranchName from 'current-git-branch';
+import ignore from 'ignore';
 
 import { IDiff } from "./interface";
 import { SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO, DIFF_SOURCE, DEFAULT_BRANCH, DATETIME_FORMAT, GIT_REPO } from "./constants";
@@ -15,9 +16,11 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 
 	if (!changeEvent.contentChanges.length) { return; }
 	const filePath = changeEvent.document.fileName;
-	if (isGitFile(filePath)) {
-		return;
-	}
+	const relPath = filePath.split(`${repoPath}/`)[1];
+
+	// Skip .git/ and syncignore files
+	if (shouldIgnoreFile(repoPath, relPath)) { return; }
+
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	// If you only care about changes to the active editor's text,
 	//  just check to see if changeEvent.document matches the active editor's document.
@@ -35,7 +38,6 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 		console.log(`Skipping: No repoPath`);
 		return; 
 	}
-	const relPath = filePath.split(`${repoPath}/`)[1];
 	const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${relPath}`;
 	const shadowExists = fs.existsSync(shadowPath);
 	if (!shadowExists) { 
@@ -94,11 +96,10 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
-		if (isGitFile(filePath)) {
-			return;
-		}	
-		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		const relPath = filePath.split(`${repoPath}/`)[1];
+		// Skip .git/ and syncignore files
+		if (shouldIgnoreFile(repoPath, relPath)) { return; }
+		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		const destOriginals = `${ORIGINALS_REPO}/${repoName}/${branch}/${relPath}`;
 		const destOriginalsPathSplit = destOriginals.split("/");
 		const destOriginalsBasePath = destOriginalsPathSplit.slice(0, destOriginalsPathSplit.length-1).join("/");
@@ -146,12 +147,11 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
-		if (isGitFile(filePath)) {
-			return;
-		}
+		const relPath = filePath.split(`${repoPath}/`)[1];
+		// Skip .git/ and syncignore files
+		if (shouldIgnoreFile(repoPath, relPath)) { return; }
 		console.log(`FileDeleted: ${filePath}`);
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
-		const relPath = filePath.split(`${repoPath}/`)[1];
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
 		newDiff.repo = repoName;
@@ -190,12 +190,11 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 	changeEvent.files.forEach((file) => {
 		const oldAbsPath = file.oldUri.path;
 		const newAbsPath = file.newUri.path;
-		console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
 		const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
 		const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
-		if (isGitFile(oldRelPath)) {
-			return;
-		}
+		// Skip .git/ and syncignore files
+		if (shouldIgnoreFile(repoPath, oldRelPath)) { return; }
+		console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${newRelPath}`;
 		const shadowPathSplit = shadowPath.split("/");
@@ -219,4 +218,18 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 
 export function isGitFile(path: string) {
 	return path.startsWith(GIT_REPO);
+}
+
+function shouldIgnoreFile(repoPath: string, relPath: string) {
+	// Always ignore .git/
+	if (isGitFile(relPath)) { return true; }
+	const syncIgnorePath = `${repoPath}/.syncignore`;
+	// TODO: See what to do if syncignore is not there
+	if (!fs.existsSync(syncIgnorePath)) { return true; }
+	const syncignorePaths = fs.readFileSync(syncIgnorePath, "utf8");
+	const splitLines = syncignorePaths.split("\n");
+	const ig = ignore().add(splitLines);
+	const shouldIgnore = ig.ignores(relPath);
+	if (shouldIgnore) { console.log(`Skipping syncignored file: ${relPath}`); }
+	return shouldIgnore;
 }
