@@ -193,7 +193,7 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 		const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
 		const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
 		// Skip .git/ and syncignore files
-		if (shouldIgnoreFile(repoPath, oldRelPath)) { return; }
+		if (shouldIgnoreFile(repoPath, newRelPath)) { return; }
 		console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${newRelPath}`;
