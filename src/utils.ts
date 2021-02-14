@@ -7,13 +7,13 @@ import * as getBranchName from 'current-git-branch';
 import ignore from 'ignore';
 
 import { IDiff } from "./interface";
-import { SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO, DIFF_SOURCE, DEFAULT_BRANCH, DATETIME_FORMAT, GIT_REPO } from "./constants";
+import { SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO, DIFF_SOURCE, DEFAULT_BRANCH, DATETIME_FORMAT, GIT_REPO, CONFIG_PATH } from "./constants";
+
 
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName) { return; }
-
+	if (!repoPath || !repoName || shouldSkipEvent(repoName, repoPath)) { return; }
 	if (!changeEvent.contentChanges.length) { return; }
 	const filePath = changeEvent.document.fileName;
 	const relPath = filePath.split(`${repoPath}/`)[1];
@@ -89,10 +89,9 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 					scheme:"file"
 	
 	*/
-
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName) { return; }
+	if (!repoPath || !repoName || shouldSkipEvent(repoName, repoPath)) { return; }
 
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
@@ -143,7 +142,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 	*/
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName) { return; }
+	if (!repoPath || !repoName || shouldSkipEvent(repoName, repoPath)) { return; }
 
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
@@ -186,7 +185,7 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 	*/
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName) { return; }
+	if (!repoPath || !repoName || shouldSkipEvent(repoName, repoPath)) { return; }
 	changeEvent.files.forEach((file) => {
 		const oldAbsPath = file.oldUri.path;
 		const newAbsPath = file.newUri.path;
@@ -232,4 +231,18 @@ function shouldIgnoreFile(repoPath: string, relPath: string) {
 	const shouldIgnore = ig.ignores(relPath);
 	if (shouldIgnore) { console.log(`Skipping syncignored file: ${relPath}`); }
 	return shouldIgnore;
+}
+
+function shouldSkipEvent(repoName: string, repoPath: string) {
+	// TODO: Show some alert to user
+	// If config.yml does not exists, return
+	const configExists = fs.existsSync(CONFIG_PATH);
+	if (!configExists) { return true; }
+	// Return if user hasn't synced the repo
+	try {
+		const config = yaml.load(fs.readFileSync(CONFIG_PATH, "utf8"));
+		return !(repoName in config['repos']) || config['repos'][repoName].path !== repoPath;
+	} catch (e) {
+		return true;
+	}
 }

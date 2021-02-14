@@ -14,20 +14,6 @@ export function activate(context: vscode.ExtensionContext) {
 	const repoPath = vscode.workspace.rootPath;
 
 	if (!repoPath || !repoName || !editor) { return; }
-
-	// TODO: Show some alert to user
-	// If config.yml does not exists, return
-	const configExists = fs.existsSync(CONFIG_PATH);
-	if (!configExists) { return; }
-	// Return if user hasn't synced the repo
-	try {
-		const config = yaml.load(fs.readFileSync(CONFIG_PATH, "utf8"));
-		if (!(repoName in config['repos']) || config['repos'][repoName].path !== repoPath) {
-			return;
-		}
-	} catch (e) {
-		return;
-	}
 	
 	console.log(`Configured repo: ${repoPath}`);
 
