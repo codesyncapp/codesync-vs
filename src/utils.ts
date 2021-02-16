@@ -186,36 +186,51 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath || !repoName || shouldSkipEvent(repoName, repoPath)) { return; }
-	changeEvent.files.forEach((file) => {
-		const oldAbsPath = file.oldUri.path;
-		const newAbsPath = file.newUri.path;
-		const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
-		const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
-		// Skip .git/ and syncignore files
-		if (shouldIgnoreFile(repoPath, newRelPath)) { return; }
-		console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
-		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
-		const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${newRelPath}`;
-		const shadowPathSplit = shadowPath.split("/");
-		const shadowBasePath = shadowPathSplit.slice(0, shadowPathSplit.length-1).join("/");
-		// Add file in shadow repo
-		fs.mkdirSync(shadowBasePath, { recursive: true });
-		fs.copyFileSync(newAbsPath, shadowPath);
-		// Add new diff in the buffer
-		const newDiff = <IDiff>{};
-		newDiff.repo = repoName;
-		newDiff.branch = branch || DEFAULT_BRANCH;
-		newDiff.file_relative_path = newRelPath;
-		newDiff.is_rename = true;
-		newDiff.source = DIFF_SOURCE;
-		newDiff.created_at = dateFormat(new Date(), DATETIME_FORMAT);
-		newDiff.diff = JSON.stringify({ old_abs_path: oldAbsPath, new_abs_path: newAbsPath, old_rel_path: oldRelPath, new_rel_path: newRelPath});
-		// Append new diff in the buffer
-		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+	changeEvent.files.forEach((event) => {
+		const oldAbsPath = event.oldUri.path;
+		const newAbsPath = event.newUri.path;
+		if (fs.lstatSync(newAbsPath).isDirectory()) {
+			fs.readdirSync(newAbsPath).forEach(file => {
+				const oldFilePath = `${oldAbsPath}/${file}`;
+				const newFilePath = `${newAbsPath}/${file}`;
+				handleFileRenamed(repoName, repoPath, oldFilePath, newFilePath);
+			});
+			return;
+		} 
+		if (fs.lstatSync(newAbsPath).isFile()) {
+			handleFileRenamed(repoName, repoPath, oldAbsPath, newAbsPath);
+			return;
+		}
 	});
 }
 
-export function isGitFile(path: string) {
+function handleFileRenamed(repoName: string, repoPath: string, oldAbsPath: string, newAbsPath: string) {
+	const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
+	const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
+	// Skip .git/ and syncignore files
+	if (shouldIgnoreFile(repoPath, newRelPath)) { return; }
+	console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
+	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+	const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${newRelPath}`;
+	const shadowPathSplit = shadowPath.split("/");
+	const shadowBasePath = shadowPathSplit.slice(0, shadowPathSplit.length-1).join("/");
+	// Add file in shadow repo
+	fs.mkdirSync(shadowBasePath, { recursive: true });
+	fs.copyFileSync(newAbsPath, shadowPath);
+	// Add new diff in the buffer
+	const newDiff = <IDiff>{};
+	newDiff.repo = repoName;
+	newDiff.branch = branch || DEFAULT_BRANCH;
+	newDiff.file_relative_path = newRelPath;
+	newDiff.is_rename = true;
+	newDiff.source = DIFF_SOURCE;
+	newDiff.created_at = dateFormat(new Date(), DATETIME_FORMAT);
+	newDiff.diff = JSON.stringify({ old_abs_path: oldAbsPath, new_abs_path: newAbsPath, old_rel_path: oldRelPath, new_rel_path: newRelPath});
+	// Append new diff in the buffer
+	fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+}
+
+function isGitFile(path: string) {
 	return path.startsWith(GIT_REPO);
 }
 
