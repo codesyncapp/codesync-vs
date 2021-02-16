@@ -189,28 +189,32 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 	changeEvent.files.forEach((event) => {
 		const oldAbsPath = event.oldUri.path;
 		const newAbsPath = event.newUri.path;
+		const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
+		// Skip .git/ and syncignore files
+		if (shouldIgnoreFile(repoPath, newRelPath)) { return; }
+		
+		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+	
 		if (fs.lstatSync(newAbsPath).isDirectory()) {
 			fs.readdirSync(newAbsPath).forEach(file => {
 				const oldFilePath = `${oldAbsPath}/${file}`;
 				const newFilePath = `${newAbsPath}/${file}`;
-				handleFileRenamed(repoName, repoPath, oldFilePath, newFilePath);
+				handleFileRenamed(repoName, repoPath, branch, oldFilePath, newFilePath);
 			});
 			return;
 		} 
 		if (fs.lstatSync(newAbsPath).isFile()) {
-			handleFileRenamed(repoName, repoPath, oldAbsPath, newAbsPath);
+			handleFileRenamed(repoName, repoPath, branch, oldAbsPath, newAbsPath);
 			return;
 		}
 	});
 }
 
-function handleFileRenamed(repoName: string, repoPath: string, oldAbsPath: string, newAbsPath: string) {
+function handleFileRenamed(repoName: string, repoPath: string, branch: string, oldAbsPath: string, newAbsPath: string) {
 	const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
 	const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
 	// Skip .git/ and syncignore files
-	if (shouldIgnoreFile(repoPath, newRelPath)) { return; }
 	console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
-	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${newRelPath}`;
 	const shadowPathSplit = shadowPath.split("/");
 	const shadowBasePath = shadowPathSplit.slice(0, shadowPathSplit.length-1).join("/");
