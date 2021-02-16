@@ -7,6 +7,7 @@ export interface IDiff {
 	diff?: string;
 	is_binary?: boolean;
 	is_rename?: boolean;
+	is_dir_rename?: boolean;
 	is_new_file?: boolean;
 	is_deleted?: boolean;
 }

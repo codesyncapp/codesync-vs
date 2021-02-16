@@ -5,3 +5,4 @@ node_modules/
 out/
 .vs/
 yarn-error.log
+.idea/

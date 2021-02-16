@@ -194,37 +194,38 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 		if (shouldIgnoreFile(repoPath, newRelPath)) { return; }
 		
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
-	
-		if (fs.lstatSync(newAbsPath).isDirectory()) {
-			fs.readdirSync(newAbsPath).forEach(file => {
-				const oldFilePath = `${oldAbsPath}/${file}`;
-				const newFilePath = `${newAbsPath}/${file}`;
-				handleFileRenamed(repoName, repoPath, branch, oldFilePath, newFilePath);
-			});
-			return;
-		} 
-		if (fs.lstatSync(newAbsPath).isFile()) {
-			handleFileRenamed(repoName, repoPath, branch, oldAbsPath, newAbsPath);
-			return;
-		}
+		handleRename(repoName, repoPath, branch, oldAbsPath, newAbsPath, fs.lstatSync(newAbsPath).isFile());
 	});
 }
 
-function handleFileRenamed(repoName: string, repoPath: string, branch: string, oldAbsPath: string, newAbsPath: string) {
+function handleRename(repoName: string, repoPath: string, branch: string, oldAbsPath: string, newAbsPath: string, isFile: boolean) {
 	const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
 	const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
-	// Skip .git/ and syncignore files
+	const oldShadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${oldRelPath}`;
+	const newShadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${newRelPath}`;
+	fs.renameSync(oldShadowPath, newShadowPath);
+
+	if (!isFile) {
+		console.log(`DirectoryRenamed: ${oldAbsPath} -> ${newAbsPath}`);
+		// Add new diff in the buffer
+		const newDiff = <IDiff>{};
+		newDiff.repo = repoName;
+		newDiff.branch = branch;
+		newDiff.file_relative_path = '';
+		newDiff.is_dir_rename = true;
+		newDiff.source = DIFF_SOURCE;
+		newDiff.created_at = dateFormat(new Date(), DATETIME_FORMAT);
+		newDiff.diff = JSON.stringify({ old_path: oldAbsPath, new_path: newAbsPath });
+		// Append new diff in the buffer
+		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+		return;
+	}
+
 	console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
-	const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${newRelPath}`;
-	const shadowPathSplit = shadowPath.split("/");
-	const shadowBasePath = shadowPathSplit.slice(0, shadowPathSplit.length-1).join("/");
-	// Add file in shadow repo
-	fs.mkdirSync(shadowBasePath, { recursive: true });
-	fs.copyFileSync(newAbsPath, shadowPath);
 	// Add new diff in the buffer
 	const newDiff = <IDiff>{};
 	newDiff.repo = repoName;
-	newDiff.branch = branch || DEFAULT_BRANCH;
+	newDiff.branch = branch;
 	newDiff.file_relative_path = newRelPath;
 	newDiff.is_rename = true;
 	newDiff.source = DIFF_SOURCE;
