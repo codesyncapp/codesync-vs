@@ -95,6 +95,8 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
+		// Skip for directory
+		if (fs.lstatSync(filePath).isDirectory()) { return; }
 		const relPath = filePath.split(`${repoPath}/`)[1];
 		// Skip .git/ and syncignore files
 		if (shouldIgnoreFile(repoPath, relPath)) { return; }
@@ -146,6 +148,8 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
+		// Skip for directory
+		if (fs.lstatSync(filePath).isDirectory()) { return; }
 		const relPath = filePath.split(`${repoPath}/`)[1];
 		// Skip .git/ and syncignore files
 		if (shouldIgnoreFile(repoPath, relPath)) { return; }
