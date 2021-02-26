@@ -7,7 +7,8 @@ import * as getBranchName from 'current-git-branch';
 import ignore from 'ignore';
 
 import { IDiff } from "./interface";
-import { SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO, DIFF_SOURCE, DEFAULT_BRANCH, DATETIME_FORMAT, GIT_REPO, CONFIG_PATH } from "./constants";
+import { SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO, DIFF_SOURCE, DEFAULT_BRANCH, 
+	DATETIME_FORMAT, GIT_REPO, CONFIG_PATH, DELETED_REPO } from "./constants";
 
 
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
@@ -153,6 +154,17 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 		if (shouldIgnoreFile(repoPath, relPath)) { return; }
 		console.log(`FileDeleted: ${filePath}`);
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+		// Cache path
+		const destDeleted = `${DELETED_REPO}/${repoName}/${branch}/${relPath}`;
+		const destDeletedPathSplit = destDeleted.split("/");
+		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join("/");
+		// Shadow path
+		const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${relPath}`;
+		if (fs.existsSync(destDeletedBasePath)) { return; }
+		// Add file in originals repo
+		fs.mkdirSync(destDeletedBasePath, { recursive: true });
+		// File destination will be created or overwritten by default.
+		fs.copyFileSync(shadowPath, destDeleted);
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
 		newDiff.repo = repoName;
