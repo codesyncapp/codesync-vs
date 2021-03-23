@@ -67,7 +67,7 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	}
 	// Add new diff in the buffer
 	const newDiff = <IDiff>{};
-	newDiff.repo = repoName;
+	newDiff.repo_path = repoPath;
 	newDiff.branch = branch || DEFAULT_BRANCH;
 	newDiff.file_relative_path = relPath;
 	newDiff.diff = diffs;
@@ -120,7 +120,7 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 		fs.copyFileSync(filePath, destShadow);  
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
-		newDiff.repo = repoName;
+		newDiff.repo_path = repoPath;
 		newDiff.branch = branch || DEFAULT_BRANCH;
 		newDiff.file_relative_path = relPath;
 		newDiff.is_new_file = true;
@@ -167,7 +167,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 		fs.copyFileSync(shadowPath, destDeleted);
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
-		newDiff.repo = repoName;
+		newDiff.repo_path = repoPath;
 		newDiff.branch = branch || DEFAULT_BRANCH;
 		newDiff.file_relative_path = relPath;
 		newDiff.is_deleted = true;
@@ -223,7 +223,7 @@ function handleRename(repoName: string, repoPath: string, branch: string, oldAbs
 		console.log(`DirectoryRenamed: ${oldAbsPath} -> ${newAbsPath}`);
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
-		newDiff.repo = repoName;
+		newDiff.repo_path = repoPath;
 		newDiff.branch = branch;
 		newDiff.file_relative_path = '';
 		newDiff.is_dir_rename = true;
@@ -238,7 +238,7 @@ function handleRename(repoName: string, repoPath: string, branch: string, oldAbs
 	console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
 	// Add new diff in the buffer
 	const newDiff = <IDiff>{};
-	newDiff.repo = repoName;
+	newDiff.repo_path = repoPath;
 	newDiff.branch = branch;
 	newDiff.file_relative_path = newRelPath;
 	newDiff.is_rename = true;
@@ -275,7 +275,7 @@ function shouldSkipEvent(repoName: string, repoPath: string) {
 	// Return if user hasn't synced the repo
 	try {
 		const config = yaml.load(fs.readFileSync(CONFIG_PATH, "utf8"));
-		return !(repoName in config['repos']) || config['repos'][repoName].path !== repoPath;
+		return !(repoPath in config['repos']);
 	} catch (e) {
 		return true;
 	}

@@ -1,5 +1,5 @@
 export interface IDiff {
-	repo: string;
+	repo_path: string;
 	branch: string;
 	file_relative_path: string;
 	created_at: string;
