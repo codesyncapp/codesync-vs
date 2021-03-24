@@ -14,7 +14,7 @@ import { SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO, DIFF_SOURCE, DEFAULT_BRANCH,
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName || shouldSkipEvent(repoName, repoPath)) { return; }
+	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
 	if (!changeEvent.contentChanges.length) { return; }
 	const filePath = changeEvent.document.fileName;
 	const relPath = filePath.split(`${repoPath}/`)[1];
@@ -39,7 +39,7 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 		console.log(`Skipping: No repoPath`);
 		return; 
 	}
-	const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${relPath}`;
+	const shadowPath = `${SHADOW_REPO}/${repoPath.slice(1)}/${branch}/${relPath}`;
 	const shadowExists = fs.existsSync(shadowPath);
 	if (!shadowExists) { 
 		// TODO: Create shadow file?
@@ -92,7 +92,7 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 	*/
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName || shouldSkipEvent(repoName, repoPath)) { return; }
+	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
 
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
@@ -102,10 +102,10 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 		// Skip .git/ and syncignore files
 		if (shouldIgnoreFile(repoPath, relPath)) { return; }
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
-		const destOriginals = `${ORIGINALS_REPO}/${repoName}/${branch}/${relPath}`;
+		const destOriginals = `${ORIGINALS_REPO}/${repoPath.slice(1)}/${branch}/${relPath}`;
 		const destOriginalsPathSplit = destOriginals.split("/");
 		const destOriginalsBasePath = destOriginalsPathSplit.slice(0, destOriginalsPathSplit.length-1).join("/");
-		const destShadow = `${SHADOW_REPO}/${repoName}/${branch}/${relPath}`;
+		const destShadow = `${SHADOW_REPO}/${repoPath.slice(1)}/${branch}/${relPath}`;
 		const destShadowPathSplit = destShadow.split("/");
 		const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length-1).join("/");
 		if (fs.existsSync(destOriginals)) { return; }
@@ -145,7 +145,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 	*/
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName || shouldSkipEvent(repoName, repoPath)) { return; }
+	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
 
 	changeEvent.files.forEach((file) => {
 		const filePath = file.path;
@@ -155,11 +155,11 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 		console.log(`FileDeleted: ${filePath}`);
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		// Cache path
-		const destDeleted = `${DELETED_REPO}/${repoName}/${branch}/${relPath}`;
+		const destDeleted = `${DELETED_REPO}/${repoPath.slice(1)}/${branch}/${relPath}`;
 		const destDeletedPathSplit = destDeleted.split("/");
 		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join("/");
 		// Shadow path
-		const shadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${relPath}`;
+		const shadowPath = `${SHADOW_REPO}/${repoPath.slice(1)}/${branch}/${relPath}`;
 		if (fs.existsSync(destDeletedBasePath)) { return; }
 		// Add file in originals repo
 		fs.mkdirSync(destDeletedBasePath, { recursive: true });
@@ -199,7 +199,7 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 	*/
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName || shouldSkipEvent(repoName, repoPath)) { return; }
+	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
 	changeEvent.files.forEach((event) => {
 		const oldAbsPath = event.oldUri.path;
 		const newAbsPath = event.newUri.path;
@@ -208,15 +208,15 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 		if (shouldIgnoreFile(repoPath, newRelPath)) { return; }
 		
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
-		handleRename(repoName, repoPath, branch, oldAbsPath, newAbsPath, fs.lstatSync(newAbsPath).isFile());
+		handleRename(repoPath, branch, oldAbsPath, newAbsPath, fs.lstatSync(newAbsPath).isFile());
 	});
 }
 
-function handleRename(repoName: string, repoPath: string, branch: string, oldAbsPath: string, newAbsPath: string, isFile: boolean) {
+function handleRename(repoPath: string, branch: string, oldAbsPath: string, newAbsPath: string, isFile: boolean) {
 	const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
 	const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
-	const oldShadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${oldRelPath}`;
-	const newShadowPath = `${SHADOW_REPO}/${repoName}/${branch}/${newRelPath}`;
+	const oldShadowPath = `${SHADOW_REPO}/${repoPath.slice(1)}/${branch}/${oldRelPath}`;
+	const newShadowPath = `${SHADOW_REPO}/${repoPath.slice(1)}/${branch}/${newRelPath}`;
 	fs.renameSync(oldShadowPath, newShadowPath);
 
 	if (!isFile) {
@@ -267,7 +267,7 @@ function shouldIgnoreFile(repoPath: string, relPath: string) {
 	return shouldIgnore;
 }
 
-function shouldSkipEvent(repoName: string, repoPath: string) {
+function shouldSkipEvent(repoPath: string) {
 	// TODO: Show some alert to user
 	// If config.yml does not exists, return
 	const configExists = fs.existsSync(CONFIG_PATH);
