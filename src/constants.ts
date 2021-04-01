@@ -1,4 +1,5 @@
-export const CODESYNC_ROOT = '/usr/local/bin/.codesync';
+import untildify =  require('untildify');
+export const CODESYNC_ROOT = untildify('~/.codesync');
 export const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs`;
 export const ORIGINALS_REPO = `${CODESYNC_ROOT}/.originals`;
 export const SHADOW_REPO = `${CODESYNC_ROOT}/.shadow`;
