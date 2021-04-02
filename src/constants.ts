@@ -1,4 +1,5 @@
 import untildify =  require('untildify');
+
 export const CODESYNC_ROOT = untildify('~/.codesync');
 export const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs`;
 export const ORIGINALS_REPO = `${CODESYNC_ROOT}/.originals`;

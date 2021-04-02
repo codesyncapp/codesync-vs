@@ -1,11 +1,13 @@
 {
-    "name": "reverseword",
-    "displayName": "ReverseWord",
-    "description": "Reverse a word",
-    "version": "0.0.1",
-    "publisher": "rebornix",
+    "name": "codesync",
+    "displayName": "codesync",
+    "description": "Sync your code changes as you make them",
+    "version": "1.0.0",
+    "publisher": "basit",
     "engines": {
-        "vscode": "^1.32.0"
+        "vscode": "^1.32.0",
+        "npm": "7.7.6",
+        "node": "15.13.0"    
     },
     "categories": [
         "Other"
@@ -14,14 +16,6 @@
         "onStartupFinished"
     ],
     "main": "./out/extension",
-    "contributes": {
-        "commands": [
-            {
-                "command": "extension.reverseWord",
-                "title": "Reverse Word"
-            }
-        ]
-    },
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
