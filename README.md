@@ -1,10 +1,8 @@
-# Document Editing Sample
+# CodeSync
 
-This is an example that shows you how to create a command which makes changes to the document in the active editor.
+	Syncs your real time code changes as you make them. 
 
-## Demo
-
-![demo](demo.gif)
+	Sign up at https://www.codesync.com and follow the steps mentioned there to make this extension work
 
 ## VS Code API
 
