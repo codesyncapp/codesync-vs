@@ -1,6 +1,6 @@
 {
     "name": "codesync",
-    "displayName": "codesync",
+    "displayName": "CodeSync",
     "description": "Sync your code changes as you make them",
     "version": "1.0.0",
     "publisher": "basit",
@@ -42,5 +42,10 @@
         "js-yaml": "^3.14.1",
         "lodash": ">=4.17.19",
         "untildify": "^4.0.0"
-    }
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/codesyncapp/codesync-vs"
+      },
+      "homepage": "https://www.codesync.com"
 }

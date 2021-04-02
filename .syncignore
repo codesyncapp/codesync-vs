@@ -6,3 +6,5 @@ out/
 .vs/
 yarn-error.log
 .git/
+.idea/
+.vscode/*
