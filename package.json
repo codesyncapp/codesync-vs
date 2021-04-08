@@ -2,12 +2,12 @@
     "name": "codesync",
     "displayName": "CodeSync",
     "description": "Sync your code changes as you make them",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "publisher": "basit",
     "engines": {
         "vscode": "^1.32.0",
         "npm": "7.7.6",
-        "node": "15.13.0"    
+        "node": "15.13.0"
     },
     "categories": [
         "Other"
@@ -47,5 +47,5 @@
         "type": "git",
         "url": "https://github.com/codesyncapp/codesync-vs"
     },
-      "homepage": "https://www.codesync.com"
+    "homepage": "https://www.codesync.com"
 }
