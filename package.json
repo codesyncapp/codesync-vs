@@ -46,6 +46,6 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/codesyncapp/codesync-vs"
-      },
+    },
       "homepage": "https://www.codesync.com"
 }
