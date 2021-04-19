@@ -2,12 +2,12 @@
     "name": "codesync",
     "displayName": "CodeSync",
     "description": "Sync your code changes as you make them",
-    "version": "1.1.0",
-    "publisher": "basit",
+    "version": "1.0.0",
+    "publisher": "codesync",
     "engines": {
         "vscode": "^1.32.0",
         "npm": "7.7.6",
-        "node": "15.13.0"
+        "node": "15.14.0"
     },
     "categories": [
         "Other"
