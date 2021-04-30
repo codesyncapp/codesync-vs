@@ -3,7 +3,7 @@
     "displayName": "CodeSync",
     "description": "Sync your code changes as you make them",
     "icon": "https://codesync-images.s3.amazonaws.com/icon.png",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "publisher": "codesync",
     "engines": {
         "vscode": "^1.32.0",
