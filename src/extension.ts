@@ -1,11 +1,9 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as yaml from 'js-yaml';
-
-import { CONFIG_PATH} from "./constants";
 import { handleChangeEvent, handleFilesCreated, handleFilesDeleted, handleFilesRenamed } from "./utils";
+import { RESTART_DAEMON_AFTER } from "./constants";
+
 
 export function activate(context: vscode.ExtensionContext) {
 	// Get the active text editor
@@ -33,5 +31,19 @@ export function activate(context: vscode.ExtensionContext) {
 		handleFilesRenamed(changeEvent);
 	});
 
+	function handleBuffer() {
+		try {
+			// Daemon functionality will go here
+		} catch {
+			console.log("Daemon failed");
+		}
+
+		// Recall daemon after X seconds
+		setTimeout(() => {
+			handleBuffer();
+		}, RESTART_DAEMON_AFTER);
+	}
+
+	handleBuffer();
 	// context.subscriptions.push(disposable);
 }

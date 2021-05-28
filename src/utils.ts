@@ -59,22 +59,9 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	const dmp = new diff_match_patch();
 	const patches = dmp.patch_make(shadowText, text);
 	//  Create text representation of patches objects
-	const diffs = dmp.patch_toText(patches);
-	// Skip empty diffs
-	if (!diffs) { 
-		console.log(`Skipping: Empty diffs`);
-		return;
-	}
+	const diffs = dmp.patch_toText(patches);	
 	// Add new diff in the buffer
-	const newDiff = <IDiff>{};
-	newDiff.repo_path = repoPath;
-	newDiff.branch = branch || DEFAULT_BRANCH;
-	newDiff.file_relative_path = relPath;
-	newDiff.diff = diffs;
-	newDiff.source = DIFF_SOURCE;
-	newDiff.created_at = dateFormat(new Date(), DATETIME_FORMAT);
-	// Append new diff in the buffer
-	fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+	manageDiff(repoPath, branch, relPath, diffs);
 }
 
 export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
@@ -119,15 +106,7 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 		// File destination will be created or overwritten by default.
 		fs.copyFileSync(filePath, destShadow);  
 		// Add new diff in the buffer
-		const newDiff = <IDiff>{};
-		newDiff.repo_path = repoPath;
-		newDiff.branch = branch || DEFAULT_BRANCH;
-		newDiff.file_relative_path = relPath;
-		newDiff.is_new_file = true;
-		newDiff.source = DIFF_SOURCE;
-		newDiff.created_at = dateFormat(new Date(), DATETIME_FORMAT);
-		// Append new diff in the buffer
-		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));	
+		manageDiff(repoPath, branch, relPath, "", true);
 	});
 }
 
@@ -165,16 +144,8 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 		fs.mkdirSync(destDeletedBasePath, { recursive: true });
 		// File destination will be created or overwritten by default.
 		fs.copyFileSync(shadowPath, destDeleted);
-		// Add new diff in the buffer
-		const newDiff = <IDiff>{};
-		newDiff.repo_path = repoPath;
-		newDiff.branch = branch || DEFAULT_BRANCH;
-		newDiff.file_relative_path = relPath;
-		newDiff.is_deleted = true;
-		newDiff.source = DIFF_SOURCE;
-		newDiff.created_at = dateFormat(new Date(), DATETIME_FORMAT);
-		// Append new diff in the buffer
-		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+
+		manageDiff(repoPath, branch, relPath, "", false, false, false, true);
 	});
 }
 
@@ -221,30 +192,45 @@ function handleRename(repoPath: string, branch: string, oldAbsPath: string, newA
 
 	if (!isFile) {
 		console.log(`DirectoryRenamed: ${oldAbsPath} -> ${newAbsPath}`);
-		// Add new diff in the buffer
-		const newDiff = <IDiff>{};
-		newDiff.repo_path = repoPath;
-		newDiff.branch = branch;
-		newDiff.file_relative_path = '';
-		newDiff.is_dir_rename = true;
-		newDiff.source = DIFF_SOURCE;
-		newDiff.created_at = dateFormat(new Date(), DATETIME_FORMAT);
-		newDiff.diff = JSON.stringify({ old_path: oldAbsPath, new_path: newAbsPath });
-		// Append new diff in the buffer
-		fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+		const diff = JSON.stringify({ old_path: oldAbsPath, new_path: newAbsPath });
+		manageDiff(repoPath, branch, "", diff, false, false, true);
 		return;
 	}
 
 	console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
+	// Create diff
+	const diff = JSON.stringify({ old_abs_path: oldAbsPath, new_abs_path: newAbsPath, old_rel_path: oldRelPath, new_rel_path: newRelPath});
+	manageDiff(repoPath, branch, newRelPath, diff, false, true);
+}
+
+function manageDiff(repoPath: string, branch: string, file_rel_path: string, diff: string, is_new_file?: boolean, is_rename?: boolean, 
+	is_dir_rename?: boolean, is_deleted?: boolean) {
+
+	// Skip empty diffs
+	if (!diff && !is_new_file) { 
+		console.log(`Skipping: Empty diffs`);
+		return;
+	}
 	// Add new diff in the buffer
 	const newDiff = <IDiff>{};
 	newDiff.repo_path = repoPath;
 	newDiff.branch = branch;
-	newDiff.file_relative_path = newRelPath;
-	newDiff.is_rename = true;
+	newDiff.file_relative_path = file_rel_path;
+	if (is_rename) {
+		newDiff.is_new_file = true;
+	}
+	if (is_rename) {
+		newDiff.is_rename = true;
+	}
+	if (is_dir_rename) {
+		newDiff.is_dir_rename = true;
+	}
+	if (is_deleted) {
+		newDiff.is_deleted = true;
+	}
 	newDiff.source = DIFF_SOURCE;
 	newDiff.created_at = dateFormat(new Date(), DATETIME_FORMAT);
-	newDiff.diff = JSON.stringify({ old_abs_path: oldAbsPath, new_abs_path: newAbsPath, old_rel_path: oldRelPath, new_rel_path: newRelPath});
+	newDiff.diff = diff;
 	// Append new diff in the buffer
 	fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
 }
