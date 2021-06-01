@@ -11,3 +11,13 @@ export interface IDiff {
 	is_new_file?: boolean;
 	is_deleted?: boolean;
 }
+
+export interface IRepoDiffs {
+	path: string;
+	file_to_diff: IFileToDiff[];
+}
+
+export interface IFileToDiff {
+	file_path: string;
+	diff: IDiff;
+}
