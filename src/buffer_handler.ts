@@ -1,14 +1,12 @@
 import * as fs from 'fs';
-import * as yaml from 'js-yaml';
-import fetch from "node-fetch";
 import { client } from "websocket";
 
 import { putLogEvent } from './logger';
-import { readYML } from './utils/common';
-import { IDiff, IFileToDiff, IRepoDiffs } from './interface';
-import { RESTART_DAEMON_AFTER, DIFFS_REPO, API_HEALTHCHECK, DIFF_FILES_PER_ITERATION,
-	REQUIRED_DIFF_KEYS, DIFF_SIZE_LIMIT, REQUIRED_FILE_RENAME_DIFF_KEYS,
-	REQUIRED_DIR_RENAME_DIFF_KEYS, CONFIG_PATH, WEBSOCKET_ENDPOINT} from "./constants";
+import { readYML, checkServerDown } from './utils/common';
+import { isValidDiff } from './utils/buffer_utils';
+import { IFileToDiff, IRepoDiffs } from './interface';
+import { RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, 
+	CONFIG_PATH, WEBSOCKET_ENDPOINT} from "./constants";
 
 
 const recallDaemon = () => {
@@ -19,59 +17,6 @@ const recallDaemon = () => {
 	}, RESTART_DAEMON_AFTER);	
 };
 
-const isValidDiff = (diffData: IDiff) => {
-	const missingKeys = REQUIRED_DIFF_KEYS.filter(key => !(key in diffData));
-	if (missingKeys.length) { return false; }
-	const isRename = diffData.is_rename;
-	const isDirRename = diffData.is_dir_rename;
-	const diff = diffData.diff;
-	if (diff && diff.length > DIFF_SIZE_LIMIT) { return false; }
-	if (isRename || isDirRename) {
-		if (!diff) { return false; }
-		let diffJSON = {};
-		try {
-			diffJSON = yaml.load(diff);
-		} catch (e) {
-			return false;
-		}
-		if (isRename) {
-			const missingRenameKeys = REQUIRED_FILE_RENAME_DIFF_KEYS.filter(key => !(key in diffJSON));
-			if (missingRenameKeys.length) { return false; }
-		}
-		if (isDirRename) {
-			const missingDirRenameKeys = REQUIRED_DIR_RENAME_DIFF_KEYS.filter(key => !(key in diffJSON));
-			if (missingDirRenameKeys.length) { return false; }
-		}
-	}
-	return true;
-};
-
-const checkServerDown = async () => {
-	let isDown = false;
-	const response = await fetch(API_HEALTHCHECK)
-	.then(res => res.json())
-    .then(json => json)
-	.catch(err => isDown = true);
-	return isDown || !response.status;
-};
-
-const connect = async() => {
-    return new Promise(function(resolve, reject) {
-		const WebSocketClient = new client();
-		WebSocketClient.connect(WEBSOCKET_ENDPOINT);
-
-		WebSocketClient.on('connectFailed', function(error) {
-			console.log('Connect Error: ' + error.toString());
-			reject(WebSocketClient);
-		});
-		
-		WebSocketClient.on('connect', function(connection) {
-			console.log('WebSocket Client Connected');
-			resolve(WebSocketClient);
-		});
-
-    });
-};
 
 export async function handleBuffer() {
 	/***

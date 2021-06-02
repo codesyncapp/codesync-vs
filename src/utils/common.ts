@@ -1,8 +1,10 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
+import fetch from "node-fetch";
 
 import { CODESYNC_ROOT, SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO, 
-	DELETED_REPO } from "../constants";
+	DELETED_REPO, API_HEALTHCHECK } from "../constants";
+
 
 export const readYML = (filePath: string) => {
 	try {
@@ -12,7 +14,6 @@ export const readYML = (filePath: string) => {
 	}
 };
 
-
 export const initCodeSync = () => {
 	const paths = [CODESYNC_ROOT, DIFFS_REPO, ORIGINALS_REPO, SHADOW_REPO, DELETED_REPO ];
 	paths.forEach((path) => {
@@ -21,4 +22,13 @@ export const initCodeSync = () => {
 			fs.mkdirSync(path, { recursive: true });
 		}
 	});
+};
+
+export const checkServerDown = async () => {
+	let isDown = false;
+	const response = await fetch(API_HEALTHCHECK)
+	.then(res => res.json())
+    .then(json => json)
+	.catch(err => isDown = true);
+	return isDown || !response.status;
 };
