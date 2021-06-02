@@ -126,8 +126,6 @@ export async function handleBuffer() {
 			}
 		});
 
-		// await connect().then(function(client: any) {
-
 		const WebSocketClient = new client();
 		WebSocketClient.connect(WEBSOCKET_ENDPOINT);
 
@@ -136,9 +134,30 @@ export async function handleBuffer() {
 		});
 		
 		WebSocketClient.on('connect', function(connection) {
+			connection.on('error', function(error) {
+				console.log("Connection Error: " + error.toString());
+			});
+			connection.on('close', function() {
+				console.log('echo-protocol Connection Closed');
+			});
+		
 			// Iterate repoDiffs and send to server
 			repoDiffs.forEach((repoDiff) => {
 				const configRepo = configJSON.repos[repoDiff.path];
+				const accessToken = configRepo.token;
+				
+				// authenticate via websocket
+				connection.send(accessToken);
+				connection.on('message', function(message) {
+					if (message.type === 'utf8') {
+						const resp = JSON.parse(message.utf8Data || "{}");
+						if (resp.type === 'auth' && resp.status != 200) { return; }
+						if (resp.type === 'sync' && resp.status === 200) { 
+							fs.unlinkSync(resp.diff_file_path);
+						}
+					}
+				});
+
 				repoDiff.file_to_diff.forEach((fileToDiff) => {
 					const diffData = fileToDiff.diff;
 					const configFiles = configRepo['branches'][diffData.branch];
@@ -159,27 +178,14 @@ export async function handleBuffer() {
 						'is_rename': isRename,
 						'is_binary': isBinary,
 						'created_at': diffData.created_at,
-						'path': relPath
+						'path': relPath,
+						'diff_file_path': fileToDiff.file_path
 					};
-					const accessToken = configRepo.token;
-					// const response = connection.send(accessToken);
-
-					// connection.on('message', function(message) {
-					// 	if (message.type === 'utf8') {
-					// 		console.log("Received: '" + JSON.parse(message) + "'");
-					// 	}
-					// });
-					// const response = connection.send(JSON.stringify({'diffs': [diffToSend]}));
-					// console.log(response);
+					connection.send(JSON.stringify({'diffs': [diffToSend]}));	
 				});
-	
 			});
 		});
 
-		// }).catch(function(err) {
-		// 	// error here
-		// 	console.log("Socket connection failed: ", err);
-		// });
 		console.log("Iteration completed");
 		
 	} catch {
