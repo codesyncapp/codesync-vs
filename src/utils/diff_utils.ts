@@ -13,7 +13,7 @@ export function manageDiff(repoPath: string, branch: string, file_rel_path: stri
 	is_deleted?: boolean) {
 
 	// Skip empty diffs
-	if (!diff && !is_new_file) {
+	if (!diff && !is_new_file && !is_deleted) {
 		console.log(`Skipping: Empty diffs`);
 		return;
 	}

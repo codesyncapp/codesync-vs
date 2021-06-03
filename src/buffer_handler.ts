@@ -3,7 +3,7 @@ import { client } from "websocket";
 
 import { putLogEvent } from './logger';
 import { readYML, checkServerDown } from './utils/common';
-import { handleFilesRename, isValidDiff, handleNewFileUpload } from './utils/buffer_utils';
+import { handleFilesRename, isValidDiff, handleNewFileUpload, isDirDeleted, getDIffForDeletedFile } from './utils/buffer_utils';
 import { IFileToDiff, IRepoDiffs } from './interface';
 import { RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, 
 	CONFIG_PATH, WEBSOCKET_ENDPOINT} from "./constants";
@@ -161,6 +161,10 @@ export async function handleBuffer() {
 									handleNewFileUpload(accessToken, diffData, relPath, configRepo.id, configJSON, fileToDiff.file_path);
 									return;
 								}
+
+								// Skip the changes diffs if relevant file was uploaded in the same iteration, wait for next iteration
+								if (newFiles.includes(relPath)) { return; }
+
 								if (diffData.is_rename) {
 									const oldRelPath = JSON.parse(diffData.diff).old_rel_path;
 									// If old_rel_path uploaded in the same iteration, wait for next iteration
@@ -183,7 +187,27 @@ export async function handleBuffer() {
 									putLogEvent(`Empty diff found in file: ${fileToDiff.file_path}`);
 									fs.unlinkSync(fileToDiff.file_path);
 								}
+
 								const fileId = configFiles[relPath];
+
+								if (!fileId && !isDeleted && !diffData.is_rename) {
+									putLogEvent("File ID not found");
+									return;
+								}
+
+								if (!fileId && isDeleted) {
+									// It can be a directory delete
+									if (!isDirDeleted(diffData.repo_path, diffData.branch, relPath)) {
+										putLogEvent(`is_deleted non-synced file found: ${diffData.repo_path}/${relPath}`);
+									}
+									fs.unlinkSync(fileToDiff.file_path);
+									return;
+								}
+
+								if (isDeleted) {
+									diffData.diff =  getDIffForDeletedFile(diffData.repo_path, diffData.branch, relPath, configJSON);
+								}
+
 								// Diff data to be sent to server
 								const diffToSend = {
 									'file_id': fileId,

@@ -1,13 +1,13 @@
 import * as fs from 'fs';
-import * as yaml from 'js-yaml';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { diff_match_patch } from 'diff-match-patch';
 import * as getBranchName from 'current-git-branch';
-import ignore from 'ignore';
 
 import { SHADOW_REPO, ORIGINALS_REPO, DEFAULT_BRANCH, 
-	GIT_REPO, CONFIG_PATH, DELETED_REPO } from "./constants";
+	DELETED_REPO } from "./constants";
 import { handleDirectoryRenameDiffs, manageDiff } from './utils/diff_utils';
+import { shouldSkipEvent, shouldIgnoreFile } from './utils/event_utils';
 
 
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
@@ -133,17 +133,15 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 		console.log(`FileDeleted: ${filePath}`);
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		// Cache path
-		const destDeleted = `${DELETED_REPO}/${repoPath.slice(1)}/${branch}/${relPath}`;
-		const destDeletedPathSplit = destDeleted.split("/");
-		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join("/");
-		// Shadow path
-		const shadowPath = `${SHADOW_REPO}/${repoPath.slice(1)}/${branch}/${relPath}`;
-		if (fs.existsSync(destDeletedBasePath)) { return; }
+		const destDeleted = path.join(DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
+		const destDeletedBasePath = path.join(DELETED_REPO, `${repoPath}/${branch}`);
+		if (fs.existsSync(destDeleted)) { return; }
 		// Add file in originals repo
 		fs.mkdirSync(destDeletedBasePath, { recursive: true });
+		// Shadow path
+		const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
 		// File destination will be created or overwritten by default.
 		fs.copyFileSync(shadowPath, destDeleted);
-
 		manageDiff(repoPath, branch, relPath, "", false, false, true);
 	});
 }
@@ -202,36 +200,4 @@ function handleRename(repoPath: string, branch: string, oldAbsPath: string, newA
 	// Create diff
 	const diff = JSON.stringify({ old_abs_path: oldAbsPath, new_abs_path: newAbsPath, old_rel_path: oldRelPath, new_rel_path: newRelPath});
 	manageDiff(repoPath, branch, newRelPath, diff, false, true);
-}
-
-function isGitFile(path: string) {
-	return path.startsWith(GIT_REPO);
-}
-
-function shouldIgnoreFile(repoPath: string, relPath: string) {
-	// Always ignore .git/
-	if (isGitFile(relPath)) { return true; }
-	const syncIgnorePath = `${repoPath}/.syncignore`;
-	// TODO: See what to do if syncignore is not there
-	if (!fs.existsSync(syncIgnorePath)) { return true; }
-	const syncignorePaths = fs.readFileSync(syncIgnorePath, "utf8");
-	const splitLines = syncignorePaths.split("\n");
-	const ig = ignore().add(splitLines);
-	const shouldIgnore = ig.ignores(relPath);
-	if (shouldIgnore) { console.log(`Skipping syncignored file: ${relPath}`); }
-	return shouldIgnore;
-}
-
-function shouldSkipEvent(repoPath: string) {
-	// TODO: Show some alert to user
-	// If config.yml does not exists, return
-	const configExists = fs.existsSync(CONFIG_PATH);
-	if (!configExists) { return true; }
-	// Return if user hasn't synced the repo
-	try {
-		const config = yaml.load(fs.readFileSync(CONFIG_PATH, "utf8"));
-		return !(repoPath in config['repos']);
-	} catch (e) {
-		return true;
-	}
 }
