@@ -1,6 +1,6 @@
 import untildify =  require('untildify');
 
-export const CODESYNC_ROOT = untildify('~/.codesync');
+export const CODESYNC_ROOT = untildify('~/.codesync-local');
 export const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs/.vscode`;
 export const ORIGINALS_REPO = `${CODESYNC_ROOT}/.originals`;
 export const SHADOW_REPO = `${CODESYNC_ROOT}/.shadow`;
@@ -12,10 +12,12 @@ export const GIT_REPO = '.git/';
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
-export const CODESYNC_DOMAIN = '127.0.0.1:8000';
-export const CODESYNC_HOST = 'http://127.0.0.1:8000';
-// export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
-// export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
+// export const CODESYNC_DOMAIN = '127.0.0.1:8000';
+// export const CODESYNC_HOST = 'http://127.0.0.1:8000';
+export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
+export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
+export const API_ENDPOINT = `${CODESYNC_HOST}/v1`;
+export const API_FILES = `${API_ENDPOINT}/files`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v1/websocket`;
 

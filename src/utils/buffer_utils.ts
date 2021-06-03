@@ -4,8 +4,8 @@ import * as path from 'path';
 import { IDiff } from "../interface";
 import { CONFIG_PATH, DIFF_SIZE_LIMIT, REQUIRED_DIFF_KEYS, 
 	REQUIRED_DIR_RENAME_DIFF_KEYS, REQUIRED_FILE_RENAME_DIFF_KEYS,
-	SHADOW_REPO
- } from "../constants";
+	SHADOW_REPO, ORIGINALS_REPO } from "../constants";
+import { uploadFileToServer } from './upload_file';
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -33,6 +33,22 @@ export const isValidDiff = (diffData: IDiff) => {
 		}
 	}
 	return true;
+};
+
+export const handleNewFileUpload = async (access_token: string, diffData: IDiff, relPath: string, repoId: number, 
+	configJSON: any, diffFilePath: string) => {
+	/* 
+	Uplaods new file to server and adds it in config
+	Ignore if file is not present in .originals repo 
+	*/
+	const originalsPath = path.join(ORIGINALS_REPO, `${diffData.repo_path}/${diffData.branch}/${relPath}`);
+	if (!fs.existsSync(originalsPath)) { return; }
+	const response = await uploadFileToServer(access_token, repoId, diffData.branch, originalsPath, relPath, diffData.created_at);
+	if (response.error) { return; }
+	configJSON.repos[diffData.repo_path].branches[diffData.branch][relPath] = response.fileId;
+	// write file id to config.yml
+	fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
+	fs.unlinkSync(diffFilePath);
 };
 
 export const handleFilesRename = (configJSON: any, repoPath: string, branch: string, 

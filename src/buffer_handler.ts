@@ -3,7 +3,7 @@ import { client } from "websocket";
 
 import { putLogEvent } from './logger';
 import { readYML, checkServerDown } from './utils/common';
-import { handleFilesRename, isValidDiff } from './utils/buffer_utils';
+import { handleFilesRename, isValidDiff, handleNewFileUpload } from './utils/buffer_utils';
 import { IFileToDiff, IRepoDiffs } from './interface';
 import { RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, 
 	CONFIG_PATH, WEBSOCKET_ENDPOINT} from "./constants";
@@ -153,8 +153,15 @@ export async function handleBuffer() {
 								const relPath = diffData.file_relative_path;
 								const isBinary = diffData.is_binary;
 								const isDeleted = diffData.is_deleted;
-								const isRename = diffData.is_rename;
-								if (isRename) {
+
+								if (diffData.is_new_file) {
+									if (!newFiles.includes(relPath)) {
+										newFiles.push(relPath);
+									}
+									handleNewFileUpload(accessToken, diffData, relPath, configRepo.id, configJSON, fileToDiff.file_path);
+									return;
+								}
+								if (diffData.is_rename) {
 									const oldRelPath = JSON.parse(diffData.diff).old_rel_path;
 									// If old_rel_path uploaded in the same iteration, wait for next iteration
 									if (newFiles.includes(oldRelPath)) { return; }
@@ -182,7 +189,7 @@ export async function handleBuffer() {
 									'file_id': fileId,
 									'diff': diffData.diff,
 									'is_deleted': isDeleted,
-									'is_rename': isRename,
+									'is_rename': diffData.is_rename,
 									'is_binary': isBinary,
 									'created_at': diffData.created_at,
 									'path': relPath,
