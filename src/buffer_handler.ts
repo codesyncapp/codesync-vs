@@ -3,7 +3,7 @@ import { client } from "websocket";
 
 import { putLogEvent } from './logger';
 import { readYML, checkServerDown } from './utils/common';
-import { isValidDiff } from './utils/buffer_utils';
+import { handleFilesRename, isValidDiff } from './utils/buffer_utils';
 import { IFileToDiff, IRepoDiffs } from './interface';
 import { RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, 
 	CONFIG_PATH, WEBSOCKET_ENDPOINT} from "./constants";
@@ -133,6 +133,7 @@ export async function handleBuffer() {
 		
 			// Iterate repoDiffs and send to server
 			repoDiffs.forEach((repoDiff) => {
+				const newFiles: string[] = [];
 				const configRepo = configJSON.repos[repoDiff.path];
 				const accessToken = configRepo.token;
 				
@@ -142,36 +143,53 @@ export async function handleBuffer() {
 					if (message.type === 'utf8') {
 						const resp = JSON.parse(message.utf8Data || "{}");
 						if (resp.type === 'auth') {
-							if (resp.status === 200) { 
-								repoDiff.file_to_diff.forEach((fileToDiff) => {
-									const diffData = fileToDiff.diff;
-									const configFiles = configRepo['branches'][diffData.branch];
-									const relPath = diffData.file_relative_path;
-									const isBinary = diffData.is_binary;
-									const isDeleted = diffData.is_deleted;
-									const isRename = diffData.is_rename;
-									if (!isBinary && !isDeleted && !diffData.diff) {
-										putLogEvent(`Empty diff found in file: ${fileToDiff.file_path}`);
-										fs.unlinkSync(fileToDiff.file_path);
-									}
-									const fileId = configFiles[relPath];
-									// Diff data to be sent to server
-									const diffToSend = {
-										'file_id': fileId,
-										'diff': diffData.diff,
-										'is_deleted': isDeleted,
-										'is_rename': isRename,
-										'is_binary': isBinary,
-										'created_at': diffData.created_at,
-										'path': relPath,
-										'diff_file_path': fileToDiff.file_path
-									};
-									connection.send(JSON.stringify({'diffs': [diffToSend]}));	
-								});
-							} else {
+							if (resp.status !== 200) { 
 								console.log("Auth Failed");
 								return; 
 							}
+							repoDiff.file_to_diff.forEach((fileToDiff) => {
+								const diffData = fileToDiff.diff;
+								const configFiles = configRepo['branches'][diffData.branch];
+								const relPath = diffData.file_relative_path;
+								const isBinary = diffData.is_binary;
+								const isDeleted = diffData.is_deleted;
+								const isRename = diffData.is_rename;
+								if (isRename) {
+									const oldRelPath = JSON.parse(diffData.diff).old_rel_path;
+									// If old_rel_path uploaded in the same iteration, wait for next iteration
+									if (newFiles.includes(oldRelPath)) { return; }
+									// Remove old file ID from config
+									const oldFileId = configFiles[oldRelPath];
+									delete configFiles[oldRelPath];
+
+									if  (!oldFileId) {
+										putLogEvent(`old_file: ${oldRelPath} was not 
+										synced for rename of ${repoDiff.path}/${relPath}`, configRepo.email);
+										fs.unlinkSync(fileToDiff.file_path);
+										return;
+									}
+									handleFilesRename(configJSON, diffData.repo_path, diffData.branch, 
+										relPath, oldFileId, oldRelPath);
+								}
+
+								if (!isBinary && !isDeleted && !diffData.diff) {
+									putLogEvent(`Empty diff found in file: ${fileToDiff.file_path}`);
+									fs.unlinkSync(fileToDiff.file_path);
+								}
+								const fileId = configFiles[relPath];
+								// Diff data to be sent to server
+								const diffToSend = {
+									'file_id': fileId,
+									'diff': diffData.diff,
+									'is_deleted': isDeleted,
+									'is_rename': isRename,
+									'is_binary': isBinary,
+									'created_at': diffData.created_at,
+									'path': relPath,
+									'diff_file_path': fileToDiff.file_path
+								};
+								connection.send(JSON.stringify({'diffs': [diffToSend]}));	
+							});
 						}
 						if (resp.type === 'sync') {
 							if (resp.status === 200) { 

@@ -1,7 +1,11 @@
+import * as fs from 'fs';
 import * as yaml from 'js-yaml';
-
+import * as path from 'path';
 import { IDiff } from "../interface";
-import { DIFF_SIZE_LIMIT, REQUIRED_DIFF_KEYS, REQUIRED_DIR_RENAME_DIFF_KEYS, REQUIRED_FILE_RENAME_DIFF_KEYS } from "../constants";
+import { CONFIG_PATH, DIFF_SIZE_LIMIT, REQUIRED_DIFF_KEYS, 
+	REQUIRED_DIR_RENAME_DIFF_KEYS, REQUIRED_FILE_RENAME_DIFF_KEYS,
+	SHADOW_REPO
+ } from "../constants";
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -29,4 +33,17 @@ export const isValidDiff = (diffData: IDiff) => {
 		}
 	}
 	return true;
+};
+
+export const handleFilesRename = (configJSON: any, repoPath: string, branch: string, 
+	relPath: string, oldFileId: number, oldRelPath: string) => {
+	
+	const oldShadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${oldRelPath}`);
+	const newShadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+	if (fs.existsSync(oldShadowPath)) { 
+		fs.renameSync(oldShadowPath, newShadowPath);
+	}
+	configJSON.repos[repoPath].branches[branch][relPath] = oldFileId;
+	// write file id to config.yml
+	fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
 };
