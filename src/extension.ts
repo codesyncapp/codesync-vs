@@ -1,11 +1,10 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as yaml from 'js-yaml';
 
-import { CONFIG_PATH} from "./constants";
-import { handleChangeEvent, handleFilesCreated, handleFilesDeleted, handleFilesRenamed } from "./utils";
+import { handleChangeEvent, handleFilesCreated, handleFilesDeleted, handleFilesRenamed } from "./event_handler";
+import { handleBuffer } from "./buffer_handler";
+import { initCodeSync } from "./utils/common";
 
 export function activate(context: vscode.ExtensionContext) {
 	// Get the active text editor
@@ -15,6 +14,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	if (!repoPath || !repoName || !editor) { return; }
 	
+	initCodeSync();
+
 	console.log(`Configured repo: ${repoPath}`);
 
 	vscode.workspace.onDidChangeTextDocument(changeEvent => {
@@ -33,5 +34,6 @@ export function activate(context: vscode.ExtensionContext) {
 		handleFilesRenamed(changeEvent);
 	});
 
+	handleBuffer();
 	// context.subscriptions.push(disposable);
 }
