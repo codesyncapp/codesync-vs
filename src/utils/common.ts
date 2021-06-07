@@ -3,7 +3,8 @@ import * as yaml from 'js-yaml';
 import fetch from "node-fetch";
 
 import { CODESYNC_ROOT, SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO, 
-	DELETED_REPO, API_HEALTHCHECK } from "../constants";
+	DELETED_REPO, API_HEALTHCHECK, CONNECTION_ERROR_MESSAGE } from "../constants";
+import { putLogEvent } from '../logger';
 
 
 export const readYML = (filePath: string) => {
@@ -29,6 +30,9 @@ export const checkServerDown = async () => {
 	const response = await fetch(API_HEALTHCHECK)
 	.then(res => res.json())
     .then(json => json)
-	.catch(err => isDown = true);
+	.catch(err => {
+		isDown = true;
+		putLogEvent(CONNECTION_ERROR_MESSAGE);
+	});
 	return isDown || !response.status;
 };

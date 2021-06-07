@@ -25,11 +25,7 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	// If you only care about changes to the active editor's text,
 	//  just check to see if changeEvent.document matches the active editor's document.
 	const editor = vscode.window.activeTextEditor;
-	if (!editor) {
-		console.log("Outside IDE");
-		return;
-	}
-	if (editor.document !== changeEvent.document) {
+	if (!editor || editor.document !== changeEvent.document) {
 		console.log("Skipping InActive Editor's document");
 		return;
 	}

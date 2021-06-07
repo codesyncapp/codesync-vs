@@ -55,7 +55,6 @@ export const uploadFileToServer = async (access_token: string, repoId: number, b
 		created_at: created_at,
 	};
 	const json = await uploadFile(access_token, data);
-	console.log('response: ', json.response);
 	if (fileInfo.size && json.response.url) {
 		await uploadFileTos3(filePath, json.response.presignedUrl);
 	}

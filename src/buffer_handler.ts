@@ -6,7 +6,7 @@ import { readYML, checkServerDown } from './utils/common';
 import { handleFilesRename, isValidDiff, handleNewFileUpload, isDirDeleted, getDIffForDeletedFile } from './utils/buffer_utils';
 import { IFileToDiff, IRepoDiffs } from './interface';
 import { RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, 
-	CONFIG_PATH, WEBSOCKET_ENDPOINT} from "./constants";
+	CONFIG_PATH, WEBSOCKET_ENDPOINT, INVALID_TOKEN_MESSAGE} from "./constants";
 
 
 const recallDaemon = () => {
@@ -96,8 +96,8 @@ export async function handleBuffer() {
 			}
 			const configRepo = configJSON.repos[diffData.repo_path];
 			if (!(diffData.branch in configRepo.branches)) {
-				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`, 
-				configRepo.email);
+				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`, configRepo.email);
+				// TODO: Need to call init() here for branch sync silently
 			}
 
 			// Group diffs by repo_path
@@ -120,15 +120,15 @@ export async function handleBuffer() {
 		WebSocketClient.connect(WEBSOCKET_ENDPOINT);
 
 		WebSocketClient.on('connectFailed', function(error) {
-			console.log('Connect Error: ' + error.toString());
+			putLogEvent('Socket Connect Error: ' + error.toString());
 		});
 		
 		WebSocketClient.on('connect', function(connection) {
 			connection.on('error', function(error) {
-				console.log("Connection Error: " + error.toString());
+				putLogEvent("Socket Connection Error: " + error.toString());
 			});
 			connection.on('close', function() {
-				console.log('echo-protocol Connection Closed');
+				putLogEvent('echo-protocol Connection Closed');
 			});
 		
 			// Iterate repoDiffs and send to server
@@ -144,7 +144,7 @@ export async function handleBuffer() {
 						const resp = JSON.parse(message.utf8Data || "{}");
 						if (resp.type === 'auth') {
 							if (resp.status !== 200) { 
-								console.log("Auth Failed");
+								putLogEvent(INVALID_TOKEN_MESSAGE);
 								return; 
 							}
 							repoDiff.file_to_diff.forEach((fileToDiff) => {
@@ -184,21 +184,21 @@ export async function handleBuffer() {
 								}
 
 								if (!isBinary && !isDeleted && !diffData.diff) {
-									putLogEvent(`Empty diff found in file: ${fileToDiff.file_path}`);
+									putLogEvent(`Empty diff found in file: ${fileToDiff.file_path}`, configRepo.email);
 									fs.unlinkSync(fileToDiff.file_path);
 								}
 
 								const fileId = configFiles[relPath];
 
 								if (!fileId && !isDeleted && !diffData.is_rename) {
-									putLogEvent("File ID not found");
+									putLogEvent("File ID not found", configRepo.email);
 									return;
 								}
 
 								if (!fileId && isDeleted) {
 									// It can be a directory delete
 									if (!isDirDeleted(diffData.repo_path, diffData.branch, relPath)) {
-										putLogEvent(`is_deleted non-synced file found: ${diffData.repo_path}/${relPath}`);
+										putLogEvent(`is_deleted non-synced file found: ${diffData.repo_path}/${relPath}`, configRepo.email);
 									}
 									fs.unlinkSync(fileToDiff.file_path);
 									return;
@@ -232,8 +232,8 @@ export async function handleBuffer() {
 			});
 		});
 		
-	} catch {
-		console.log("Daemon failed");
+	} catch (e) {
+		putLogEvent(`"Daemon failed": ${e}`);
 	}
 
 	recallDaemon();
