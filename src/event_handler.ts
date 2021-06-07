@@ -143,13 +143,20 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 			return;
 		}
 		if (!lstat.isFile()) { return; }
+
 		console.log(`FileDeleted: ${itemPath}`);
+		
 		// Cache path
 		const destDeleted = path.join(DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
-		const destDeletedBasePath = path.join(DELETED_REPO, `${repoPath}/${branch}`);
+		const destDeletedPathSplit = destDeleted.split("/");
+		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join("/");
+
 		if (fs.existsSync(destDeleted)) { return; }
 		// Add file in .deleted repo
-		fs.mkdirSync(destDeletedBasePath, { recursive: true });
+		if (!fs.existsSync(destDeletedBasePath)) {
+			// Create directories
+			fs.mkdirSync(destDeletedBasePath, { recursive: true });
+		}
 		// File destination will be created or overwritten by default.
 		fs.copyFileSync(shadowPath, destDeleted);
 		manageDiff(repoPath, branch, relPath, "", false, false, true);
