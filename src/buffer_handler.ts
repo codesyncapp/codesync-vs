@@ -3,7 +3,7 @@ import { client } from "websocket";
 
 import { putLogEvent } from './logger';
 import { readYML, checkServerDown } from './utils/common';
-import { handleFilesRename, isValidDiff, handleNewFileUpload, isDirDeleted, getDIffForDeletedFile } from './utils/buffer_utils';
+import { handleFilesRename, isValidDiff, handleNewFileUpload, isDirDeleted, getDIffForDeletedFile, cleanUpDeleteDiff } from './utils/buffer_utils';
 import { IFileToDiff, IRepoDiffs } from './interface';
 import { RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, 
 	CONFIG_PATH, WEBSOCKET_ENDPOINT, INVALID_TOKEN_MESSAGE} from "./constants";
@@ -200,6 +200,7 @@ export async function handleBuffer() {
 									if (!isDirDeleted(diffData.repo_path, diffData.branch, relPath)) {
 										putLogEvent(`is_deleted non-synced file found: ${diffData.repo_path}/${relPath}`, configRepo.email);
 									}
+									cleanUpDeleteDiff(diffData.repo_path, diffData.branch, relPath, configJSON);
 									fs.unlinkSync(fileToDiff.file_path);
 									return;
 								}

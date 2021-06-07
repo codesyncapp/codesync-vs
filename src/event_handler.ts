@@ -6,7 +6,7 @@ import * as getBranchName from 'current-git-branch';
 
 import { SHADOW_REPO, ORIGINALS_REPO, DEFAULT_BRANCH, 
 	DELETED_REPO } from "./constants";
-import { handleDirectoryRenameDiffs, manageDiff } from './utils/diff_utils';
+import { handleDirectoryDeleteDiffs, handleDirectoryRenameDiffs, manageDiff } from './utils/diff_utils';
 import { shouldSkipEvent, shouldIgnoreFile } from './utils/event_utils';
 
 
@@ -121,21 +121,35 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
 
-	changeEvent.files.forEach((file) => {
-		const filePath = file.path;
-		const relPath = filePath.split(`${repoPath}/`)[1];
+	changeEvent.files.forEach((item) => {
+		const itemPath = item.path;
+		const relPath = itemPath.split(`${repoPath}/`)[1];
+
 		// Skip .git/ and syncignore files
 		if (shouldIgnoreFile(repoPath, relPath)) { return; }
-		console.log(`FileDeleted: ${filePath}`);
+
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+
+		// Shadow path
+		const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+
+		const lstat = fs.lstatSync(shadowPath);
+		
+		if (!fs.existsSync(shadowPath)) { return; }
+
+		if (lstat.isDirectory()) {
+			console.log(`DirectoryDeleted: ${itemPath}`);
+			handleDirectoryDeleteDiffs(repoPath, branch, relPath);
+			return;
+		}
+		if (!lstat.isFile()) { return; }
+		console.log(`FileDeleted: ${itemPath}`);
 		// Cache path
 		const destDeleted = path.join(DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
 		const destDeletedBasePath = path.join(DELETED_REPO, `${repoPath}/${branch}`);
 		if (fs.existsSync(destDeleted)) { return; }
-		// Add file in originals repo
+		// Add file in .deleted repo
 		fs.mkdirSync(destDeletedBasePath, { recursive: true });
-		// Shadow path
-		const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
 		// File destination will be created or overwritten by default.
 		fs.copyFileSync(shadowPath, destDeleted);
 		manageDiff(repoPath, branch, relPath, "", false, false, true);

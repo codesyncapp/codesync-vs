@@ -1,11 +1,14 @@
 import * as fs from 'fs';
 import * as walk from 'walk';
 import * as yaml from 'js-yaml';
+import * as path from 'path';
 import * as dateFormat from "dateformat";
 import { IDiff } from "../interface";
 import {
 	DIFFS_REPO, DIFF_SOURCE,
-	DATETIME_FORMAT
+	DATETIME_FORMAT,
+	SHADOW_REPO,
+	DELETED_REPO
 } from "../constants";
 
 
@@ -58,6 +61,30 @@ export const handleDirectoryRenameDiffs = async (repoPath: string, branch: strin
 			'new_abs_path': newFilePath
 		});
 		manageDiff(repoPath, branch, newRelPath, diff, false, true);
+		next();
+	});
+};
+
+export const handleDirectoryDeleteDiffs = async (repoPath: string, branch: string, relPath: string) => {
+	const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+
+	const walker = walk.walk(shadowPath);
+	walker.on("file", function (root, fileStats, next) {
+		const filePath = `${root}/${fileStats.name}`;
+		const relPath = filePath.split(`${repoPath}/${branch}/`)[1];
+		const destDeleted = path.join(DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
+		const destDeletedPathSplit = destDeleted.split("/");
+		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join("/");
+
+		if (fs.existsSync(destDeleted)) { return; }
+		// Create directories
+		if (!fs.existsSync(destDeletedBasePath)) {
+			// Add file in .deleted repo
+			fs.mkdirSync(destDeletedBasePath, { recursive: true });
+		}
+		// File destination will be created or overwritten by default.
+		fs.copyFileSync(filePath, destDeleted);
+		manageDiff(repoPath, branch, relPath, "", false, false, true);
 		next();
 	});
 };
