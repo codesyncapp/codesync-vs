@@ -8,6 +8,7 @@ import { CONFIG_PATH, DIFF_SIZE_LIMIT, REQUIRED_DIFF_KEYS,
 import { uploadFileToServer } from './upload_file';
 import { isBinaryFileSync } from 'isbinaryfile';
 import { diff_match_patch } from 'diff-match-patch';
+import { putLogEvent } from '../logger';
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -46,7 +47,10 @@ export const handleNewFileUpload = async (access_token: string, diffData: IDiff,
 	const originalsPath = path.join(ORIGINALS_REPO, `${diffData.repo_path}/${diffData.branch}/${relPath}`);
 	if (!fs.existsSync(originalsPath)) { return; }
 	const response = await uploadFileToServer(access_token, repoId, diffData.branch, originalsPath, relPath, diffData.created_at);
-	if (response.error) { return; }
+	if (response.error) { 
+		putLogEvent(`Error uploading to server: ${response.error}`);
+		return;
+	}
 	configJSON.repos[diffData.repo_path].branches[diffData.branch][relPath] = response.fileId;
 	// write file id to config.yml
 	fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));

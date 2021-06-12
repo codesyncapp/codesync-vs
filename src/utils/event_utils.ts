@@ -6,6 +6,7 @@ import { GIT_REPO, CONFIG_PATH } from "../constants";
 function isGitFile(path: string) {
 	return path.startsWith(GIT_REPO);
 }
+
 export function shouldIgnoreFile(repoPath: string, relPath: string) {
 	// Always ignore .git/
 	if (isGitFile(relPath)) { return true; }
@@ -19,6 +20,7 @@ export function shouldIgnoreFile(repoPath: string, relPath: string) {
 	if (shouldIgnore) { console.log(`Skipping syncignored file: ${relPath}`); }
 	return shouldIgnore;
 }
+
 export function shouldSkipEvent(repoPath: string) {
 	// TODO: Show some alert to user
 	// If config.yml does not exists, return

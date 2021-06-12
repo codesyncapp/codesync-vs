@@ -94,7 +94,9 @@ export async function handleBuffer() {
 				putLogEvent(`Repo ${diffData.repo_path} is in buffer.yml but not in config.yml`);
 				return;
 			}
+
 			const configRepo = configJSON.repos[diffData.repo_path];
+
 			if (!(diffData.branch in configRepo.branches)) {
 				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`, configRepo.email);
 				// TODO: Need to call init() here for branch sync silently
@@ -191,7 +193,7 @@ export async function handleBuffer() {
 								const fileId = configFiles[relPath];
 
 								if (!fileId && !isDeleted && !diffData.is_rename) {
-									putLogEvent("File ID not found", configRepo.email);
+									putLogEvent(`File ID not found for; ${relPath}`, configRepo.email);
 									return;
 								}
 
