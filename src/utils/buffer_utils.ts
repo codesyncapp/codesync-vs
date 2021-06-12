@@ -55,6 +55,7 @@ export const handleNewFileUpload = async (access_token: string, diffData: IDiff,
 	// write file id to config.yml
 	fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
 	fs.unlinkSync(diffFilePath);
+	return configJSON;
 };
 
 export const handleFilesRename = (configJSON: any, repoPath: string, branch: string, 

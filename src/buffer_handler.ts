@@ -71,7 +71,7 @@ export async function handleBuffer() {
 		if (!diffFiles.length) { return recallDaemon(); }
 	
 		// Read config.json
-		const configJSON = readYML(CONFIG_PATH);
+		let configJSON = readYML(CONFIG_PATH);
 		if (!configJSON) { return; }
 
 		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
@@ -160,7 +160,7 @@ export async function handleBuffer() {
 									if (!newFiles.includes(relPath)) {
 										newFiles.push(relPath);
 									}
-									handleNewFileUpload(accessToken, diffData, relPath, configRepo.id, configJSON, fileToDiff.file_path);
+									configJSON = handleNewFileUpload(accessToken, diffData, relPath, configRepo.id, configJSON, fileToDiff.file_path);
 									return;
 								}
 
