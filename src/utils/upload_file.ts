@@ -26,17 +26,28 @@ export const uploadFile = async (token: string, data: any) => {
 };
 
 export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
-	let error = '';
-	if (!fs.existsSync(filePath)) { return; }
-	const content = fs.readFileSync(filePath);
-	const response = await fetch(presignedUrl.url, {
-			method: 'post',
-			body: content
+	return new Promise((resolve, reject) => {
+		if (!fs.existsSync(filePath)) { 
+			return {
+				error: `file not found on : ${filePath}`
+			};
 		}
-	)
-	.then(res => res.json())
-	.then(json => json)
-	.catch(err => error = err);
+		
+		const content = fs.readFileSync(filePath, "utf8");
+
+		const formData = new FormData();
+		Object.keys(presignedUrl.fields).forEach(key => {
+			formData.append(key, presignedUrl.fields[key]);
+		});
+		// Actual file has to be appended last.
+		formData.append("file", content);
+		const xhr = new XMLHttpRequest();
+		xhr.open("POST", presignedUrl.url, true);
+		xhr.send(formData);
+		xhr.onload = function() {
+			this.status === 204 ? resolve(null) : reject(this.responseText);
+		};
+	});
 };
 
 export const uploadFileToServer = async (access_token: string, repoId: number, branch: string, filePath: string, relPath: string, created_at: string) => {
@@ -55,11 +66,21 @@ export const uploadFileToServer = async (access_token: string, repoId: number, b
 		created_at: created_at,
 	};
 	const json = await uploadFile(access_token, data);
+	if (json.error) {
+		return {
+			error: json.error
+		};
+	}
 	if (fileInfo.size && json.response.url) {
-		await uploadFileTos3(filePath, json.response.presignedUrl);
+		const s3jsonError = await uploadFileTos3(filePath, json.response.url);
+		if (s3jsonError) {
+			return {
+				error: s3jsonError
+			};
+		}
 	}
 	return {
-		error: json.error,
+		error: null,
 		fileId: json.response.id
 	};
 };
