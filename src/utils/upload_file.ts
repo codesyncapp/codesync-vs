@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
 import { API_FILES } from "../constants";
@@ -34,19 +35,16 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 		}
 		
 		const content = fs.readFileSync(filePath, "utf8");
-
 		const formData = new FormData();
 		Object.keys(presignedUrl.fields).forEach(key => {
 			formData.append(key, presignedUrl.fields[key]);
 		});
 		// Actual file has to be appended last.
 		formData.append("file", content);
-		const xhr = new XMLHttpRequest();
-		xhr.open("POST", presignedUrl.url, true);
-		xhr.send(formData);
-		xhr.onload = function() {
-			this.status === 204 ? resolve(null) : reject(this.responseText);
-		};
+		formData.submit(presignedUrl.url, function(err, res) {
+			if (err) reject(err);
+			resolve(null);
+		});
 	});
 };
 

@@ -4,10 +4,9 @@ import * as vscode from 'vscode';
 import { diff_match_patch } from 'diff-match-patch';
 import * as getBranchName from 'current-git-branch';
 
-import { SHADOW_REPO, ORIGINALS_REPO, DEFAULT_BRANCH, 
-	DELETED_REPO } from "./constants";
-import { handleDirectoryDeleteDiffs, handleDirectoryRenameDiffs, manageDiff } from './utils/diff_utils';
-import { shouldSkipEvent, shouldIgnoreFile } from './utils/event_utils';
+import { SHADOW_REPO, DEFAULT_BRANCH, DELETED_REPO } from "./constants";
+import { handleDirectoryDeleteDiffs, manageDiff } from './utils/diff_utils';
+import { shouldSkipEvent, shouldIgnoreFile, handleRename, handleNewFile } from './utils/event_utils';
 
 
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
@@ -77,35 +76,15 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
 
 	changeEvent.files.forEach((file) => {
-		const filePath = file.path;
-		// Skip for directory
-		const lstat = fs.lstatSync(filePath);
-		if (lstat.isDirectory()) { return; }
-		const relPath = filePath.split(`${repoPath}/`)[1];
-		// Skip .git/ and syncignore files
-		if (shouldIgnoreFile(repoPath, relPath)) { return; }
-		console.log(`FileCreated: ${filePath}`);
-		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
-		const destShadow = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
-		const destShadowPathSplit = destShadow.split("/");
-		const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length-1).join("/");
-
-		const destOriginals = path.join(ORIGINALS_REPO, `${repoPath}/${branch}/${relPath}`);
-		const destOriginalsPathSplit = destOriginals.split("/");
-		const destOriginalsBasePath = destOriginalsPathSplit.slice(0, destOriginalsPathSplit.length-1).join("/");
-
-		if (fs.existsSync(destShadow) || fs.existsSync(destOriginals)) { return; }
-		// Add file in shadow repo
-		fs.mkdirSync(destShadowBasePath, { recursive: true });
-		// File destination will be created or overwritten by default.
-		fs.copyFileSync(filePath, destShadow);  
-		// Add file in originals repo
-		fs.mkdirSync(destOriginalsBasePath, { recursive: true });
-		// File destination will be created or overwritten by default.
-		fs.copyFileSync(filePath, destOriginals);
-		// Add new diff in the buffer
-		manageDiff(repoPath, branch, relPath, "", true);
+		handleNewFile(repoPath, file.path);
 	});
+}
+
+export function handlePastedFile(filePath: string) {
+	const repoName = vscode.workspace.name;
+	const repoPath = vscode.workspace.rootPath;
+	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
+	handleNewFile(repoPath, filePath);
 }
 
 export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
@@ -200,24 +179,3 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 	});
 }
 
-function handleRename(repoPath: string, branch: string, oldAbsPath: string, newAbsPath: string, isFile: boolean) {
-	const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
-	const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
-	const oldShadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${oldRelPath}`);
-	const newShadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${newRelPath}`);
-
-	// rename file in shadow repo
-	fs.renameSync(oldShadowPath, newShadowPath);
-	
-	if (!isFile) {
-		console.log(`DirectoryRenamed: ${oldAbsPath} -> ${newAbsPath}`);
-		const diff = JSON.stringify({ old_path: oldAbsPath, new_path: newAbsPath });
-		handleDirectoryRenameDiffs(repoPath, branch, diff);
-		return;
-	}
-
-	console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
-	// Create diff
-	const diff = JSON.stringify({ old_abs_path: oldAbsPath, new_abs_path: newAbsPath, old_rel_path: oldRelPath, new_rel_path: newRelPath});
-	manageDiff(repoPath, branch, newRelPath, diff, false, true);
-}
