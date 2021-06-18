@@ -12,13 +12,11 @@ import { repoIsNotSynced, shouldIgnoreFile, handleRename, handleNewFile } from '
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
-	if (!changeEvent.contentChanges.length) { return; }
 	const filePath = changeEvent.document.fileName;
 	const relPath = filePath.split(`${repoPath}/`)[1];
-
 	// Skip .git/ and syncignore files
-	if (shouldIgnoreFile(repoPath, relPath)) { return; }
+	if (!repoPath || !repoName || repoIsNotSynced(repoPath) || shouldIgnoreFile(repoPath, relPath)) { return; }
+	if (!changeEvent.contentChanges.length) { return; }
 
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	// If you only care about changes to the active editor's text,
@@ -114,10 +112,10 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 
 		// Shadow path
 		const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
-
-		const lstat = fs.lstatSync(shadowPath);
 		
 		if (!fs.existsSync(shadowPath)) { return; }
+
+		const lstat = fs.lstatSync(shadowPath);
 
 		if (lstat.isDirectory()) {
 			console.log(`DirectoryDeleted: ${itemPath}`);
