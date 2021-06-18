@@ -6,13 +6,13 @@ import * as getBranchName from 'current-git-branch';
 
 import { SHADOW_REPO, DEFAULT_BRANCH, DELETED_REPO } from "./constants";
 import { handleDirectoryDeleteDiffs, manageDiff } from './utils/diff_utils';
-import { shouldSkipEvent, shouldIgnoreFile, handleRename, handleNewFile } from './utils/event_utils';
+import { repoIsNotSynced, shouldIgnoreFile, handleRename, handleNewFile } from './utils/event_utils';
 
 
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
+	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
 	if (!changeEvent.contentChanges.length) { return; }
 	const filePath = changeEvent.document.fileName;
 	const relPath = filePath.split(`${repoPath}/`)[1];
@@ -73,7 +73,7 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 	*/
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
+	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
 
 	changeEvent.files.forEach((file) => {
 		handleNewFile(repoPath, file.path);
@@ -83,7 +83,7 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 export function handlePastedFile(filePath: string) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
+	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
 	handleNewFile(repoPath, filePath);
 }
 
@@ -101,7 +101,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 	*/
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
+	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
 
 	changeEvent.files.forEach((item) => {
 		const itemPath = item.path;
@@ -167,7 +167,7 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
 	
-	if (!repoPath || !repoName || shouldSkipEvent(repoPath)) { return; }
+	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
 	changeEvent.files.forEach((event) => {
 		const oldAbsPath = event.oldUri.path;
 		const newAbsPath = event.newUri.path;

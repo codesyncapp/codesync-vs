@@ -15,20 +15,21 @@ export const GIT_REPO = '.git/';
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
-// export const CODESYNC_DOMAIN = '127.0.0.1:8000';
-// export const CODESYNC_HOST = 'http://127.0.0.1:8000';
-export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
-export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
+export const CODESYNC_DOMAIN = '127.0.0.1:8000';
+export const CODESYNC_HOST = 'http://127.0.0.1:8000';
+// export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
+// export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
 export const API_ENDPOINT = `${CODESYNC_HOST}/v1`;
 export const API_FILES = `${API_ENDPOINT}/files`;
+export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v1/websocket`;
 
+// Diff utils
 export const DIFF_FILES_PER_ITERATION = 50;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
 export const REQUIRED_FILE_RENAME_DIFF_KEYS = ['old_abs_path', 'new_abs_path', 'old_rel_path', 'new_rel_path'];
 export const REQUIRED_DIR_RENAME_DIFF_KEYS = ['old_path', 'new_path'];
-
 export const DIFF_SIZE_LIMIT = 16 * 1000 * 1000;
 
 // AWS constants
@@ -38,3 +39,18 @@ export const CLIENT_LOGS_GROUP_NAME = 'client-logs';
 // Error msgs
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
 export const INVALID_TOKEN_MESSAGE = 'Error => Auth token provided is invalid';
+
+// Auth0 
+export const Auth0URLs = {
+	AUTHORIZE: "https://codesyncapp.us.auth0.com/authorize?response_type=code&client_id=FKx1oF94M0OuoDW0YDyAx6tlelUvR3wm&redirect_uri=http://localhost:8080&scope=openid%20profile%20email&state=STATE",
+	GET_TOKEN: "https://codesyncapp.us.auth0.com/oauth/token"
+};
+
+// Notification Buttons
+export const NOTIFICATION_CONSTANTS = {
+	JOIN: "Join",
+	WELCOME_MSG: "Welcome to CodeSync!",
+	CONNECT_REPO: "Connect your repo with CodeSync",
+	CONNECT: "Connect",
+	IGNORE: 'Ignore'
+};
