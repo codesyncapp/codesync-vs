@@ -62,7 +62,7 @@ export async function createUser(response: any) {
 		.then(json => json)
 		.catch(err => error = err);
 
-	if (error || 'error' in response) {
+	if (error || 'error' in userResponse) {
 		vscode.window.showErrorMessage("Sign up to CodeSync failed");
 		return;
 	}
