@@ -34,7 +34,7 @@ export const initExpressServer = (port: number) => {
 	// define a route handler for the default home page
 	expressApp.get( "/", async (req: any, res: any) => {
 		await handleRedirect(req, port);
-		res.send( "Successfully Logged in. Check your IDE" );
+		res.send("Successfully Logged in. Check your IDE");
 	});
 	
 	// start the Express server
@@ -72,7 +72,6 @@ export const authorizeUser = async (req: any, port: number) => {
 	const authorizationCode = req.query.code;
 	const data = new URLSearchParams();
 	data.append('grant_type', 'authorization_code');
-	// TODO: Move to config.json
 	data.append('client_id', Auth0URLs.CLIENT_KEY);
 	data.append('client_secret', Auth0URLs.CLIENT_SECRET);
 	data.append('code', authorizationCode);
