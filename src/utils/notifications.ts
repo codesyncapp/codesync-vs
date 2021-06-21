@@ -1,15 +1,16 @@
 import * as vscode from 'vscode';
-import { Auth0URLs, NOTIFICATION_CONSTANTS } from '../constants';
+import { NOTIFICATION_CONSTANTS } from '../constants';
+import { createAuthorizeUrl } from './login_utils';
 
 
-export function showSignUpButtons() { 
+export function showSignUpButtons(port: number) { 
 	vscode.window.showInformationMessage(
 		NOTIFICATION_CONSTANTS.WELCOME_MSG, ...[
 		NOTIFICATION_CONSTANTS.JOIN, 
 		NOTIFICATION_CONSTANTS.IGNORE
 	]).then(async selection => {
 		if (selection === NOTIFICATION_CONSTANTS.JOIN) {
-			vscode.env.openExternal(vscode.Uri.parse(Auth0URLs.AUTHORIZE));
+			vscode.env.openExternal(vscode.Uri.parse(createAuthorizeUrl(port)));
 		}
 	});
 }

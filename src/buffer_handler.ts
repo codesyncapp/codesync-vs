@@ -141,7 +141,7 @@ export async function handleBuffer() {
 				
 				// authenticate via websocket
 				connection.send(accessToken);
-				connection.on('message', function(message) {
+				connection.on('message', async function(message) {
 					if (message.type === 'utf8') {
 						const resp = JSON.parse(message.utf8Data || "{}");
 						if (resp.type === 'auth') {
@@ -149,7 +149,8 @@ export async function handleBuffer() {
 								putLogEvent(INVALID_TOKEN_MESSAGE);
 								return; 
 							}
-							repoDiff.file_to_diff.forEach((fileToDiff) => {
+
+							for (const fileToDiff of repoDiff.file_to_diff) {
 								const diffData = fileToDiff.diff;
 								const configFiles = configRepo['branches'][diffData.branch];
 								const relPath = diffData.file_relative_path;
@@ -160,17 +161,20 @@ export async function handleBuffer() {
 									if (!newFiles.includes(relPath)) {
 										newFiles.push(relPath);
 									}
-									configJSON = handleNewFileUpload(accessToken, diffData, relPath, configRepo.id, configJSON, fileToDiff.file_path);
-									return;
+									const json = await handleNewFileUpload(accessToken, diffData, relPath, configRepo.id, configJSON, fileToDiff.file_path);
+									if (json.uploaded) {
+										configJSON = json.config;
+									}
+									continue;
 								}
 
 								// Skip the changes diffs if relevant file was uploaded in the same iteration, wait for next iteration
-								if (newFiles.includes(relPath)) { return; }
+								if (newFiles.includes(relPath)) { continue; }
 
 								if (diffData.is_rename) {
 									const oldRelPath = JSON.parse(diffData.diff).old_rel_path;
 									// If old_rel_path uploaded in the same iteration, wait for next iteration
-									if (newFiles.includes(oldRelPath)) { return; }
+									if (newFiles.includes(oldRelPath)) { continue; }
 									// Remove old file ID from config
 									const oldFileId = configFiles[oldRelPath];
 									delete configFiles[oldRelPath];
@@ -179,7 +183,7 @@ export async function handleBuffer() {
 										putLogEvent(`old_file: ${oldRelPath} was not 
 										synced for rename of ${repoDiff.path}/${relPath}`, configRepo.email);
 										fs.unlinkSync(fileToDiff.file_path);
-										return;
+										continue;
 									}
 									handleFilesRename(configJSON, diffData.repo_path, diffData.branch, 
 										relPath, oldFileId, oldRelPath);
@@ -194,7 +198,7 @@ export async function handleBuffer() {
 
 								if (!fileId && !isDeleted && !diffData.is_rename) {
 									putLogEvent(`File ID not found for; ${relPath}`, configRepo.email);
-									return;
+									continue;
 								}
 
 								if (!fileId && isDeleted) {
@@ -204,7 +208,7 @@ export async function handleBuffer() {
 									}
 									cleanUpDeleteDiff(diffData.repo_path, diffData.branch, relPath, configJSON);
 									fs.unlinkSync(fileToDiff.file_path);
-									return;
+									continue;
 								}
 
 								if (isDeleted) {
@@ -223,7 +227,7 @@ export async function handleBuffer() {
 									'diff_file_path': fileToDiff.file_path
 								};
 								connection.send(JSON.stringify({'diffs': [diffToSend]}));	
-							});
+							}
 						}
 						if (resp.type === 'sync') {
 							if (resp.status === 200) { 

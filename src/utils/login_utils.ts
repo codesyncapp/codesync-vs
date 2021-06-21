@@ -1,31 +1,80 @@
+'use strict';
+
 import * as fs from "fs";
 import * as vscode from 'vscode';
 import * as yaml from 'js-yaml';
+import * as express from "express";
+import * as detectPort from "detect-port";
+import * as querystring from 'querystring';
+
 import fetch from "node-fetch";
 import jwt_decode from "jwt-decode";
 
-import { API_USERS, Auth0URLs, USER_PATH } from "../constants";
 import { readYML } from './common';
 import { IAuth0User } from '../interface';
+import { API_USERS, Auth0URLs, USER_PATH } from "../constants";
 
 
-export async function handleRedirect(req: any, redirectUri: string) {
-	const json = await authorizeUser(req, redirectUri);
-	if (json.error) {
-		return;
-	}
+export const isPortAvailable = async (port: number) => {
+	return detectPort(port)
+		.then(_port => {
+			return port === _port;
+		})
+		.catch(err => {
+			console.log(err);
+			return false;
+		});
+};
+
+
+export const initExpressServer = (port: number) => {
+	// Create an express server
+	const expressApp = express();
+
+	// define a route handler for the default home page
+	expressApp.get( "/", async (req: any, res: any) => {
+		await handleRedirect(req, port);
+		res.send( "Successfully Logged in. Check your IDE" );
+	});
+	
+	// start the Express server
+	expressApp.listen(port, () => {
+		console.log(`server started at ${ createRedirectUri(port)}` );
+	});
+};
+
+export async function handleRedirect(req: any, port: number) {
+	const json = await authorizeUser(req, port);
+	if (json.error) { return; }
 	// create user
 	await createUser(json.response);
 }
 
-export async function authorizeUser(req: any, redirectUri: string) {
+export function createRedirectUri(port: number) {
+	return `${Auth0URLs.REDIRECT_URI}:${port}`;
+}
+
+export const createAuthorizeUrl = (port: number) => {
+	// response_type=code&client_id=clientId&redirect_uri=http://localhost:8080&scope=openid%20profile%20email
+	const params = {
+		response_type: "code",
+		client_id: Auth0URLs.CLIENT_KEY,
+		redirect_uri: createRedirectUri(port),
+		scope: "openid profile email"
+	};
+	const queryParams = querystring.stringify(params);
+	return `${Auth0URLs.AUTHORIZE}?${queryParams}`;
+};
+
+export const authorizeUser = async (req: any, port: number) => {
 	let error = '';
+	const redirectUri = createRedirectUri(port);
 	const authorizationCode = req.query.code;
 	const data = new URLSearchParams();
 	data.append('grant_type', 'authorization_code');
 	// TODO: Move to config.json
-	data.append('client_id', 'FKx1oF94M0OuoDW0YDyAx6tlelUvR3wm');
-	data.append('client_secret', 'CdaU65M2wJ7G_HJo3eL_NNA-3IOuAbx0llsW46gGoE7FzTIwnqpGsM57tM2AfoMQ');
+	data.append('client_id', Auth0URLs.CLIENT_KEY);
+	data.append('client_secret', Auth0URLs.CLIENT_SECRET);
 	data.append('code', authorizationCode);
 	data.append('redirect_uri', redirectUri);
 	const response = await fetch(Auth0URLs.GET_TOKEN, {
@@ -42,12 +91,12 @@ export async function authorizeUser(req: any, redirectUri: string) {
 		response, 
 		error
 	};
-}
+};
 
-export async function createUser(response: any) {
+export const createUser = async (response: any) => {
 	let error = "";
-	const accessToken = response.access_token;
 	let user = <IAuth0User>{};
+	const accessToken = response.access_token;
 	user = jwt_decode(response.id_token);
 	const userResponse = await fetch(API_USERS, {
 				method: 'POST',
@@ -76,4 +125,4 @@ export async function createUser(response: any) {
 	}
 	fs.writeFileSync(USER_PATH, yaml.safeDump(users));
 	vscode.window.showInformationMessage("Successfully logged in to CodeSync");
-}
+};

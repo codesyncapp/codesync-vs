@@ -1,4 +1,7 @@
+"use strict";
+
 import untildify =  require('untildify');
+import * as authConfig from "./config.json";
 
 export const CODESYNC_ROOT = untildify('~/.codesync');
 export const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs/.vscode`;
@@ -42,8 +45,13 @@ export const INVALID_TOKEN_MESSAGE = 'Error => Auth token provided is invalid';
 
 // Auth0 
 export const Auth0URLs = {
-	AUTHORIZE: "https://codesyncapp.us.auth0.com/authorize?response_type=code&client_id=FKx1oF94M0OuoDW0YDyAx6tlelUvR3wm&redirect_uri=http://localhost:8080&scope=openid%20profile%20email&state=STATE",
-	GET_TOKEN: "https://codesyncapp.us.auth0.com/oauth/token"
+	AUTHORIZE: "https://codesyncapp.us.auth0.com/authorize",
+	GET_TOKEN: "https://codesyncapp.us.auth0.com/oauth/token",
+	CLIENT_KEY: authConfig.clientKey,
+	CLIENT_SECRET: authConfig.clientSecret,
+	REDIRECT_URI: "http://localhost",
+	// TODO: Define valid ports after defining in auth0 portal
+	PORTS: [8000, 3000, 44201]
 };
 
 // Notification Buttons
