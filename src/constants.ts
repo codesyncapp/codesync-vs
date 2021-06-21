@@ -18,10 +18,10 @@ export const GIT_REPO = '.git/';
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
-export const CODESYNC_DOMAIN = '127.0.0.1:8000';
-export const CODESYNC_HOST = 'http://127.0.0.1:8000';
-// export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
-// export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
+// export const CODESYNC_DOMAIN = '127.0.0.1:8000';
+// export const CODESYNC_HOST = 'http://127.0.0.1:8000';
+export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
+export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
 export const API_ENDPOINT = `${CODESYNC_HOST}/v1`;
 export const API_FILES = `${API_ENDPOINT}/files`;
 export const API_USERS =  `${API_ENDPOINT}/users`;
