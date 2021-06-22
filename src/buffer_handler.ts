@@ -188,6 +188,7 @@ export async function handleBuffer() {
 								if (!isBinary && !isDeleted && !diffData.diff) {
 									putLogEvent(`Empty diff found in file: ${fileToDiff.file_path}`, configRepo.email);
 									fs.unlinkSync(fileToDiff.file_path);
+									return;
 								}
 
 								const fileId = configFiles[relPath];
