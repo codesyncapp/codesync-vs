@@ -231,7 +231,7 @@ export async function handleBuffer() {
 							}
 						}
 						if (resp.type === 'sync') {
-							if (resp.status === 200) { 
+							if (resp.status === 200 && fs.existsSync(resp.diff_file_path)) { 
 								fs.unlinkSync(resp.diff_file_path);
 							}
 						}
