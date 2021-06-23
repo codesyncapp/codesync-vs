@@ -21,3 +21,7 @@ export interface IFileToDiff {
 	file_path: string;
 	diff: IDiff;
 }
+
+export interface IAuth0User {
+	email: string;
+}

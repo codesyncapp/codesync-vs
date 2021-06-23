@@ -6,7 +6,8 @@ import { handleChangeEvent, handleFilesCreated, handleFilesDeleted, handleFilesR
 import { handleBuffer } from "./buffer_handler";
 import { initCodeSync } from "./utils/common";
 
-export function activate(context: vscode.ExtensionContext) {
+
+export async function activate(context: vscode.ExtensionContext) {
 	// Get the active text editor
 	const editor = vscode.window.activeTextEditor;
 	const repoName = vscode.workspace.name;
@@ -14,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	if (!repoPath || !repoName || !editor) { return; }
 	
-	initCodeSync();
+	await initCodeSync(repoPath);
 
 	console.log(`Configured repo: ${repoPath}`);
 

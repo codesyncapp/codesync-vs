@@ -45,17 +45,29 @@ export const handleNewFileUpload = async (access_token: string, diffData: IDiff,
 	Ignore if file is not present in .originals repo 
 	*/
 	const originalsPath = path.join(ORIGINALS_REPO, `${diffData.repo_path}/${diffData.branch}/${relPath}`);
-	if (!fs.existsSync(originalsPath)) { return; }
+	if (!fs.existsSync(originalsPath)) {
+		fs.unlinkSync(diffFilePath);
+		return {
+			uploaded: false, 
+			config: configJSON
+		};
+	}
 	const response = await uploadFileToServer(access_token, repoId, diffData.branch, originalsPath, relPath, diffData.created_at);
 	if (response.error) { 
 		putLogEvent(`Error uploading to server: ${response.error}`);
-		return;
+		return {
+			uploaded: false, 
+			config: configJSON
+		};
 	}
 	configJSON.repos[diffData.repo_path].branches[diffData.branch][relPath] = response.fileId;
 	// write file id to config.yml
 	fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
 	fs.unlinkSync(diffFilePath);
-	return configJSON;
+	return {
+		uploaded: true, 
+		config: configJSON
+	};
 };
 
 export const handleFilesRename = (configJSON: any, repoPath: string, branch: string, 

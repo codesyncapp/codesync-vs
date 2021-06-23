@@ -1,10 +1,10 @@
 import * as fs from 'fs';
-import * as yaml from 'js-yaml';
 import * as path from "path";
 import ignore from 'ignore';
 import * as getBranchName from 'current-git-branch';
 import { GIT_REPO, CONFIG_PATH, SHADOW_REPO, DEFAULT_BRANCH, ORIGINALS_REPO } from "../constants";
 import { handleDirectoryRenameDiffs, manageDiff } from './diff_utils';
+import { readYML } from './common';
 
 function isGitFile(path: string) {
 	return path.startsWith(GIT_REPO);
@@ -24,14 +24,14 @@ export function shouldIgnoreFile(repoPath: string, relPath: string) {
 	return shouldIgnore;
 }
 
-export function shouldSkipEvent(repoPath: string) {
+export function repoIsNotSynced(repoPath: string) {
 	// TODO: Show some alert to user
 	// If config.yml does not exists, return
 	const configExists = fs.existsSync(CONFIG_PATH);
 	if (!configExists) { return true; }
 	// Return if user hasn't synced the repo
 	try {
-		const config = yaml.load(fs.readFileSync(CONFIG_PATH, "utf8"));
+		const config = readYML(CONFIG_PATH);
 		return !(repoPath in config['repos']);
 	} catch (e) {
 		return true;
