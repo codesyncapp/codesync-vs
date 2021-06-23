@@ -50,8 +50,19 @@ export const Auth0URLs = {
 	CLIENT_KEY: authConfig.clientKey,
 	CLIENT_SECRET: authConfig.clientSecret,
 	REDIRECT_URI: "http://localhost",
-	// TODO: Define valid ports after defining in auth0 portal
-	PORTS: [8000, 3000, 44201]
+	// Pre defined ports
+	PORTS: [
+		49160,
+		49165,
+		49170, 
+		49175, 
+		49180, 
+		50100,
+		50105, 
+		50110, 
+		50115, 
+		50120
+	]
 };
 
 // Notification Buttons

@@ -18,6 +18,7 @@ import {API_USERS, Auth0URLs, USER_PATH} from "../constants";
 export const isPortAvailable = async (port: number) => {
     return detectPort(port)
         .then(_port => {
+            if (port !== _port) { console.log(`${port} not available`); }
             return port === _port;
         })
         .catch(err => {
