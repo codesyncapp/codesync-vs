@@ -1,18 +1,19 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
-import fetch from "node-fetch";
 
 import { CODESYNC_ROOT, SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO, 
-	DELETED_REPO, API_HEALTHCHECK, CONNECTION_ERROR_MESSAGE, USER_PATH, Auth0URLs } from "../constants";
-import { putLogEvent } from '../logger';
-import { repoIsNotSynced } from './event_utils';
+	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH } from "../constants";
 import { initExpressServer, isPortAvailable } from './login_utils';
 import { showConnectRepo, showSignUpButtons } from './notifications';
 
 
+export const readFile = (filePath: string) => {
+	return fs.readFileSync(filePath, "utf8");
+};
+
 export const readYML = (filePath: string) => {
 	try {
-		return yaml.load(fs.readFileSync(filePath, "utf8"));
+		return yaml.load(readFile(filePath));
 	} catch (e) {
 		return;
 	}
@@ -27,7 +28,19 @@ export const initCodeSync = async (repoPath: string) => {
 			fs.mkdirSync(path, { recursive: true });
 		}
 	});
+
+	// Create config.yml if does not exist
+	const configExists = fs.existsSync(CONFIG_PATH);
+	if (!configExists) { 
+		fs.writeFileSync(CONFIG_PATH, yaml.safeDump({repos: {}}));
+	}
 	
+	// Create sequence_token.yml if does not exist
+	const sequenceTokenExists = fs.existsSync(SEQUENCE_TOKEN_PATH);
+	if (!sequenceTokenExists) { 
+		fs.writeFileSync(SEQUENCE_TOKEN_PATH, yaml.safeDump({}));
+	}
+		
 	let port = 0;
 	for (const _port of Auth0URLs.PORTS) {
 		const isAvailable = await isPortAvailable(_port);
@@ -40,7 +53,7 @@ export const initCodeSync = async (repoPath: string) => {
 	initExpressServer(port);
 	
 	if (!fs.existsSync(USER_PATH)) {
-		showSignUpButtons(port);
+		await showSignUpButtons(port);
 	}
 
 	// Check if access token is present against users
@@ -54,24 +67,11 @@ export const initCodeSync = async (repoPath: string) => {
 	});
 
 	if (validUsers.length === 0) {
-		showSignUpButtons(port);
+		await showSignUpButtons(port);
 	}
 
 	// If repo is synced, do not go for Login
-	if (!repoIsNotSynced(repoPath)) { return; }
+	// if (!repoIsNotSynced(repoPath)) { return; }
 	// Show notification to user to Sync the repo
-	showConnectRepo();
-};
-
-
-export const checkServerDown = async () => {
-	let isDown = false;
-	const response = await fetch(API_HEALTHCHECK)
-	.then(res => res.json())
-    .then(json => json)
-	.catch(err => {
-		isDown = true;
-		putLogEvent(CONNECTION_ERROR_MESSAGE);
-	});
-	return isDown || !response.status;
+	showConnectRepo(repoPath);
 };

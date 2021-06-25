@@ -3,7 +3,7 @@
 import untildify =  require('untildify');
 import * as authConfig from "./config.json";
 
-export const CODESYNC_ROOT = untildify('~/.codesync');
+export const CODESYNC_ROOT = untildify('~/.codesync-local');
 export const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs/.vscode`;
 export const ORIGINALS_REPO = `${CODESYNC_ROOT}/.originals`;
 export const SHADOW_REPO = `${CODESYNC_ROOT}/.shadow`;
@@ -12,22 +12,36 @@ export const CONFIG_PATH = `${CODESYNC_ROOT}/config.yml`;
 export const USER_PATH = `${CODESYNC_ROOT}/user.yml`;
 export const SEQUENCE_TOKEN_PATH = `${CODESYNC_ROOT}/sequence_token.yml`;
 
+export const SYNCIGNORE = ".syncignore";
+export const GITIGNORE = ".gitignore";
+
+
 export const DIFF_SOURCE = 'vs-code';
 export const DEFAULT_BRANCH = 'default';
 export const GIT_REPO = '.git/';
+
+// TODO: Use standard .gitignore
+export const IGNOREABLE_REPOS = [
+	".git",
+	"node_modules",
+	".DS_Store",
+	".idea",
+];
+
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
-// export const CODESYNC_DOMAIN = '127.0.0.1:8000';
-// export const CODESYNC_HOST = 'http://127.0.0.1:8000';
-export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
-export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
+export const CODESYNC_DOMAIN = '127.0.0.1:8000';
+export const CODESYNC_HOST = 'http://127.0.0.1:8000';
+// export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
+// export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
 export const API_ENDPOINT = `${CODESYNC_HOST}/v1`;
 export const API_FILES = `${API_ENDPOINT}/files`;
 export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v1/websocket`;
 
+export const PLANS_URL = `${CODESYNC_HOST}/plans`;
 // Diff utils
 export const DIFF_FILES_PER_ITERATION = 50;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
@@ -71,5 +85,10 @@ export const NOTIFICATION_CONSTANTS = {
 	WELCOME_MSG: "Welcome to CodeSync!",
 	CONNECT_REPO: "Connect your repo with CodeSync",
 	CONNECT: "Connect",
-	IGNORE: 'Ignore'
+	IGNORE: 'Ignore',
+	CHOOSE_ACCOUNT: "Choose account to sync your repo",
+	USE_DIFFERENT_ACCOUNT: "Use differnet account",
+	PUBLIC_OR_PRIVATE: "Do you want to make the repo public?",
+	YES: "Yes",
+	NO: "No"
 };
