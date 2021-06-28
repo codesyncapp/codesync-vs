@@ -37,6 +37,7 @@ export const CODESYNC_HOST = 'http://127.0.0.1:8000';
 // export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
 export const API_ENDPOINT = `${CODESYNC_HOST}/v1`;
 export const API_FILES = `${API_ENDPOINT}/files`;
+export const API_INIT =  `${API_ENDPOINT}/init`;
 export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v1/websocket`;
@@ -56,6 +57,7 @@ export const CLIENT_LOGS_GROUP_NAME = 'client-logs';
 // Error msgs
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
 export const INVALID_TOKEN_MESSAGE = 'Error => Auth token provided is invalid';
+export const ERROR_SYNCING_REPO = "Error syncing repo/branch.";
 
 // Auth0 
 export const Auth0URLs = {

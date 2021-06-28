@@ -4,14 +4,14 @@ import { API_HEALTHCHECK, API_USERS, CONNECTION_ERROR_MESSAGE } from "../constan
 import { putLogEvent } from "../logger";
 
 
-export const checkServerDown = async () => {
+export const checkServerDown = async (userEmail?: string) => {
 	let isDown = false;
 	const response = await fetch(API_HEALTHCHECK)
 	.then(res => res.json())
     .then(json => json)
 	.catch(err => {
 		isDown = true;
-		putLogEvent(CONNECTION_ERROR_MESSAGE);
+		putLogEvent(CONNECTION_ERROR_MESSAGE, userEmail);
 	});
 	return isDown || !response.status;
 };

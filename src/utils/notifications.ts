@@ -57,6 +57,6 @@ export const showChooseAccount = (repoPath: string, accounts: any[]) => {
 		const index = accounts.findIndex(user => user.email === selection);
 		const user = accounts[index];
 		// We have token, repoPath Trigger Init
-		await syncRepo(repoPath, user.access_token);
+		await syncRepo(repoPath, user.access_token, user.email);
 	});
 };

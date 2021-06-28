@@ -9,7 +9,7 @@ import { readFile, readYML } from "./utils/common";
 import { checkServerDown, getUserForToken } from "./utils/api_utils";
 import { initUtils } from './utils/init_utils';
 
-export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=false, isSyncingBranch=false) => {
+export const syncRepo = async (repoPath: string, accessToken: string, email: string, viaDaemon=false, isSyncingBranch=false) => {
 	/* Syncs a repo with CodeSync */
 	if (!viaDaemon) {
 		const isServerDown = await checkServerDown();
@@ -27,6 +27,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 		} else {
 			// Show error msg that token is invalid
 			vscode.window.showErrorMessage(INVALID_TOKEN_MESSAGE);
+			// TODO: Trigger sign up process
 		}
 		return;	
 	}
@@ -106,6 +107,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 		// copy files to .shadow repo
 		initUtils.copyFilesTo(repoPath, itemPaths, shadowRepoBranchPath);
 	}
-	console.log("Copied files");
 
+	// Upload repo/branch
+	await initUtils.uploadRepo(repoPath, branch, accessToken, isPublic, itemPaths, email, viaDaemon);
 };
