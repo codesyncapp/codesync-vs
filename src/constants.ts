@@ -3,7 +3,7 @@
 import untildify =  require('untildify');
 import * as authConfig from "./config.json";
 
-export const CODESYNC_ROOT = untildify('~/.codesync-local');
+export const CODESYNC_ROOT = untildify('~/.codesync');
 export const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs/.vscode`;
 export const ORIGINALS_REPO = `${CODESYNC_ROOT}/.originals`;
 export const SHADOW_REPO = `${CODESYNC_ROOT}/.shadow`;
@@ -31,10 +31,10 @@ export const IGNOREABLE_REPOS = [
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
-export const CODESYNC_DOMAIN = '127.0.0.1:8000';
-export const CODESYNC_HOST = 'http://127.0.0.1:8000';
-// export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
-// export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
+// export const CODESYNC_DOMAIN = '127.0.0.1:8000';
+// export const CODESYNC_HOST = 'http://127.0.0.1:8000';
+export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
+export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
 export const API_ENDPOINT = `${CODESYNC_HOST}/v1`;
 export const API_FILES = `${API_ENDPOINT}/files`;
 export const API_INIT =  `${API_ENDPOINT}/init`;
@@ -98,5 +98,7 @@ export const NOTIFICATION_CONSTANTS = {
 	UPDATE_SYNCIGNORE: "Add files in .syncignore you don't wnat to sync",
 	CONTINUE: "Continue",
 	CANCEL: "Cancel",
-	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later"
+	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later",
+	REPOS_LIMIT_BREACHED: `Repo size exceeds the limit. Allowed repo size is`,
+	FILES_LIMIT_BREACHED: `FIles count exceeds the limit.`
 };

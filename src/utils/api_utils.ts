@@ -19,13 +19,13 @@ export const checkServerDown = async (userEmail?: string) => {
 
 export const getUserForToken = async (accessToken: string) => {
 	let isTokenValid = false;
-	const response = await fetch(API_USERS, {
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Basic ${accessToken}`
-			},
-		}
-	)
+	const response = await fetch(
+		API_USERS, {
+		headers: {
+			'Content-Type': 'application/json',
+			'Authorization': `Basic ${accessToken}`
+		},
+	})
 	.then(res => res.json())
 	.then(json => json)
 	.catch(err => {

@@ -24,7 +24,7 @@ export class initUtils {
 	static isValidRepoSize (syncSize: number, userPlan: any)  {
 		const isValid = userPlan.SIZE >= syncSize;
 		if (!isValid) {
-			console.log(`Repo size exceeds limit. Allowed repo size is ${userPlan.SIZE}`);
+			vscode.window.showErrorMessage(`${NOTIFICATION_CONSTANTS.REPOS_LIMIT_BREACHED} ${userPlan.SIZE}`);
 		}
 		return isValid;	
 	}
@@ -32,11 +32,12 @@ export class initUtils {
 	static isValidFilesCount (filesCount: number, userPlan: any) {
 		const isValid = userPlan.FILE_COUNT >= filesCount;
 		if (!isValid) {
-			console.log(`You can add only ${userPlan.FILE_COUNT} files (Trying to add ${filesCount} files)`);
+			vscode.window.showErrorMessage(`${NOTIFICATION_CONSTANTS.FILES_LIMIT_BREACHED}\n
+			You can add only ${userPlan.FILE_COUNT} files (Trying to add ${filesCount} files)`);
 		}
 		return isValid;
 	}
-		
+
 	static getSyncablePaths (repoPath: string, userPlan: any) {
 		const syncignorePath = path.join(repoPath, SYNCIGNORE);
 		const syncignoreExists = fs.existsSync(syncignorePath);

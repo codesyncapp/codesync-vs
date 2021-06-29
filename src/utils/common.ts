@@ -3,6 +3,7 @@ import * as yaml from 'js-yaml';
 
 import { CODESYNC_ROOT, SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO, 
 	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH } from "../constants";
+import { repoIsNotSynced } from './event_utils';
 import { initExpressServer, isPortAvailable } from './login_utils';
 import { showConnectRepo, showSignUpButtons } from './notifications';
 
@@ -71,7 +72,7 @@ export const initCodeSync = async (repoPath: string) => {
 	}
 
 	// If repo is synced, do not go for Login
-	// if (!repoIsNotSynced(repoPath)) { return; }
+	if (!repoIsNotSynced(repoPath)) { return; }
 	// Show notification to user to Sync the repo
 	showConnectRepo(repoPath);
 };

@@ -44,10 +44,10 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
     const isRepoSynced = repoPath in configJSON['repos'];
 	const isBranchSynced = isRepoSynced && branch in configJSON.repos[repoPath].branches;
 	
-	// if (isRepoSynced && isBranchSynced) {
-	// 	vscode.window.showWarningMessage(`Repo is already in sync with branch: ${branch}`);
-	// 	return;
-	// }
+	if (isRepoSynced && isBranchSynced) {
+		vscode.window.showWarningMessage(`Repo is already in sync with branch: ${branch}`);
+		return;
+	}
 
 	if (!isRepoSynced && user.repo_count >= user.plan.REPO_COUNT) {
 		vscode.window.showErrorMessage(`Upgrade your plan: ${PLANS_URL}`);
