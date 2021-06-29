@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as getBranchName from 'current-git-branch';
 
-import { CONFIG_PATH, DEFAULT_BRANCH, INVALID_TOKEN_MESSAGE, NOTIFICATION_CONSTANTS, 
+import { CONFIG_PATH, DEFAULT_BRANCH, GITIGNORE, INVALID_TOKEN_MESSAGE, NOTIFICATION_CONSTANTS, 
 	ORIGINALS_REPO, PLANS_URL, SHADOW_REPO, SYNCIGNORE } from "./constants";
 import { readFile, readYML } from "./utils/common";
 import { checkServerDown, getUserForToken } from "./utils/api_utils";
@@ -15,7 +15,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 	if (!viaDaemon) {
 		const isServerDown = await checkServerDown();
 		if (isServerDown) { 
-			// TODO: Show server is down, try again a moment later
+			vscode.window.showErrorMessage("Service is unavailable. Please try again in a moment.");
 			return; 
 		}
 	}
@@ -32,34 +32,27 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 		}
 		return;	
 	}
-	const user = json.response;
-	// Check if config.yml exists
-	const configExists = fs.existsSync(CONFIG_PATH);
-	if (!configExists) { 
-		// TODO: Show some error here OR create config.yml maybe?
-		return;
-	}
 
-	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+	const user = json.response;
 
 	let isPublic = false;
-
+	let shouldExit = false;
+	const splittedPath = repoPath.split('/');
+	const repoName = splittedPath[splittedPath.length-1];
+	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	const configJSON = readYML(CONFIG_PATH);
     const isRepoSynced = repoPath in configJSON['repos'];
 	const isBranchSynced = isRepoSynced && branch in configJSON.repos[repoPath].branches;
 	
-	if (isRepoSynced && isBranchSynced) {
-		vscode.window.showErrorMessage(`Repo is already in sync with branch: ${branch}`);
-		return;
-	}
+	// if (isRepoSynced && isBranchSynced) {
+	// 	vscode.window.showWarningMessage(`Repo is already in sync with branch: ${branch}`);
+	// 	return;
+	// }
 
 	if (!isRepoSynced && user.repo_count >= user.plan.REPO_COUNT) {
 		vscode.window.showErrorMessage(`Upgrade your plan: ${PLANS_URL}`);
 		return;
 	}
-	
-
-	const continueWithoutAsking = viaDaemon || isRepoSynced;
 
 	const syncignorePath = path.join(repoPath, SYNCIGNORE);
 	const syncignoreExists = fs.existsSync(syncignorePath);
@@ -68,32 +61,54 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 	if (syncignoreExists) {
 		syncignoreData = readFile(syncignorePath);
 	} else {
-		fs.writeFileSync(syncignorePath, "");
+		fs.writeFileSync(syncignorePath, "");	
 	}
 
-	// TODO: Deal with syncignore later
-	// const gitignorePath = path.join(repoPath, GITIGNORE);
-	// const gitignoreExists  = fs.existsSync(gitignorePath);
-	// if (!syncignoreExists || (syncignoreExists && !syncignoreData) && gitignoreExists) {
-	// 	// Ask if .gitignore should be used as .syncignore
-	// 	vscode.window.showInformationMessage(`Do you want to use ${GITIGNORE} as ${SYNCIGNORE}?`, ...[
-	// 		NOTIFICATION_CONSTANTS.YES,
-	// 		NOTIFICATION_CONSTANTS.NO
-	// 	]).then(async selection => {
-	// 		if (selection  === NOTIFICATION_CONSTANTS.YES) {
-	// 			fs.copyFileSync(gitignorePath, syncignorePath);
-	// 		}
-	// 	});
-	// }
+	const gitignorePath = path.join(repoPath, GITIGNORE);
+	const gitignoreExists  = fs.existsSync(gitignorePath);
+	if (!syncignoreExists || (syncignoreExists && !syncignoreData) && gitignoreExists && !viaDaemon) {
+		fs.copyFileSync(gitignorePath, syncignorePath);
+		// Notify the user that .syncignore was created from .syncignore
+		vscode.window.showInformationMessage(`${SYNCIGNORE} was created from ${GITIGNORE}`);
+	}
+
+	// Open .syncignore and ask for user input for Continue/Cancel
+	if (!viaDaemon) {
+		// Opening .syncignore
+		const setting: vscode.Uri = vscode.Uri.parse("file:" + `${repoPath}/${SYNCIGNORE}`);
+		await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
+			await vscode.window.showTextDocument(a, 1, false).then(async e => {
+				const selectedValue = await vscode.window.showInformationMessage(
+					NOTIFICATION_CONSTANTS.UPDATE_SYNCIGNORE, ...[
+					NOTIFICATION_CONSTANTS.CONTINUE, 
+					NOTIFICATION_CONSTANTS.CANCEL
+				]).then(selection => selection);
+			
+				shouldExit = !selectedValue || selectedValue !== NOTIFICATION_CONSTANTS.CONTINUE;
+				if (shouldExit) {
+					vscode.window.showWarningMessage("Init process was cancelled");
+					return;
+				}
+			});
+		});
+	}
+
+	if (shouldExit) { return; }
+	
+	if (!viaDaemon && isRepoSynced) {
+		vscode.window.showInformationMessage(`Branch: ${branch} is being synced for the repo: ${repoName}`);
+	}
 
 	// Only ask for public/private in case of Repo Sync. Do not ask for Branch Sync.
-	if (!isRepoSynced) {
-		const buttonSelected = await vscode.window.showInformationMessage(NOTIFICATION_CONSTANTS.PUBLIC_OR_PRIVATE, ...[
+	if (!viaDaemon && !isRepoSynced) {
+		const buttonSelected = await vscode.window.showInformationMessage(
+			NOTIFICATION_CONSTANTS.PUBLIC_OR_PRIVATE, ...[
 			NOTIFICATION_CONSTANTS.YES, 
 			NOTIFICATION_CONSTANTS.NO
 		]).then(selection => selection);
 	
 		if (buttonSelected == undefined) {
+			vscode.window.showWarningMessage("Init process was cancelled");
 			return;
 		}
 		isPublic = buttonSelected === NOTIFICATION_CONSTANTS.YES;
@@ -115,5 +130,5 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 	}
 
 	// Upload repo/branch
-	await initUtils.uploadRepo(repoPath, branch, accessToken, isPublic, itemPaths, email, isRepoSynced, viaDaemon);
+	await initUtils.uploadRepo(repoPath, repoName, branch,  accessToken, isPublic, itemPaths, email, isRepoSynced, viaDaemon);
 };

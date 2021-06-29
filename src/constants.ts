@@ -95,4 +95,8 @@ export const NOTIFICATION_CONSTANTS = {
 	NO: "No",
 	REPO_SYNCED: "Successfully synced the repo",
 	BRANCH_SYNCED: "Successfully synced the branch",
+	UPDATE_SYNCIGNORE: "Add files in .syncignore you don't wnat to sync",
+	CONTINUE: "Continue",
+	CANCEL: "Cancel",
+	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later"
 };

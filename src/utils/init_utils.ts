@@ -206,7 +206,7 @@ export class initUtils {
 		});
 
 	}
-	static async uploadRepo(repoPath: string, branch: string, token: string, isPublic: boolean, itemPaths: IFileToUpload[],
+	static async uploadRepo(repoPath: string, repoName: string, branch: string, token: string, isPublic: boolean, itemPaths: IFileToUpload[],
 		userEmail: string, isRepoSynced=false, viaDaemon=false) {
 		const configJSON = readYML(CONFIG_PATH);
 		const repoInConfig = repoPath in configJSON.repos;
@@ -235,9 +235,6 @@ export class initUtils {
 
 		console.log(`Uploading new branch: ${branch} for repo: ${repoPath}`);
 
-		const splittedPath = repoPath.split('/');
-		const repoName = splittedPath[splittedPath.length-1];
-
 		const data = {
 			name: repoName,
 			is_public: isPublic,
@@ -248,7 +245,7 @@ export class initUtils {
 		if (json.error || json.response.error) {
 			putLogEvent(`${ERROR_SYNCING_REPO}. Reason: ${json.error || json.response.error}`);
 			if (!viaDaemon) {
-				// TODO: Show some error notification to user
+				vscode.window.showErrorMessage(NOTIFICATION_CONSTANTS.SYNC_FAILED);
 			}
 			return;
 		}
