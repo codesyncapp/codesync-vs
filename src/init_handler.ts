@@ -15,7 +15,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 	if (!viaDaemon) {
 		const isServerDown = await checkServerDown();
 		if (isServerDown) { 
-			vscode.window.showErrorMessage("Service is unavailable. Please try again in a moment.");
+			vscode.window.showErrorMessage(NOTIFICATION_CONSTANTS.SERVICE_NOT_AVAILABLE);
 			return; 
 		}
 	}

@@ -100,5 +100,6 @@ export const NOTIFICATION_CONSTANTS = {
 	CANCEL: "Cancel",
 	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later",
 	REPOS_LIMIT_BREACHED: `Repo size exceeds the limit. Allowed repo size is`,
-	FILES_LIMIT_BREACHED: `FIles count exceeds the limit.`
+	FILES_LIMIT_BREACHED: `FIles count exceeds the limit.`,
+	SERVICE_NOT_AVAILABLE: "Service is unavailable. Please try again in a moment."
 };
