@@ -9,6 +9,7 @@ import { readFile, readYML } from "./utils/common";
 import { checkServerDown, getUserForToken } from "./utils/api_utils";
 import { initUtils } from './utils/init_utils';
 
+
 export const syncRepo = async (repoPath: string, accessToken: string, email: string, viaDaemon=false, isSyncingBranch=false) => {
 	/* Syncs a repo with CodeSync */
 	if (!viaDaemon) {
@@ -41,13 +42,16 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 
+	let isPublic = false;
+
 	const configJSON = readYML(CONFIG_PATH);
     const isRepoSynced = repoPath in configJSON['repos'];
+	const isBranchSynced = isRepoSynced && branch in configJSON.repos[repoPath].branches;
 	
-	// if (isRepoSynced && branch in configJSON.repos[repoPath].branches) {
-	// 	vscode.window.showErrorMessage(`Repo is already in sync with branch: ${branch}`);
-	// 	return;
-	// }
+	if (isRepoSynced && isBranchSynced) {
+		vscode.window.showErrorMessage(`Repo is already in sync with branch: ${branch}`);
+		return;
+	}
 
 	if (!isRepoSynced && user.repo_count >= user.plan.REPO_COUNT) {
 		vscode.window.showErrorMessage(`Upgrade your plan: ${PLANS_URL}`);
@@ -82,17 +86,19 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 	// 	});
 	// }
 
-	const buttonSelected = await vscode.window.showInformationMessage(NOTIFICATION_CONSTANTS.PUBLIC_OR_PRIVATE, ...[
-		NOTIFICATION_CONSTANTS.YES, 
-		NOTIFICATION_CONSTANTS.NO
-	]).then(selection => selection);
-
-	if (buttonSelected == undefined) {
-		return;
+	// Only ask for public/private in case of Repo Sync. Do not ask for Branch Sync.
+	if (!isRepoSynced) {
+		const buttonSelected = await vscode.window.showInformationMessage(NOTIFICATION_CONSTANTS.PUBLIC_OR_PRIVATE, ...[
+			NOTIFICATION_CONSTANTS.YES, 
+			NOTIFICATION_CONSTANTS.NO
+		]).then(selection => selection);
+	
+		if (buttonSelected == undefined) {
+			return;
+		}
+		isPublic = buttonSelected === NOTIFICATION_CONSTANTS.YES;
 	}
 
-	const isPublic = buttonSelected === NOTIFICATION_CONSTANTS.YES;
-	
 	// get item paths to upload and copy in respective repos
 	const itemPaths = initUtils.getSyncablePaths(repoPath, user.plan);
 
@@ -109,5 +115,5 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 	}
 
 	// Upload repo/branch
-	await initUtils.uploadRepo(repoPath, branch, accessToken, isPublic, itemPaths, email, viaDaemon);
+	await initUtils.uploadRepo(repoPath, branch, accessToken, isPublic, itemPaths, email, isRepoSynced, viaDaemon);
 };

@@ -1,13 +1,15 @@
 import * as fs from 'fs';
-import * as yaml from 'js-yaml';
 import * as path from 'path';
 import * as walk from 'walk';
+import * as yaml from 'js-yaml';
+import * as vscode from 'vscode';
+import * as parallel from "run-parallel";
 
 import ignore from 'ignore';
 import fetch from "node-fetch";
 import { isBinaryFileSync } from 'isbinaryfile';
 
-import { API_INIT, CONFIG_PATH, ERROR_SYNCING_REPO, IGNOREABLE_REPOS, ORIGINALS_REPO, 
+import { API_INIT, CONFIG_PATH, ERROR_SYNCING_REPO, IGNOREABLE_REPOS, NOTIFICATION_CONSTANTS, ORIGINALS_REPO, 
 	SEQUENCE_TOKEN_PATH, 
 	SYNCIGNORE, 
 	USER_PATH} from '../constants';
@@ -15,6 +17,7 @@ import { IFileToUpload } from '../interface';
 import { readFile, readYML } from './common';
 import { checkServerDown } from './api_utils';
 import { putLogEvent } from '../logger';
+import { uploadFileTos3 } from './upload_file';
 
 export class initUtils {
 
@@ -151,9 +154,60 @@ export class initUtils {
 		}
 	}
 
-	static async uploadRepo(repoPath: string, branch: string, token: string, isPublic: boolean, itemPaths: IFileToUpload[],
-		userEmail: string, viaDaemon=false) {
+	static async uploadRepoToS3(repoPath: string, branch: string, token: string, uploadResponse: any, userEmail: string,
+		isRepoSynced=false, viaDaemon=false) {
+
+		const repoId = uploadResponse.repo_id;
+		const filePathAndId = uploadResponse.file_path_and_id;
+		const s3Urls =  uploadResponse.urls;
+	
+		const tasks: any[] = [];
 		const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(repoPath, branch));
+
+		Object.keys(s3Urls).forEach(relPath => {
+			const presignedUrl = s3Urls[relPath];
+			const absPath = path.join(originalsRepoBranchPath, relPath);
+			if (presignedUrl) {	
+				tasks.push(async function (callback: any) {
+					await uploadFileTos3(absPath, presignedUrl);
+					callback(null, true);
+				});
+			}	
+		});
+
+		parallel(
+			tasks,
+			// optional callback
+			function (err, results) {
+				// the results array will equal ['one','two'] even though
+				// the second function had a shorter timeout.
+				if (err) return;
+				const repoData = <any>{
+					id: repoId,
+					email: userEmail,
+					token
+				};
+				const configJSON = readYML(CONFIG_PATH);
+				Object.keys(repoData).forEach((key) => {
+					configJSON.repos[repoPath][key] = repoData[key];
+				});
+				// Write file IDs
+				configJSON.repos[repoPath].branches[branch] = filePathAndId;
+				fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
+				
+				// delete .originals repo 
+				fs.rmdirSync(originalsRepoBranchPath, { recursive: true });
+				
+				// Show success notifucation
+				if (!viaDaemon) {
+					const successMsg = isRepoSynced ? NOTIFICATION_CONSTANTS.BRANCH_SYNCED : NOTIFICATION_CONSTANTS.REPO_SYNCED;
+					vscode.window.showInformationMessage(successMsg);	
+				}
+		});
+
+	}
+	static async uploadRepo(repoPath: string, branch: string, token: string, isPublic: boolean, itemPaths: IFileToUpload[],
+		userEmail: string, isRepoSynced=false, viaDaemon=false) {
 		const configJSON = readYML(CONFIG_PATH);
 		const repoInConfig = repoPath in configJSON.repos;
 		const branchFiles = <any>{};
@@ -204,12 +258,10 @@ export class initUtils {
 					'repo_id': repo_id,
 					'branch_id': branch_id,
 					'file_path_and_ids': file_path_and_id,
-					'file_urls': <presigned_urls_for_files>
+					'urls': <presigned_urls_for_files>
 				}
 		*/	
 		
-		const repoId = json.response.repo_id;
-		const filePathAndId = json.response.file_path_and_id;
 		const user = json.response.user;
 		
 		// Save IAM credentials
@@ -219,5 +271,6 @@ export class initUtils {
 		initUtils.saveSequenceTokenFile(user.email);
 
 		// Upload to s3
+		await initUtils.uploadRepoToS3(repoPath, branch, token, json.response, user.email, isRepoSynced, viaDaemon);
 	}
 }

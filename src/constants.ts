@@ -92,5 +92,7 @@ export const NOTIFICATION_CONSTANTS = {
 	USE_DIFFERENT_ACCOUNT: "Use differnet account",
 	PUBLIC_OR_PRIVATE: "Do you want to make the repo public?",
 	YES: "Yes",
-	NO: "No"
+	NO: "No",
+	REPO_SYNCED: "Successfully synced the repo",
+	BRANCH_SYNCED: "Successfully synced the branch",
 };
