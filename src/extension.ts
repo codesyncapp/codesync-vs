@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 
 import { handleChangeEvent, handleFilesCreated, handleFilesDeleted, handleFilesRenamed, handlePastedFile } from "./event_handler";
 import { handleBuffer } from "./buffer_handler";
-import { initCodeSync } from "./utils/common";
+import { setupCodeSync } from "./utils/setup_utils";
 
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -15,7 +15,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	if (!repoPath || !repoName || !editor) { return; }
 	
-	await initCodeSync(repoPath);
+	await setupCodeSync(repoPath);
 
 	console.log(`Configured repo: ${repoPath}`);
 
