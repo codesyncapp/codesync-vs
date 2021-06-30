@@ -63,6 +63,7 @@ export const ERROR_SYNCING_REPO = "Error syncing repo/branch.";
 export const Auth0URLs = {
 	AUTHORIZE: "https://codesyncapp.us.auth0.com/authorize",
 	GET_TOKEN: "https://codesyncapp.us.auth0.com/oauth/token",
+	LOGOUT: "https://codesyncapp.us.auth0.com/v2/logout?federated",
 	CLIENT_KEY: authConfig.clientKey,
 	CLIENT_SECRET: authConfig.clientSecret,
 	REDIRECT_URI: "http://localhost",
@@ -82,24 +83,29 @@ export const Auth0URLs = {
 };
 
 // Notification Buttons
-export const NOTIFICATION_CONSTANTS = {
+export const NOTIFICATION = {
 	JOIN: "Join",
-	WELCOME_MSG: "Welcome to CodeSync!",
-	CONNECT_REPO: "Connect your repo with CodeSync",
 	CONNECT: "Connect",
 	IGNORE: 'Ignore',
+	YES: "Yes",
+	NO: "No",
+	CANCEL: "Cancel",
+	CONTINUE: "Continue",
+	WELCOME_MSG: "Welcome to CodeSync!",
+	LOGIN_SUCCESS: "Successfully Logged in. Please check your IDE for further instructions",
+	CONNECT_REPO: "Connect your repo with CodeSync",
+	CONNECT_AFTER_JOIN: "Successfully logged in to CodeSync. Let's connect your repo",
 	CHOOSE_ACCOUNT: "Choose account to sync your repo",
 	USE_DIFFERENT_ACCOUNT: "Use differnet account",
 	PUBLIC_OR_PRIVATE: "Do you want to make the repo public?",
-	YES: "Yes",
-	NO: "No",
 	REPO_SYNCED: "Successfully synced the repo",
 	BRANCH_SYNCED: "Successfully synced the branch",
 	UPDATE_SYNCIGNORE: "Add files in .syncignore you don't wnat to sync",
-	CONTINUE: "Continue",
-	CANCEL: "Cancel",
 	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later",
 	REPOS_LIMIT_BREACHED: `Repo size exceeds the limit. Allowed repo size is`,
 	FILES_LIMIT_BREACHED: `FIles count exceeds the limit.`,
-	SERVICE_NOT_AVAILABLE: "Service is unavailable. Please try again in a moment."
+	SERVICE_NOT_AVAILABLE: "Service is unavailable. Please try again in a moment.",
+	UPGRADE_PLAN: `Upgrade your plan: ${PLANS_URL}`,
+	INIT_CANCELLED: "Init process was cancelled",
+	NO_VALID_ACCOUNT: "No valid account found"
 };

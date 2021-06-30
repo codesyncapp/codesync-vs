@@ -1,29 +1,39 @@
 import * as vscode from 'vscode';
-import { Auth0URLs, NOTIFICATION_CONSTANTS, USER_PATH } from '../constants';
+import { NOTIFICATION, USER_PATH } from '../constants';
 import { syncRepo } from '../init_handler';
 import { readYML } from './common';
-import { createAuthorizeUrl } from './login_utils';
+import { logout, redirectToBrowser } from './login_utils';
 
 
-export const showSignUpButtons = async (port: number) => { 
-	await vscode.window.showInformationMessage(
-		NOTIFICATION_CONSTANTS.WELCOME_MSG, ...[
-		NOTIFICATION_CONSTANTS.JOIN, 
-		NOTIFICATION_CONSTANTS.IGNORE
+export const showSignUpButtons = (port: number) => { 
+	vscode.window.showInformationMessage(
+		NOTIFICATION.WELCOME_MSG, ...[
+		NOTIFICATION.JOIN, 
+		NOTIFICATION.IGNORE
 	]).then(async selection => {
-		if (selection === NOTIFICATION_CONSTANTS.JOIN) {
-			vscode.env.openExternal(vscode.Uri.parse(createAuthorizeUrl(port)));
+		if (selection === NOTIFICATION.JOIN) {
+			redirectToBrowser(port);
 		}
 	});
 };
 
-export const showConnectRepo = (repoPath: string) => { 
-	vscode.window.showInformationMessage(
-		NOTIFICATION_CONSTANTS.CONNECT_REPO, ...[
-		NOTIFICATION_CONSTANTS.CONNECT, 
-		NOTIFICATION_CONSTANTS.IGNORE
+export const showConnectRepo = (repoPath: string, email="", accessToken="", port=0, skipAskConnect=false) => { 
+	if (skipAskConnect && email && accessToken) {
+		syncRepo(repoPath, accessToken, email);
+		return;
+	}
+	const msg = email ? NOTIFICATION.CONNECT_AFTER_JOIN : NOTIFICATION.CONNECT_REPO;
+	vscode.window.showInformationMessage(msg, ...[
+		NOTIFICATION.CONNECT, 
+		NOTIFICATION.IGNORE
 	]).then(async selection => {
-		if (selection === NOTIFICATION_CONSTANTS.CONNECT) {
+		if (selection === NOTIFICATION.CONNECT) {
+
+			if (email && accessToken) {
+				await syncRepo(repoPath, accessToken, email);
+				return;
+			}
+
 			// Check if access token is present against users
 			const users = readYML(USER_PATH);
 			const validUsers: any[] = [];
@@ -35,23 +45,26 @@ export const showConnectRepo = (repoPath: string) => {
 			});
 
 			if (validUsers.length === 0) {
-				vscode.window.showErrorMessage("No valid account found");
+				vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
 				return;
 			}
 
-			showChooseAccount(repoPath, validUsers);
-
+			showChooseAccount(repoPath, validUsers, port);
 		}
 	});
 };
 
 
-export const showChooseAccount = (repoPath: string, accounts: any[]) => {
+export const showChooseAccount = (repoPath: string, accounts: any[], port: number) => {
 	const emails = accounts.map(account => account.email);
+	const options = [...emails, NOTIFICATION.USE_DIFFERENT_ACCOUNT];
 	vscode.window.showInformationMessage(
-		NOTIFICATION_CONSTANTS.CHOOSE_ACCOUNT, ...emails, NOTIFICATION_CONSTANTS.USE_DIFFERENT_ACCOUNT).then(async selection => {
-			if (selection === NOTIFICATION_CONSTANTS.USE_DIFFERENT_ACCOUNT) {
-				// Trigger sign up
+		NOTIFICATION.CHOOSE_ACCOUNT, 
+		...options)
+		.then(async selection => {
+			if (selection === NOTIFICATION.USE_DIFFERENT_ACCOUNT) {
+				await logout(port);
+				redirectToBrowser(port, true);
 				return;
 			}
 		const index = accounts.findIndex(user => user.email === selection);

@@ -9,7 +9,7 @@ import ignore from 'ignore';
 import fetch from "node-fetch";
 import { isBinaryFileSync } from 'isbinaryfile';
 
-import { API_INIT, CONFIG_PATH, ERROR_SYNCING_REPO, IGNOREABLE_REPOS, NOTIFICATION_CONSTANTS, ORIGINALS_REPO, 
+import { API_INIT, CONFIG_PATH, ERROR_SYNCING_REPO, IGNOREABLE_REPOS, NOTIFICATION, ORIGINALS_REPO, 
 	SEQUENCE_TOKEN_PATH, 
 	SYNCIGNORE, 
 	USER_PATH} from '../constants';
@@ -24,7 +24,7 @@ export class initUtils {
 	static isValidRepoSize (syncSize: number, userPlan: any)  {
 		const isValid = userPlan.SIZE >= syncSize;
 		if (!isValid) {
-			vscode.window.showErrorMessage(`${NOTIFICATION_CONSTANTS.REPOS_LIMIT_BREACHED} ${userPlan.SIZE}`);
+			vscode.window.showErrorMessage(`${NOTIFICATION.REPOS_LIMIT_BREACHED} ${userPlan.SIZE}`);
 		}
 		return isValid;	
 	}
@@ -32,7 +32,7 @@ export class initUtils {
 	static isValidFilesCount (filesCount: number, userPlan: any) {
 		const isValid = userPlan.FILE_COUNT >= filesCount;
 		if (!isValid) {
-			vscode.window.showErrorMessage(`${NOTIFICATION_CONSTANTS.FILES_LIMIT_BREACHED}\n
+			vscode.window.showErrorMessage(`${NOTIFICATION.FILES_LIMIT_BREACHED}\n
 			You can add only ${userPlan.FILE_COUNT} files (Trying to add ${filesCount} files)`);
 		}
 		return isValid;
@@ -201,7 +201,7 @@ export class initUtils {
 				
 				// Show success notifucation
 				if (!viaDaemon) {
-					const successMsg = isRepoSynced ? NOTIFICATION_CONSTANTS.BRANCH_SYNCED : NOTIFICATION_CONSTANTS.REPO_SYNCED;
+					const successMsg = isRepoSynced ? NOTIFICATION.BRANCH_SYNCED : NOTIFICATION.REPO_SYNCED;
 					vscode.window.showInformationMessage(successMsg);	
 				}
 		});
@@ -246,7 +246,7 @@ export class initUtils {
 		if (json.error || json.response.error) {
 			putLogEvent(`${ERROR_SYNCING_REPO}. Reason: ${json.error || json.response.error}`);
 			if (!viaDaemon) {
-				vscode.window.showErrorMessage(NOTIFICATION_CONSTANTS.SYNC_FAILED);
+				vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			}
 			return;
 		}

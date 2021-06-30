@@ -52,13 +52,14 @@ export const initCodeSync = async (repoPath: string) => {
 	}
 
 	initExpressServer(port);
-	
-	if (!fs.existsSync(USER_PATH)) {
-		await showSignUpButtons(port);
-	}
 
+	if (!fs.existsSync(USER_PATH)) {
+		showSignUpButtons(port);
+		return;
+	}
+	
 	// Check if access token is present against users
-	const users = readYML(USER_PATH);
+	const users = readYML(USER_PATH) || {};
 	const validUsers: string[] = [];
 	Object.keys(users).forEach(key => {
 		const user = users[key];
@@ -68,11 +69,12 @@ export const initCodeSync = async (repoPath: string) => {
 	});
 
 	if (validUsers.length === 0) {
-		await showSignUpButtons(port);
+		showSignUpButtons(port);
+		return;
 	}
 
 	// If repo is synced, do not go for Login
 	if (!repoIsNotSynced(repoPath)) { return; }
 	// Show notification to user to Sync the repo
-	showConnectRepo(repoPath);
+	showConnectRepo(repoPath, "", "", port);
 };

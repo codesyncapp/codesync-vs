@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as getBranchName from 'current-git-branch';
 
-import { CONFIG_PATH, DEFAULT_BRANCH, GITIGNORE, INVALID_TOKEN_MESSAGE, NOTIFICATION_CONSTANTS, 
+import { CONFIG_PATH, DEFAULT_BRANCH, GITIGNORE, INVALID_TOKEN_MESSAGE, NOTIFICATION, 
 	ORIGINALS_REPO, PLANS_URL, SHADOW_REPO, SYNCIGNORE } from "./constants";
 import { readFile, readYML } from "./utils/common";
 import { checkServerDown, getUserForToken } from "./utils/api_utils";
@@ -15,7 +15,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 	if (!viaDaemon) {
 		const isServerDown = await checkServerDown();
 		if (isServerDown) { 
-			vscode.window.showErrorMessage(NOTIFICATION_CONSTANTS.SERVICE_NOT_AVAILABLE);
+			vscode.window.showErrorMessage(NOTIFICATION.SERVICE_NOT_AVAILABLE);
 			return; 
 		}
 	}
@@ -50,7 +50,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 	}
 
 	if (!isRepoSynced && user.repo_count >= user.plan.REPO_COUNT) {
-		vscode.window.showErrorMessage(`Upgrade your plan: ${PLANS_URL}`);
+		vscode.window.showErrorMessage(NOTIFICATION.UPGRADE_PLAN);
 		return;
 	}
 
@@ -79,14 +79,14 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 		await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
 			await vscode.window.showTextDocument(a, 1, false).then(async e => {
 				const selectedValue = await vscode.window.showInformationMessage(
-					NOTIFICATION_CONSTANTS.UPDATE_SYNCIGNORE, ...[
-					NOTIFICATION_CONSTANTS.CONTINUE, 
-					NOTIFICATION_CONSTANTS.CANCEL
+					NOTIFICATION.UPDATE_SYNCIGNORE, ...[
+					NOTIFICATION.CONTINUE, 
+					NOTIFICATION.CANCEL
 				]).then(selection => selection);
 			
-				shouldExit = !selectedValue || selectedValue !== NOTIFICATION_CONSTANTS.CONTINUE;
+				shouldExit = !selectedValue || selectedValue !== NOTIFICATION.CONTINUE;
 				if (shouldExit) {
-					vscode.window.showWarningMessage("Init process was cancelled");
+					vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
 					return;
 				}
 			});
@@ -102,16 +102,16 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 	// Only ask for public/private in case of Repo Sync. Do not ask for Branch Sync.
 	if (!viaDaemon && !isRepoSynced) {
 		const buttonSelected = await vscode.window.showInformationMessage(
-			NOTIFICATION_CONSTANTS.PUBLIC_OR_PRIVATE, ...[
-			NOTIFICATION_CONSTANTS.YES, 
-			NOTIFICATION_CONSTANTS.NO
+			NOTIFICATION.PUBLIC_OR_PRIVATE, ...[
+			NOTIFICATION.YES, 
+			NOTIFICATION.NO
 		]).then(selection => selection);
 	
 		if (buttonSelected == undefined) {
-			vscode.window.showWarningMessage("Init process was cancelled");
+			vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
 			return;
 		}
-		isPublic = buttonSelected === NOTIFICATION_CONSTANTS.YES;
+		isPublic = buttonSelected === NOTIFICATION.YES;
 	}
 
 	// get item paths to upload and copy in respective repos
