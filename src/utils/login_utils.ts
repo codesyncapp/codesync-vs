@@ -51,8 +51,8 @@ export const initExpressServer = (port: number) => {
 };
 
 export const redirectToBrowser = (port: number, skipAskConnect = false) => {
-    const redirectUri = createAuthorizeUrl(port, skipAskConnect);
-    vscode.env.openExternal(vscode.Uri.parse(redirectUri));
+    const authorizeUrl = createAuthorizeUrl(port, skipAskConnect);
+    vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
 };
 
 export async function handleRedirect(req: any, port: number) {

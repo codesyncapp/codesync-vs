@@ -2,8 +2,7 @@ import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 
 
-
-const readFile = (filePath: string) => {
+export const readFile = (filePath: string) => {
 	return fs.readFileSync(filePath, "utf8");
 };
 

@@ -73,3 +73,21 @@ export const showChooseAccount = (repoPath: string, accounts: any[], port: numbe
 		await syncRepo(repoPath, user.access_token, user.email);
 	});
 };
+
+export const askPublicPrivate = async() => {
+	const buttonSelected = await vscode.window.showInformationMessage(
+		NOTIFICATION.PUBLIC_OR_PRIVATE, ...[
+		NOTIFICATION.YES, 
+		NOTIFICATION.NO
+	]).then(selection => selection);
+	return buttonSelected;
+};
+
+export const askContinue = async () => {
+	return await vscode.window.showInformationMessage(
+		NOTIFICATION.UPDATE_SYNCIGNORE, ...[
+		NOTIFICATION.CONTINUE, 
+		NOTIFICATION.CANCEL
+	])
+	.then(selection => selection);
+};

@@ -4,10 +4,11 @@ import * as vscode from 'vscode';
 import * as getBranchName from 'current-git-branch';
 
 import { CONFIG_PATH, DEFAULT_BRANCH, GITIGNORE, INVALID_TOKEN_MESSAGE, NOTIFICATION, 
-	ORIGINALS_REPO, PLANS_URL, SHADOW_REPO, SYNCIGNORE } from "./constants";
+	ORIGINALS_REPO, SHADOW_REPO, SYNCIGNORE } from "./constants";
 import { readFile, readYML } from "./utils/common";
 import { checkServerDown, getUserForToken } from "./utils/api_utils";
 import { initUtils } from './utils/init_utils';
+import { askContinue, askPublicPrivate } from './utils/notifications';
 
 
 export const syncRepo = async (repoPath: string, accessToken: string, email: string, viaDaemon=false, isSyncingBranch=false) => {
@@ -78,12 +79,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 		const setting: vscode.Uri = vscode.Uri.parse("file:" + `${repoPath}/${SYNCIGNORE}`);
 		await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
 			await vscode.window.showTextDocument(a, 1, false).then(async e => {
-				const selectedValue = await vscode.window.showInformationMessage(
-					NOTIFICATION.UPDATE_SYNCIGNORE, ...[
-					NOTIFICATION.CONTINUE, 
-					NOTIFICATION.CANCEL
-				]).then(selection => selection);
-			
+				const selectedValue = await askContinue();
 				shouldExit = !selectedValue || selectedValue !== NOTIFICATION.CONTINUE;
 				if (shouldExit) {
 					vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
@@ -101,12 +97,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 
 	// Only ask for public/private in case of Repo Sync. Do not ask for Branch Sync.
 	if (!viaDaemon && !isRepoSynced) {
-		const buttonSelected = await vscode.window.showInformationMessage(
-			NOTIFICATION.PUBLIC_OR_PRIVATE, ...[
-			NOTIFICATION.YES, 
-			NOTIFICATION.NO
-		]).then(selection => selection);
-	
+		const buttonSelected = await askPublicPrivate();
 		if (buttonSelected == undefined) {
 			vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
 			return;

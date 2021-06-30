@@ -63,8 +63,9 @@ export const setupCodeSync = async (repoPath: string) => {
 		return;
 	}
 
-	// If repo is synced, do not go for Login
-	if (!repoIsNotSynced(repoPath)) { return; }
-	// Show notification to user to Sync the repo
-	showConnectRepo(repoPath, "", "", port);
+	if (repoIsNotSynced(repoPath)) { 
+		// Show notification to user to Sync the repo
+		showConnectRepo(repoPath, "", "", port);
+		return;
+	}
 };
