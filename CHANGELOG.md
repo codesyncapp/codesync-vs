@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated README
 
+## [2.6.0] - 2021-06-23
 ### Fixed
 - Removing diff file only if it exists
 
