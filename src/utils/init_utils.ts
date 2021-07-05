@@ -3,13 +3,13 @@ import * as path from 'path';
 import * as walk from 'walk';
 import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
-import * as parallel from "run-parallel";
-
 import ignore from 'ignore';
 import fetch from "node-fetch";
+import * as parallel from "run-parallel";
+import * as getBranchName from 'current-git-branch';
 import { isBinaryFileSync } from 'isbinaryfile';
 
-import { API_INIT, CONFIG_PATH, ERROR_SYNCING_REPO, IGNOREABLE_REPOS, NOTIFICATION, ORIGINALS_REPO, 
+import { API_INIT, CONFIG_PATH, DEFAULT_BRANCH, ERROR_SYNCING_REPO, IGNOREABLE_REPOS, NOTIFICATION, ORIGINALS_REPO, 
 	SEQUENCE_TOKEN_PATH, 
 	SYNCIGNORE, 
 	USER_PATH} from '../constants';
@@ -36,6 +36,20 @@ export class initUtils {
 			You can add only ${userPlan.FILE_COUNT} files (Trying to add ${filesCount} files)`);
 		}
 		return isValid;
+	}
+
+	static successfulySynced (repoPath: string) {
+		const config = readYML(CONFIG_PATH);
+		const configRepo = config['repos'][repoPath];
+		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+		const configFiles = configRepo.branches[branch];
+		const invalidFiles = [];
+		Object.keys(configFiles).forEach((relPath) => {
+			if (configFiles[relPath] === null) {
+				invalidFiles.push(relPath);
+			}
+		});
+		return invalidFiles.length === 0;
 	}
 
 	static getSyncablePaths (repoPath: string, userPlan: any) {

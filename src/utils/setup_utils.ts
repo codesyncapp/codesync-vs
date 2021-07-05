@@ -8,6 +8,7 @@ import { repoIsNotSynced } from './event_utils';
 import { initExpressServer, isPortAvailable } from './login_utils';
 import { showConnectRepo, showSignUpButtons } from './notifications';
 import { readYML } from './common';
+import { initUtils } from './init_utils';
 
 
 export const setupCodeSync = async (repoPath: string) => {
@@ -63,7 +64,7 @@ export const setupCodeSync = async (repoPath: string) => {
 		return;
 	}
 
-	if (repoIsNotSynced(repoPath)) { 
+	if (repoIsNotSynced(repoPath) || initUtils.successfulySynced(repoPath)) { 
 		// Show notification to user to Sync the repo
 		showConnectRepo(repoPath, "", "", port);
 		return;
