@@ -82,9 +82,10 @@ export const Auth0URLs = {
 	]
 };
 
-// Notification Buttons
+// Notification Messages
 export const NOTIFICATION = {
 	JOIN: "Join",
+	LOGIN: "Login",
 	CONNECT: "Connect",
 	IGNORE: 'Ignore',
 	YES: "Yes",
@@ -92,7 +93,7 @@ export const NOTIFICATION = {
 	CANCEL: "Cancel",
 	CONTINUE: "Continue",
 	WELCOME_MSG: "Welcome to CodeSync!",
-	LOGIN_SUCCESS: "Successfully Logged in. Please check your IDE for further instructions",
+	LOGIN_SUCCESS: "Successfully Authenticated. Please check your IDE for further instructions",
 	CONNECT_REPO: "Connect your repo with CodeSync",
 	CONNECT_AFTER_JOIN: "Successfully logged in to CodeSync. Let's connect your repo",
 	CHOOSE_ACCOUNT: "Choose account to sync your repo",
@@ -107,5 +108,7 @@ export const NOTIFICATION = {
 	SERVICE_NOT_AVAILABLE: "Service is unavailable. Please try again in a moment.",
 	UPGRADE_PLAN: `Upgrade your plan: ${PLANS_URL}`,
 	INIT_CANCELLED: "Init process was cancelled",
-	NO_VALID_ACCOUNT: "No valid account found"
+	NO_VALID_ACCOUNT: "No valid account found",
+	REPO_IN_SYNC: "Repo is in sync with CodeSync",
+	AUTHENTICATION_FAILED: "Authentication failed. You need to login again"
 };

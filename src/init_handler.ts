@@ -9,9 +9,10 @@ import { readFile, readYML } from "./utils/common";
 import { checkServerDown, getUserForToken } from "./utils/api_utils";
 import { initUtils } from './utils/init_utils';
 import { askContinue, askPublicPrivate } from './utils/notifications';
+import { redirectToBrowser } from './utils/login_utils';
 
 
-export const syncRepo = async (repoPath: string, accessToken: string, email: string, viaDaemon=false, isSyncingBranch=false) => {
+export const syncRepo = async (repoPath: string, accessToken: string, email: string, port=0, viaDaemon=false, isSyncingBranch=false) => {
 	/* Syncs a repo with CodeSync */
 	if (!viaDaemon) {
 		const isServerDown = await checkServerDown();
@@ -27,9 +28,16 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 		if (viaDaemon) {
 			console.log(INVALID_TOKEN_MESSAGE);
 		} else {
-			// Show error msg that token is invalid
-			vscode.window.showErrorMessage(INVALID_TOKEN_MESSAGE);
-			// TODO: Trigger sign up process
+			// Trigger sign up process
+			vscode.window.showWarningMessage(
+				NOTIFICATION.AUTHENTICATION_FAILED, ...[
+				NOTIFICATION.LOGIN, 
+				NOTIFICATION.IGNORE
+			]).then(async selection => {
+				if (selection === NOTIFICATION.LOGIN) {
+					redirectToBrowser(port, true);
+				}
+			});
 		}
 		return;	
 	}

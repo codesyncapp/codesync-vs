@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
+import * as vscode from 'vscode';
 import {
 	CODESYNC_ROOT, SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO,
-	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH
+	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH, NOTIFICATION
 } from "../constants";
 import { repoIsNotSynced } from './event_utils';
 import { initExpressServer, isPortAvailable } from './login_utils';
@@ -64,9 +65,12 @@ export const setupCodeSync = async (repoPath: string) => {
 		return;
 	}
 
-	if (repoIsNotSynced(repoPath) || initUtils.successfulySynced(repoPath)) { 
+	if (repoIsNotSynced(repoPath) || !initUtils.successfulySynced(repoPath)) { 
 		// Show notification to user to Sync the repo
 		showConnectRepo(repoPath, "", "", port);
 		return;
-	}
+	} 
+
+	// Show notification that repo is in sync
+	vscode.window.showInformationMessage(NOTIFICATION.REPO_IN_SYNC);
 };
