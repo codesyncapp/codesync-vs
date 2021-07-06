@@ -19,7 +19,7 @@ export const showSignUpButtons = (port: number) => {
 
 export const showConnectRepo = (repoPath: string, email="", accessToken="", port=0, skipAskConnect=false) => { 
 	if (skipAskConnect && email && accessToken) {
-		syncRepo(repoPath, accessToken, email, port);
+		syncRepo(repoPath, accessToken, port);
 		return;
 	}
 	const msg = email ? NOTIFICATION.CONNECT_AFTER_JOIN : NOTIFICATION.CONNECT_REPO;
@@ -30,7 +30,7 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="", port
 		if (selection === NOTIFICATION.CONNECT) {
 
 			if (email && accessToken) {
-				await syncRepo(repoPath, accessToken, email, port);
+				await syncRepo(repoPath, accessToken, port);
 				return;
 			}
 
@@ -70,7 +70,7 @@ export const showChooseAccount = (repoPath: string, accounts: any[], port: numbe
 		const index = accounts.findIndex(user => user.email === selection);
 		const user = accounts[index];
 		// We have token, repoPath Trigger Init
-		await syncRepo(repoPath, user.access_token, user.email, port);
+		await syncRepo(repoPath, user.access_token, port);
 	});
 };
 

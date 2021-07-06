@@ -12,7 +12,7 @@ import { askContinue, askPublicPrivate } from './utils/notifications';
 import { redirectToBrowser } from './utils/login_utils';
 
 
-export const syncRepo = async (repoPath: string, accessToken: string, email: string, port=0, viaDaemon=false, isSyncingBranch=false) => {
+export const syncRepo = async (repoPath: string, accessToken: string, port=0, viaDaemon=false, isSyncingBranch=false) => {
 	/* Syncs a repo with CodeSync */
 	if (!viaDaemon) {
 		const isServerDown = await checkServerDown();
@@ -129,5 +129,5 @@ export const syncRepo = async (repoPath: string, accessToken: string, email: str
 	}
 
 	// Upload repo/branch
-	await initUtils.uploadRepo(repoPath, repoName, branch,  accessToken, isPublic, itemPaths, email, isRepoSynced, viaDaemon);
+	await initUtils.uploadRepo(repoPath, repoName, branch,  accessToken, isPublic, itemPaths, user.email, isRepoSynced, viaDaemon);
 };
