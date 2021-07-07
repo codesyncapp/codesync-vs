@@ -112,3 +112,9 @@ export const NOTIFICATION = {
 	REPO_IN_SYNC: "Repo is in sync with CodeSync",
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again"
 };
+
+export const COMMAND = {
+	triggerSignUp: 'codesync.singup',
+	triggerSync: 'codesync.sync',
+	triggerUnsync: 'codesync.unsync'
+};

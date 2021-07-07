@@ -12,7 +12,8 @@ import { askContinue, askPublicPrivate } from './utils/notifications';
 import { redirectToBrowser } from './utils/login_utils';
 
 
-export const syncRepo = async (repoPath: string, accessToken: string, port=0, viaDaemon=false, isSyncingBranch=false) => {
+export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=false, isSyncingBranch=false) => {
+	const port = (global as any).port;
 	/* Syncs a repo with CodeSync */
 	if (!viaDaemon) {
 		const isServerDown = await checkServerDown();
@@ -35,7 +36,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, port=0, vi
 				NOTIFICATION.IGNORE
 			]).then(async selection => {
 				if (selection === NOTIFICATION.LOGIN) {
-					redirectToBrowser(port, true);
+					redirectToBrowser(true);
 				}
 			});
 		}
@@ -130,4 +131,6 @@ export const syncRepo = async (repoPath: string, accessToken: string, port=0, vi
 
 	// Upload repo/branch
 	await initUtils.uploadRepo(repoPath, repoName, branch,  accessToken, isPublic, itemPaths, user.email, isRepoSynced, viaDaemon);
+
+	vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
 };

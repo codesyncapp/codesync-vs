@@ -16,7 +16,6 @@ import { API_USERS, Auth0URLs, NOTIFICATION, USER_PATH } from "../constants";
 import { repoIsNotSynced } from "./event_utils";
 import { showConnectRepo } from "./notifications";
 
-
 export const isPortAvailable = async (port: number) => {
     return detectPort(port)
         .then(_port => {
@@ -50,8 +49,8 @@ export const initExpressServer = (port: number) => {
     });
 };
 
-export const redirectToBrowser = (port: number, skipAskConnect = false) => {
-    const authorizeUrl = createAuthorizeUrl(port, skipAskConnect);
+export const redirectToBrowser = (skipAskConnect = false) => {
+    const authorizeUrl = createAuthorizeUrl(skipAskConnect);
     vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
 };
 
@@ -68,7 +67,8 @@ export function createRedirectUri(port: number) {
     return `${Auth0URLs.REDIRECT_URI}:${port}`;
 }
 
-export const createAuthorizeUrl = (port: number, skipAskConnect=false) => {
+export const createAuthorizeUrl = (skipAskConnect=false) => {
+    const port = (global as any).port;
     // response_type=code&client_id=clientId&redirect_uri=http://localhost:8080&scope=openid%20profile%20email
     const params = {
         response_type: "code",
@@ -110,6 +110,7 @@ export const authorizeUser = async (req: any, port: number) => {
 };
 
 export const createUser = async (response: any, skipAskConnect=false) => {
+    const port = (global as any).port;
     let error = "";
     let user = <IAuth0User>{};
     const accessToken = response.access_token;
@@ -144,9 +145,11 @@ export const createUser = async (response: any, skipAskConnect=false) => {
     const repoPath = vscode.workspace.rootPath;
     if (!repoPath) { return; }
 
+    vscode.commands.executeCommand('setContext', 'showLogIn', false);
+
 	if (repoIsNotSynced(repoPath)) { 
         // Show notification to user to Sync the repo
-        showConnectRepo(repoPath, user.email, accessToken, 0, skipAskConnect);
+        showConnectRepo(repoPath, user.email, accessToken, skipAskConnect);
     }
 };
 

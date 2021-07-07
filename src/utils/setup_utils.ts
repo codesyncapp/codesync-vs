@@ -12,7 +12,7 @@ import { readYML } from './common';
 import { initUtils } from './init_utils';
 
 
-export const setupCodeSync = async (repoPath: string) => {
+const createSystemDirectories = () => {
 	// Create system directories
 	const paths = [CODESYNC_ROOT, DIFFS_REPO, ORIGINALS_REPO, SHADOW_REPO, DELETED_REPO];
 	paths.forEach((path) => {
@@ -21,7 +21,6 @@ export const setupCodeSync = async (repoPath: string) => {
 			fs.mkdirSync(path, { recursive: true });
 		}
 	});
-
 	// Create config.yml if does not exist
 	const configExists = fs.existsSync(CONFIG_PATH);
 	if (!configExists) {
@@ -32,7 +31,13 @@ export const setupCodeSync = async (repoPath: string) => {
 	const sequenceTokenExists = fs.existsSync(SEQUENCE_TOKEN_PATH);
 	if (!sequenceTokenExists) {
 		fs.writeFileSync(SEQUENCE_TOKEN_PATH, yaml.safeDump({}));
-	}
+	}	
+};
+
+
+export const setupCodeSync = async (repoPath: string) => {
+
+	createSystemDirectories();
 
 	let port = 0;
 	for (const _port of Auth0URLs.PORTS) {
@@ -43,10 +48,13 @@ export const setupCodeSync = async (repoPath: string) => {
 		}
 	}
 
+	// Set port to global variable
+	(global as any).port = port;
+
 	initExpressServer(port);
 
 	if (!fs.existsSync(USER_PATH)) {
-		showSignUpButtons(port);
+		showSignUpButtons();
 		return;
 	}
 
@@ -61,16 +69,41 @@ export const setupCodeSync = async (repoPath: string) => {
 	});
 
 	if (validUsers.length === 0) {
-		showSignUpButtons(port);
+		showSignUpButtons();
 		return;
 	}
 
 	if (repoIsNotSynced(repoPath) || !initUtils.successfulySynced(repoPath)) { 
 		// Show notification to user to Sync the repo
-		showConnectRepo(repoPath, "", "", port);
+		showConnectRepo(repoPath, "", "");
 		return;
 	} 
 
 	// Show notification that repo is in sync
 	vscode.window.showInformationMessage(NOTIFICATION.REPO_IN_SYNC);
+};
+
+export const showLogIn = () => {
+	if (!fs.existsSync(USER_PATH)) {
+		return true;
+	}
+
+	// Check if access token is present against users
+	const users = readYML(USER_PATH) || {};
+	const validUsers: string[] = [];
+	Object.keys(users).forEach(key => {
+		const user = users[key];
+		if (user.access_token) {
+			validUsers.push(user.email);
+		}
+	});
+
+	if (validUsers.length === 0) {
+		return true;
+	}
+	return false;
+};
+
+export const showConnectRepoView = (repoPath: string) => {
+	return repoIsNotSynced(repoPath) || !initUtils.successfulySynced(repoPath);
 };
