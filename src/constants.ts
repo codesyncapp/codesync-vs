@@ -114,7 +114,7 @@ export const NOTIFICATION = {
 };
 
 export const COMMAND = {
-	triggerSignUp: 'codesync.singup',
+	triggerSignUp: 'codesync.signup',
 	triggerSync: 'codesync.sync',
 	triggerUnsync: 'codesync.unsync'
 };

@@ -51,7 +51,7 @@ export const setupCodeSync = async (repoPath: string) => {
 	// Set port to global variable
 	(global as any).port = port;
 
-	initExpressServer(port);
+	initExpressServer();
 
 	if (!fs.existsSync(USER_PATH)) {
 		showSignUpButtons();
@@ -98,10 +98,7 @@ export const showLogIn = () => {
 		}
 	});
 
-	if (validUsers.length === 0) {
-		return true;
-	}
-	return false;
+	return validUsers.length === 0;
 };
 
 export const showConnectRepoView = (repoPath: string) => {

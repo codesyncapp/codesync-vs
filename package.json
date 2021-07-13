@@ -17,6 +17,20 @@
     "onStartupFinished"
   ],
   "contributes": {
+    "commands": [
+        {
+          "command": "codesync.signup",
+          "title": "CodeSync: Sign Up"
+        },
+        {
+            "command": "codesync.sync",
+            "title": "CodeSync: Connect Repo"
+        },
+        {
+            "command": "codesync.unsync",
+            "title": "CodeSync: Disconnet Repo"
+        }
+    ],
     "viewsContainers": {
       "activitybar": [
         {

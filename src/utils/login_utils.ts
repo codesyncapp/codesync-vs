@@ -29,9 +29,10 @@ export const isPortAvailable = async (port: number) => {
 };
 
 
-export const initExpressServer = (port: number) => {
+export const initExpressServer = () => {
     // Create an express server
     const expressApp = express();
+    const port = (global as any).port;
 
     // define a route handler for the default home page
     expressApp.get("/", async (req: any, res: any) => {
@@ -39,7 +40,7 @@ export const initExpressServer = (port: number) => {
             res.send(NOTIFICATION.LOGIN_SUCCESS); 
             return;
         }
-        await handleRedirect(req, port);
+        await handleRedirect(req);
         res.send(NOTIFICATION.LOGIN_SUCCESS);
     });
 
@@ -54,8 +55,9 @@ export const redirectToBrowser = (skipAskConnect = false) => {
     vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
 };
 
-export async function handleRedirect(req: any, port: number) {
-    const json = await authorizeUser(req, port);
+export async function handleRedirect(req: any) {
+    const port = (global as any).port;
+    const json = await authorizeUser(req);
     if (json.error) {
         return;
     }
@@ -81,7 +83,8 @@ export const createAuthorizeUrl = (skipAskConnect=false) => {
     return `${Auth0URLs.AUTHORIZE}?${queryParams}`;
 };
 
-export const authorizeUser = async (req: any, port: number) => {
+export const authorizeUser = async (req: any) => {
+    const port = (global as any).port;
     let error = '';
     const redirectUri = createRedirectUri(port);
     const authorizationCode = req.query.code;
@@ -110,7 +113,6 @@ export const authorizeUser = async (req: any, port: number) => {
 };
 
 export const createUser = async (response: any, skipAskConnect=false) => {
-    const port = (global as any).port;
     let error = "";
     let user = <IAuth0User>{};
     const accessToken = response.access_token;
