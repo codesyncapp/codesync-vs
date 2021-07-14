@@ -25,3 +25,11 @@ export interface IFileToDiff {
 export interface IAuth0User {
 	email: string;
 }
+
+export interface IFileToUpload {
+	file_path: string,
+	rel_path: string,
+	is_binary: boolean,
+	size: number
+	created_at: number
+}

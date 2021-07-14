@@ -2,7 +2,8 @@ import * as fs from 'fs';
 import { client } from "websocket";
 
 import { putLogEvent } from './logger';
-import { readYML, checkServerDown } from './utils/common';
+import { readYML } from './utils/common';
+import { checkServerDown } from "./utils/api_utils";
 import { handleFilesRename, isValidDiff, handleNewFileUpload, isDirDeleted, getDIffForDeletedFile, cleanUpDeleteDiff } from './utils/buffer_utils';
 import { IFileToDiff, IRepoDiffs } from './interface';
 import { RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, 
