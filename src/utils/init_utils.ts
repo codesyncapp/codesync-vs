@@ -238,7 +238,8 @@ export class initUtils {
 		});
 
 		if (!repoInConfig) {
-			configJSON.repos[repoPath] = {'branches': {branch: branchFiles}};
+			configJSON.repos[repoPath] = {'branches': {}};
+			configJSON.repos[repoPath].branches[branch] = branchFiles;
 			fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
 		} else if (!(branch in configJSON.repos[repoPath].branches)) {
 			configJSON.repos[repoPath].branches[branch] = branchFiles;
