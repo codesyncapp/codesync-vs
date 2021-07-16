@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 
 import { handleChangeEvent, handleFilesCreated, handleFilesDeleted, handleFilesRenamed, handlePastedFile } from "./event_handler";
-import { handleBuffer } from "./buffer_handler";
+import { detectBranchChange, handleBuffer } from "./buffer_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
 import { COMMAND } from './constants';
 import { unSyncHandler, SignUpHandler, SyncHandler } from './commands_handler';
@@ -49,6 +49,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		handleFilesRenamed(changeEvent);
 	});
 
+	await detectBranchChange(false);
+	
 	handleBuffer();
 		
 }

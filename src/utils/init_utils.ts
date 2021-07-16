@@ -13,7 +13,7 @@ import { API_INIT, CONFIG_PATH, DEFAULT_BRANCH, ERROR_SYNCING_REPO, IGNOREABLE_R
 	SEQUENCE_TOKEN_PATH, 
 	SYNCIGNORE, 
 	USER_PATH} from '../constants';
-import { IFileToUpload } from '../interface';
+import { IFileToUpload, IUserPlan } from '../interface';
 import { readFile, readYML } from './common';
 import { checkServerDown } from './api_utils';
 import { putLogEvent } from '../logger';
@@ -21,7 +21,7 @@ import { uploadFileTos3 } from './upload_file';
 
 export class initUtils {
 
-	static isValidRepoSize (syncSize: number, userPlan: any)  {
+	static isValidRepoSize (syncSize: number, userPlan: IUserPlan)  {
 		const isValid = userPlan.SIZE >= syncSize;
 		if (!isValid) {
 			vscode.window.showErrorMessage(`${NOTIFICATION.REPOS_LIMIT_BREACHED} ${userPlan.SIZE}`);
@@ -29,7 +29,7 @@ export class initUtils {
 		return isValid;	
 	}
 	
-	static isValidFilesCount (filesCount: number, userPlan: any) {
+	static isValidFilesCount (filesCount: number, userPlan: IUserPlan) {
 		const isValid = userPlan.FILE_COUNT >= filesCount;
 		if (!isValid) {
 			vscode.window.showErrorMessage(`${NOTIFICATION.FILES_LIMIT_BREACHED}\n
@@ -42,6 +42,8 @@ export class initUtils {
 		const config = readYML(CONFIG_PATH);
 		const configRepo = config['repos'][repoPath];
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+		// If branch is not synced, daemon will take care of that
+		if (!(branch in configRepo.branches)) { return true; }
 		const configFiles = configRepo.branches[branch];
 		const invalidFiles = [];
 		Object.keys(configFiles).forEach((relPath) => {
@@ -52,7 +54,7 @@ export class initUtils {
 		return invalidFiles.length === 0;
 	}
 
-	static getSyncablePaths (repoPath: string, userPlan: any) {
+	static getSyncablePaths (repoPath: string, userPlan: IUserPlan, isSyncingBranch=false) {
 		const syncignorePath = path.join(repoPath, SYNCIGNORE);
 		const syncignoreExists = fs.existsSync(syncignorePath);
 		const itemPaths: IFileToUpload[] = [];
@@ -89,7 +91,7 @@ export class initUtils {
 						});
 						syncSize += fileStats.size;
 					}
-					if (!(initUtils.isValidRepoSize(syncSize, userPlan) && initUtils.isValidFilesCount(itemPaths.length, userPlan))) {
+					if (!isSyncingBranch && !initUtils.isValidRepoSize(syncSize, userPlan) && !initUtils.isValidFilesCount(itemPaths.length, userPlan)) {
 						return [];
 					}
 					next();
@@ -175,6 +177,12 @@ export class initUtils {
 		const repoId = uploadResponse.repo_id;
 		const filePathAndId = uploadResponse.file_path_and_id;
 		const s3Urls =  uploadResponse.urls;
+
+		// Write file IDs
+		const configJSON = readYML(CONFIG_PATH);
+		configJSON.repos[repoPath].branches[branch] = filePathAndId;
+		fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
+		
 	
 		const tasks: any[] = [];
 		const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(repoPath, branch));
@@ -206,9 +214,6 @@ export class initUtils {
 				Object.keys(repoData).forEach((key) => {
 					configJSON.repos[repoPath][key] = repoData[key];
 				});
-				// Write file IDs
-				configJSON.repos[repoPath].branches[branch] = filePathAndId;
-				fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
 				
 				// delete .originals repo 
 				fs.rmdirSync(originalsRepoBranchPath, { recursive: true });
@@ -221,8 +226,12 @@ export class initUtils {
 		});
 
 	}
-	static async uploadRepo(repoPath: string, repoName: string, branch: string, token: string, isPublic: boolean, itemPaths: IFileToUpload[],
-		userEmail: string, isRepoSynced=false, viaDaemon=false) {
+
+	static async uploadRepo(repoPath: string, branch: string, token: string, itemPaths: IFileToUpload[], isPublic=false,
+		isRepoSynced=false, viaDaemon=false, userEmail?: string) {
+		const splittedPath = repoPath.split('/');
+		const repoName = splittedPath[splittedPath.length-1];
+		
 		const configJSON = readYML(CONFIG_PATH);
 		const repoInConfig = repoPath in configJSON.repos;
 		const branchFiles = <any>{};

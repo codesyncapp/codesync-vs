@@ -33,3 +33,16 @@ export interface IFileToUpload {
 	size: number
 	created_at: number
 }
+
+
+export interface IUser {
+	email: string,
+	plan: IUserPlan,
+	repo_count: number
+}
+
+export interface IUserPlan {
+	SIZE: number,
+	FILE_COUNT: number,
+	REPO_COUNT: number
+}

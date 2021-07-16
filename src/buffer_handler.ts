@@ -1,23 +1,66 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import { client } from "websocket";
+import * as getBranchName from 'current-git-branch';
 
 import { putLogEvent } from './logger';
 import { readYML } from './utils/common';
 import { checkServerDown } from "./utils/api_utils";
 import { handleFilesRename, isValidDiff, handleNewFileUpload, isDirDeleted, getDIffForDeletedFile, cleanUpDeleteDiff } from './utils/buffer_utils';
-import { IFileToDiff, IRepoDiffs } from './interface';
+import { IFileToDiff, IRepoDiffs, IUserPlan } from './interface';
 import { RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, 
-	CONFIG_PATH, WEBSOCKET_ENDPOINT, INVALID_TOKEN_MESSAGE} from "./constants";
+	CONFIG_PATH, WEBSOCKET_ENDPOINT, INVALID_TOKEN_MESSAGE, ORIGINALS_REPO, DEFAULT_BRANCH} from "./constants";
+import { syncRepo } from './init_handler';
+import { initUtils } from './utils/init_utils';
 
 
 const recallDaemon = () => {
 	console.log('recallDaemon');
 	// Recall daemon after X seconds
 	setTimeout(() => {
+		detectBranchChange();
 		handleBuffer();
 	}, RESTART_DAEMON_AFTER);	
 };
 
+export const detectBranchChange = async (viaDaemon=true) => {
+	// Read config.json
+	const configJSON = readYML(CONFIG_PATH);
+	for (const repoPath of Object.keys(configJSON.repos)) {
+		const configRepo = configJSON.repos[repoPath];
+		const accessToken = configRepo.token;
+        const userEmail = configRepo.email;
+        if (!accessToken) {
+			putLogEvent(`Access token not found in config for repo: ${repoPath}`, userEmail);
+			continue;
+		}
+		if (!fs.existsSync(repoPath)) {
+			// TODO: Handle out of sync repo
+			continue;
+		}
+		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+		const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(repoPath, branch));
+		const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
+		if (!(branch in configRepo.branches)) {
+			if (originalsRepoExists) {
+				// init has been called, now see if we can upload the repo/branch
+				const itemPaths = initUtils.getSyncablePaths(repoPath, <IUserPlan>{}, true);
+				await initUtils.uploadRepo(repoPath, branch, accessToken, itemPaths, false, true, viaDaemon, configRepo.email);
+			} else {
+				await syncRepo(repoPath, accessToken, viaDaemon, true);
+			}
+			continue;
+		}
+
+		const configFiles = configRepo['branches'][branch];
+        // If all files IDs are None in config.yml, we need to sync the branch
+		const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
+		if (shouldSyncBranch) {
+			const itemPaths = initUtils.getSyncablePaths(repoPath, <IUserPlan>{}, true);
+			await initUtils.uploadRepo(repoPath, branch, accessToken, itemPaths, false, true, viaDaemon, configRepo.email);
+		}
+	}
+};
 
 export async function handleBuffer() {
 	/***
@@ -81,8 +124,7 @@ export async function handleBuffer() {
 		if (isServerDown) { return recallDaemon(); }
 
 		const repoDiffs: IRepoDiffs[] = [];
-
-		diffFiles.forEach((diffFile) => {
+		for (const diffFile of diffFiles) {
 			const filePath = `${DIFFS_REPO}/${diffFile}`;
 			const diffData = readYML(filePath);
 			if (!diffData) { return; }
@@ -100,7 +142,6 @@ export async function handleBuffer() {
 
 			if (!(diffData.branch in configRepo.branches)) {
 				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`, configRepo.email);
-				// TODO: Need to call init() here for branch sync silently
 			}
 
 			// Group diffs by repo_path
@@ -117,7 +158,7 @@ export async function handleBuffer() {
 				newRepoDiff.file_to_diff = [fileToDiff];
 				repoDiffs.push(newRepoDiff);
 			}
-		});
+		}
 
 		const WebSocketClient = new client();
 		WebSocketClient.connect(WEBSOCKET_ENDPOINT);

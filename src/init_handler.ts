@@ -10,40 +10,45 @@ import { checkServerDown, getUserForToken } from "./utils/api_utils";
 import { initUtils } from './utils/init_utils';
 import { askContinue, askPublicPrivate } from './utils/notifications';
 import { redirectToBrowser } from './utils/login_utils';
+import { IUser, IUserPlan } from './interface';
 
 
 export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=false, isSyncingBranch=false) => {
 	const port = (global as any).port;
 	/* Syncs a repo with CodeSync */
-	if (!viaDaemon) {
-		const isServerDown = await checkServerDown();
-		if (isServerDown) { 
-			vscode.window.showErrorMessage(NOTIFICATION.SERVICE_NOT_AVAILABLE);
-			return; 
-		}
+	const isServerDown = await checkServerDown();
+
+	if (!viaDaemon && isServerDown) {
+		vscode.window.showErrorMessage(NOTIFICATION.SERVICE_NOT_AVAILABLE);
+		return; 
 	}
 
-	// Validate access token
-	const json = await getUserForToken(accessToken);
-	if (!json.isTokenValid) {
-		if (viaDaemon) {
-			console.log(INVALID_TOKEN_MESSAGE);
-		} else {
-			// Trigger sign up process
-			vscode.window.showWarningMessage(
-				NOTIFICATION.AUTHENTICATION_FAILED, ...[
-				NOTIFICATION.LOGIN, 
-				NOTIFICATION.IGNORE
-			]).then(async selection => {
-				if (selection === NOTIFICATION.LOGIN) {
-					redirectToBrowser(true);
-				}
-			});
+	let user = <IUser>{};
+	user.email = "";
+	user.plan = <IUserPlan>{};
+	
+	if (!isServerDown) {
+		// Validate access token
+		const json = await getUserForToken(accessToken);
+		if (!json.isTokenValid) {
+			if (viaDaemon) {
+				console.log(INVALID_TOKEN_MESSAGE);
+			} else {
+				// Trigger sign up process
+				vscode.window.showWarningMessage(
+					NOTIFICATION.AUTHENTICATION_FAILED, ...[
+					NOTIFICATION.LOGIN, 
+					NOTIFICATION.IGNORE
+				]).then(async selection => {
+					if (selection === NOTIFICATION.LOGIN) {
+						redirectToBrowser(true);
+					}
+				});
+			}
+			return;	
 		}
-		return;	
+		user = json.response;
 	}
-
-	const user = json.response;
 
 	let isPublic = false;
 	let shouldExit = false;
@@ -54,12 +59,12 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
     const isRepoSynced = repoPath in configJSON['repos'];
 	const isBranchSynced = isRepoSynced && branch in configJSON.repos[repoPath].branches;
 	
-	if (isRepoSynced && isBranchSynced) {
+	if (isRepoSynced && isBranchSynced && !viaDaemon) {
 		vscode.window.showWarningMessage(`Repo is already in sync with branch: ${branch}`);
 		return;
 	}
 
-	if (!isRepoSynced && user.repo_count >= user.plan.REPO_COUNT) {
+	if (!isServerDown && !isRepoSynced && !isSyncingBranch && user.repo_count >= user.plan.REPO_COUNT) {
 		vscode.window.showErrorMessage(NOTIFICATION.UPGRADE_PLAN);
 		return;
 	}
@@ -115,7 +120,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 	}
 
 	// get item paths to upload and copy in respective repos
-	const itemPaths = initUtils.getSyncablePaths(repoPath, user.plan);
+	const itemPaths = initUtils.getSyncablePaths(repoPath, user.plan, isSyncingBranch);
 
 	const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(repoPath, branch));
 	if (!fs.existsSync(originalsRepoBranchPath)) {
@@ -130,7 +135,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 	}
 
 	// Upload repo/branch
-	await initUtils.uploadRepo(repoPath, repoName, branch,  accessToken, isPublic, itemPaths, user.email, isRepoSynced, viaDaemon);
+	await initUtils.uploadRepo(repoPath, branch,  accessToken, itemPaths, isPublic, isRepoSynced, viaDaemon, user.email);
 
 	vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
 };
