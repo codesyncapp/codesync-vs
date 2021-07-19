@@ -83,13 +83,6 @@ export const handleFilesRename = (configJSON: any, repoPath: string, branch: str
 	fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
 };
 
-
-export const isDirDeleted = (repoPath: string, branch: string, relPath: string) => {
-	const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
-	return fs.existsSync(shadowPath) && fs.lstatSync(shadowPath).isDirectory;
-};
-
-
 export const cleanUpDeleteDiff = (repoPath: string, branch: string, relPath: string, configJSON: any) => {
 	const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
 	const originalsPath = path.join(ORIGINALS_REPO, `${repoPath}/${branch}/${relPath}`);

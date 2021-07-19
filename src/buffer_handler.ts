@@ -6,7 +6,7 @@ import * as getBranchName from 'current-git-branch';
 import { putLogEvent } from './logger';
 import { readYML } from './utils/common';
 import { checkServerDown } from "./utils/api_utils";
-import { handleFilesRename, isValidDiff, handleNewFileUpload, isDirDeleted, getDIffForDeletedFile, cleanUpDeleteDiff } from './utils/buffer_utils';
+import { handleFilesRename, isValidDiff, handleNewFileUpload, getDIffForDeletedFile, cleanUpDeleteDiff } from './utils/buffer_utils';
 import { IFileToDiff, IRepoDiffs, IUserPlan } from './interface';
 import { RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, 
 	CONFIG_PATH, WEBSOCKET_ENDPOINT, INVALID_TOKEN_MESSAGE, ORIGINALS_REPO, DEFAULT_BRANCH} from "./constants";
@@ -246,9 +246,7 @@ export async function handleBuffer() {
 
 								if (!fileId && isDeleted) {
 									// It can be a directory delete
-									if (!isDirDeleted(diffData.repo_path, diffData.branch, relPath)) {
-										putLogEvent(`is_deleted non-synced file found: ${diffData.repo_path}/${relPath}`, configRepo.email);
-									}
+									putLogEvent(`is_deleted non-synced file found: ${diffData.repo_path}/${relPath}`, configRepo.email);
 									cleanUpDeleteDiff(diffData.repo_path, diffData.branch, relPath, configJSON);
 									fs.unlinkSync(fileToDiff.file_path);
 									continue;
