@@ -70,7 +70,7 @@
       },
       {
         "view": "codesync-signed-up-and-synced",
-        "contents": "Current repo is in sync with CodeSync.\n[Unsync](command:codesync.unsync)\n"
+        "contents": "Repo is in sync with CodeSync.\n[Track it](command:codesync.trackRepo)"
       }
     ]
   },

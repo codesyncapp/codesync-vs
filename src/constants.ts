@@ -42,7 +42,8 @@ export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v1/websocket`;
 
-export const PLANS_URL = `${CODESYNC_HOST}/plans`;
+export const WEB_APP_URL = "https://www.codesync.com";
+export const PLANS_URL = `${WEB_APP_URL}/plans`;
 // Diff utils
 export const DIFF_FILES_PER_ITERATION = 50;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
@@ -92,6 +93,7 @@ export const NOTIFICATION = {
 	NO: "No",
 	CANCEL: "Cancel",
 	CONTINUE: "Continue",
+	TRACK_IT: "Track it",
 	WELCOME_MSG: "Welcome to CodeSync!",
 	LOGIN_SUCCESS: "Successfully Authenticated. Please check your IDE for further instructions",
 	CONNECT_REPO: "Connect your repo with CodeSync",
@@ -99,8 +101,8 @@ export const NOTIFICATION = {
 	CHOOSE_ACCOUNT: "Choose account to sync your repo",
 	USE_DIFFERENT_ACCOUNT: "Use differnet account",
 	PUBLIC_OR_PRIVATE: "Do you want to make the repo public?",
-	REPO_SYNCED: "Successfully synced the repo",
-	BRANCH_SYNCED: "Successfully synced the branch",
+	REPO_SYNCED: "Repo synced successfully!",
+	BRANCH_SYNCED: "Branch synced successfully!",
 	UPDATE_SYNCIGNORE: "Add files in .syncignore you don't wnat to sync",
 	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later",
 	REPOS_LIMIT_BREACHED: `Repo size exceeds the limit. Allowed repo size is`,
@@ -109,12 +111,13 @@ export const NOTIFICATION = {
 	UPGRADE_PLAN: `Upgrade your plan: ${PLANS_URL}`,
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
-	REPO_IN_SYNC: "Repo is in sync with CodeSync",
+	REPO_IN_SYNC: "Repo is in sync with CodeSync.",
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again"
 };
 
 export const COMMAND = {
 	triggerSignUp: 'codesync.signup',
 	triggerSync: 'codesync.sync',
-	triggerUnsync: 'codesync.unsync'
+	triggerUnsync: 'codesync.unsync',
+	trackRepo: 'codesync.trackRepo'
 };

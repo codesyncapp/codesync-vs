@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { NOTIFICATION } from './constants';
+import { CONFIG_PATH, NOTIFICATION, WEB_APP_URL } from './constants';
+import { readYML } from './utils/common';
 import { repoIsNotSynced } from './utils/event_utils';
 import { initUtils } from './utils/init_utils';
 import { redirectToBrowser } from "./utils/login_utils";
@@ -25,4 +26,14 @@ export const SyncHandler = () => {
 
 export const unSyncHandler = () => {
 	console.log("Unsync activated");
+};
+
+export const trackRepoHandler = () => {
+	const config = readYML(CONFIG_PATH);
+	const repoPath = vscode.workspace.rootPath;
+	if (!repoPath) { return; }
+	const configRepo = config['repos'][repoPath];
+	// Show notification that repo is in sync
+	const playbackLink = `${WEB_APP_URL}/repos/${configRepo.id}/playback`;
+	vscode.env.openExternal(vscode.Uri.parse(playbackLink));
 };

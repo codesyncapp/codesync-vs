@@ -12,12 +12,15 @@ import { isBinaryFileSync } from 'isbinaryfile';
 import { API_INIT, CONFIG_PATH, DEFAULT_BRANCH, ERROR_SYNCING_REPO, IGNOREABLE_REPOS, NOTIFICATION, ORIGINALS_REPO, 
 	SEQUENCE_TOKEN_PATH, 
 	SYNCIGNORE, 
-	USER_PATH} from '../constants';
+	USER_PATH,
+	WEB_APP_URL
+} from '../constants';
 import { IFileToUpload, IUserPlan } from '../interface';
 import { readFile, readYML } from './common';
 import { checkServerDown } from './api_utils';
 import { putLogEvent } from '../logger';
 import { uploadFileTos3 } from './upload_file';
+import { trackRepoHandler } from '../commands_handler';
 
 export class initUtils {
 
@@ -51,7 +54,8 @@ export class initUtils {
 				invalidFiles.push(relPath);
 			}
 		});
-		return invalidFiles.length === 0;
+		const hasValidFiles = invalidFiles.length === 0;
+		return hasValidFiles;
 	}
 
 	static getSyncablePaths (repoPath: string, userPlan: IUserPlan, isSyncingBranch=false) {
@@ -180,9 +184,12 @@ export class initUtils {
 
 		// Write file IDs
 		const configJSON = readYML(CONFIG_PATH);
-		configJSON.repos[repoPath].branches[branch] = filePathAndId;
+		const configRepo = configJSON.repos[repoPath];
+		configRepo.branches[branch] = filePathAndId;
+		configRepo.id = repoId;
+		configRepo.email = userEmail;
+		configRepo.token = token;
 		fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
-		
 	
 		const tasks: any[] = [];
 		const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(repoPath, branch));
@@ -221,10 +228,16 @@ export class initUtils {
 				// Show success notifucation
 				if (!viaDaemon) {
 					const successMsg = isRepoSynced ? NOTIFICATION.BRANCH_SYNCED : NOTIFICATION.REPO_SYNCED;
-					vscode.window.showInformationMessage(successMsg);	
+					const msgWithPlaybackLink = `${successMsg} ${WEB_APP_URL}/repos/${repoId}/playback`;
+					vscode.window.showInformationMessage(msgWithPlaybackLink, ...[
+						NOTIFICATION.TRACK_IT
+					]).then(selection => {
+						if (selection === NOTIFICATION.TRACK_IT) {
+							trackRepoHandler();
+						}
+					});
 				}
 		});
-
 	}
 
 	static async uploadRepo(repoPath: string, branch: string, token: string, itemPaths: IFileToUpload[], isPublic=false,
@@ -249,9 +262,11 @@ export class initUtils {
 		if (!repoInConfig) {
 			configJSON.repos[repoPath] = {'branches': {}};
 			configJSON.repos[repoPath].branches[branch] = branchFiles;
+			configJSON.repos[repoPath].token = token;
 			fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
 		} else if (!(branch in configJSON.repos[repoPath].branches)) {
 			configJSON.repos[repoPath].branches[branch] = branchFiles;
+			configJSON.repos[repoPath].token = token;
 			fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
 		}
 

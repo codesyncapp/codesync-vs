@@ -6,7 +6,7 @@ import { handleChangeEvent, handleFilesCreated, handleFilesDeleted, handleFilesR
 import { detectBranchChange, handleBuffer } from "./buffer_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
 import { COMMAND } from './constants';
-import { unSyncHandler, SignUpHandler, SyncHandler } from './commands_handler';
+import { unSyncHandler, SignUpHandler, SyncHandler, trackRepoHandler } from './commands_handler';
     
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -22,6 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, SignUpHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSync, SyncHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerUnsync, unSyncHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackRepo, trackRepoHandler));
 
 	await setupCodeSync(repoPath);
 

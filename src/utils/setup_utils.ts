@@ -3,13 +3,14 @@ import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 import {
 	CODESYNC_ROOT, SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO,
-	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH, NOTIFICATION
+	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH, NOTIFICATION, WEB_APP_URL
 } from "../constants";
 import { repoIsNotSynced } from './event_utils';
 import { initExpressServer, isPortAvailable } from './login_utils';
 import { showConnectRepo, showSignUpButtons } from './notifications';
 import { readYML } from './common';
 import { initUtils } from './init_utils';
+import { trackRepoHandler } from '../commands_handler';
 
 
 const createSystemDirectories = () => {
@@ -79,8 +80,17 @@ export const setupCodeSync = async (repoPath: string) => {
 		return;
 	} 
 
+	const config = readYML(CONFIG_PATH);
+	const configRepo = config['repos'][repoPath];
+
 	// Show notification that repo is in sync
-	vscode.window.showInformationMessage(NOTIFICATION.REPO_IN_SYNC);
+	vscode.window.showInformationMessage(NOTIFICATION.REPO_IN_SYNC, ...[
+		NOTIFICATION.TRACK_IT
+	]).then(selection => {
+		if (selection === NOTIFICATION.TRACK_IT) {
+			trackRepoHandler();
+		}
+	});
 };
 
 export const showLogIn = () => {
