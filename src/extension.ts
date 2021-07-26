@@ -50,7 +50,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		handleFilesRenamed(changeEvent);
 	});
 
-	await detectBranchChange(false);
+	await detectBranchChange();
 	
 	handleBuffer();
 		

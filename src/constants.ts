@@ -60,7 +60,7 @@ export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Pleas
 export const INVALID_TOKEN_MESSAGE = 'Error => Auth token provided is invalid';
 export const ERROR_SYNCING_REPO = "Error syncing repo/branch.";
 
-// Auth0 
+// Auth0
 export const Auth0URLs = {
 	AUTHORIZE: "https://codesyncapp.us.auth0.com/authorize",
 	GET_TOKEN: "https://codesyncapp.us.auth0.com/oauth/token",
@@ -72,13 +72,13 @@ export const Auth0URLs = {
 	PORTS: [
 		49160,
 		49165,
-		49170, 
-		49175, 
-		49180, 
+		49170,
+		49175,
+		49180,
 		50100,
-		50105, 
-		50110, 
-		50115, 
+		50105,
+		50110,
+		50115,
 		50120
 	]
 };
@@ -105,14 +105,16 @@ export const NOTIFICATION = {
 	BRANCH_SYNCED: "Branch synced successfully!",
 	UPDATE_SYNCIGNORE: "Add files in .syncignore you don't wnat to sync",
 	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later",
-	REPOS_LIMIT_BREACHED: `Repo size exceeds the limit. Allowed repo size is`,
-	FILES_LIMIT_BREACHED: `FIles count exceeds the limit.`,
+	REPOS_LIMIT_BREACHED: "Repo size exceeds the limit. Allowed repo size is",
+	FILES_LIMIT_BREACHED: "FIles count exceeds the limit.",
 	SERVICE_NOT_AVAILABLE: "Service is unavailable. Please try again in a moment.",
 	UPGRADE_PLAN: `Upgrade your plan: ${PLANS_URL}`,
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
 	REPO_IN_SYNC: "Repo is in sync with CodeSync.",
-	AUTHENTICATION_FAILED: "Authentication failed. You need to login again"
+	AUTHENTICATION_FAILED: "Authentication failed. You need to login again",
+	ERROR_SYNCING_REPO: "Error syncing repo.",
+	ERROR_SYNCING_BRANCH: "Error syncing branch"
 };
 
 export const COMMAND = {

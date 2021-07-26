@@ -12,7 +12,7 @@ import jwt_decode from "jwt-decode";
 
 import { readYML } from './common';
 import { IAuth0User } from '../interface';
-import { API_USERS, Auth0URLs, NOTIFICATION, USER_PATH } from "../constants";
+import { API_USERS, Auth0URLs, CONFIG_PATH, NOTIFICATION, USER_PATH } from "../constants";
 import { repoIsNotSynced } from "./event_utils";
 import { showConnectRepo } from "./notifications";
 
@@ -144,10 +144,10 @@ export const createUser = async (response: any, skipAskConnect=false) => {
     }
     fs.writeFileSync(USER_PATH, yaml.safeDump(users));
 
+    vscode.commands.executeCommand('setContext', 'showLogIn', false);
+
     const repoPath = vscode.workspace.rootPath;
     if (!repoPath) { return; }
-
-    vscode.commands.executeCommand('setContext', 'showLogIn', false);
 
 	if (repoIsNotSynced(repoPath)) { 
         // Show notification to user to Sync the repo
@@ -168,4 +168,18 @@ export const logout = async (port: number) => {
         response,
         error
     };
+};
+
+export const askAndTriggerSignUp = () => {
+    // Trigger sign up process
+    vscode.window.showWarningMessage(
+        NOTIFICATION.AUTHENTICATION_FAILED, ...[
+        NOTIFICATION.LOGIN,
+        NOTIFICATION.IGNORE
+    ]).then(selection => {
+        if (selection === NOTIFICATION.LOGIN) {
+            redirectToBrowser(true);
+        }
+    });
+
 };

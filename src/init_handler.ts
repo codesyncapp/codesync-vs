@@ -3,13 +3,13 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as getBranchName from 'current-git-branch';
 
-import { CONFIG_PATH, DEFAULT_BRANCH, GITIGNORE, INVALID_TOKEN_MESSAGE, NOTIFICATION, 
+import { CONFIG_PATH, DEFAULT_BRANCH, GITIGNORE, NOTIFICATION,
 	ORIGINALS_REPO, SHADOW_REPO, SYNCIGNORE } from "./constants";
 import { readFile, readYML } from "./utils/common";
 import { checkServerDown, getUserForToken } from "./utils/api_utils";
 import { initUtils } from './utils/init_utils';
 import { askContinue, askPublicPrivate } from './utils/notifications';
-import { redirectToBrowser } from './utils/login_utils';
+import { askAndTriggerSignUp } from './utils/login_utils';
 import { IUser, IUserPlan } from './interface';
 
 
@@ -20,32 +20,19 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 
 	if (!viaDaemon && isServerDown) {
 		vscode.window.showErrorMessage(NOTIFICATION.SERVICE_NOT_AVAILABLE);
-		return; 
+		return;
 	}
 
 	let user = <IUser>{};
 	user.email = "";
 	user.plan = <IUserPlan>{};
-	
+
 	if (!isServerDown) {
 		// Validate access token
 		const json = await getUserForToken(accessToken);
 		if (!json.isTokenValid) {
-			if (viaDaemon) {
-				console.log(INVALID_TOKEN_MESSAGE);
-			} else {
-				// Trigger sign up process
-				vscode.window.showWarningMessage(
-					NOTIFICATION.AUTHENTICATION_FAILED, ...[
-					NOTIFICATION.LOGIN, 
-					NOTIFICATION.IGNORE
-				]).then(async selection => {
-					if (selection === NOTIFICATION.LOGIN) {
-						redirectToBrowser(true);
-					}
-				});
-			}
-			return;	
+			askAndTriggerSignUp();
+			return;
 		}
 		user = json.response;
 	}
@@ -58,7 +45,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 	const configJSON = readYML(CONFIG_PATH);
     const isRepoSynced = repoPath in configJSON['repos'];
 	const isBranchSynced = isRepoSynced && branch in configJSON.repos[repoPath].branches;
-	
+
 	if (isRepoSynced && isBranchSynced && !viaDaemon) {
 		vscode.window.showWarningMessage(`Repo is already in sync with branch: ${branch}`);
 		return;
@@ -76,7 +63,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 	if (syncignoreExists) {
 		syncignoreData = readFile(syncignorePath);
 	} else {
-		fs.writeFileSync(syncignorePath, "");	
+		fs.writeFileSync(syncignorePath, "");
 	}
 
 	const gitignorePath = path.join(repoPath, GITIGNORE);
@@ -104,7 +91,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 	}
 
 	if (shouldExit) { return; }
-	
+
 	if (!viaDaemon && isRepoSynced) {
 		vscode.window.showInformationMessage(`Branch: ${branch} is being synced for the repo: ${repoName}`);
 	}

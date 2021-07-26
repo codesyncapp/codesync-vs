@@ -9,9 +9,10 @@ import { checkServerDown } from "./utils/api_utils";
 import { handleFilesRename, isValidDiff, handleNewFileUpload, getDIffForDeletedFile, cleanUpDeleteDiff } from './utils/buffer_utils';
 import { IFileToDiff, IRepoDiffs, IUserPlan } from './interface';
 import { RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, 
-	CONFIG_PATH, WEBSOCKET_ENDPOINT, INVALID_TOKEN_MESSAGE, ORIGINALS_REPO, DEFAULT_BRANCH} from "./constants";
+	CONFIG_PATH, WEBSOCKET_ENDPOINT, INVALID_TOKEN_MESSAGE, ORIGINALS_REPO, DEFAULT_BRANCH, USER_PATH} from "./constants";
 import { syncRepo } from './init_handler';
 import { initUtils } from './utils/init_utils';
+import { askAndTriggerSignUp } from './utils/login_utils';
 
 
 const recallDaemon = () => {
@@ -26,12 +27,13 @@ const recallDaemon = () => {
 export const detectBranchChange = async (viaDaemon=true) => {
 	// Read config.json
 	const configJSON = readYML(CONFIG_PATH);
+	const users = readYML(USER_PATH) || {};
 	for (const repoPath of Object.keys(configJSON.repos)) {
 		const configRepo = configJSON.repos[repoPath];
-		const accessToken = configRepo.token;
+		const accessToken = users[configRepo.email].access_token;
         const userEmail = configRepo.email;
         if (!accessToken) {
-			putLogEvent(`Access token not found in config for repo: ${repoPath}`, userEmail);
+			putLogEvent(`Access token not found for repo: ${repoPath}, ${userEmail}`, userEmail);
 			continue;
 		}
 		if (!fs.existsSync(repoPath)) {
@@ -58,6 +60,7 @@ export const detectBranchChange = async (viaDaemon=true) => {
 		if (shouldSyncBranch) {
 			const itemPaths = initUtils.getSyncablePaths(repoPath, <IUserPlan>{}, true);
 			await initUtils.uploadRepo(repoPath, branch, accessToken, itemPaths, false, true, viaDaemon, configRepo.email);
+			continue;
 		}
 	}
 };
@@ -117,6 +120,7 @@ export async function handleBuffer() {
 		// Read config.json
 		let configJSON = readYML(CONFIG_PATH);
 		if (!configJSON) { return; }
+		const users = readYML(USER_PATH) || {};
 
 		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
 
@@ -179,7 +183,7 @@ export async function handleBuffer() {
 			repoDiffs.forEach((repoDiff) => {
 				const newFiles: string[] = [];
 				const configRepo = configJSON.repos[repoDiff.path];
-				const accessToken = configRepo.token;
+				const accessToken = users[configRepo.email].access_token;
 				
 				// authenticate via websocket
 				connection.send(accessToken);
@@ -187,8 +191,9 @@ export async function handleBuffer() {
 					if (message.type === 'utf8') {
 						const resp = JSON.parse(message.utf8Data || "{}");
 						if (resp.type === 'auth') {
-							if (resp.status !== 200) { 
+							if (resp.status !== 200) {
 								putLogEvent(INVALID_TOKEN_MESSAGE);
+								askAndTriggerSignUp();
 								return; 
 							}
 
