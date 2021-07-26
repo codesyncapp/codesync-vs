@@ -43,23 +43,32 @@
     "views": {
       "codesync": [
         {
+          "id": "codesync-open-repo",
+          "name": "CodeSync",
+          "when": "workbenchState == empty"
+        },
+        {
           "id": "codesync-signup",
           "name": "CodeSync",
-          "when": "showLogIn"
+          "when": "workbenchState != empty && showLogIn"
         },
         {
           "id": "codesync-signed-up-not-synced",
           "name": "CodeSync",
-          "when": "!showLogIn && showConnectRepoView"
+          "when": "workbenchState != empty && !showLogIn && showConnectRepoView"
         },
         {
           "id": "codesync-signed-up-and-synced",
           "name": "CodeSync",
-          "when": "!showLogIn && !showConnectRepoView"
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView"
         }
       ]
     },
     "viewsWelcome": [
+      {
+        "view": "codesync-open-repo",
+        "contents": "In order to use CodeSync features, you can open a folder containing a git repository or clone from a URL.\n[Open Folder](command:vscode.openFolder)\n[Clone Repository](command:git.clone)\n"
+      },
       {
         "view": "codesync-signup",
         "contents": "Login to CodeSync.\n[Join](command:codesync.singup)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
