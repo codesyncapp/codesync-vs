@@ -12,7 +12,7 @@ import jwt_decode from "jwt-decode";
 
 import { readYML } from './common';
 import { IAuth0User } from '../interface';
-import { API_USERS, Auth0URLs, CONFIG_PATH, NOTIFICATION, USER_PATH } from "../constants";
+import { API_USERS, Auth0URLs, NOTIFICATION, USER_PATH } from "../constants";
 import { repoIsNotSynced } from "./event_utils";
 import { showConnectRepo } from "./notifications";
 
