@@ -14,7 +14,6 @@ import { IUser, IUserPlan } from './interface';
 
 
 export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=false, isSyncingBranch=false) => {
-	const port = (global as any).port;
 	/* Syncs a repo with CodeSync */
 	const isServerDown = await checkServerDown();
 

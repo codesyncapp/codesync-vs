@@ -1,7 +1,6 @@
 "use strict";
 
 import untildify =  require('untildify');
-import * as authConfig from "./config.json";
 
 export const CODESYNC_ROOT = untildify('~/.codesync');
 export const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs/.vscode`;
@@ -39,6 +38,7 @@ export const API_FILES = `${API_ENDPOINT}/files`;
 export const API_INIT =  `${API_ENDPOINT}/init`;
 export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
+export const AUTH0_AUTHORIZE = `${CODESYNC_HOST}/authorize`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v1/websocket`;
 
 export const WEB_APP_URL = "https://www.codesync.com";
@@ -60,12 +60,6 @@ export const ERROR_SYNCING_REPO = "Error syncing repo/branch.";
 
 // Auth0
 export const Auth0URLs = {
-	AUTHORIZE: "https://codesyncapp.us.auth0.com/authorize",
-	GET_TOKEN: "https://codesyncapp.us.auth0.com/oauth/token",
-	LOGOUT: "https://codesyncapp.us.auth0.com/v2/logout?federated",
-	CLIENT_KEY: authConfig.clientKey,
-	CLIENT_SECRET: authConfig.clientSecret,
-	REDIRECT_URI: "http://localhost",
 	// Pre defined ports
 	PORTS: [
 		49160,

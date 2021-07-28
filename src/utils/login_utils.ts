@@ -5,14 +5,13 @@ import * as vscode from 'vscode';
 import * as yaml from 'js-yaml';
 import * as express from "express";
 import * as detectPort from "detect-port";
-import * as querystring from 'querystring';
 
 import fetch from "node-fetch";
 import jwt_decode from "jwt-decode";
 
 import { readYML } from './common';
 import { IAuth0User } from '../interface';
-import { API_USERS, Auth0URLs, NOTIFICATION, USER_PATH } from "../constants";
+import { API_USERS, AUTH0_AUTHORIZE, NOTIFICATION, USER_PATH } from "../constants";
 import { repoIsNotSynced } from "./event_utils";
 import { showConnectRepo } from "./notifications";
 
@@ -28,7 +27,6 @@ export const isPortAvailable = async (port: number) => {
         });
 };
 
-
 export const initExpressServer = () => {
     // Create an express server
     const expressApp = express();
@@ -36,87 +34,32 @@ export const initExpressServer = () => {
 
     // define a route handler for the default home page
     expressApp.get("/", async (req: any, res: any) => {
-        if (!req.query.code) { 
-            res.send(NOTIFICATION.LOGIN_SUCCESS); 
-            return;
-        }
-        await handleRedirect(req);
+        res.send("OK");
+    });
+
+    // define a route handler for the authorization callback
+    expressApp.get("/auth-callback", async (req: any, res: any) => {
+        await createUser(req.query.access_token, req.query.id_token);
         res.send(NOTIFICATION.LOGIN_SUCCESS);
     });
 
     // start the Express server
     expressApp.listen(port, () => {
-        console.log(`server started at ${createRedirectUri(port)}`);
+        console.log(`server started at ${port}`);
     });
 };
 
-export const redirectToBrowser = (skipAskConnect = false) => {
-    const authorizeUrl = createAuthorizeUrl(skipAskConnect);
-    vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
+export const redirectToBrowser = (skipAskConnect=false) => {
+    const port = (global as any).port;
+    (global as any).skipAskConnect = skipAskConnect;
+    const redirectUri = `http://localhost:${port}/auth-callback`;
+    vscode.env.openExternal(vscode.Uri.parse(`${AUTH0_AUTHORIZE}?redirect_uri=${redirectUri}`));
 };
 
-export async function handleRedirect(req: any) {
-    const port = (global as any).port;
-    const json = await authorizeUser(req);
-    if (json.error) {
-        return;
-    }
-    // create user
-    await createUser(json.response, json.skipAskConnect);
-}
-
-export function createRedirectUri(port: number) {
-    return `${Auth0URLs.REDIRECT_URI}:${port}`;
-}
-
-export const createAuthorizeUrl = (skipAskConnect=false) => {
-    const port = (global as any).port;
-    // response_type=code&client_id=clientId&redirect_uri=http://localhost:8080&scope=openid%20profile%20email
-    const params = {
-        response_type: "code",
-        client_id: Auth0URLs.CLIENT_KEY,
-        redirect_uri: createRedirectUri(port),
-        scope: "openid profile email",
-        state: querystring.stringify( { skipAskConnect })
-    };
-    const queryParams = querystring.stringify(params);
-    return `${Auth0URLs.AUTHORIZE}?${queryParams}`;
-};
-
-export const authorizeUser = async (req: any) => {
-    const port = (global as any).port;
-    let error = '';
-    const redirectUri = createRedirectUri(port);
-    const authorizationCode = req.query.code;
-    const skipAskConnect = req.query.state.split("skipAskConnect=")[1] === 'true';
-    const data = new URLSearchParams();
-    data.append('grant_type', 'authorization_code');
-    data.append('client_id', Auth0URLs.CLIENT_KEY);
-    data.append('client_secret', Auth0URLs.CLIENT_SECRET);
-    data.append('code', authorizationCode);
-    data.append('redirect_uri', redirectUri);
-    const response = await fetch(Auth0URLs.GET_TOKEN, {
-            method: 'POST',
-            headers: {'content-type': 'application/x-www-form-urlencoded'},
-            body: data.toString()
-        }
-    )
-        .then(res => res.json())
-        .then(json => json)
-        .catch(err => error = err);
-
-    return {
-        response,
-        error,
-        skipAskConnect
-    };
-};
-
-export const createUser = async (response: any, skipAskConnect=false) => {
+export const createUser = async (accessToken: string, idToken: string) => {
     let error = "";
     let user = <IAuth0User>{};
-    const accessToken = response.access_token;
-    user = jwt_decode(response.id_token);
+    user = jwt_decode(idToken);
     const userResponse = await fetch(API_USERS, {
             method: 'POST',
             headers: {
@@ -149,25 +92,14 @@ export const createUser = async (response: any, skipAskConnect=false) => {
     const repoPath = vscode.workspace.rootPath;
     if (!repoPath) { return; }
 
-	if (repoIsNotSynced(repoPath)) { 
+	if (repoIsNotSynced(repoPath)) {
         // Show notification to user to Sync the repo
-        showConnectRepo(repoPath, user.email, accessToken, skipAskConnect);
+        showConnectRepo(repoPath, user.email, accessToken);
     }
 };
 
 export const logout = async (port: number) => {
-    let error = "";
-    const response = await fetch(
-        `${Auth0URLs.LOGOUT}&client_id=${Auth0URLs.CLIENT_KEY}`
-        )
-        .then(res => res)
-        .then(json => json)
-        .catch(err => error = err);
-
-    return {
-        response,
-        error
-    };
+    // TODO: Implemenet Logout from server
 };
 
 export const askAndTriggerSignUp = () => {
