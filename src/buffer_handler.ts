@@ -1,27 +1,30 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as vscode from "vscode";
 import { client } from "websocket";
 import * as getBranchName from 'current-git-branch';
 
 import { putLogEvent } from './logger';
-import { readYML } from './utils/common';
+import { readYML, updateStatusBarItem } from './utils/common';
 import { checkServerDown } from "./utils/api_utils";
 import { handleFilesRename, isValidDiff, handleNewFileUpload, getDIffForDeletedFile, cleanUpDeleteDiff } from './utils/buffer_utils';
 import { IFileToDiff, IRepoDiffs, IUserPlan } from './interface';
-import { RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, 
-	CONFIG_PATH, WEBSOCKET_ENDPOINT, INVALID_TOKEN_MESSAGE, ORIGINALS_REPO, DEFAULT_BRANCH, USER_PATH} from "./constants";
+import {
+	RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, STATUS_BAR_MSGS,
+	CONFIG_PATH, WEBSOCKET_ENDPOINT, ORIGINALS_REPO, DEFAULT_BRANCH, USER_PATH, NOTIFICATION
+} from "./constants";
 import { syncRepo } from './init_handler';
 import { initUtils } from './utils/init_utils';
-import { askAndTriggerSignUp } from './utils/login_utils';
 
 
-const recallDaemon = () => {
+const recallDaemon = (statusBarItem: vscode.StatusBarItem) => {
 	console.log('recallDaemon');
 	// Recall daemon after X seconds
 	setTimeout(() => {
 		detectBranchChange();
-		handleBuffer();
-	}, RESTART_DAEMON_AFTER);	
+		updateStatusBarItem(statusBarItem);
+		handleBuffer(statusBarItem);
+	}, RESTART_DAEMON_AFTER);
 };
 
 export const detectBranchChange = async (viaDaemon=true) => {
@@ -65,7 +68,7 @@ export const detectBranchChange = async (viaDaemon=true) => {
 	}
 };
 
-export async function handleBuffer() {
+export async function handleBuffer(statusBarItem: vscode.StatusBarItem) {
 	/***
 	 * Each file in .diffs directory contains following data
 
@@ -90,7 +93,7 @@ export async function handleBuffer() {
 			- Authenticate from server for repo token
 				- Do not continue if token is invalid
 		- For each diff in diffs-group
-			- Check if file_relative_path in diff file is syncable, 
+			- Check if file_relative_path in diff file is syncable,
 				- Skip the diff-file if it is for non-syncable file
 			- If diff is for changes for existing file
 				- Push changes to server
@@ -109,14 +112,14 @@ export async function handleBuffer() {
 			- If diff is for is_deleted
 				- Get the diff with shadow file
 				- Remove the sahdow file
-				- Remove the diff file if data is successfully uploaded 
+				- Remove the diff file if data is successfully uploaded
 	***/
 	try {
 		let diffFiles = fs.readdirSync(DIFFS_REPO);
 		// Pick only yml files
 		diffFiles = diffFiles.filter(file => file.endsWith('.yml'));
-		if (!diffFiles.length) { return recallDaemon(); }
-	
+		if (!diffFiles.length) { return recallDaemon(statusBarItem); }
+
 		// Read config.json
 		let configJSON = readYML(CONFIG_PATH);
 		if (!configJSON) { return; }
@@ -125,14 +128,17 @@ export async function handleBuffer() {
 		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
 
 		const isServerDown = await checkServerDown();
-		if (isServerDown) { return recallDaemon(); }
+		if (isServerDown) { 
+			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.SERVER_DOWN);
+			return recallDaemon(statusBarItem);
+		}
 
 		const repoDiffs: IRepoDiffs[] = [];
 		for (const diffFile of diffFiles) {
 			const filePath = `${DIFFS_REPO}/${diffFile}`;
 			const diffData = readYML(filePath);
 			if (!diffData) { return; }
-			if (!isValidDiff(diffData)) { 
+			if (!isValidDiff(diffData)) {
 				putLogEvent(`Skipping invalid diff file: ${diffData}, file: ${diffFile}`);
 				fs.unlinkSync(filePath);
 				return;
@@ -170,7 +176,7 @@ export async function handleBuffer() {
 		WebSocketClient.on('connectFailed', function(error) {
 			putLogEvent('Socket Connect Error: ' + error.toString());
 		});
-		
+
 		WebSocketClient.on('connect', function(connection) {
 			connection.on('error', function(error) {
 				putLogEvent("Socket Connection Error: " + error.toString());
@@ -178,13 +184,13 @@ export async function handleBuffer() {
 			connection.on('close', function() {
 				putLogEvent('echo-protocol Connection Closed');
 			});
-		
+
 			// Iterate repoDiffs and send to server
 			repoDiffs.forEach((repoDiff) => {
 				const newFiles: string[] = [];
 				const configRepo = configJSON.repos[repoDiff.path];
 				const accessToken = users[configRepo.email].access_token;
-				
+
 				// authenticate via websocket
 				connection.send(accessToken);
 				connection.on('message', async function(message) {
@@ -192,11 +198,11 @@ export async function handleBuffer() {
 						const resp = JSON.parse(message.utf8Data || "{}");
 						if (resp.type === 'auth') {
 							if (resp.status !== 200) {
-								putLogEvent(INVALID_TOKEN_MESSAGE);
-								askAndTriggerSignUp();
-								return; 
+								putLogEvent(STATUS_BAR_MSGS.ERROR_SENDING_DIFF);
+								updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
+								return;
 							}
-
+							updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.REPO_BEING_SYNCED);
 							for (const fileToDiff of repoDiff.file_to_diff) {
 								const diffData = fileToDiff.diff;
 								const configFiles = configRepo['branches'][diffData.branch];
@@ -232,7 +238,7 @@ export async function handleBuffer() {
 										fs.unlinkSync(fileToDiff.file_path);
 										continue;
 									}
-									handleFilesRename(configJSON, diffData.repo_path, diffData.branch, 
+									handleFilesRename(configJSON, diffData.repo_path, diffData.branch,
 										relPath, oldFileId, oldRelPath);
 								}
 
@@ -272,11 +278,11 @@ export async function handleBuffer() {
 									'path': relPath,
 									'diff_file_path': fileToDiff.file_path
 								};
-								connection.send(JSON.stringify({'diffs': [diffToSend]}));	
+								connection.send(JSON.stringify({'diffs': [diffToSend]}));
 							}
 						}
 						if (resp.type === 'sync') {
-							if (resp.status === 200 && fs.existsSync(resp.diff_file_path)) { 
+							if (resp.status === 200 && fs.existsSync(resp.diff_file_path)) {
 								fs.unlinkSync(resp.diff_file_path);
 							}
 						}
@@ -284,11 +290,11 @@ export async function handleBuffer() {
 				});
 			});
 		});
-		
+
 	} catch (e) {
 		putLogEvent(`"Daemon failed": ${e}`);
 	}
 
-	recallDaemon();
+	recallDaemon(statusBarItem);
 
 }

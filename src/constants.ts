@@ -15,7 +15,6 @@ export const SEQUENCE_TOKEN_PATH = `${CODESYNC_ROOT}/sequence_token.yml`;
 export const SYNCIGNORE = ".syncignore";
 export const GITIGNORE = ".gitignore";
 
-
 export const DIFF_SOURCE = 'vs-code';
 export const DEFAULT_BRANCH = 'default';
 export const GIT_REPO = '.git/';
@@ -57,7 +56,6 @@ export const CLIENT_LOGS_GROUP_NAME = 'client-logs';
 
 // Error msgs
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
-export const INVALID_TOKEN_MESSAGE = 'Error => Auth token provided is invalid';
 export const ERROR_SYNCING_REPO = "Error syncing repo/branch.";
 
 // Auth0
@@ -103,7 +101,7 @@ export const NOTIFICATION = {
 	PUBLIC_OR_PRIVATE: "Do you want to make the repo public?",
 	REPO_SYNCED: "Repo synced successfully!",
 	BRANCH_SYNCED: "Branch synced successfully!",
-	UPDATE_SYNCIGNORE: "Add files in .syncignore you don't wnat to sync",
+	UPDATE_SYNCIGNORE: "Add files in .syncignore you don't want to sync",
 	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later",
 	REPOS_LIMIT_BREACHED: "Repo size exceeds the limit. Allowed repo size is",
 	FILES_LIMIT_BREACHED: "FIles count exceeds the limit.",
@@ -114,7 +112,14 @@ export const NOTIFICATION = {
 	REPO_IN_SYNC: "Repo is in sync with CodeSync.",
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again",
 	ERROR_SYNCING_REPO: "Error syncing repo.",
-	ERROR_SYNCING_BRANCH: "Error syncing branch"
+	ERROR_SYNCING_BRANCH: "Error syncing branch",
+};
+
+export const STATUS_BAR_MSGS = {
+	ERROR_SENDING_DIFF: 'Error sending diff => Authentication failed',
+	AUTHENTICATION_FAILED: 'CodeSync => Authentication failed. Click to Login!',
+	REPO_BEING_SYNCED: 'CodeSync => Code is being synced',
+	SERVER_DOWN: "CodeSync => Offline"
 };
 
 export const COMMAND = {

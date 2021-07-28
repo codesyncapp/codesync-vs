@@ -2,12 +2,15 @@
 
 import * as vscode from 'vscode';
 
-import { handleChangeEvent, handleFilesCreated, handleFilesDeleted, handleFilesRenamed, handlePastedFile } from "./event_handler";
+import { handleChangeEvent, handleFilesCreated, handleFilesDeleted,
+	handleFilesRenamed, handlePastedFile } from "./event_handler";
 import { detectBranchChange, handleBuffer } from "./buffer_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
 import { COMMAND } from './constants';
+import { updateStatusBarItem } from "./utils/common";
+
 import { unSyncHandler, SignUpHandler, SyncHandler, trackRepoHandler } from './commands_handler';
-    
+
 
 export async function activate(context: vscode.ExtensionContext) {
 	// Get the active text editor
@@ -24,6 +27,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerUnsync, unSyncHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackRepo, trackRepoHandler));
 
+	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+	statusBarItem.command = COMMAND.triggerUnsync;
+	context.subscriptions.push(statusBarItem);
+
 	await setupCodeSync(repoPath);
 
 	console.log(`Configured repo: ${repoPath}`);
@@ -37,7 +44,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.workspace.onDidChangeTextDocument(changeEvent => {
 		handleChangeEvent(changeEvent);
 	});
-	
+
 	vscode.workspace.onDidCreateFiles(changeEvent => {
 		handleFilesCreated(changeEvent);
 	});
@@ -51,7 +58,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	await detectBranchChange();
-	
-	handleBuffer();
-		
+
+	updateStatusBarItem(statusBarItem);
+	handleBuffer(statusBarItem);
+
+
 }
+
