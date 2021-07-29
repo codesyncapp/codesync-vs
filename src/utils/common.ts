@@ -15,7 +15,7 @@ export const readYML = (filePath: string) => {
 	}
 };
 
-export const updateStatusBarItem = (statusBarItem: vscode.StatusBarItem, text = "CodeSync") => {
+export const updateStatusBarItem = (statusBarItem: vscode.StatusBarItem, text= STATUS_BAR_MSGS.DEFAULT) => {
 	if (text === STATUS_BAR_MSGS.AUTHENTICATION_FAILED) {
 		statusBarItem.command = COMMAND.triggerSignUp;
 	} else {

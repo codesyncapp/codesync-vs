@@ -6,7 +6,7 @@ import { handleChangeEvent, handleFilesCreated, handleFilesDeleted,
 	handleFilesRenamed, handlePastedFile } from "./event_handler";
 import { detectBranchChange, handleBuffer } from "./buffer_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
-import { COMMAND } from './constants';
+import { COMMAND, STATUS_BAR_MSGS } from './constants';
 import { updateStatusBarItem } from "./utils/common";
 
 import { unSyncHandler, SignUpHandler, SyncHandler, trackRepoHandler } from './commands_handler';
@@ -59,9 +59,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	await detectBranchChange();
 
-	updateStatusBarItem(statusBarItem);
-	handleBuffer(statusBarItem);
-
+	updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.GETTING_READY);
+	await handleBuffer(statusBarItem);
 
 }
 

@@ -56,7 +56,6 @@ export const CLIENT_LOGS_GROUP_NAME = 'client-logs';
 
 // Error msgs
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
-export const ERROR_SYNCING_REPO = "Error syncing repo/branch.";
 
 // Auth0
 export const Auth0URLs = {
@@ -111,9 +110,12 @@ export const NOTIFICATION = {
 
 export const STATUS_BAR_MSGS = {
 	ERROR_SENDING_DIFF: 'Error sending diff => Authentication failed',
+	DEFAULT: 'CodeSync => Watching changes',
+	SYNCING: 'CodeSync => Syncing changes',
 	AUTHENTICATION_FAILED: 'CodeSync => Authentication failed. Click to Login!',
-	REPO_BEING_SYNCED: 'CodeSync => Code is being synced',
-	SERVER_DOWN: "CodeSync => Offline"
+	SERVER_DOWN: 'CodeSync => Offline',
+	GETTING_READY: 'CodeSync => Getting ready',
+	NO_REPO_OPEN: 'CodeSync => No project is open'
 };
 
 export const COMMAND = {

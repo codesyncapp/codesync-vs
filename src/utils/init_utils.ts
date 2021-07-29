@@ -9,7 +9,13 @@ import * as parallel from "run-parallel";
 import * as getBranchName from 'current-git-branch';
 import { isBinaryFileSync } from 'isbinaryfile';
 
-import { API_INIT, CONFIG_PATH, DEFAULT_BRANCH, ERROR_SYNCING_REPO, IGNOREABLE_REPOS, NOTIFICATION, ORIGINALS_REPO,
+import {
+	API_INIT,
+	CONFIG_PATH,
+	DEFAULT_BRANCH,
+	IGNOREABLE_REPOS,
+	NOTIFICATION,
+	ORIGINALS_REPO,
 	SEQUENCE_TOKEN_PATH,
 	SYNCIGNORE,
 	USER_PATH,
@@ -185,7 +191,7 @@ export class initUtils {
 		configRepo.branches[branch] = filePathAndId;
 		configRepo.id = repoId;
 		configRepo.email = userEmail;
-		fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));		
+		fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
 	}
 
 	static async uploadRepoToS3(repoPath: string, branch: string, token: string, uploadResponse: any,
@@ -275,7 +281,7 @@ export class initUtils {
 		if (isServerDown) { return; }
 
 		console.log(`Uploading new branch: ${branch} for repo: ${repoPath}`);
-		
+
 		const data = {
 			name: repoName,
 			is_public: isPublic,

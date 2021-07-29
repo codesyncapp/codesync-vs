@@ -7,7 +7,8 @@ import * as getBranchName from 'current-git-branch';
 import { putLogEvent } from './logger';
 import { readYML, updateStatusBarItem } from './utils/common';
 import { checkServerDown } from "./utils/api_utils";
-import { handleFilesRename, isValidDiff, handleNewFileUpload, getDIffForDeletedFile, cleanUpDeleteDiff } from './utils/buffer_utils';
+import { handleFilesRename, isValidDiff, handleNewFileUpload, getDIffForDeletedFile,
+	cleanUpDeleteDiff } from './utils/buffer_utils';
 import { IFileToDiff, IRepoDiffs, IUserPlan } from './interface';
 import {
 	RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, STATUS_BAR_MSGS,
@@ -22,7 +23,6 @@ const recallDaemon = (statusBarItem: vscode.StatusBarItem) => {
 	// Recall daemon after X seconds
 	setTimeout(() => {
 		detectBranchChange();
-		updateStatusBarItem(statusBarItem);
 		handleBuffer(statusBarItem);
 	}, RESTART_DAEMON_AFTER);
 };
@@ -63,7 +63,6 @@ export const detectBranchChange = async (viaDaemon=true) => {
 		if (shouldSyncBranch) {
 			const itemPaths = initUtils.getSyncablePaths(repoPath, <IUserPlan>{}, true);
 			await initUtils.uploadRepo(repoPath, branch, accessToken, itemPaths, false, true, viaDaemon, configRepo.email);
-			continue;
 		}
 	}
 };
@@ -118,7 +117,11 @@ export async function handleBuffer(statusBarItem: vscode.StatusBarItem) {
 		let diffFiles = fs.readdirSync(DIFFS_REPO);
 		// Pick only yml files
 		diffFiles = diffFiles.filter(file => file.endsWith('.yml'));
-		if (!diffFiles.length) { return recallDaemon(statusBarItem); }
+		if (!diffFiles.length) {
+			const msg = vscode.workspace.rootPath ? STATUS_BAR_MSGS.DEFAULT : STATUS_BAR_MSGS.NO_REPO_OPEN;
+			updateStatusBarItem(statusBarItem, msg);
+			return recallDaemon(statusBarItem);
+		}
 
 		// Read config.json
 		let configJSON = readYML(CONFIG_PATH);
@@ -128,7 +131,7 @@ export async function handleBuffer(statusBarItem: vscode.StatusBarItem) {
 		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
 
 		const isServerDown = await checkServerDown();
-		if (isServerDown) { 
+		if (isServerDown) {
 			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.SERVER_DOWN);
 			return recallDaemon(statusBarItem);
 		}
@@ -202,7 +205,9 @@ export async function handleBuffer(statusBarItem: vscode.StatusBarItem) {
 								updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
 								return;
 							}
-							updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.REPO_BEING_SYNCED);
+
+							updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.SYNCING);
+
 							for (const fileToDiff of repoDiff.file_to_diff) {
 								const diffData = fileToDiff.diff;
 								const configFiles = configRepo['branches'][diffData.branch];
