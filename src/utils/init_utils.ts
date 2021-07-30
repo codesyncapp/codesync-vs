@@ -236,8 +236,7 @@ export class initUtils {
 				// Show success notification
 				if (!viaDaemon) {
 					const successMsg = isSyncingBranch ? NOTIFICATION.BRANCH_SYNCED : NOTIFICATION.REPO_SYNCED;
-					const msgWithPlaybackLink = `${successMsg} ${WEB_APP_URL}/repos/${repoId}/playback`;
-					vscode.window.showInformationMessage(msgWithPlaybackLink, ...[
+					vscode.window.showInformationMessage(successMsg, ...[
 						NOTIFICATION.TRACK_IT
 					]).then(selection => {
 						if (selection === NOTIFICATION.TRACK_IT) {

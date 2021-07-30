@@ -12,7 +12,7 @@ import { handleFilesRename, isValidDiff, handleNewFileUpload, getDIffForDeletedF
 import { IFileToDiff, IRepoDiffs, IUserPlan } from './interface';
 import {
 	RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, STATUS_BAR_MSGS,
-	CONFIG_PATH, WEBSOCKET_ENDPOINT, ORIGINALS_REPO, DEFAULT_BRANCH, USER_PATH, NOTIFICATION
+	CONFIG_PATH, WEBSOCKET_ENDPOINT, ORIGINALS_REPO, DEFAULT_BRANCH, USER_PATH
 } from "./constants";
 import { syncRepo } from './init_handler';
 import { initUtils } from './utils/init_utils';
@@ -33,6 +33,7 @@ export const detectBranchChange = async (viaDaemon=true) => {
 	const users = readYML(USER_PATH) || {};
 	for (const repoPath of Object.keys(configJSON.repos)) {
 		const configRepo = configJSON.repos[repoPath];
+		if (!configRepo.email) { continue; }
 		const accessToken = users[configRepo.email].access_token;
         const userEmail = configRepo.email;
         if (!accessToken) {

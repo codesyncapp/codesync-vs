@@ -8,7 +8,7 @@ import { CONFIG_PATH, DEFAULT_BRANCH, GITIGNORE, NOTIFICATION,
 import { readFile, readYML } from "./utils/common";
 import { checkServerDown, getUserForToken } from "./utils/api_utils";
 import { initUtils } from './utils/init_utils';
-import { askContinue, askPublicPrivate } from './utils/notifications';
+import { askPublicPrivate, askToUpdateSyncIgnore } from './utils/notifications';
 import { askAndTriggerSignUp } from './utils/login_utils';
 import { IUser, IUserPlan } from './interface';
 
@@ -36,16 +36,13 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 		user = json.response;
 	}
 
-	let isPublic = false;
-	let shouldExit = false;
 	const splittedPath = repoPath.split('/');
 	const repoName = splittedPath[splittedPath.length-1];
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	const configJSON = readYML(CONFIG_PATH);
     const isRepoSynced = repoPath in configJSON['repos'];
-	const isBranchSynced = isRepoSynced && branch in configJSON.repos[repoPath].branches;
 
-	if (isRepoSynced && isBranchSynced && !viaDaemon) {
+	if (isRepoSynced && !isSyncingBranch && !viaDaemon) {
 		vscode.window.showWarningMessage(`Repo is already in sync with branch: ${branch}`);
 		return;
 	}
@@ -73,30 +70,43 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 		vscode.window.showInformationMessage(`${SYNCIGNORE} was created from ${GITIGNORE}`);
 	}
 
+	if (viaDaemon) {
+		await postSyncIgnoreUpdate(repoName, branch, repoPath, user, accessToken, viaDaemon, isSyncingBranch);
+		return;
+	}
 	// Open .syncignore and ask for user input for Continue/Cancel
-	if (!viaDaemon) {
-		// Opening .syncignore
-		const setting: vscode.Uri = vscode.Uri.parse("file:" + `${repoPath}/${SYNCIGNORE}`);
-		await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
-			await vscode.window.showTextDocument(a, 1, false).then(async e => {
-				const selectedValue = await askContinue();
-				shouldExit = !selectedValue || selectedValue !== NOTIFICATION.CONTINUE;
-				if (shouldExit) {
-					vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
-					return;
+	const setting: vscode.Uri = vscode.Uri.parse("file:" + `${repoPath}/${SYNCIGNORE}`);
+	// Opening .syncignore
+	await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
+		await vscode.window.showTextDocument(a, 1, false).then(async e => {
+			vscode.workspace.onDidSaveTextDocument(async event => {
+				const fileName = event.fileName;
+				if (fileName.endsWith(SYNCIGNORE)) {
+					await postSyncIgnoreUpdate(repoName, branch, repoPath, user, accessToken, viaDaemon, isSyncingBranch);
 				}
 			});
+
+			const selectedValue = await askToUpdateSyncIgnore();
+			const shouldExit = selectedValue && selectedValue === NOTIFICATION.CANCEL;
+			if (shouldExit) {
+				vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
+				return;
+			}
 		});
-	}
+	});
+};
 
-	if (shouldExit) { return; }
+const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: string, user: IUser, accessToken: string,
+	viaDaemon=false, isSyncingBranch=false) => {
 
-	if (!viaDaemon && isRepoSynced) {
+	let isPublic = false;
+
+	if (!viaDaemon && isSyncingBranch) {
 		vscode.window.showInformationMessage(`Branch: ${branch} is being synced for the repo: ${repoName}`);
 	}
 
 	// Only ask for public/private in case of Repo Sync. Do not ask for Branch Sync.
-	if (!viaDaemon && !isRepoSynced) {
+	if (!viaDaemon && !isSyncingBranch) {
 		const buttonSelected = await askPublicPrivate();
 		if (buttonSelected == undefined) {
 			vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
@@ -121,7 +131,7 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 	}
 
 	// Upload repo/branch
-	await initUtils.uploadRepo(repoPath, branch,  accessToken, itemPaths, isPublic, isRepoSynced, viaDaemon, user.email);
+	await initUtils.uploadRepo(repoPath, branch, accessToken, itemPaths, isPublic, isSyncingBranch, viaDaemon, user.email);
 
 	vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
 };

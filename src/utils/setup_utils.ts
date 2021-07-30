@@ -80,9 +80,6 @@ export const setupCodeSync = async (repoPath: string) => {
 		return;
 	} 
 
-	const config = readYML(CONFIG_PATH);
-	const configRepo = config['repos'][repoPath];
-
 	// Show notification that repo is in sync
 	vscode.window.showInformationMessage(NOTIFICATION.REPO_IN_SYNC, ...[
 		NOTIFICATION.TRACK_IT

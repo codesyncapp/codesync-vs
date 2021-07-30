@@ -78,19 +78,18 @@ export const showChooseAccount = (repoPath: string) => {
 
 export const askPublicPrivate = async () => {
 	const buttonSelected = await vscode.window.showInformationMessage(
-		NOTIFICATION.PUBLIC_OR_PRIVATE, ...[
+		NOTIFICATION.PUBLIC_OR_PRIVATE,
+		{ modal: true }, ...[
 		NOTIFICATION.YES,
 		NOTIFICATION.NO
 	]).then(selection => selection);
 	return buttonSelected;
 };
 
-export const askContinue = async () => {
+export const askToUpdateSyncIgnore = async () => {
 	const selectedValue = await vscode.window.showInformationMessage(
-		NOTIFICATION.UPDATE_SYNCIGNORE, ...[
-		NOTIFICATION.CONTINUE,
-		NOTIFICATION.CANCEL
-	])
-	.then(selection => selection);
+		NOTIFICATION.UPDATE_SYNCIGNORE,
+		...[NOTIFICATION.OK, NOTIFICATION.CANCEL]
+	).then(selection => selection);
 	return selectedValue;
 };
