@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { NOTIFICATION, USER_PATH } from '../constants';
 import { syncRepo } from '../init_handler';
 import { readYML } from './common';
-import { logout, redirectToBrowser } from './login_utils';
+import { logout, redirectToBrowser } from './auth_utils';
 
 export const showSignUpButtons = () => {
 	vscode.window.showInformationMessage(
@@ -65,9 +65,8 @@ export const showChooseAccount = (repoPath: string) => {
 		...options)
 		.then(async selection => {
 			if (selection === NOTIFICATION.USE_DIFFERENT_ACCOUNT) {
-				await logout(port);
-				redirectToBrowser(true);
-				return;
+				(global as any).skipAskConnect = true;
+				return logout();
 			}
 		const index = validUsers.findIndex(user => user.email === selection);
 		const user = validUsers[index];

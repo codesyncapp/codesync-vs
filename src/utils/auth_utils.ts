@@ -11,7 +11,7 @@ import jwt_decode from "jwt-decode";
 
 import { readYML } from './common';
 import { IAuth0User } from '../interface';
-import { API_USERS, AUTH0_AUTHORIZE, NOTIFICATION, USER_PATH } from "../constants";
+import { API_USERS, AUTH0_AUTHORIZE, AUTH0_LOGOUT, LOGIN_SUCCESS_CALLBACK, NOTIFICATION, USER_PATH } from "../constants";
 import { repoIsNotSynced } from "./event_utils";
 import { showConnectRepo } from "./notifications";
 
@@ -38,7 +38,7 @@ export const initExpressServer = () => {
     });
 
     // define a route handler for the authorization callback
-    expressApp.get("/auth-callback", async (req: any, res: any) => {
+    expressApp.get(LOGIN_SUCCESS_CALLBACK, async (req: any, res: any) => {
         await createUser(req.query.access_token, req.query.id_token);
         res.send(NOTIFICATION.LOGIN_SUCCESS);
     });
@@ -49,11 +49,16 @@ export const initExpressServer = () => {
     });
 };
 
-export const redirectToBrowser = (skipAskConnect=false) => {
+export const createRedirectUri = () => {
     const port = (global as any).port;
+    return `http://localhost:${port}${LOGIN_SUCCESS_CALLBACK}`;
+};
+
+export const redirectToBrowser = (skipAskConnect=false) => {
     (global as any).skipAskConnect = skipAskConnect;
-    const redirectUri = `http://localhost:${port}/auth-callback`;
-    vscode.env.openExternal(vscode.Uri.parse(`${AUTH0_AUTHORIZE}?redirect_uri=${redirectUri}`));
+    const redirectUri = createRedirectUri();
+    const authorizeUrl = `${AUTH0_AUTHORIZE}?redirect_uri=${redirectUri}`;
+    vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
 };
 
 export const createUser = async (accessToken: string, idToken: string) => {
@@ -98,8 +103,13 @@ export const createUser = async (accessToken: string, idToken: string) => {
     }
 };
 
-export const logout = async (port: number) => {
-    // TODO: Implemenet Logout from server
+export const logout = () => {
+    const redirectUri = createRedirectUri();
+    const params = new URLSearchParams({
+        redirect_uri: redirectUri
+    });
+    const logoutUrl = `${AUTH0_LOGOUT}?${params}`;
+    vscode.env.openExternal(vscode.Uri.parse(logoutUrl));
 };
 
 export const askAndTriggerSignUp = () => {

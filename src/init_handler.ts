@@ -9,7 +9,7 @@ import { readFile, readYML } from "./utils/common";
 import { checkServerDown, getUserForToken } from "./utils/api_utils";
 import { initUtils } from './utils/init_utils';
 import { askPublicPrivate, askToUpdateSyncIgnore } from './utils/notifications';
-import { askAndTriggerSignUp } from './utils/login_utils';
+import { askAndTriggerSignUp } from './utils/auth_utils';
 import { IUser, IUserPlan } from './interface';
 
 

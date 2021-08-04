@@ -39,7 +39,9 @@ export const API_INIT =  `${API_ENDPOINT}/init`;
 export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
 export const AUTH0_AUTHORIZE = `${CODESYNC_HOST}/authorize`;
+export const AUTH0_LOGOUT = `${CODESYNC_HOST}/auth-logout`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v1/websocket`;
+export const LOGIN_SUCCESS_CALLBACK = "/login-success";
 
 export const WEB_APP_URL = "https://www.codesync.com";
 export const PLANS_URL = `${WEB_APP_URL}/plans`;

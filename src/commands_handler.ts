@@ -3,7 +3,7 @@ import { CONFIG_PATH, NOTIFICATION, WEB_APP_URL } from './constants';
 import { readYML } from './utils/common';
 import { repoIsNotSynced } from './utils/event_utils';
 import { initUtils } from './utils/init_utils';
-import { redirectToBrowser } from "./utils/login_utils";
+import { redirectToBrowser } from "./utils/auth_utils";
 import { showChooseAccount } from "./utils/notifications";
 
 export const SignUpHandler = () => {

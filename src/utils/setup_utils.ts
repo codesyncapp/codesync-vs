@@ -6,7 +6,7 @@ import {
 	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH, NOTIFICATION, WEB_APP_URL
 } from "../constants";
 import { repoIsNotSynced } from './event_utils';
-import { initExpressServer, isPortAvailable } from './login_utils';
+import { initExpressServer, isPortAvailable } from './auth_utils';
 import { showConnectRepo, showSignUpButtons } from './notifications';
 import { readYML } from './common';
 import { initUtils } from './init_utils';
@@ -62,10 +62,10 @@ export const setupCodeSync = async (repoPath: string) => {
 	// Check if access token is present against users
 	const users = readYML(USER_PATH) || {};
 	const validUsers: string[] = [];
-	Object.keys(users).forEach(key => {
-		const user = users[key];
+	Object.keys(users).forEach(email => {
+		const user = users[email];
 		if (user.access_token) {
-			validUsers.push(user.email);
+			validUsers.push(email);
 		}
 	});
 
