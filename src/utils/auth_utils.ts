@@ -11,7 +11,7 @@ import jwt_decode from "jwt-decode";
 
 import { readYML } from './common';
 import { IAuth0User } from '../interface';
-import { API_USERS, AUTH0_AUTHORIZE, AUTH0_LOGOUT, LOGIN_SUCCESS_CALLBACK, NOTIFICATION, USER_PATH } from "../constants";
+import { API_USERS, Auth0URLs, LOGIN_SUCCESS_CALLBACK, NOTIFICATION, USER_PATH } from "../constants";
 import { repoIsNotSynced } from "./event_utils";
 import { showConnectRepo } from "./notifications";
 
@@ -57,7 +57,7 @@ export const createRedirectUri = () => {
 export const redirectToBrowser = (skipAskConnect=false) => {
     (global as any).skipAskConnect = skipAskConnect;
     const redirectUri = createRedirectUri();
-    const authorizeUrl = `${AUTH0_AUTHORIZE}?redirect_uri=${redirectUri}`;
+    const authorizeUrl = `${Auth0URLs.AUTHORIZE}?redirect_uri=${redirectUri}`;
     vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
 };
 
@@ -108,7 +108,7 @@ export const logout = () => {
     const params = new URLSearchParams({
         redirect_uri: redirectUri
     });
-    const logoutUrl = `${AUTH0_LOGOUT}?${params}`;
+    const logoutUrl = `${Auth0URLs.LOGOUT}?${params}`;
     vscode.env.openExternal(vscode.Uri.parse(logoutUrl));
 };
 
