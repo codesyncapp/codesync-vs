@@ -26,7 +26,7 @@ import { readFile, readYML } from './common';
 import { checkServerDown } from './api_utils';
 import { putLogEvent } from '../logger';
 import { uploadFileTos3 } from './upload_file';
-import { trackRepoHandler } from '../commands_handler';
+import { trackRepoHandler, unSyncHandler } from '../commands_handler';
 
 export class initUtils {
 
@@ -237,10 +237,15 @@ export class initUtils {
 				if (!viaDaemon) {
 					const successMsg = isSyncingBranch ? NOTIFICATION.BRANCH_SYNCED : NOTIFICATION.REPO_SYNCED;
 					vscode.window.showInformationMessage(successMsg, ...[
-						NOTIFICATION.TRACK_IT
+						NOTIFICATION.TRACK_IT,
+						NOTIFICATION.UNSYNC_REPO,
 					]).then(selection => {
+						if (!selection) { return; }
 						if (selection === NOTIFICATION.TRACK_IT) {
 							trackRepoHandler();
+						}
+						if (selection === NOTIFICATION.UNSYNC_REPO) {
+							unSyncHandler();
 						}
 					});
 				}

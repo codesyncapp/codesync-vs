@@ -28,7 +28,7 @@ export const SyncHandler = () => {
 export const unSyncHandler = async () => {
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath) { return; }
-	vscode.window.showInformationMessage(
+	vscode.window.showWarningMessage(
 		NOTIFICATION.REPO_UNSYNC_CONFIRMATION, ...[
 		NOTIFICATION.YES, 
 		NOTIFICATION.CANCEL
@@ -43,12 +43,12 @@ export const unSyncHandler = async () => {
 		const accessToken = users[configRepo.email].access_token;
 		const json = await updateRepo(accessToken, configRepo.id, { is_in_sync: false });
 		if (json.error) {
-			vscode.window.showInformationMessage(NOTIFICATION.REPO_UNSYNC_FAILED);
+			vscode.window.showErrorMessage(NOTIFICATION.REPO_UNSYNC_FAILED);
 		} else {
 			// Show notification that repo is not in sync
 			delete config['repos'][repoPath];
 			vscode.window.showInformationMessage(NOTIFICATION.REPO_UNSYNCED);
-		}	
+		}
 	});
 };
 
