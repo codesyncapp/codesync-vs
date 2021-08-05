@@ -2,7 +2,13 @@
 
 import untildify =  require('untildify');
 
+// export const CODESYNC_ROOT = untildify('~/.codesync-local');
+// export const CODESYNC_DOMAIN = '127.0.0.1:8000';
+// export const CODESYNC_HOST = 'http://127.0.0.1:8000';
 export const CODESYNC_ROOT = untildify('~/.codesync');
+export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
+export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
+
 export const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs/.vscode`;
 export const ORIGINALS_REPO = `${CODESYNC_ROOT}/.originals`;
 export const SHADOW_REPO = `${CODESYNC_ROOT}/.shadow`;
@@ -29,10 +35,6 @@ export const IGNOREABLE_REPOS = [
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
-// export const CODESYNC_DOMAIN = '127.0.0.1:8000';
-// export const CODESYNC_HOST = 'http://127.0.0.1:8000';
-export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
-export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
 export const API_ENDPOINT = `${CODESYNC_HOST}/v1`;
 export const API_FILES = `${API_ENDPOINT}/files`;
 export const API_INIT =  `${API_ENDPOINT}/init`;
@@ -89,6 +91,7 @@ export const NOTIFICATION = {
 	OK: "OK!",
 	CONTINUE: "Continue",
 	TRACK_IT: "Track it",
+	UNSYNC_REPO: "Unsync",
 	WELCOME_MSG: "Welcome to CodeSync!",
 	LOGIN_SUCCESS: "Successfully Authenticated. Please check your IDE for further instructions",
 	CONNECT_REPO: "Connect your repo with CodeSync",
@@ -110,6 +113,9 @@ export const NOTIFICATION = {
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again",
 	ERROR_SYNCING_REPO: "Error syncing repo.",
 	ERROR_SYNCING_BRANCH: "Error syncing branch",
+	REPO_UNSYNCED: "Repo disconnected successfully",
+	REPO_UNSYNC_FAILED: "Could not unsync the repo",
+	REPO_UNSYNC_CONFIRMATION: "Are you sure to continue? You won't be able to revert this!",
 };
 
 export const STATUS_BAR_MSGS = {
