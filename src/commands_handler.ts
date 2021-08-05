@@ -1,4 +1,6 @@
+import * as fs from "fs";
 import * as vscode from 'vscode';
+import * as yaml from "js-yaml";
 import { CONFIG_PATH, NOTIFICATION, USER_PATH, WEB_APP_URL } from './constants';
 import { readYML } from './utils/common';
 import { repoIsNotSynced } from './utils/event_utils';
@@ -47,6 +49,8 @@ export const unSyncHandler = async () => {
 		} else {
 			// Show notification that repo is not in sync
 			delete config['repos'][repoPath];
+			fs.writeFileSync(CONFIG_PATH, yaml.safeDump(config));
+			vscode.commands.executeCommand('setContext', 'showConnectRepoView', true);
 			vscode.window.showInformationMessage(NOTIFICATION.REPO_UNSYNCED);
 		}
 	});
