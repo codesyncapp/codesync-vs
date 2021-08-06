@@ -5,7 +5,7 @@ import * as getBranchName from 'current-git-branch';
 
 import { CONFIG_PATH, DEFAULT_BRANCH, GITIGNORE, NOTIFICATION,
 	ORIGINALS_REPO, SHADOW_REPO, SYNCIGNORE } from "./constants";
-import { readFile, readYML } from "./utils/common";
+import {isRepoActive, readFile, readYML} from "./utils/common";
 import { checkServerDown, getUserForToken } from "./utils/api_utils";
 import { initUtils } from './utils/init_utils';
 import { askPublicPrivate, askToUpdateSyncIgnore } from './utils/notifications';
@@ -36,11 +36,11 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 		user = json.response;
 	}
 
-	const splittedPath = repoPath.split('/');
-	const repoName = splittedPath[splittedPath.length-1];
+	const splitPath = repoPath.split('/');
+	const repoName = splitPath[splitPath.length-1];
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	const configJSON = readYML(CONFIG_PATH);
-    const isRepoSynced = repoPath in configJSON['repos'];
+	const isRepoSynced = isRepoActive(configJSON, repoPath);
 
 	if (isRepoSynced && !isSyncingBranch && !viaDaemon) {
 		vscode.window.showWarningMessage(`Repo is already in sync with branch: ${branch}`);
@@ -79,13 +79,16 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 	// Opening .syncignore
 	await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
 		await vscode.window.showTextDocument(a, 1, false).then(async e => {
-			vscode.workspace.onDidSaveTextDocument(async event => {
-				const fileName = event.fileName;
-				if (fileName.endsWith(SYNCIGNORE)) {
-					await postSyncIgnoreUpdate(repoName, branch, repoPath, user, accessToken, viaDaemon, isSyncingBranch);
-				}
-			});
-
+			if (!(global as any).didSaveSyncIgnoreEventAdded) {
+				(global as any).didSaveSyncIgnoreEventAdded = true;
+				vscode.workspace.onDidSaveTextDocument(async event => {
+					console.log("Saved!");
+					const fileName = event.fileName;
+					if (fileName.endsWith(SYNCIGNORE)) {
+						await postSyncIgnoreUpdate(repoName, branch, repoPath, user, accessToken, viaDaemon, isSyncingBranch);
+					}
+				});
+			}
 			const selectedValue = await askToUpdateSyncIgnore();
 			const shouldExit = selectedValue && selectedValue === NOTIFICATION.CANCEL;
 			if (shouldExit) {
@@ -119,16 +122,12 @@ const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: 
 	const itemPaths = initUtils.getSyncablePaths(repoPath, user.plan, isSyncingBranch);
 
 	const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(repoPath, branch));
-	if (!fs.existsSync(originalsRepoBranchPath)) {
-		// copy files to .originals repo
-		initUtils.copyFilesTo(repoPath, itemPaths, originalsRepoBranchPath);
-	}
+	// copy files to .originals repo
+	initUtils.copyFilesTo(repoPath, itemPaths, originalsRepoBranchPath);
 
 	const shadowRepoBranchPath = path.join(SHADOW_REPO, path.join(repoPath, branch));
-	if (!fs.existsSync(shadowRepoBranchPath)) {
-		// copy files to .shadow repo
-		initUtils.copyFilesTo(repoPath, itemPaths, shadowRepoBranchPath);
-	}
+	// copy files to .shadow repo
+	initUtils.copyFilesTo(repoPath, itemPaths, shadowRepoBranchPath);
 
 	// Upload repo/branch
 	await initUtils.uploadRepo(repoPath, branch, accessToken, itemPaths, isPublic, isSyncingBranch, viaDaemon, user.email);

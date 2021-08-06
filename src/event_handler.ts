@@ -27,31 +27,37 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 		return;
 	}
 	const text = changeEvent.document.getText();
-	if (!repoPath) { 
+	if (!repoPath) {
 		console.log(`Skipping: No repoPath`);
-		return; 
+		return;
 	}
 	const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
 	const shadowExists = fs.existsSync(shadowPath);
-	if (!shadowExists) { 
-		// TODO: Create shadow file?
-		console.log(`Skipping: Shadow does not exist, ${filePath}`);
+	if (!shadowExists) {
+		// Creating shadow file if shadow does not exist somehow
+		const destShadow = `${SHADOW_REPO}/${repoPath.slice(1)}/${branch}/${relPath}`;
+		const destShadowPathSplit = destShadow.split("/");
+		const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length - 1).join("/");
+		// Add file in shadow repo
+		fs.mkdirSync(destShadowBasePath, {recursive: true});
+		// File destination will be created or overwritten by default.
+		fs.copyFileSync(filePath, destShadow);
 		return;
 	}
-	// Read shadow file 
+	// Read shadow file
 	const shadowText = fs.readFileSync(shadowPath, "utf8");
 	// If shadow text is same as current content, no need to compute diffs
 	if (shadowText === text) {
 		console.log(`Skipping: Shadow is same as text`);
 		return;
 	}
-	// Update shadow file 
+	// Update shadow file
 	fs.writeFileSync(shadowPath, text);
 	// Compute diffs
 	const dmp = new diff_match_patch();
 	const patches = dmp.patch_make(shadowText, text);
 	//  Create text representation of patches objects
-	const diffs = dmp.patch_toText(patches);	
+	const diffs = dmp.patch_toText(patches);
 	// Add new diff in the buffer
 	manageDiff(repoPath, branch, relPath, diffs);
 }
@@ -67,7 +73,7 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 					external:"file:///Users/basit/projects/codesync/codesync/codesync/new.py"
 					path:"/Users/basit/projects/codesync/codesync/codesync/new.py"
 					scheme:"file"
-	
+
 	*/
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
@@ -95,7 +101,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 					fsPath:"/Users/basit/projects/codesync/codesync/4.py"
 					external:"file:///Users/basit/projects/codesync/codesync/4.py"
 					path:"/Users/basit/projects/codesync/codesync/4.py"
-					scheme:"file"	
+					scheme:"file"
 	*/
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
@@ -112,7 +118,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 
 		// Shadow path
 		const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
-		
+
 		if (!fs.existsSync(shadowPath)) { return; }
 
 		const lstat = fs.lstatSync(shadowPath);
@@ -125,7 +131,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 		if (!lstat.isFile()) { return; }
 
 		console.log(`FileDeleted: ${itemPath}`);
-		
+
 		// Cache path
 		const destDeleted = path.join(DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
 		const destDeletedPathSplit = destDeleted.split("/");
@@ -154,7 +160,7 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 						fsPath:"/Users/basit/projects/codesync/codesync/4.py"
 						external:"file:///Users/basit/projects/codesync/codesync/4.py"
 						path:"/Users/basit/projects/codesync/codesync/4.py"
-						scheme:"file"	
+						scheme:"file"
 					newUri:
 						$mid:1
 						fsPath:"/Users/basit/projects/codesync/codesync/5.py"
@@ -164,7 +170,7 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 	*/
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	
+
 	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
 	changeEvent.files.forEach((event) => {
 		const oldAbsPath = event.oldUri.path;

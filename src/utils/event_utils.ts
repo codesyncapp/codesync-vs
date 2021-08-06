@@ -4,7 +4,7 @@ import ignore from 'ignore';
 import * as getBranchName from 'current-git-branch';
 import { GIT_REPO, CONFIG_PATH, SHADOW_REPO, DEFAULT_BRANCH, ORIGINALS_REPO } from "../constants";
 import { handleDirectoryRenameDiffs, manageDiff } from './diff_utils';
-import { readYML } from './common';
+import {isRepoActive, readYML} from './common';
 
 function isGitFile(path: string) {
 	return path.startsWith(GIT_REPO);
@@ -32,7 +32,7 @@ export function repoIsNotSynced(repoPath: string) {
 	// Return if user hasn't synced the repo
 	try {
 		const config = readYML(CONFIG_PATH);
-		return !(repoPath in config['repos']);
+		return !isRepoActive(config, repoPath);
 	} catch (e) {
 		return true;
 	}
@@ -46,7 +46,7 @@ export function handleRename(repoPath: string, branch: string, oldAbsPath: strin
 
 	// rename file in shadow repo
 	fs.renameSync(oldShadowPath, newShadowPath);
-	
+
 	if (!isFile) {
 		console.log(`DirectoryRenamed: ${oldAbsPath} -> ${newAbsPath}`);
 		const diff = JSON.stringify({ old_path: oldAbsPath, new_path: newAbsPath });
@@ -81,7 +81,7 @@ export function handleNewFile(repoPath: string, filePath: string) {
 	// Add file in shadow repo
 	fs.mkdirSync(destShadowBasePath, { recursive: true });
 	// File destination will be created or overwritten by default.
-	fs.copyFileSync(filePath, destShadow);  
+	fs.copyFileSync(filePath, destShadow);
 	// Add file in originals repo
 	fs.mkdirSync(destOriginalsBasePath, { recursive: true });
 	// File destination will be created or overwritten by default.

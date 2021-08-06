@@ -19,7 +19,6 @@ import { initUtils } from './utils/init_utils';
 
 
 const recallDaemon = (statusBarItem: vscode.StatusBarItem) => {
-	console.log('recallDaemon');
 	// Recall daemon after X seconds
 	setTimeout(() => {
 		detectBranchChange();
@@ -32,6 +31,9 @@ export const detectBranchChange = async (viaDaemon=true) => {
 	const configJSON = readYML(CONFIG_PATH);
 	const users = readYML(USER_PATH) || {};
 	for (const repoPath of Object.keys(configJSON.repos)) {
+		if (configJSON.repos[repoPath].is_disconnected) {
+			continue;
+		}
 		const configRepo = configJSON.repos[repoPath];
 		if (!configRepo.email) { continue; }
 		const accessToken = users[configRepo.email].access_token;
@@ -111,7 +113,7 @@ export async function handleBuffer(statusBarItem: vscode.StatusBarItem) {
 				- Repeat file rename for every nested item
 			- If diff is for is_deleted
 				- Get the diff with shadow file
-				- Remove the sahdow file
+				- Remove the shadow file
 				- Remove the diff file if data is successfully uploaded
 	***/
 	try {
@@ -151,7 +153,10 @@ export async function handleBuffer(statusBarItem: vscode.StatusBarItem) {
 				putLogEvent(`Repo ${diffData.repo_path} is in buffer.yml but not in config.yml`);
 				return;
 			}
-
+			if (configJSON.repos[diffData.repo_path].is_disconnected) {
+				putLogEvent(`Repo ${diffData.repo_path} is disconnected`);
+				return;
+			}
 			const configRepo = configJSON.repos[diffData.repo_path];
 
 			if (!(diffData.branch in configRepo.branches)) {

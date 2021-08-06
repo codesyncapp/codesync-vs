@@ -24,3 +24,7 @@ export const updateStatusBarItem = (statusBarItem: vscode.StatusBarItem, text= S
 	statusBarItem.text = text;
 	statusBarItem.show();
 };
+
+export const isRepoActive = (config: any, repoPath: string) => {
+	return repoPath in config.repos && !config.repos[repoPath].is_disconnected;
+};

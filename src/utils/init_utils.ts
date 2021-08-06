@@ -22,7 +22,7 @@ import {
 	WEB_APP_URL
 } from '../constants';
 import { IFileToUpload, IUserPlan } from '../interface';
-import { readFile, readYML } from './common';
+import {isRepoActive, readFile, readYML} from './common';
 import { checkServerDown } from './api_utils';
 import { putLogEvent } from '../logger';
 import { uploadFileTos3 } from './upload_file';
@@ -47,7 +47,7 @@ export class initUtils {
 		return isValid;
 	}
 
-	static successfulySynced (repoPath: string) {
+	static successfullySynced (repoPath: string) {
 		const config = readYML(CONFIG_PATH);
 		const configRepo = config['repos'][repoPath];
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
@@ -259,7 +259,7 @@ export class initUtils {
 		const repoName = splitPath[splitPath.length-1];
 
 		const configJSON = readYML(CONFIG_PATH);
-		const repoInConfig = repoPath in configJSON.repos;
+		const repoInConfig = isRepoActive(configJSON, repoPath);
 		const branchFiles = <any>{};
 		const filesData = <any>{};
 
