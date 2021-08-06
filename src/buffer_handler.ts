@@ -5,7 +5,7 @@ import { client } from "websocket";
 import * as getBranchName from 'current-git-branch';
 
 import { putLogEvent } from './logger';
-import { readYML, updateStatusBarItem } from './utils/common';
+import {isRepoActive, readYML, updateStatusBarItem} from './utils/common';
 import { checkServerDown } from "./utils/api_utils";
 import { handleFilesRename, isValidDiff, handleNewFileUpload, getDIffForDeletedFile,
 	cleanUpDeleteDiff } from './utils/buffer_utils';
@@ -117,27 +117,37 @@ export async function handleBuffer(statusBarItem: vscode.StatusBarItem) {
 				- Remove the diff file if data is successfully uploaded
 	***/
 	try {
+		// Read config.json
+		let configJSON = readYML(CONFIG_PATH);
+		if (!configJSON) {
+			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.CONNECT_REPO);
+			return recallDaemon(statusBarItem);
+		}
+		const repoPath = vscode.workspace.rootPath;
+		if (!repoPath) {
+			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.NO_REPO_OPEN);
+			return recallDaemon(statusBarItem);
+		}
+		// Update status bar msg
+		const msg =  isRepoActive(configJSON, repoPath) ? STATUS_BAR_MSGS.DEFAULT : STATUS_BAR_MSGS.CONNECT_REPO;
+		updateStatusBarItem(statusBarItem, msg);
+
 		let diffFiles = fs.readdirSync(DIFFS_REPO);
 		// Pick only yml files
 		diffFiles = diffFiles.filter(file => file.endsWith('.yml'));
 		if (!diffFiles.length) {
-			const msg = vscode.workspace.rootPath ? STATUS_BAR_MSGS.DEFAULT : STATUS_BAR_MSGS.NO_REPO_OPEN;
-			updateStatusBarItem(statusBarItem, msg);
 			return recallDaemon(statusBarItem);
 		}
-
-		// Read config.json
-		let configJSON = readYML(CONFIG_PATH);
-		if (!configJSON) { return; }
-		const users = readYML(USER_PATH) || {};
-
-		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
 
 		const isServerDown = await checkServerDown();
 		if (isServerDown) {
 			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.SERVER_DOWN);
 			return recallDaemon(statusBarItem);
 		}
+
+		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
+
+		const users = readYML(USER_PATH) || {};
 
 		const repoDiffs: IRepoDiffs[] = [];
 		for (const diffFile of diffFiles) {

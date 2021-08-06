@@ -125,7 +125,8 @@ export const STATUS_BAR_MSGS = {
 	AUTHENTICATION_FAILED: 'CodeSync => Authentication failed. Click to Login!',
 	SERVER_DOWN: 'CodeSync => Offline',
 	GETTING_READY: 'CodeSync => Getting ready',
-	NO_REPO_OPEN: 'CodeSync => No project is open'
+	NO_REPO_OPEN: 'CodeSync => No project is open',
+	CONNECT_REPO: 'CodeSync => Click to connect repo!'
 };
 
 export const COMMAND = {
