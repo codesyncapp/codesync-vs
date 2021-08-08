@@ -8,7 +8,7 @@ import { readYML } from './utils/common';
 
 let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 
-export function putLogEvent(error: string, userEmail?: string) {
+export function putLogEvent(error: string, userEmail?: string, retryCount?: number) {
 	console.log(error);
 
 	const users = readYML(USER_PATH);
@@ -86,9 +86,20 @@ export function putLogEvent(error: string, userEmail?: string) {
 		const errString = err.toString();
 		if (errString.substr('DataAlreadyAcceptedException') || errString.substr('InvalidSequenceTokenException')) {
 			const matches = errString.match(/(\d+)/);
-			sequenceTokenConfig[email] = matches[0];
-			fs.writeFileSync(SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
-			putLogEvent(error, email);
+			if (matches[0]) {
+				sequenceTokenConfig[email] = matches[0];
+				fs.writeFileSync(SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
+				if (retryCount) {
+					if (retryCount < 10) {
+						retryCount += 1;
+						putLogEvent(error, email, retryCount);
+					} 
+				} else {
+					putLogEvent(error, email, 1);
+				}
+			} else {
+				console.log(err, err.stack);
+			}
 		} else {
 			console.log(err, err.stack);
 		}
