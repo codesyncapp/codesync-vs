@@ -120,14 +120,14 @@ const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: 
 
 	// get item paths to upload and copy in respective repos
 	const itemPaths = initUtils.getSyncablePaths(repoPath, user.plan, isSyncingBranch);
-
+	const filePaths = itemPaths.map(itemPath => itemPath.file_path);
 	const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(repoPath, branch));
 	// copy files to .originals repo
-	initUtils.copyFilesTo(repoPath, itemPaths, originalsRepoBranchPath);
+	initUtils.copyFilesTo(repoPath, filePaths, originalsRepoBranchPath);
 
 	const shadowRepoBranchPath = path.join(SHADOW_REPO, path.join(repoPath, branch));
 	// copy files to .shadow repo
-	initUtils.copyFilesTo(repoPath, itemPaths, shadowRepoBranchPath);
+	initUtils.copyFilesTo(repoPath, filePaths, shadowRepoBranchPath);
 
 	// Upload repo/branch
 	await initUtils.uploadRepo(repoPath, branch, accessToken, itemPaths, isPublic, isSyncingBranch, viaDaemon, user.email);

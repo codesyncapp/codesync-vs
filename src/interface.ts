@@ -30,8 +30,9 @@ export interface IFileToUpload {
 	file_path: string,
 	rel_path: string,
 	is_binary: boolean,
-	size: number
-	created_at: number
+	size: number,
+	created_at: number,
+	modified_at: number
 }
 
 

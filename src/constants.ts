@@ -51,6 +51,8 @@ export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 
 export const REQUIRED_FILE_RENAME_DIFF_KEYS = ['old_abs_path', 'new_abs_path', 'old_rel_path', 'new_rel_path'];
 export const REQUIRED_DIR_RENAME_DIFF_KEYS = ['old_path', 'new_path'];
 export const DIFF_SIZE_LIMIT = 16 * 1000 * 1000;
+export const SEQUENCE_MATCHER_RATIO = 0.8;
+export const FILE_SIZE_AS_COPY = 100; // 100 bytes
 
 // AWS constants
 export const AWS_REGION = 'us-east-1';

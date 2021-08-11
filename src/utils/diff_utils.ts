@@ -12,16 +12,16 @@ import {
 } from "../constants";
 
 
-export function manageDiff(repoPath: string, branch: string, file_rel_path: string, diff: string, is_new_file?: boolean, is_rename?: boolean,
-	is_deleted?: boolean) {
-
+export function manageDiff(repoPath: string, branch: string, fileRelPath: string, diff: string,
+							isNewFile?: boolean, isRename?: boolean, isDeleted?: boolean, createdAt?: string) {
 	// Skip empty diffs
-	if (!diff && !is_new_file && !is_deleted) {
+	if (!diff && !isNewFile && !isDeleted) {
 		console.log(`Skipping: Empty diffs`);
 		return;
 	}
-
-	const createdAt = dateFormat(new Date(), DATETIME_FORMAT);
+	if (!createdAt) {
+		createdAt = dateFormat(new Date(), DATETIME_FORMAT);
+	}
 
 	// Add new diff in the buffer
 	const newDiff = <IDiff>{};
@@ -30,15 +30,15 @@ export function manageDiff(repoPath: string, branch: string, file_rel_path: stri
 	newDiff.diff = diff;
 	newDiff.repo_path = repoPath;
 	newDiff.branch = branch;
-	newDiff.file_relative_path = file_rel_path;
-	
-	if (is_new_file) {
+	newDiff.file_relative_path = fileRelPath;
+
+	if (isNewFile) {
 		newDiff.is_new_file = true;
 	}
-	else if (is_rename) {
+	else if (isRename) {
 		newDiff.is_rename = true;
 	}
-	else if (is_deleted) {
+	else if (isDeleted) {
 		newDiff.is_deleted = true;
 	}
 	// Append new diff in the buffer

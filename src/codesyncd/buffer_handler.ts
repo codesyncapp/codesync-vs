@@ -1,76 +1,29 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import * as vscode from "vscode";
-import { client } from "websocket";
-import * as getBranchName from 'current-git-branch';
+import {client} from "websocket";
 
-import { putLogEvent } from './logger';
-import {isRepoActive, readYML, updateStatusBarItem} from './utils/common';
-import { checkServerDown } from "./utils/api_utils";
-import { handleFilesRename, isValidDiff, handleNewFileUpload, getDIffForDeletedFile,
-	cleanUpDeleteDiff } from './utils/buffer_utils';
-import { IFileToDiff, IRepoDiffs, IUserPlan } from './interface';
+import {putLogEvent} from '../logger';
+import {isRepoActive, readYML, updateStatusBarItem} from '../utils/common';
+import {checkServerDown} from "../utils/api_utils";
 import {
-	RESTART_DAEMON_AFTER, DIFFS_REPO, DIFF_FILES_PER_ITERATION, STATUS_BAR_MSGS,
-	CONFIG_PATH, WEBSOCKET_ENDPOINT, ORIGINALS_REPO, DEFAULT_BRANCH, USER_PATH
-} from "./constants";
-import { syncRepo } from './init_handler';
-import { initUtils } from './utils/init_utils';
+    cleanUpDeleteDiff,
+    getDIffForDeletedFile,
+    handleFilesRename,
+    handleNewFileUpload,
+    isValidDiff
+} from '../utils/buffer_utils';
+import {IFileToDiff, IRepoDiffs} from '../interface';
+import {
+    CONFIG_PATH,
+    DIFF_FILES_PER_ITERATION,
+    DIFFS_REPO,
+    STATUS_BAR_MSGS,
+    USER_PATH,
+    WEBSOCKET_ENDPOINT
+} from "../constants";
+import {recallDaemon} from "./codesyncd";
 
-
-const recallDaemon = (statusBarItem: vscode.StatusBarItem) => {
-	// Recall daemon after X seconds
-	setTimeout(() => {
-		detectBranchChange();
-		handleBuffer(statusBarItem);
-	}, RESTART_DAEMON_AFTER);
-};
-
-export const detectBranchChange = async (viaDaemon=true) => {
-	// Read config.json
-	const configJSON = readYML(CONFIG_PATH);
-	const users = readYML(USER_PATH) || {};
-	for (const repoPath of Object.keys(configJSON.repos)) {
-		if (configJSON.repos[repoPath].is_disconnected) {
-			continue;
-		}
-		const configRepo = configJSON.repos[repoPath];
-		if (!configRepo.email) { continue; }
-		const accessToken = users[configRepo.email].access_token;
-        const userEmail = configRepo.email;
-        if (!accessToken) {
-			putLogEvent(`Access token not found for repo: ${repoPath}, ${userEmail}`, userEmail);
-			continue;
-		}
-		if (!fs.existsSync(repoPath)) {
-			// TODO: Handle out of sync repo
-			continue;
-		}
-		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
-		const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(repoPath, branch));
-		const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
-		if (!(branch in configRepo.branches)) {
-			if (originalsRepoExists) {
-				// init has been called, now see if we can upload the repo/branch
-				const itemPaths = initUtils.getSyncablePaths(repoPath, <IUserPlan>{}, true);
-				await initUtils.uploadRepo(repoPath, branch, accessToken, itemPaths, false, true, viaDaemon, configRepo.email);
-			} else {
-				await syncRepo(repoPath, accessToken, viaDaemon, true);
-			}
-			continue;
-		}
-
-		const configFiles = configRepo['branches'][branch];
-        // If all files IDs are None in config.yml, we need to sync the branch
-		const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
-		if (shouldSyncBranch) {
-			const itemPaths = initUtils.getSyncablePaths(repoPath, <IUserPlan>{}, true);
-			await initUtils.uploadRepo(repoPath, branch, accessToken, itemPaths, false, true, viaDaemon, configRepo.email);
-		}
-	}
-};
-
-export async function handleBuffer(statusBarItem: vscode.StatusBarItem) {
+export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 	/***
 	 * Each file in .diffs directory contains following data
 
