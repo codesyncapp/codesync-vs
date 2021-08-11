@@ -4,10 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased 2.20.0] - 2021-08-07
+## [Unreleased 2.20.0] - 2021-08-11
 ### Added
 - Updated status bar msg if repo is not connected. Clicking on it triggers Init process
 - Applied limit on retry putLogEvent
+- Non-IDE events i.e. file create/updated/deleted are now part of daemon
 
 ## [2.19.0] - 2021-08-07
 ### Added
