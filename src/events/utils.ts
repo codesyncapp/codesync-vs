@@ -4,7 +4,7 @@ import ignore from 'ignore';
 import * as getBranchName from 'current-git-branch';
 import { GIT_REPO, CONFIG_PATH, SHADOW_REPO, DEFAULT_BRANCH, ORIGINALS_REPO } from "../constants";
 import { handleDirectoryRenameDiffs, manageDiff } from './diff_utils';
-import {isRepoActive, readYML} from './common';
+import {isRepoActive, readYML} from '../utils/common';
 
 function isGitFile(path: string) {
 	return path.startsWith(GIT_REPO);

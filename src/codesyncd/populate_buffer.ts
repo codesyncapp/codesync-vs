@@ -14,12 +14,12 @@ import {
     USER_PATH
 } from "../constants";
 import {putLogEvent} from "../logger";
-import {initUtils} from "../utils/init_utils";
+import {initUtils} from "../init/utils";
 import {IFileToUpload, IUserPlan} from "../interface";
-import {syncRepo} from "../init_handler";
+import {syncRepo} from "../init/init_handler";
 import {similarity} from "./utils";
 import {diff_match_patch} from "diff-match-patch";
-import {manageDiff} from "../utils/diff_utils";
+import {manageDiff} from "../events/diff_utils";
 import {isBinaryFileSync} from "isbinaryfile";
 import * as dateFormat from "dateformat";
 
@@ -38,7 +38,7 @@ const populateBufferForMissedEvents = async (readyRepos: any) => {
             // Go for content diffs if repo was modified after lastSyncedAt
             dataDiffs = await obj.populateBufferForRepo();
         }
-        const deletedFilesDiffs = await obj.getDiffForDeletedFiles();
+        const deletedFilesDiffs = obj.getDiffForDeletedFiles();
         const diffs = Object.assign({}, dataDiffs, deletedFilesDiffs);
         obj.addDiffsInBuffer(diffs);
     }
@@ -235,9 +235,9 @@ class PopulateBuffer {
                 'is_deleted': true,
                 'diff': null,  // Computing later while handling buffer
             };
-            const cacheRepoBranchPath = path.join(DELETED_REPO, this.repoBranchPath);
+            const cacheRepoPath = path.join(DELETED_REPO, this.repoPath);
             // Pick from .shadow and add file in .deleted repo to avoid duplicate diffs
-            initUtils.copyFilesTo(this.repoPath, [shadowFilePath], cacheRepoBranchPath);
+            initUtils.copyFilesTo(this.repoPath, [shadowFilePath], cacheRepoPath);
         });
         return diffs;
     }

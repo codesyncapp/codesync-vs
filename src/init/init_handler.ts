@@ -4,13 +4,13 @@ import * as vscode from 'vscode';
 import * as getBranchName from 'current-git-branch';
 
 import { CONFIG_PATH, DEFAULT_BRANCH, GITIGNORE, NOTIFICATION,
-	ORIGINALS_REPO, SHADOW_REPO, SYNCIGNORE } from "./constants";
-import {isRepoActive, readFile, readYML} from "./utils/common";
-import { checkServerDown, getUserForToken } from "./utils/api_utils";
-import { initUtils } from './utils/init_utils';
-import { askPublicPrivate, askToUpdateSyncIgnore } from './utils/notifications';
-import { askAndTriggerSignUp } from './utils/auth_utils';
-import { IUser, IUserPlan } from './interface';
+	ORIGINALS_REPO, SHADOW_REPO, SYNCIGNORE } from "../constants";
+import {isRepoActive, readFile, readYML} from "../utils/common";
+import { checkServerDown, getUserForToken } from "../utils/api_utils";
+import { initUtils } from './utils';
+import { askPublicPrivate, askToUpdateSyncIgnore } from '../utils/notifications';
+import { askAndTriggerSignUp } from '../utils/auth_utils';
+import { IUser, IUserPlan } from '../interface';
 
 
 export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=false, isSyncingBranch=false) => {

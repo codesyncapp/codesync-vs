@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { NOTIFICATION, USER_PATH } from '../constants';
-import { syncRepo } from '../init_handler';
+import { syncRepo } from '../init/init_handler';
 import { readYML } from './common';
 import { logout, redirectToBrowser } from './auth_utils';
 

@@ -11,7 +11,7 @@ import {
     handleFilesRename,
     handleNewFileUpload,
     isValidDiff
-} from '../utils/buffer_utils';
+} from './utils';
 import {IFileToDiff, IRepoDiffs} from '../interface';
 import {
     CONFIG_PATH,
@@ -24,7 +24,7 @@ import {
 import {recallDaemon} from "./codesyncd";
 
 export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
-	/***
+	/*
 	 * Each file in .diffs directory contains following data
 
         repo_path: /Users/basit/projects/codesync/codesync
@@ -68,7 +68,7 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 				- Get the diff with shadow file
 				- Remove the shadow file
 				- Remove the diff file if data is successfully uploaded
-	***/
+	*/
 	try {
 		// Read config.json
 		let configJSON = readYML(CONFIG_PATH);
@@ -270,5 +270,4 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 	}
 
 	recallDaemon(statusBarItem);
-
-}
+};

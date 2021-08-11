@@ -22,11 +22,11 @@ import {
 	WEB_APP_URL
 } from '../constants';
 import { IFileToUpload, IUserPlan } from '../interface';
-import {isRepoActive, readFile, readYML} from './common';
-import { checkServerDown } from './api_utils';
+import {isRepoActive, readFile, readYML} from '../utils/common';
+import { checkServerDown } from '../utils/api_utils';
 import { putLogEvent } from '../logger';
-import { uploadFileTos3 } from './upload_file';
-import { trackRepoHandler, unSyncHandler } from '../commands_handler';
+import { uploadFileTos3 } from '../utils/upload_file';
+import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
 
 export class initUtils {
 
