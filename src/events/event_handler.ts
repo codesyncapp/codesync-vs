@@ -4,9 +4,9 @@ import * as vscode from 'vscode';
 import { diff_match_patch } from 'diff-match-patch';
 import * as getBranchName from 'current-git-branch';
 
-import { SHADOW_REPO, DEFAULT_BRANCH, DELETED_REPO } from "./constants";
-import { handleDirectoryDeleteDiffs, manageDiff } from './utils/diff_utils';
-import { repoIsNotSynced, shouldIgnoreFile, handleRename, handleNewFile } from './utils/event_utils';
+import { SHADOW_REPO, DEFAULT_BRANCH, DELETED_REPO } from "../constants";
+import { handleDirectoryDeleteDiffs, manageDiff } from './diff_utils';
+import { repoIsNotSynced, shouldIgnoreFile, handleRename, handleNewFile } from './utils';
 
 
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {

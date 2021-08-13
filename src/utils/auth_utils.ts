@@ -12,7 +12,7 @@ import jwt_decode from "jwt-decode";
 import { readYML } from './common';
 import { IAuth0User } from '../interface';
 import { API_USERS, Auth0URLs, LOGIN_SUCCESS_CALLBACK, NOTIFICATION, USER_PATH } from "../constants";
-import { repoIsNotSynced } from "./event_utils";
+import { repoIsNotSynced } from "../events/utils";
 import { showConnectRepo } from "./notifications";
 
 export const isPortAvailable = async (port: number) => {

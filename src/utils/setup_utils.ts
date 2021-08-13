@@ -5,12 +5,12 @@ import {
 	CODESYNC_ROOT, SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO,
 	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH, NOTIFICATION, WEB_APP_URL
 } from "../constants";
-import { repoIsNotSynced } from './event_utils';
+import { repoIsNotSynced } from '../events/utils';
 import { initExpressServer, isPortAvailable } from './auth_utils';
 import { showConnectRepo, showSignUpButtons } from './notifications';
 import { readYML } from './common';
-import { initUtils } from './init_utils';
-import { trackRepoHandler, unSyncHandler } from '../commands_handler';
+import { initUtils } from '../init/utils';
+import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
 
 
 const createSystemDirectories = () => {
@@ -32,7 +32,7 @@ const createSystemDirectories = () => {
 	const sequenceTokenExists = fs.existsSync(SEQUENCE_TOKEN_PATH);
 	if (!sequenceTokenExists) {
 		fs.writeFileSync(SEQUENCE_TOKEN_PATH, yaml.safeDump({}));
-	}	
+	}
 };
 
 
@@ -74,11 +74,11 @@ export const setupCodeSync = async (repoPath: string) => {
 		return;
 	}
 
-	if (repoIsNotSynced(repoPath) || !initUtils.successfullySynced(repoPath)) { 
+	if (repoIsNotSynced(repoPath) || !initUtils.successfullySynced(repoPath)) {
 		// Show notification to user to Sync the repo
 		showConnectRepo(repoPath, "", "");
 		return;
-	} 
+	}
 
 	// Show notification that repo is in sync
 	vscode.window.showInformationMessage(NOTIFICATION.REPO_IN_SYNC, ...[

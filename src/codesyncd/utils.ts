@@ -2,10 +2,10 @@ import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import * as path from 'path';
 import { IDiff } from "../interface";
-import { CONFIG_PATH, DIFF_SIZE_LIMIT, REQUIRED_DIFF_KEYS, 
+import { CONFIG_PATH, DIFF_SIZE_LIMIT, REQUIRED_DIFF_KEYS,
 	REQUIRED_DIR_RENAME_DIFF_KEYS, REQUIRED_FILE_RENAME_DIFF_KEYS,
 	SHADOW_REPO, ORIGINALS_REPO, DELETED_REPO } from "../constants";
-import { uploadFileToServer } from './upload_file';
+import { uploadFileToServer } from '../utils/upload_file';
 import { isBinaryFileSync } from 'isbinaryfile';
 import { diff_match_patch } from 'diff-match-patch';
 import { putLogEvent } from '../logger';
@@ -38,25 +38,25 @@ export const isValidDiff = (diffData: IDiff) => {
 	return true;
 };
 
-export const handleNewFileUpload = async (access_token: string, diffData: IDiff, relPath: string, repoId: number, 
+export const handleNewFileUpload = async (access_token: string, diffData: IDiff, relPath: string, repoId: number,
 	configJSON: any, diffFilePath: string) => {
-	/* 
+	/*
 	Uplaods new file to server and adds it in config
-	Ignore if file is not present in .originals repo 
+	Ignore if file is not present in .originals repo
 	*/
 	const originalsPath = path.join(ORIGINALS_REPO, `${diffData.repo_path}/${diffData.branch}/${relPath}`);
 	if (!fs.existsSync(originalsPath)) {
 		fs.unlinkSync(diffFilePath);
 		return {
-			uploaded: false, 
+			uploaded: false,
 			config: configJSON
 		};
 	}
 	const response = await uploadFileToServer(access_token, repoId, diffData.branch, originalsPath, relPath, diffData.created_at);
-	if (response.error) { 
+	if (response.error) {
 		putLogEvent(`Error uploading to server: ${response.error}`);
 		return {
-			uploaded: false, 
+			uploaded: false,
 			config: configJSON
 		};
 	}
@@ -65,17 +65,17 @@ export const handleNewFileUpload = async (access_token: string, diffData: IDiff,
 	fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
 	fs.unlinkSync(diffFilePath);
 	return {
-		uploaded: true, 
+		uploaded: true,
 		config: configJSON
 	};
 };
 
-export const handleFilesRename = (configJSON: any, repoPath: string, branch: string, 
+export const handleFilesRename = (configJSON: any, repoPath: string, branch: string,
 	relPath: string, oldFileId: number, oldRelPath: string) => {
-	
+
 	const oldShadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${oldRelPath}`);
 	const newShadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
-	if (fs.existsSync(oldShadowPath)) { 
+	if (fs.existsSync(oldShadowPath)) {
 		fs.renameSync(oldShadowPath, newShadowPath);
 	}
 	configJSON.repos[repoPath].branches[branch][relPath] = oldFileId;
@@ -116,4 +116,45 @@ export const getDIffForDeletedFile = (repoPath: string, branch: string, relPath:
 	diff = dmp.patch_toText(patches);
 	cleanUpDeleteDiff(repoPath, branch, relPath, configJSON);
 	return diff;
+};
+
+export const similarity = (s1: string, s2: string) => {
+	let longer = s1;
+	let shorter = s2;
+	if (s1.length < s2.length) {
+		longer = s2;
+		shorter = s1;
+	}
+	const longerLength = longer.length;
+	if (longerLength == 0) {
+		return 1.0;
+	}
+	return (longerLength - editDistance(longer, shorter)) / longerLength;
+};
+
+const editDistance = (s1: string, s2: string) => {
+	s1 = s1.toLowerCase();
+	s2 = s2.toLowerCase();
+
+	const costs: number[] = [];
+	for (let i = 0; i <= s1.length; i++) {
+		let lastValue = i;
+		for (let j = 0; j <= s2.length; j++) {
+			if (i == 0)
+				costs[j] = j;
+			else {
+				if (j > 0) {
+					let newValue = costs[j - 1];
+					if (s1.charAt(i - 1) != s2.charAt(j - 1))
+						newValue = Math.min(Math.min(newValue, lastValue),
+							costs[j]) + 1;
+					costs[j - 1] = lastValue;
+					lastValue = newValue;
+				}
+			}
+		}
+		if (i > 0)
+			costs[s2.length] = lastValue;
+	}
+	return costs[s2.length];
 };

@@ -22,11 +22,11 @@ import {
 	WEB_APP_URL
 } from '../constants';
 import { IFileToUpload, IUserPlan } from '../interface';
-import {isRepoActive, readFile, readYML} from './common';
-import { checkServerDown } from './api_utils';
+import {isRepoActive, readFile, readYML} from '../utils/common';
+import { checkServerDown } from '../utils/api_utils';
 import { putLogEvent } from '../logger';
-import { uploadFileTos3 } from './upload_file';
-import { trackRepoHandler, unSyncHandler } from '../commands_handler';
+import { uploadFileTos3 } from '../utils/upload_file';
+import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
 
 export class initUtils {
 
@@ -64,7 +64,8 @@ export class initUtils {
 		return hasValidFiles;
 	}
 
-	static getSyncablePaths (repoPath: string, userPlan: IUserPlan, isSyncingBranch=false) {
+	static getSyncablePaths (repoPath: string, userPlan: IUserPlan, isSyncingBranch=false,
+							isPopulatingBuffer = false) {
 		const syncignorePath = path.join(repoPath, SYNCIGNORE);
 		const syncignoreExists = fs.existsSync(syncignorePath);
 		const itemPaths: IFileToUpload[] = [];
@@ -97,11 +98,15 @@ export class initUtils {
 							rel_path: relPath,
 							is_binary: isBinaryFileSync(filePath),
 							size: fileStats.size,
-							created_at: fileStats.ctime
+							created_at: fileStats.ctime,
+							modified_at: fileStats.mtime
 						});
 						syncSize += fileStats.size;
 					}
-					if (!isSyncingBranch && !initUtils.isValidRepoSize(syncSize, userPlan) && !initUtils.isValidFilesCount(itemPaths.length, userPlan)) {
+
+					if (!isPopulatingBuffer && !isSyncingBranch &&
+						!initUtils.isValidRepoSize(syncSize, userPlan) &&
+						!initUtils.isValidFilesCount(itemPaths.length, userPlan)) {
 						return [];
 					}
 					next();
@@ -112,16 +117,16 @@ export class initUtils {
 		return itemPaths;
 	}
 
-	static copyFilesTo (repoPath: string, itemPaths: IFileToUpload[], destination: string) {
-		itemPaths.forEach((fileToUpload) => {
-			const relPath = fileToUpload.file_path.split(`${repoPath}/`)[1];
+	static copyFilesTo (repoPath: string, filePaths: string[], destination: string) {
+		filePaths.forEach((filePath) => {
+			const relPath = filePath.split(`${repoPath}/`)[1];
 			const destinationPath = path.join(destination, relPath);
 			const directories = path.dirname(destinationPath);
 			if (!fs.existsSync(directories)) {
 				fs.mkdirSync(directories, { recursive: true });
 			}
 			// File destination will be created or overwritten by default.
-			fs.copyFileSync(fileToUpload.file_path, destinationPath);
+			fs.copyFileSync(filePath, destinationPath);
 		});
 	}
 

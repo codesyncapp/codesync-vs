@@ -3,13 +3,14 @@
 import * as vscode from 'vscode';
 
 import { handleChangeEvent, handleFilesCreated, handleFilesDeleted,
-	handleFilesRenamed, handlePastedFile } from "./event_handler";
-import { detectBranchChange, handleBuffer } from "./buffer_handler";
+	handleFilesRenamed, handlePastedFile } from "./events/event_handler";
+import { handleBuffer } from "./codesyncd/buffer_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
 import { COMMAND, STATUS_BAR_MSGS } from './constants';
 import { updateStatusBarItem } from "./utils/common";
 
-import { unSyncHandler, SignUpHandler, SyncHandler, trackRepoHandler } from './commands_handler';
+import { unSyncHandler, SignUpHandler, SyncHandler, trackRepoHandler } from './handlers/commands_handler';
+import { detectBranchChange } from "./codesyncd/populate_buffer";
 
 
 export async function activate(context: vscode.ExtensionContext) {

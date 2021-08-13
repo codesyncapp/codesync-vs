@@ -1,13 +1,13 @@
 import * as fs from "fs";
 import * as vscode from 'vscode';
 import * as yaml from "js-yaml";
-import { CONFIG_PATH, NOTIFICATION, USER_PATH, WEB_APP_URL } from './constants';
-import {isRepoActive, readYML} from './utils/common';
-import { repoIsNotSynced } from './utils/event_utils';
-import { initUtils } from './utils/init_utils';
-import { redirectToBrowser } from "./utils/auth_utils";
-import { showChooseAccount } from "./utils/notifications";
-import { updateRepo } from './utils/sync_repo_utils';
+import { CONFIG_PATH, NOTIFICATION, USER_PATH, WEB_APP_URL } from '../constants';
+import {isRepoActive, readYML} from '../utils/common';
+import { repoIsNotSynced } from '../events/utils';
+import { initUtils } from '../init/utils';
+import { redirectToBrowser } from "../utils/auth_utils";
+import { showChooseAccount } from "../utils/notifications";
+import { updateRepo } from '../utils/sync_repo_utils';
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
