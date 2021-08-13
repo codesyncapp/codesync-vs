@@ -29,6 +29,10 @@
       {
         "command": "codesync.unsync",
         "title": "CodeSync: Disconnet Repo"
+      },
+      {
+        "command": "codesync.trackFile",
+        "title": "View File Playback on CodeSync"
       }
     ],
     "viewsContainers": {
@@ -71,7 +75,7 @@
       },
       {
         "view": "codesync-signup",
-        "contents": "Login to CodeSync.\n[Join](command:codesync.singup)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
+        "contents": "Login to CodeSync.\n[Join](command:codesync.signup)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
       },
       {
         "view": "codesync-signed-up-not-synced",
@@ -81,7 +85,16 @@
         "view": "codesync-signed-up-and-synced",
         "contents": "Repo is in sync with CodeSync.\n[Track it](command:codesync.trackRepo)\n[Unsync](command:codesync.unsync)"
       }
-    ]
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "group": "CodeSync",
+          "command": "codesync.trackFile",
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView"
+        }
+      ]
+    }
   },
   "main": "./out/extension",
   "scripts": {

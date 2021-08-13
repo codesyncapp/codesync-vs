@@ -1,8 +1,10 @@
 import * as fs from "fs";
 import * as vscode from 'vscode';
 import * as yaml from "js-yaml";
-import { CONFIG_PATH, NOTIFICATION, USER_PATH, WEB_APP_URL } from '../constants';
-import {isRepoActive, readYML} from '../utils/common';
+import * as getBranchName from 'current-git-branch';
+
+import { CONFIG_PATH, DEFAULT_BRANCH, NOTIFICATION, USER_PATH, WEB_APP_URL } from '../constants';
+import { isRepoActive, readYML } from '../utils/common';
 import { repoIsNotSynced } from '../events/utils';
 import { initUtils } from '../init/utils';
 import { redirectToBrowser } from "../utils/auth_utils";
@@ -64,5 +66,24 @@ export const trackRepoHandler = () => {
 	const configRepo = config['repos'][repoPath];
 	// Show notification that repo is in sync
 	const playbackLink = `${WEB_APP_URL}/repos/${configRepo.id}/playback`;
+	vscode.env.openExternal(vscode.Uri.parse(playbackLink));
+};
+
+
+export const trackFileHandler = () => {
+	const repoPath = vscode.workspace.rootPath;
+	if (!repoPath) { return; }
+	const config = readYML(CONFIG_PATH);
+	const configRepo = config['repos'][repoPath];
+	const editor = vscode.window.activeTextEditor;
+	const filePath = editor?.document.fileName;
+	if (!filePath) { return; }
+	const branch = getBranchName({altPath: repoPath}) || DEFAULT_BRANCH;
+	const configFiles = configRepo.branches[branch];
+	const relPath = filePath.split(`${repoPath}/`)[1];
+	if (!(relPath in configFiles )) { return; }
+	const fileId = configFiles[relPath];
+	// Show notification that repo is in sync
+	const playbackLink = `${WEB_APP_URL}/files/${fileId}/history`;
 	vscode.env.openExternal(vscode.Uri.parse(playbackLink));
 };

@@ -9,7 +9,7 @@ import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_uti
 import { COMMAND, STATUS_BAR_MSGS } from './constants';
 import { updateStatusBarItem } from "./utils/common";
 
-import { unSyncHandler, SignUpHandler, SyncHandler, trackRepoHandler } from './handlers/commands_handler';
+import { unSyncHandler, SignUpHandler, SyncHandler, trackRepoHandler, trackFileHandler } from './handlers/commands_handler';
 import { detectBranchChange } from "./codesyncd/populate_buffer";
 
 
@@ -27,6 +27,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSync, SyncHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerUnsync, unSyncHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackRepo, trackRepoHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackFile, trackFileHandler));
 
 	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 	statusBarItem.command = COMMAND.triggerUnsync;

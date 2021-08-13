@@ -5,9 +5,12 @@ import untildify =  require('untildify');
 // export const CODESYNC_ROOT = untildify('~/.codesync-test');
 // export const CODESYNC_DOMAIN = '127.0.0.1:8000';
 // export const CODESYNC_HOST = 'http://127.0.0.1:8000';
+// export const WEB_APP_URL = "http://localhost:3000";
 export const CODESYNC_ROOT = untildify('~/.codesync');
 export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
 export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
+export const WEB_APP_URL = "https://www.codesync.com";
+
 
 export const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs/.vscode`;
 export const ORIGINALS_REPO = `${CODESYNC_ROOT}/.originals`;
@@ -43,7 +46,6 @@ export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v1/websocket`;
 export const LOGIN_SUCCESS_CALLBACK = "/login-success";
 
-export const WEB_APP_URL = "https://www.codesync.com";
 export const PLANS_URL = `${WEB_APP_URL}/plans`;
 // Diff utils
 export const DIFF_FILES_PER_ITERATION = 50;
@@ -135,5 +137,6 @@ export const COMMAND = {
 	triggerSignUp: 'codesync.signup',
 	triggerSync: 'codesync.sync',
 	triggerUnsync: 'codesync.unsync',
-	trackRepo: 'codesync.trackRepo'
+	trackRepo: 'codesync.trackRepo',
+	trackFile: 'codesync.trackFile'
 };
