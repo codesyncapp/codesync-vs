@@ -109,7 +109,9 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 			if (!diffData) { return; }
 			if (!isValidDiff(diffData)) {
 				putLogEvent(`Skipping invalid diff file: ${diffData}, file: ${diffFile}`);
-				fs.unlinkSync(filePath);
+				if (fs.existsSync(filePath)) {
+					fs.unlinkSync(filePath);
+				}
 				return;
 			}
 			if (!(diffData.repo_path in configJSON.repos)) {
@@ -188,9 +190,12 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 									if (!newFiles.includes(relPath)) {
 										newFiles.push(relPath);
 									}
-									const json = await handleNewFileUpload(accessToken, diffData, relPath, configRepo.id, configJSON, fileToDiff.file_path);
+									const json = await handleNewFileUpload(accessToken, diffData, relPath, configRepo.id, configJSON);
 									if (json.uploaded) {
 										configJSON = json.config;
+									}
+									if (fs.existsSync(fileToDiff.file_path)) {
+										fs.unlinkSync(fileToDiff.file_path);
 									}
 									continue;
 								}

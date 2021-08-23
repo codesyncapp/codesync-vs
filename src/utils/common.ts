@@ -1,7 +1,14 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as yaml from 'js-yaml';
-import { COMMAND, STATUS_BAR_MSGS } from "../constants";
+import * as path from "path";
+
+import {
+	COMMAND,
+	IGNOREABLE_REPOS,
+	STATUS_BAR_MSGS,
+	SYNCIGNORE
+} from "../constants";
 
 export const readFile = (filePath: string) => {
 	return fs.readFileSync(filePath, "utf8");
@@ -29,4 +36,29 @@ export const updateStatusBarItem = (statusBarItem: vscode.StatusBarItem, text: s
 
 export const isRepoActive = (config: any, repoPath: string) => {
 	return repoPath in config.repos && !config.repos[repoPath].is_disconnected;
+};
+
+export const getSyncIgnoreItems = (repoPath: string) => {
+	const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
+	const syncIgnoreExists = fs.existsSync(syncIgnorePath);
+	if (!syncIgnoreExists) {
+		return [];
+	}
+	let syncIgnoreData = "";
+	syncIgnoreData = readFile(syncIgnorePath);
+	const syncIgnoreItems = syncIgnoreData.split("\n");
+	return syncIgnoreItems.filter(item =>  item);
+};
+
+export const getSkipRepos = (repoPath: string, syncignoreItems: string[]) => {
+	const skipRepos = [...IGNOREABLE_REPOS];
+	syncignoreItems.forEach((pattern) => {
+		const path = `${repoPath}/${pattern}`;
+		if (!fs.existsSync(path)) { return; }
+		const lstat = fs.lstatSync(path);
+		if (lstat.isDirectory()) {
+			skipRepos.push(pattern);
+		}
+	});
+	return skipRepos;
 };

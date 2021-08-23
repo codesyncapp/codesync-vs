@@ -39,14 +39,13 @@ export const isValidDiff = (diffData: IDiff) => {
 };
 
 export const handleNewFileUpload = async (access_token: string, diffData: IDiff, relPath: string, repoId: number,
-	configJSON: any, diffFilePath: string) => {
+	configJSON: any) => {
 	/*
 	Uplaods new file to server and adds it in config
 	Ignore if file is not present in .originals repo
 	*/
 	const originalsPath = path.join(ORIGINALS_REPO, `${diffData.repo_path}/${diffData.branch}/${relPath}`);
 	if (!fs.existsSync(originalsPath)) {
-		fs.unlinkSync(diffFilePath);
 		return {
 			uploaded: false,
 			config: configJSON
@@ -63,7 +62,6 @@ export const handleNewFileUpload = async (access_token: string, diffData: IDiff,
 	configJSON.repos[diffData.repo_path].branches[diffData.branch][relPath] = response.fileId;
 	// write file id to config.yml
 	fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
-	fs.unlinkSync(diffFilePath);
 	return {
 		uploaded: true,
 		config: configJSON

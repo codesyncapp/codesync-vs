@@ -1,9 +1,12 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as walk from "walk";
+import * as dateFormat from "dateformat";
 import * as getBranchName from "current-git-branch";
+import ignore from "ignore";
+import {isBinaryFileSync} from "isbinaryfile";
 
-import {readYML} from "../utils/common";
+import { getSkipRepos, getSyncIgnoreItems, readYML } from "../utils/common";
 import {
     CONFIG_PATH, DATETIME_FORMAT,
     DEFAULT_BRANCH, DELETED_REPO,
@@ -20,8 +23,6 @@ import {syncRepo} from "../init/init_handler";
 import {similarity} from "./utils";
 import {diff_match_patch} from "diff-match-patch";
 import {manageDiff} from "../events/diff_utils";
-import {isBinaryFileSync} from "isbinaryfile";
-import * as dateFormat from "dateformat";
 
 
 export const populateBuffer = async () => {
@@ -94,16 +95,26 @@ class PopulateBuffer {
                 shadowFilePath
             };
         }
+        const syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
+        const ig = ignore().add(syncIgnoreItems);
+        const skipRepos = getSkipRepos(repoPath, syncIgnoreItems);
+
         const options = {
+            filters: skipRepos,
             listeners: {
                 file: function (root: string, fileStats: any, next: any) {
                     const oldFilePath = `${root}/${fileStats.name}`;
+                    const relPath = oldFilePath.split(`${shadowRepoBranchPath}/`)[1];
                     const isBinary = isBinaryFileSync(oldFilePath);
+                    // skip syncIgnored files
+                    const shouldIgnore = ig.ignores(relPath);
+                    if (shouldIgnore) {
+                        return next();
+                    }
                     // Skip binary files
                     if (isBinary) {
                         return next();
                     }
-                    const relPath = oldFilePath.split(`${shadowRepoBranchPath}/`)[1];
                     // Ignore shadow files whose actual files exist in the repo
                     const actualFilePath = path.join(repoPath, relPath);
                     if (fs.existsSync(actualFilePath)) {
@@ -119,6 +130,7 @@ class PopulateBuffer {
                 }
             }
         };
+
         walk.walkSync(shadowRepoBranchPath, options);
         return {
             isRename: matchingFilesCount === 1,

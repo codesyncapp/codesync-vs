@@ -48,6 +48,7 @@ export function manageDiff(repoPath: string, branch: string, fileRelPath: string
 
 export const handleDirectoryRenameDiffs = async (repoPath: string, branch: string, diff: string) => {
 	const diffJSON = JSON.parse(diff);
+	// No need to skip repos here as it is for specific repo
 	const walker = walk.walk(diffJSON.new_path);
 	walker.on("file", function (root, fileStats, next) {
 		const newFilePath = `${root}/${fileStats.name}`;
@@ -67,7 +68,7 @@ export const handleDirectoryRenameDiffs = async (repoPath: string, branch: strin
 
 export const handleDirectoryDeleteDiffs = async (repoPath: string, branch: string, relPath: string) => {
 	const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
-
+	// No need to skip repos here as it is for specific repo
 	const walker = walk.walk(shadowPath);
 	walker.on("file", function (root, fileStats, next) {
 		const filePath = `${root}/${fileStats.name}`;

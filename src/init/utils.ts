@@ -13,16 +13,14 @@ import {
 	API_INIT,
 	CONFIG_PATH,
 	DEFAULT_BRANCH,
-	IGNOREABLE_REPOS,
 	NOTIFICATION,
 	ORIGINALS_REPO,
 	SEQUENCE_TOKEN_PATH,
 	SYNCIGNORE,
-	USER_PATH,
-	WEB_APP_URL
+	USER_PATH
 } from '../constants';
 import { IFileToUpload, IUserPlan } from '../interface';
-import {isRepoActive, readFile, readYML} from '../utils/common';
+import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems } from '../utils/common';
 import { checkServerDown } from '../utils/api_utils';
 import { putLogEvent } from '../logger';
 import { uploadFileTos3 } from '../utils/upload_file';
@@ -66,27 +64,18 @@ export class initUtils {
 
 	static getSyncablePaths (repoPath: string, userPlan: IUserPlan, isSyncingBranch=false,
 							isPopulatingBuffer = false) {
-		const syncignorePath = path.join(repoPath, SYNCIGNORE);
-		const syncignoreExists = fs.existsSync(syncignorePath);
+		const syncIgnoreItems = getSyncIgnoreItems(repoPath);
 		const itemPaths: IFileToUpload[] = [];
-
-		if (!syncignoreExists) {
+		if (!syncIgnoreItems) {
 			return itemPaths;
 		}
-
 		let syncSize = 0;
-		let syncignoreData = "";
 
-		syncignoreData = readFile(syncignorePath);
-		const syncignoreItems = syncignoreData.split("\n");
-
-		IGNOREABLE_REPOS.forEach((repo) => {
-			syncignoreItems.push(repo);
-		});
-
-		const ig = ignore().add(syncignoreItems);
+		const ig = ignore().add(syncIgnoreItems);
+		const skipRepos = getSkipRepos(repoPath, syncIgnoreItems);
 
 		const options = {
+			filters: skipRepos,
 			listeners: {
 				file: function (root: string, fileStats: any, next: any) {
 					const filePath = `${root}/${fileStats.name}`;
@@ -126,7 +115,12 @@ export class initUtils {
 				fs.mkdirSync(directories, { recursive: true });
 			}
 			// File destination will be created or overwritten by default.
-			fs.copyFileSync(filePath, destinationPath);
+			try {
+				fs.copyFileSync(filePath, destinationPath);
+			} catch (error) {
+				console.log("Unable to copy", filePath, destinationPath);
+				console.log(error);
+			}
 		});
 	}
 
@@ -237,6 +231,9 @@ export class initUtils {
 
 				// delete .originals repo
 				fs.rmdirSync(originalsRepoBranchPath, { recursive: true });
+
+				// Hide Connect Repo
+				vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
 
 				// Show success notification
 				if (!viaDaemon) {

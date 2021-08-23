@@ -82,7 +82,6 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 			if (!(global as any).didSaveSyncIgnoreEventAdded) {
 				(global as any).didSaveSyncIgnoreEventAdded = true;
 				vscode.workspace.onDidSaveTextDocument(async event => {
-					console.log("Saved!");
 					const fileName = event.fileName;
 					if (fileName.endsWith(SYNCIGNORE)) {
 						await postSyncIgnoreUpdate(repoName, branch, repoPath, user, accessToken, viaDaemon, isSyncingBranch);
@@ -132,5 +131,4 @@ const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: 
 	// Upload repo/branch
 	await initUtils.uploadRepo(repoPath, branch, accessToken, itemPaths, isPublic, isSyncingBranch, viaDaemon, user.email);
 
-	vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
 };
