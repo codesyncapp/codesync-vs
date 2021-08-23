@@ -106,21 +106,19 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 		for (const diffFile of diffFiles) {
 			const filePath = `${DIFFS_REPO}/${diffFile}`;
 			const diffData = readYML(filePath);
-			if (!diffData) { return; }
+			if (!diffData) { continue; }
 			if (!isValidDiff(diffData)) {
 				putLogEvent(`Skipping invalid diff file: ${diffData}, file: ${diffFile}`);
-				if (fs.existsSync(filePath)) {
-					fs.unlinkSync(filePath);
-				}
-				return;
+				fs.unlinkSync(filePath);
+				continue;
 			}
 			if (!(diffData.repo_path in configJSON.repos)) {
 				putLogEvent(`Repo ${diffData.repo_path} is in buffer.yml but not in config.yml`);
-				return;
+				continue;
 			}
 			if (configJSON.repos[diffData.repo_path].is_disconnected) {
 				putLogEvent(`Repo ${diffData.repo_path} is disconnected`);
-				return;
+				continue;
 			}
 			const configRepo = configJSON.repos[diffData.repo_path];
 
