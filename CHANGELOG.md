@@ -5,9 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [2.23.0] - 2021-08-24
+## [2.24.0] - 2021-08-24
 ### Added
 - Creating separate socket connection per repo in buffer handler
+
+## [2.23.0] - 2021-08-23
+(Cannot unpublish a specific version)
 
 ## [2.22.0] - 2021-08-23
 ### Added
