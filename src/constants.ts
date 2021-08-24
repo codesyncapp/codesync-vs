@@ -2,7 +2,7 @@
 
 import untildify =  require('untildify');
 
-// export const CODESYNC_ROOT = untildify('~/.codesync-test');
+// export const CODESYNC_ROOT = untildify('~/.codesync-local');
 // export const CODESYNC_DOMAIN = '127.0.0.1:8000';
 // export const CODESYNC_HOST = 'http://127.0.0.1:8000';
 // export const WEB_APP_URL = "http://localhost:3000";
@@ -10,7 +10,6 @@ export const CODESYNC_ROOT = untildify('~/.codesync');
 export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
 export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
 export const WEB_APP_URL = "https://www.codesync.com";
-
 
 export const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs/.vscode`;
 export const ORIGINALS_REPO = `${CODESYNC_ROOT}/.originals`;
@@ -28,7 +27,7 @@ export const DEFAULT_BRANCH = 'default';
 export const GIT_REPO = '.git/';
 
 // TODO: Use standard .gitignore
-export const IGNOREABLE_REPOS = [
+export const IGNORABLE_DIRECTORIES = [
 	".git",
 	"node_modules",
 	".DS_Store",

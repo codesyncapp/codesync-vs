@@ -5,7 +5,7 @@ import * as path from "path";
 
 import {
 	COMMAND,
-	IGNOREABLE_REPOS,
+	IGNORABLE_DIRECTORIES,
 	STATUS_BAR_MSGS,
 	SYNCIGNORE
 } from "../constants";
@@ -51,7 +51,7 @@ export const getSyncIgnoreItems = (repoPath: string) => {
 };
 
 export const getSkipRepos = (repoPath: string, syncignoreItems: string[]) => {
-	const skipRepos = [...IGNOREABLE_REPOS];
+	const skipRepos = [...IGNORABLE_DIRECTORIES];
 	syncignoreItems.forEach((pattern) => {
 		const path = `${repoPath}/${pattern}`;
 		if (!fs.existsSync(path)) { return; }

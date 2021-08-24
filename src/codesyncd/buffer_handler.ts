@@ -142,27 +142,27 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 			}
 		}
 
-		const WebSocketClient = new client();
-		WebSocketClient.connect(WEBSOCKET_ENDPOINT);
-
-		WebSocketClient.on('connectFailed', function(error) {
-			putLogEvent('Socket Connect Error: ' + error.toString());
-		});
-
-		WebSocketClient.on('connect', function(connection) {
-			connection.on('error', function(error) {
-				putLogEvent("Socket Connection Error: " + error.toString());
+		// Iterate repoDiffs and send to server
+		repoDiffs.forEach((repoDiff) => {
+			// Making a new socket connection per repo
+			const WebSocketClient = new client();
+			WebSocketClient.connect(WEBSOCKET_ENDPOINT);
+	
+			WebSocketClient.on('connectFailed', function(error) {
+				putLogEvent('Socket Connect Error: ' + error.toString());
 			});
-			connection.on('close', function() {
-				putLogEvent('echo-protocol Connection Closed');
-			});
-
-			// Iterate repoDiffs and send to server
-			repoDiffs.forEach((repoDiff) => {
+	
+			WebSocketClient.on('connect', function(connection) {
+				connection.on('error', function(error) {
+					putLogEvent("Socket Connection Error: " + error.toString());
+				});
+				connection.on('close', function() {
+					putLogEvent('echo-protocol Connection Closed');
+				});
+	
 				const newFiles: string[] = [];
 				const configRepo = configJSON.repos[repoDiff.path];
 				const accessToken = users[configRepo.email].access_token;
-
 				// authenticate via websocket
 				connection.send(accessToken);
 				connection.on('message', async function(message) {
@@ -267,7 +267,6 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 				});
 			});
 		});
-
 	} catch (e) {
 		putLogEvent(`"Daemon failed": ${e}`);
 	}
