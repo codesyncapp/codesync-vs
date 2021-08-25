@@ -1,16 +1,21 @@
 {
-	"compilerOptions": {
-		"module": "commonjs",
-		"target": "es2019",
-		"lib": [
-			"ES2019",
-			"dom"
-		  ],
-		"outDir": "out",
-		"sourceMap": true,
-		"strict": true,
-		"rootDir": "src",
-		"resolveJsonModule": true
-	},
-	"exclude": ["node_modules", ".vscode-test"]
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2019",
+    "lib": [
+      "ES2019",
+      "dom"
+    ],
+    "outDir": "out",
+    "sourceMap": true,
+    "strict": true,
+    "rootDir": "src",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },
+  "exclude": [
+    "node_modules",
+    ".vscode-test"
+  ]
 }

@@ -1,7 +1,7 @@
-import * as fs from "fs";
-import * as vscode from 'vscode';
-import * as yaml from "js-yaml";
-import * as getBranchName from 'current-git-branch';
+import fs from "fs";
+import vscode from 'vscode';
+import yaml from "js-yaml";
+import getBranchName from 'current-git-branch';
 
 import { CONFIG_PATH, DEFAULT_BRANCH, NOTIFICATION, USER_PATH, WEB_APP_URL } from '../constants';
 import { isRepoActive, readYML } from '../utils/common';

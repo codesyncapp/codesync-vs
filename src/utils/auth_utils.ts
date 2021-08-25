@@ -1,10 +1,10 @@
 'use strict';
 
-import * as fs from "fs";
-import * as vscode from 'vscode';
-import * as yaml from 'js-yaml';
-import * as express from "express";
-import * as detectPort from "detect-port";
+import fs from "fs";
+import vscode from 'vscode';
+import yaml from 'js-yaml';
+import express from "express";
+import detectPort from "detect-port";
 
 import fetch from "node-fetch";
 import jwt_decode from "jwt-decode";
@@ -18,7 +18,6 @@ import { showConnectRepo } from "./notifications";
 export const isPortAvailable = async (port: number) => {
     return detectPort(port)
         .then(_port => {
-            if (port !== _port) { console.log(`${port} not available`); }
             return port === _port;
         })
         .catch(err => {
@@ -123,5 +122,4 @@ export const askAndTriggerSignUp = () => {
             redirectToBrowser(true);
         }
     });
-
 };

@@ -1,7 +1,7 @@
-import * as fs from 'fs';
-import * as path from "path";
+import fs from 'fs';
+import path from "path";
 import ignore from 'ignore';
-import * as getBranchName from 'current-git-branch';
+import getBranchName from 'current-git-branch';
 import { GIT_REPO, CONFIG_PATH, SHADOW_REPO, DEFAULT_BRANCH, ORIGINALS_REPO } from "../constants";
 import { handleDirectoryRenameDiffs, manageDiff } from './diff_utils';
 import {isRepoActive, readYML} from '../utils/common';

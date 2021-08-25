@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as FormData from "form-data";
+import fs from 'fs';
+import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
 import { API_FILES } from "../constants";

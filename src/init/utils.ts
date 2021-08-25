@@ -1,12 +1,12 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as walk from 'walk';
-import * as yaml from 'js-yaml';
-import * as vscode from 'vscode';
+import fs from 'fs';
+import path from 'path';
+import walk from 'walk';
+import yaml from 'js-yaml';
+import vscode from 'vscode';
 import ignore from 'ignore';
 import fetch from "node-fetch";
-import * as parallel from "run-parallel";
-import * as getBranchName from 'current-git-branch';
+import parallel from "run-parallel";
+import getBranchName from 'current-git-branch';
 import { isBinaryFileSync } from 'isbinaryfile';
 
 import {
@@ -16,7 +16,6 @@ import {
 	NOTIFICATION,
 	ORIGINALS_REPO,
 	SEQUENCE_TOKEN_PATH,
-	SYNCIGNORE,
 	USER_PATH
 } from '../constants';
 import { IFileToUpload, IUserPlan } from '../interface';

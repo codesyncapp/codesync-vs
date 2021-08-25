@@ -1,7 +1,7 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as vscode from 'vscode';
-import * as getBranchName from 'current-git-branch';
+import fs from 'fs';
+import path from 'path';
+import vscode from 'vscode';
+import getBranchName from 'current-git-branch';
 
 import { CONFIG_PATH, DEFAULT_BRANCH, GITIGNORE, NOTIFICATION,
 	ORIGINALS_REPO, SHADOW_REPO, SYNCIGNORE } from "../constants";

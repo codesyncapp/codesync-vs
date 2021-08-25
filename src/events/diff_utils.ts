@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import * as walk from 'walk';
-import * as yaml from 'js-yaml';
-import * as path from 'path';
-import * as dateFormat from "dateformat";
+import fs from 'fs';
+import walk from 'walk';
+import yaml from 'js-yaml';
+import path from 'path';
+import dateFormat from "dateformat";
 import { IDiff } from "../interface";
 import {
 	DIFFS_REPO, DIFF_SOURCE,

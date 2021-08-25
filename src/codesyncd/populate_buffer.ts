@@ -1,8 +1,8 @@
-import * as fs from "fs";
-import * as path from "path";
-import * as walk from "walk";
-import * as dateFormat from "dateformat";
-import * as getBranchName from "current-git-branch";
+import fs from "fs";
+import path from "path";
+import walk from "walk";
+import dateFormat from "dateformat";
+import getBranchName from "current-git-branch";
 import ignore from "ignore";
 import {isBinaryFileSync} from "isbinaryfile";
 

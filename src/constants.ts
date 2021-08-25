@@ -1,7 +1,7 @@
 "use strict";
 
-import untildify =  require('untildify');
-
+// import untildify =  require('untildify');
+import untildify from 'untildify';
 // export const CODESYNC_ROOT = untildify('~/.codesync-local');
 // export const CODESYNC_DOMAIN = '127.0.0.1:8000';
 // export const CODESYNC_HOST = 'http://127.0.0.1:8000';

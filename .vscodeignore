@@ -1,2 +1,7 @@
 **/*.ts
 **/tsconfig.json
+tests/
+coverage/
+__mocks__
+.git/
+.idea/

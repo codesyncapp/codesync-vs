@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as vscode from 'vscode';
+import fs from 'fs';
+import path from 'path';
+import vscode from 'vscode';
 import { diff_match_patch } from 'diff-match-patch';
-import * as getBranchName from 'current-git-branch';
+import getBranchName from 'current-git-branch';
 
 import { SHADOW_REPO, DEFAULT_BRANCH, DELETED_REPO } from "../constants";
 import { handleDirectoryDeleteDiffs, manageDiff } from './diff_utils';
