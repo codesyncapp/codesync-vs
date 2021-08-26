@@ -13,7 +13,8 @@ import {
 
 
 export function manageDiff(repoPath: string, branch: string, fileRelPath: string, diff: string,
-							isNewFile?: boolean, isRename?: boolean, isDeleted?: boolean, createdAt?: string) {
+							isNewFile?: boolean, isRename?: boolean, isDeleted?: boolean, createdAt?: string,
+							diffsRepo=DIFFS_REPO) {
 	// Skip empty diffs
 	if (!diff && !isNewFile && !isDeleted) {
 		console.log(`Skipping: Empty diffs`);
@@ -42,11 +43,12 @@ export function manageDiff(repoPath: string, branch: string, fileRelPath: string
 		newDiff.is_deleted = true;
 	}
 	// Append new diff in the buffer
-	fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+	fs.writeFileSync(`${diffsRepo}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
 }
 
 
-export const handleDirectoryRenameDiffs = async (repoPath: string, branch: string, diff: string) => {
+export const handleDirectoryRenameDiffs = async (repoPath: string, branch: string, diff: string,
+												diffsRepo=DIFFS_REPO) => {
 	const diffJSON = JSON.parse(diff);
 	// No need to skip repos here as it is for specific repo
 	const walker = walk.walk(diffJSON.new_path);
@@ -61,7 +63,8 @@ export const handleDirectoryRenameDiffs = async (repoPath: string, branch: strin
 			'old_abs_path': oldFilePath,
 			'new_abs_path': newFilePath
 		});
-		manageDiff(repoPath, branch, newRelPath, diff, false, true);
+		manageDiff(repoPath, branch, newRelPath, diff, false, true, false,
+			"", diffsRepo);
 		next();
 	});
 };
