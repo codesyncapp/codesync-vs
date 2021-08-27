@@ -4,7 +4,7 @@ import vscode from 'vscode';
 import { diff_match_patch } from 'diff-match-patch';
 import getBranchName from 'current-git-branch';
 
-import { SHADOW_REPO, DEFAULT_BRANCH, DELETED_REPO } from "../constants";
+import { SHADOW_REPO, DEFAULT_BRANCH, DELETED_REPO, ORIGINALS_REPO, DIFFS_REPO } from "../constants";
 import { handleDirectoryDeleteDiffs, manageDiff } from './diff_utils';
 import { repoIsNotSynced, shouldIgnoreFile, handleRename, handleNewFile } from './utils';
 
@@ -78,9 +78,9 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
-
+	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	changeEvent.files.forEach((file) => {
-		handleNewFile(repoPath, file.path);
+		handleNewFile(repoPath, branch, file.path, SHADOW_REPO, ORIGINALS_REPO, DIFFS_REPO);
 	});
 }
 
@@ -88,7 +88,8 @@ export function handlePastedFile(filePath: string) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
-	handleNewFile(repoPath, filePath);
+	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+	handleNewFile(repoPath, branch, filePath, SHADOW_REPO, ORIGINALS_REPO, DIFFS_REPO);
 }
 
 export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
@@ -179,7 +180,8 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 		// Skip .git/ and syncignore files
 		if (shouldIgnoreFile(repoPath, newRelPath)) { return; }
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
-		handleRename(repoPath, branch, oldAbsPath, newAbsPath, fs.lstatSync(newAbsPath).isFile());
+		handleRename(repoPath, branch, oldAbsPath, newAbsPath, fs.lstatSync(newAbsPath).isFile(),
+			SHADOW_REPO, DIFFS_REPO);
 	});
 }
 

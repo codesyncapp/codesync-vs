@@ -24,7 +24,7 @@ export function shouldIgnoreFile(repoPath: string, relPath: string) {
 	return shouldIgnore;
 }
 
-export function repoIsNotSynced(repoPath: string, configPath=CONFIG_PATH) {
+export const repoIsNotSynced = (repoPath: string, configPath=CONFIG_PATH) => {
 	// TODO: Show some alert to user
 	// If config.yml does not exists, return
 	const configExists = fs.existsSync(configPath);
@@ -36,10 +36,10 @@ export function repoIsNotSynced(repoPath: string, configPath=CONFIG_PATH) {
 	} catch (e) {
 		return true;
 	}
-}
+};
 
-export function handleRename(repoPath: string, branch: string, oldAbsPath: string, newAbsPath: string, isFile: boolean,
-							shadowRepo=SHADOW_REPO, diffsRepo=DIFFS_REPO) {
+export const handleRename = (repoPath: string, branch: string, oldAbsPath: string, newAbsPath: string, isFile: boolean,
+							shadowRepo: string, diffsRepo: string) => {
 	const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
 	const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
 	const oldShadowPath = path.join(shadowRepo, `${repoPath}/${branch}/${oldRelPath}`);
@@ -65,24 +65,22 @@ export function handleRename(repoPath: string, branch: string, oldAbsPath: strin
 	});
 	manageDiff(repoPath, branch, newRelPath, diff, false, true, false,
 		"", diffsRepo);
-}
+};
 
-export function handleNewFile(repoPath: string, filePath: string) {
+export const handleNewFile = (repoPath: string, branch: string, filePath: string,
+								shadowRepo: string, originalsRepo: string, diffsRepo: string) => {
 	// Skip for directory
 	const lstat = fs.lstatSync(filePath);
 	if (lstat.isDirectory()) { return; }
 	const relPath = filePath.split(`${repoPath}/`)[1];
 	// Skip .git/ and syncignore files
 	if (shouldIgnoreFile(repoPath, relPath)) { return; }
-	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
-	const destShadow = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+	const destShadow = path.join(shadowRepo, `${repoPath}/${branch}/${relPath}`);
 	const destShadowPathSplit = destShadow.split("/");
 	const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length-1).join("/");
-
-	const destOriginals = path.join(ORIGINALS_REPO, `${repoPath}/${branch}/${relPath}`);
+	const destOriginals = path.join(originalsRepo, `${repoPath}/${branch}/${relPath}`);
 	const destOriginalsPathSplit = destOriginals.split("/");
 	const destOriginalsBasePath = destOriginalsPathSplit.slice(0, destOriginalsPathSplit.length-1).join("/");
-
 	if (fs.existsSync(destShadow) || fs.existsSync(destOriginals)) { return; }
 	console.log(`FileCreated: ${filePath}`);
 	// Add file in shadow repo
@@ -94,5 +92,6 @@ export function handleNewFile(repoPath: string, filePath: string) {
 	// File destination will be created or overwritten by default.
 	fs.copyFileSync(filePath, destOriginals);
 	// Add new diff in the buffer
-	manageDiff(repoPath, branch, relPath, "", true);
-}
+	manageDiff(repoPath, branch, relPath, "", true, false,
+		false, "", diffsRepo);
+};

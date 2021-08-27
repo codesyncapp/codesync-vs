@@ -1,6 +1,6 @@
-import {repoIsNotSynced} from "../../../../src/events/utils";
 import fs from "fs";
 import yaml from "js-yaml";
+import {repoIsNotSynced} from "../../../../src/events/utils";
 import {randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
 
 const baseRepo = randomBaseRepoPath();
@@ -22,6 +22,10 @@ afterAll(() => {
 
 test("repoIsNotSynced with no config.yml",  () => {
     expect(repoIsNotSynced(repoPath, configPath)).toBe(true);
+});
+
+test("repoIsNotSynced with default config.yml",  () => {
+    expect(repoIsNotSynced(repoPath)).toBe(true);
 });
 
 test("repoIsNotSynced with repo not in config.yml",  () => {
