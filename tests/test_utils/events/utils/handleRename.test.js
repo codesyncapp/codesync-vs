@@ -89,7 +89,7 @@ test("handleRename for Directory",  async() => {
     handleRename(repoPath, DEFAULT_BRANCH, oldDirectoryPath, newDirectoryPath, false, shadowRepoPath, diffsRepo);
     expect(fs.existsSync(renamedShadowDirectoryPath)).toBe(true);
     expect(fs.existsSync(renamedShadowDirectoryFilePath)).toBe(true);
-    await waitFor(2);
+    await waitFor(1);
     // Verify correct diff file has been generated
     let diffFiles = fs.readdirSync(diffsRepo);
     expect(diffFiles).toHaveLength(1);

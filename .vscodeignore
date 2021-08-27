@@ -1,5 +1,6 @@
 **/*.ts
 **/tsconfig.json
+__mocks__
 tests/
 coverage/
 __mocks__
