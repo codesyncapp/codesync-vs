@@ -31,8 +31,9 @@ export const getUserForToken = async (accessToken: string) => {
 	.catch(err => {
 		isTokenValid = false;
 	});
-
-	isTokenValid = !("error" in response);
+	if (response) {
+		isTokenValid = !("error" in response);
+	}
 	return {
 		isTokenValid,
 		response

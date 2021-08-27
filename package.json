@@ -140,6 +140,7 @@
     "form-data": "^4.0.0",
     "ignore": "^5.1.8",
     "isbinaryfile": "^4.0.8",
+    "jest-fetch-mock": "^3.0.3",
     "js-yaml": "^3.14.1",
     "jwt-decode": "^3.1.2",
     "lodash": "^4.17.21",
@@ -153,5 +154,11 @@
     "type": "git",
     "url": "https://github.com/codesyncapp/codesync-vs"
   },
-  "homepage": "https://www.codesync.com"
+  "homepage": "https://www.codesync.com",
+  "jest": {
+    "automock": false,
+    "setupFiles": [
+      "./setupJest.js"
+    ]
+  }
 }

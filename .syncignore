@@ -9,3 +9,4 @@ yarn-error.log
 .idea/
 .vscode/*
 coverage/*
+tests/tests_data
