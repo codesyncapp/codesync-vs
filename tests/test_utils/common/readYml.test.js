@@ -18,7 +18,11 @@ afterEach(() => {
     fs.rmSync(filePath);
 });
 
-
 test('reads yml file', () => {
     expect(readYML(filePath)).toStrictEqual(fileData);
 });
+
+test('reads yml file with non-existing file path', () => {
+    expect(readYML("dummyPath")).toEqual(undefined);
+});
+

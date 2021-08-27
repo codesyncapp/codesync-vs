@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import fs from "fs";
 import { getSkipRepos, getSyncIgnoreItems } from "../../../src/utils/common";
 import { randomRepoPath } from "../../helpers/helpers";
 import { IGNORABLE_DIRECTORIES } from "../../../src/constants";
@@ -15,6 +15,7 @@ beforeAll(() => {
     fs.mkdirSync(repoPath, { recursive: true });
     fs.mkdirSync(`${repoPath}/.skip_repo_1`, { recursive: true });
     fs.mkdirSync(`${repoPath}/.skip_repo_2`, { recursive: true });
+    fs.writeFileSync(`${repoPath}/file.js`, "");
 });
 
 afterAll(() => {
@@ -30,4 +31,12 @@ test('skipRepos with .syncignore items', () => {
 
 test('skipRepos with NO .syncignore, default values', () => {
     expect(getSkipRepos(repoPath, [])).toStrictEqual(IGNORABLE_DIRECTORIES);
+});
+
+test('skipRepos with non-existing .syncignore item', () => {
+    expect(getSkipRepos(repoPath, ["directory"])).toStrictEqual(IGNORABLE_DIRECTORIES);
+});
+
+test('skipRepos with file in syncignore', () => {
+    expect(getSkipRepos(repoPath, ["file.js"])).toStrictEqual(IGNORABLE_DIRECTORIES);
 });
