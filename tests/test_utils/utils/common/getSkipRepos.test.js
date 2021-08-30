@@ -1,7 +1,7 @@
 import fs from "fs";
-import { getSkipRepos, getSyncIgnoreItems } from "../../../src/utils/common";
-import { randomRepoPath } from "../../helpers/helpers";
-import { IGNORABLE_DIRECTORIES } from "../../../src/constants";
+import { getSkipRepos, getSyncIgnoreItems } from "../../../../src/utils/common";
+import { randomRepoPath } from "../../../helpers/helpers";
+import { IGNORABLE_DIRECTORIES } from "../../../../src/constants";
 
 const repoPath = randomRepoPath();
 const syncIgnorePath = `${repoPath}/.syncignore`;

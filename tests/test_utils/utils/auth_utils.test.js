@@ -1,4 +1,4 @@
-import {isPortAvailable} from "../../src/utils/auth_utils";
+import {isPortAvailable} from "../../../src/utils/auth_utils";
 
 
 test("isPortAvailable", async () => {

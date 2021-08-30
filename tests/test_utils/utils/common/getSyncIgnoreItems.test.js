@@ -1,6 +1,6 @@
 import * as fs from "fs";
-import { getSyncIgnoreItems } from "../../../src/utils/common";
-import { randomRepoPath } from "../../helpers/helpers";
+import { getSyncIgnoreItems } from "../../../../src/utils/common";
+import { randomRepoPath } from "../../../helpers/helpers";
 
 const repoPath = randomRepoPath();
 const syncIgnorePath = `${repoPath}/.syncignore`;

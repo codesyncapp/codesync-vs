@@ -3,7 +3,7 @@ import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 import {
 	CODESYNC_ROOT, SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO,
-	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH, NOTIFICATION, WEB_APP_URL
+	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH, NOTIFICATION
 } from "../constants";
 import { repoIsNotSynced } from '../events/utils';
 import { initExpressServer, isPortAvailable } from './auth_utils';

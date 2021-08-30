@@ -1,8 +1,11 @@
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import { readYML } from "../../../src/utils/common";
+import { readYML } from "../../../../src/utils/common";
+import {randomRepoPath} from "../../../helpers/helpers";
 
-const filePath = "tests/files/test.yml";
+const repoPath = randomRepoPath();
+const filePath = `${repoPath}/test.yml`;
+
 const fileData = {"key": {"key1": "value1", "key2": "value2"}};
 
 beforeEach(() => {
@@ -10,7 +13,7 @@ beforeEach(() => {
         fs.rmSync(filePath);
     }
     // Create directories
-    fs.mkdirSync("tests/files", { recursive: true });
+    fs.mkdirSync(repoPath, { recursive: true });
     fs.writeFileSync(filePath, yaml.safeDump(fileData));
 });
 

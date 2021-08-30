@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import { isRepoActive, readYML } from "../../../src/utils/common";
-import { getRandomString } from "../../helpers/helpers";
+import { isRepoActive, readYML } from "../../../../src/utils/common";
+import { getRandomString } from "../../../helpers/helpers";
 
 const repoPath = `tests/test_repo_${getRandomString(10)}`;
 const configPath = `${repoPath}/config.yml`;

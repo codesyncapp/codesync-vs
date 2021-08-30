@@ -1,5 +1,5 @@
 import fetchMock from "jest-fetch-mock";
-import {checkServerDown, getUserForToken} from "../../src/utils/api_utils";
+import {checkServerDown, getUserForToken} from "../../../src/utils/api_utils";
 
 
 describe('checkServerDown', () => {
