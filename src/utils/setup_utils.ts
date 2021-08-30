@@ -2,8 +2,7 @@ import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 import {
-	CODESYNC_ROOT, SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO,
-	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH, NOTIFICATION
+	CODESYNC_ROOT, USER_PATH, Auth0URLs, NOTIFICATION, CONFIG_PATH
 } from "../constants";
 import { repoIsNotSynced } from '../events/utils';
 import { initExpressServer, isPortAvailable } from './auth_utils';
@@ -13,33 +12,42 @@ import { initUtils } from '../init/utils';
 import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
 
 
-const createSystemDirectories = () => {
+export const createSystemDirectories = (root=CODESYNC_ROOT) => {
 	// Create system directories
-	const paths = [CODESYNC_ROOT, DIFFS_REPO, ORIGINALS_REPO, SHADOW_REPO, DELETED_REPO];
+	const paths = [
+		root,
+		`${root}/.diffs/.vscode`,
+		`${root}/.originals`,
+		`${root}/.shadow`,
+		`${root}/.deleted`,
+	];
 	paths.forEach((path) => {
 		if (!fs.existsSync(path)) {
 			// Add file in originals repo
 			fs.mkdirSync(path, { recursive: true });
 		}
 	});
+	const configPath = `${root}/config.yml`;
+	const sequenceTokenPath = `${root}/sequence_token.yml`;
 	// Create config.yml if does not exist
-	const configExists = fs.existsSync(CONFIG_PATH);
+	const configExists = fs.existsSync(configPath);
 	if (!configExists) {
-		fs.writeFileSync(CONFIG_PATH, yaml.safeDump({ repos: {} }));
+		fs.writeFileSync(configPath, yaml.safeDump({ repos: {} }));
 	}
 
 	// Create sequence_token.yml if does not exist
-	const sequenceTokenExists = fs.existsSync(SEQUENCE_TOKEN_PATH);
+	const sequenceTokenExists = fs.existsSync(sequenceTokenPath);
 	if (!sequenceTokenExists) {
-		fs.writeFileSync(SEQUENCE_TOKEN_PATH, yaml.safeDump({}));
+		fs.writeFileSync(sequenceTokenPath, yaml.safeDump({}));
 	}
 };
 
 
-export const setupCodeSync = async (repoPath: string) => {
+export const setupCodeSync = async (repoPath: string, root=CODESYNC_ROOT) => {
 
-	createSystemDirectories();
-
+	createSystemDirectories(root);
+	const userFilePath = `${root}/user.yml`;
+	const configPath = `${root}/config.yml`;
 	let port = 0;
 	for (const _port of Auth0URLs.PORTS) {
 		const isAvailable = await isPortAvailable(_port);
@@ -54,13 +62,13 @@ export const setupCodeSync = async (repoPath: string) => {
 
 	initExpressServer();
 
-	if (!fs.existsSync(USER_PATH)) {
+	if (!fs.existsSync(userFilePath)) {
 		showSignUpButtons();
-		return;
+		return port;
 	}
 
 	// Check if access token is present against users
-	const users = readYML(USER_PATH) || {};
+	const users = readYML(userFilePath) || {};
 	const validUsers: string[] = [];
 	Object.keys(users).forEach(email => {
 		const user = users[email];
@@ -71,13 +79,13 @@ export const setupCodeSync = async (repoPath: string) => {
 
 	if (validUsers.length === 0) {
 		showSignUpButtons();
-		return;
+		return port;
 	}
 
-	if (repoIsNotSynced(repoPath) || !initUtils.successfullySynced(repoPath)) {
+	if (repoIsNotSynced(repoPath, configPath) || !initUtils.successfullySynced(repoPath, configPath)) {
 		// Show notification to user to Sync the repo
 		showConnectRepo(repoPath, "", "");
-		return;
+		return port;
 	}
 
 	// Show notification that repo is in sync
@@ -95,13 +103,13 @@ export const setupCodeSync = async (repoPath: string) => {
 	});
 };
 
-export const showLogIn = () => {
-	if (!fs.existsSync(USER_PATH)) {
+export const showLogIn = (userFilePath=USER_PATH) => {
+	if (!fs.existsSync(userFilePath)) {
 		return true;
 	}
 
 	// Check if access token is present against users
-	const users = readYML(USER_PATH) || {};
+	const users = readYML(userFilePath) || {};
 	const validUsers: string[] = [];
 	Object.keys(users).forEach(key => {
 		const user = users[key];
@@ -113,6 +121,6 @@ export const showLogIn = () => {
 	return validUsers.length === 0;
 };
 
-export const showConnectRepoView = (repoPath: string) => {
-	return repoIsNotSynced(repoPath) || !initUtils.successfullySynced(repoPath);
+export const showConnectRepoView = (repoPath: string, configPath=CONFIG_PATH) => {
+	return repoIsNotSynced(repoPath, configPath) || !initUtils.successfullySynced(repoPath, configPath);
 };

@@ -44,8 +44,8 @@ export class initUtils {
 		return isValid;
 	}
 
-	static successfullySynced (repoPath: string) {
-		const config = readYML(CONFIG_PATH);
+	static successfullySynced (repoPath: string, configPath=CONFIG_PATH) {
+		const config = readYML(configPath);
 		const configRepo = config['repos'][repoPath];
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		// If branch is not synced, daemon will take care of that
