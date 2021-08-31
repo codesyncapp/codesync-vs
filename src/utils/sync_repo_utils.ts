@@ -4,7 +4,7 @@ import { API_ENDPOINT } from "../constants";
 
 export const updateRepo = async (accessToken: string, repoId: number, data: any) => {
 	let error = "";
-	const response = await fetch(`${API_ENDPOINT}/repos/${repoId}`, {
+	let response = await fetch(`${API_ENDPOINT}/repos/${repoId}`, {
 		method: 'patch',
 		body: JSON.stringify(data),
 		headers: {
@@ -16,6 +16,10 @@ export const updateRepo = async (accessToken: string, repoId: number, data: any)
 		.then(json => json)
 		.catch(err => error = err);
 
+	if ("error" in response) {
+		error = response["error"];
+		response = {};
+	}
 	return {
 		response,
 		error
