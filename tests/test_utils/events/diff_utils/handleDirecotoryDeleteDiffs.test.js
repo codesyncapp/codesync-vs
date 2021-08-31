@@ -48,7 +48,7 @@ test("handleDirectoryDeleteDiffs",  async () => {
       }
     *
     * */
-    handleDirectoryDeleteDiffs(repoPath, DEFAULT_BRANCH, "directory", shadowRepoPath, cacheRepoPath, diffsRepo);
+    await handleDirectoryDeleteDiffs(repoPath, DEFAULT_BRANCH, "directory", shadowRepoPath, cacheRepoPath, diffsRepo);
     await waitFor(1);
     // Verify file has been renamed in the shadow repo
     expect(fs.existsSync(cacheFilePath)).toBe(true);
@@ -71,7 +71,7 @@ test("handleDirectoryDeleteDiffs",  async () => {
 test("handleDirectoryDeleteDiffs with file already in .deleted",  async () => {
     fs.mkdirSync(`${cacheRepoBranchPath}/directory`, { recursive: true });
     fs.writeFileSync(cacheFilePath, "use babel;");
-    handleDirectoryDeleteDiffs(repoPath, DEFAULT_BRANCH, "directory", shadowRepoPath, cacheRepoPath, diffsRepo);
+    await handleDirectoryDeleteDiffs(repoPath, DEFAULT_BRANCH, "directory", shadowRepoPath, cacheRepoPath, diffsRepo);
     await waitFor(1);
     // Verify correct diff file has been generated
     let diffFiles = fs.readdirSync(diffsRepo);

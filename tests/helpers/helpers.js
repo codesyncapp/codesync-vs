@@ -22,3 +22,5 @@ export function randomRepoPath() {
 export async function waitFor(seconds) {
     return await new Promise((r) => setTimeout(r, seconds*1000));
 }
+
+export const TEST_EMAIL = 'test@codesync.com';

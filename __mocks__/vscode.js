@@ -9,7 +9,9 @@ const window = {
         show: jest.fn()
     })),
     showErrorMessage: jest.fn(),
-    showWarningMessage: jest.fn(),
+    showWarningMessage: jest.fn(() => ({
+        then: jest.fn()
+    })),
     showInformationMessage: jest.fn(() => ({
         then: jest.fn()
     })),
@@ -43,6 +45,10 @@ const commands = {
     executeCommand: jest.fn()
 };
 
+const env = {
+    openExternal: jest.fn()
+};
+
 const vscode = {
     languages,
     StatusBarAlignment,
@@ -54,7 +60,8 @@ const vscode = {
     Diagnostic,
     DiagnosticSeverity,
     debug,
-    commands
+    commands,
+    env
 };
 
 module.exports = vscode;
