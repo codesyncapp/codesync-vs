@@ -41,10 +41,9 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 };
 
 
-export const showChooseAccount = (repoPath: string) => {
-	const port = (global as any).port;
+export const showChooseAccount = (repoPath: string, userFilePath=USER_PATH) => {
 	// Check if access token is present against users
-	const users = readYML(USER_PATH);
+	const users = readYML(userFilePath);
 	const validUsers: any[] = [];
 	Object.keys(users).forEach(key => {
 		const user = users[key];

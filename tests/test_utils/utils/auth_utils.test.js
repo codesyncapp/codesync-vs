@@ -1,3 +1,5 @@
+import fs from "fs";
+import vscode from "vscode";
 import fetchMock from "jest-fetch-mock";
 import {
     askAndTriggerSignUp,
@@ -8,10 +10,8 @@ import {
     redirectToBrowser
 } from "../../../src/utils/auth_utils";
 import {Auth0URLs, LOGIN_SUCCESS_CALLBACK, NOTIFICATION} from "../../../src/constants";
-import vscode from "vscode";
-import {randomBaseRepoPath, randomName, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
-import fs from "fs";
-import {readYML} from "../../../src/utils/common";
+import {randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
+import { readYML } from "../../../src/utils/common";
 import yaml from "js-yaml";
 
 describe("isPortAvailable",  () => {
