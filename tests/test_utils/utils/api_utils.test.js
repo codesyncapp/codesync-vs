@@ -1,5 +1,6 @@
 import fetchMock from "jest-fetch-mock";
 import {checkServerDown, createUserWithApi, getUserForToken} from "../../../src/utils/api_utils";
+import {INVALID_TOKEN_JSON} from "../../helpers/helpers";
 
 
 describe('checkServerDown', () => {
@@ -39,7 +40,7 @@ describe("getUserForToken",  () => {
     };
 
     test('should get auth error', async () => {
-        fetchMock.mockResponseOnce(JSON.stringify({"error": "Invalid token"}));
+        fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
         const res = await getUserForToken("INVALID_TOKEN");
         expect(res.isTokenValid).toBe(false);
     });
@@ -76,10 +77,9 @@ describe("createUserWithApi",  () => {
     };
 
     test('should get auth error', async () => {
-        const err = {"error": "Invalid token"};
-        fetchMock.mockResponseOnce(JSON.stringify(err));
+        fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
         const resp = await createUserWithApi("INVALID_TOKEN", idToken);
-        expect(resp.error).toBe(err.error);
+        expect(resp.error).toBe(INVALID_TOKEN_JSON.error);
         expect(resp.user).toStrictEqual(decodedSample);
     });
 

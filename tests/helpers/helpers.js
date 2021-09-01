@@ -24,3 +24,4 @@ export async function waitFor(seconds) {
 }
 
 export const TEST_EMAIL = 'test@codesync.com';
+export const INVALID_TOKEN_JSON = {"error": "Invalid token"};

@@ -1,4 +1,5 @@
 import fs from "fs";
+import yaml from "js-yaml";
 import vscode from "vscode";
 import fetchMock from "jest-fetch-mock";
 import {
@@ -10,9 +11,8 @@ import {
     redirectToBrowser
 } from "../../../src/utils/auth_utils";
 import {Auth0URLs, LOGIN_SUCCESS_CALLBACK, NOTIFICATION} from "../../../src/constants";
-import {randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
+import {INVALID_TOKEN_JSON, randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
 import { readYML } from "../../../src/utils/common";
-import yaml from "js-yaml";
 
 describe("isPortAvailable",  () => {
 
@@ -89,8 +89,7 @@ describe("createUser",  () => {
     });
 
     test("with invalid token", async () => {
-        const err = {"error": "Invalid token"};
-        fetchMock.mockResponseOnce(JSON.stringify(err));
+        fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
         await createUser("TOKEN", idToken, repoPath);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
     });

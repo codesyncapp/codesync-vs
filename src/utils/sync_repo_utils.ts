@@ -18,6 +18,8 @@ export const updateRepo = async (accessToken: string, repoId: number, data: any)
 
 	if ("error" in response) {
 		error = response["error"];
+	}
+	if (error) {
 		response = {};
 	}
 	return {

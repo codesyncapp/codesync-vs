@@ -47,7 +47,7 @@ export const createUserWithApi = async (accessToken: string, idToken: string) =>
 	let error = "";
 	let user = <IAuth0User>{};
 	user = jwt_decode(idToken);
-	const apiResponse = await fetch(API_USERS, {
+	const response = await fetch(API_USERS, {
 			method: 'POST',
 			headers: {
 				'content-type': 'application/json',
@@ -60,8 +60,8 @@ export const createUserWithApi = async (accessToken: string, idToken: string) =>
 		.then(json => json)
 		.catch(err => error = err);
 
-	if ("error" in apiResponse) {
-		error = apiResponse.error;
+	if ("error" in response) {
+		error = response.error;
 	}
 	return {
 		user,

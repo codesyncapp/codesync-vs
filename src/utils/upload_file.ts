@@ -6,8 +6,8 @@ import { API_FILES } from "../constants";
 
 
 export const uploadFile = async (token: string, data: any) => {
-	let error = '';
-	const response = await fetch(API_FILES, {
+	let error = "";
+	let response = await fetch(API_FILES, {
 			method: 'post',
 			body: JSON.stringify(data),
 			headers: {
@@ -20,6 +20,13 @@ export const uploadFile = async (token: string, data: any) => {
 	.then(json => json)
 	.catch(err => error = err);
 
+	if ("error" in response) {
+		error = response.error;
+	}
+	if (error) {
+		response = {};
+	}
+
 	return {
 		response,
 		error
@@ -27,13 +34,12 @@ export const uploadFile = async (token: string, data: any) => {
 };
 
 export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
+	if (!fs.existsSync(filePath)) {
+		return {
+			error: `file not found on : ${filePath}`
+		};
+	}
 	return new Promise((resolve, reject) => {
-		if (!fs.existsSync(filePath)) { 
-			return {
-				error: `file not found on : ${filePath}`
-			};
-		}
-		
 		const content = fs.readFileSync(filePath, "utf8");
 		const formData = new FormData();
 		Object.keys(presignedUrl.fields).forEach(key => {
@@ -48,9 +54,10 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 	});
 };
 
-export const uploadFileToServer = async (access_token: string, repoId: number, branch: string, filePath: string, relPath: string, created_at: string) => {
+export const uploadFileToServer = async (accessToken: string, repoId: number, branch: string, filePath: string,
+										relPath: string, createdAt: string) => {
 	/*
-	Uplaods new file to server returns its ID
+	Uploads new file to server returns its ID
 	*/
 	// Get file info
 	const fileInfo = fs.lstatSync(filePath);
@@ -61,9 +68,9 @@ export const uploadFileToServer = async (access_token: string, repoId: number, b
 		is_binary: isBinary,
 		size: fileInfo.size,
 		file_path: relPath,
-		created_at: created_at,
+		created_at: createdAt,
 	};
-	const json = await uploadFile(access_token, data);
+	const json = await uploadFile(accessToken, data);
 	if (json.error) {
 		return {
 			error: json.error

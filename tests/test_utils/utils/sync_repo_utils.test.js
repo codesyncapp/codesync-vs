@@ -25,7 +25,7 @@ describe('updateRepo', () => {
     test("will null response", async () => {
         fetchMock.mockResponseOnce(null);
         const resp = await updateRepo("TOKEN", "REPO_ID", {"is_in_sync" : false});
-        expect(resp.response).toBeTruthy();
         expect(resp.error).toBeTruthy();
+        expect(resp.response).toStrictEqual({});
     });
 });
