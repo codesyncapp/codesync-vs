@@ -1,9 +1,9 @@
 import fs from "fs";
 
 import fetchMock from "jest-fetch-mock";
-import {INVALID_TOKEN_JSON, randomRepoPath} from "../../helpers/helpers";
+import {INVALID_TOKEN_JSON, PRE_SIGNED_URL, randomRepoPath} from "../../helpers/helpers";
 import {uploadFile, uploadFileTos3, uploadFileToServer} from "../../../src/utils/upload_file";
-import {DEFAULT_BRANCH} from "../../../out/constants";
+import {DEFAULT_BRANCH} from "../../../src/constants";
 
 
 describe('uploadFile', () => {
@@ -53,14 +53,18 @@ describe('uploadFileTos3', () => {
         expect(res.error).toBeTruthy();
     });
 
-    // TODO: Look into mocking FormData
-    // test('Valid response', async () => {
-    //     fs.writeFileSync(filePath, "12345");
-    //     const url = "https://presignedurldemo.s3.eu-west-2.amazonaws.com/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJJWZ7B6WCRGMKFGQ%2F20180210%2Feu-west-2%2Fs3%2Faws4_request&X-Amz-Date=20180210T171315Z&X-Amz-Expires=1800&X-Amz-Signature=12b74b0788aa036bc7c3d03b3f20c61f1f91cc9ad8873e3314255dc479a25351&X-Amz-SignedHeaders=host"
-    //
-    //     const res = await uploadFileTos3(filePath, {url: url, fields: {}});
-    //     expect(res.error).toStrictEqual(undefined);
-    // });
+    test('Valid response', async () => {
+        fs.writeFileSync(filePath, "12345");
+        const resp = await uploadFileTos3(filePath, PRE_SIGNED_URL);
+        expect(resp.error).toStrictEqual(null);
+    });
+
+    test('InValid response', async () => {
+        fs.writeFileSync(filePath, "12345");
+        const resp = await uploadFileTos3(filePath, {url: "url", fields: {}});
+        expect(resp.error).toBeTruthy();
+    });
+
 });
 
 describe('uploadFileToServer', () => {
@@ -85,7 +89,7 @@ describe('uploadFileToServer', () => {
     });
 
     test('Empty file: fileInfo.size = 0', async () => {
-        const response = {id: 1234, url: "url"};
+        const response = {id: 1234, url: PRE_SIGNED_URL};
         fetchMock.mockResponseOnce(JSON.stringify(response));
         const res = await uploadFileToServer("accessToken", 6789, DEFAULT_BRANCH, filePath,
             "file.txt", "");
@@ -93,5 +97,26 @@ describe('uploadFileToServer', () => {
         expect(res.error).toStrictEqual(null);
     });
 
-    // TODO: Look into mocking FormData submit
+    test('Valid file', async () => {
+        fs.rmSync(filePath);
+        fs.writeFileSync(filePath, "Dummy Content Is In The File");
+        const response = {id: 1234, url: PRE_SIGNED_URL};
+        fetchMock.mockResponseOnce(JSON.stringify(response));
+        const res = await uploadFileToServer("accessToken", 6789, DEFAULT_BRANCH, filePath,
+            "file.txt", "");
+        expect(res.fileId).toStrictEqual(response.id);
+        expect(res.error).toStrictEqual(null);
+    });
+
+    test('InValid response', async () => {
+        fs.rmSync(filePath);
+        fs.writeFileSync(filePath, "Dummy Content Is In The File");
+        const response = {id: 1234, url: {url: "url", fields: {}}};
+        fetchMock.mockResponseOnce(JSON.stringify(response));
+        const res = await uploadFileToServer("accessToken", 6789, DEFAULT_BRANCH, filePath,
+            "file.txt", "");
+        expect(res.fileId).toStrictEqual(response.id);
+        expect(res.error).toBeTruthy();
+    });
+
 });

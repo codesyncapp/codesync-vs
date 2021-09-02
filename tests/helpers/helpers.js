@@ -23,5 +23,15 @@ export async function waitFor(seconds) {
     return await new Promise((r) => setTimeout(r, seconds*1000));
 }
 
+export const PRE_SIGNED_URL = {
+    'url': 'https://codesync.s3.amazonaws.com/',
+    'fields': {
+        'key': 'repos/1/codesync-intellij/master/gradle/wrapper/gradle-wrapper.jar',
+        'AWSAccessKeyId': 'DUMMY_KEY',
+        'policy': 'ABC POLICY',
+        'signature': 'enz87g3VP0fxp/sCehLWsNZ4KRE='
+    }
+};
+
 export const TEST_EMAIL = 'test@codesync.com';
 export const INVALID_TOKEN_JSON = {"error": "Invalid token"};

@@ -48,8 +48,8 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 		// Actual file has to be appended last.
 		formData.append("file", content);
 		formData.submit(presignedUrl.url, function(err, res) {
-			if (err) reject(err);
-			resolve(null);
+			if (err) resolve({error: err});
+			resolve({error: null});
 		});
 	});
 };
@@ -77,10 +77,12 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 		};
 	}
 	if (fileInfo.size && json.response.url) {
-		const s3jsonError = await uploadFileTos3(filePath, json.response.url);
-		if (s3jsonError) {
+		const s3json = await uploadFileTos3(filePath, json.response.url);
+		const error = (s3json as any).error;
+		if (error) {
 			return {
-				error: s3jsonError
+				error,
+				fileId: json.response.id
 			};
 		}
 	}
