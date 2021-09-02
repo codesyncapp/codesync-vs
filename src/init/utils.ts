@@ -4,13 +4,11 @@ import walk from 'walk';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
 import ignore from 'ignore';
-import fetch from "node-fetch";
 import parallel from "run-parallel";
 import getBranchName from 'current-git-branch';
 import { isBinaryFileSync } from 'isbinaryfile';
 
 import {
-	API_INIT,
 	CONFIG_PATH,
 	DEFAULT_BRANCH,
 	NOTIFICATION,
@@ -22,7 +20,7 @@ import { IFileToUpload, IUserPlan } from '../interface';
 import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems } from '../utils/common';
 import { checkServerDown } from '../utils/api_utils';
 import { putLogEvent } from '../logger';
-import { uploadFileTos3 } from '../utils/upload_file';
+import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
 
 export class initUtils {
@@ -46,7 +44,10 @@ export class initUtils {
 
 	static successfullySynced (repoPath: string, configPath=CONFIG_PATH) {
 		const config = readYML(configPath);
-		const configRepo = config['repos'][repoPath];
+		if (!(repoPath in config.repos)) {
+			return false;
+		}
+		const configRepo = config.repos[repoPath];
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 		// If branch is not synced, daemon will take care of that
 		if (!(branch in configRepo.branches)) { return true; }
@@ -65,11 +66,11 @@ export class initUtils {
 							isPopulatingBuffer = false) {
 		const syncIgnoreItems = getSyncIgnoreItems(repoPath);
 		const itemPaths: IFileToUpload[] = [];
-		if (!syncIgnoreItems) {
+		if (!syncIgnoreItems.length) {
 			return itemPaths;
 		}
 		let syncSize = 0;
-
+		let limitReached = false;
 		const ig = ignore().add(syncIgnoreItems);
 		const skipRepos = getSkipRepos(repoPath, syncIgnoreItems);
 
@@ -91,18 +92,17 @@ export class initUtils {
 						});
 						syncSize += fileStats.size;
 					}
-
 					if (!isPopulatingBuffer && !isSyncingBranch &&
-						!initUtils.isValidRepoSize(syncSize, userPlan) &&
-						!initUtils.isValidFilesCount(itemPaths.length, userPlan)) {
-						return [];
+						(!initUtils.isValidRepoSize(syncSize, userPlan) ||
+						!initUtils.isValidFilesCount(itemPaths.length, userPlan))) {
+						limitReached = true;
 					}
 					next();
 				}
 			}
 		};
 		walk.walkSync(repoPath, options);
-		return itemPaths;
+		return limitReached ? [] : itemPaths;
 	}
 
 	static copyFilesTo (repoPath: string, filePaths: string[], destination: string) {
@@ -123,73 +123,53 @@ export class initUtils {
 		});
 	}
 
-	static uploadRepoToServer = async (token: string, data: any) => {
-		let error = '';
-		const response = await fetch(API_INIT, {
-				method: 'post',
-				body: JSON.stringify(data),
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Basic ${token}`
-				},
-			}
-		)
-		.then(res => res.json())
-		.then(json => json)
-		.catch(err => error = err);
-
-		return {
-			response,
-			error
-		};
-	};
-
-	static saveIamUser (user: any) {
+	static saveIamUser (user: any, userFilePath=USER_PATH) {
 		// save iam credentials if not saved already
 		const iamUser = {
 			access_key: user.iam_access_key,
 			secret_key: user.iam_secret_key,
 		};
 
-		if (!fs.existsSync(USER_PATH)) {
+		if (!fs.existsSync(userFilePath)) {
 			const users = <any>{};
 			users[user.email] = iamUser;
-			fs.writeFileSync(USER_PATH, yaml.safeDump(iamUser));
+			fs.writeFileSync(userFilePath, yaml.safeDump(users));
 		} else {
-			const users = readYML(USER_PATH) || {};
+			const users = readYML(userFilePath) || {};
 			if (!(user.email in users)) {
 				users[user.email] = iamUser;
-				fs.writeFileSync(USER_PATH, yaml.safeDump(users));
+				fs.writeFileSync(userFilePath, yaml.safeDump(users));
 			}
 		}
 	}
 
-	static saveSequenceTokenFile (email: string) {
+	static saveSequenceTokenFile (email: string, sequenceTokenFilePath=SEQUENCE_TOKEN_PATH) {
 		// Save email for sequence_token
-		if (!fs.existsSync(SEQUENCE_TOKEN_PATH)) {
+		if (!fs.existsSync(sequenceTokenFilePath)) {
 			const users = <any>{};
 			users[email] = "";
-			fs.writeFileSync(SEQUENCE_TOKEN_PATH, yaml.safeDump(users));
+			fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
 		} else {
-			const users = readYML(SEQUENCE_TOKEN_PATH) || {};
+			const users = readYML(sequenceTokenFilePath) || {};
 			if (!(email in users)) {
 				users[email] = "";
-				fs.writeFileSync(SEQUENCE_TOKEN_PATH, yaml.safeDump(users));
+				fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
 			}
 		}
 	}
 
-	static saveFileIds(repoPath: string, branch: string, token: string, userEmail: string, uploadResponse: any) {
+	static saveFileIds(repoPath: string, branch: string, token: string, userEmail: string, uploadResponse: any,
+						configPath=CONFIG_PATH) {
 		// Save file IDs, repoId and email against repo path
 		const repoId = uploadResponse.repo_id;
 		const filePathAndId = uploadResponse.file_path_and_id;
 		// Write file IDs
-		const configJSON = readYML(CONFIG_PATH);
+		const configJSON = readYML(configPath);
 		const configRepo = configJSON.repos[repoPath];
 		configRepo.branches[branch] = filePathAndId;
 		configRepo.id = repoId;
 		configRepo.email = userEmail;
-		fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
+		fs.writeFileSync(configPath, yaml.safeDump(configJSON));
 	}
 
 	static async uploadRepoToS3(repoPath: string, branch: string, token: string, uploadResponse: any,
@@ -294,7 +274,7 @@ export class initUtils {
 			files_data: JSON.stringify(filesData)
 		};
 
-		const json = await initUtils.uploadRepoToServer(token, data);
+		const json = await uploadRepoToServer(token, data);
 		if (json.error || json.response.error) {
 			const error = isSyncingBranch ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
 			putLogEvent(`${error}. Reason: ${json.error || json.response.error}`);
@@ -311,7 +291,7 @@ export class initUtils {
 					'file_path_and_ids': {file_path_and_id},
 					'urls': {presigned_urls_for_files},
 					'user': {
-						'email': emali,
+						'email': email,
 						'iam_access_key': <key>,
 						'iam_secret_key': <key>
 					}

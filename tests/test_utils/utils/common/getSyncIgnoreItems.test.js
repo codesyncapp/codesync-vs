@@ -1,15 +1,11 @@
 import * as fs from "fs";
 import { getSyncIgnoreItems } from "../../../../src/utils/common";
-import { randomRepoPath } from "../../../helpers/helpers";
+import {randomRepoPath, SYNC_IGNORE_DATA} from "../../../helpers/helpers";
 
 const repoPath = randomRepoPath();
 const syncIgnorePath = `${repoPath}/.syncignore`;
-const syncIgnoreData = ".DS_Store\n.git\n\n\n.node_modules\n";
 
 beforeAll(() => {
-    if (fs.existsSync(repoPath)) {
-        fs.rmdirSync(repoPath);
-    }
     // Create directories
     fs.mkdirSync(repoPath, { recursive: true });
 });
@@ -19,7 +15,7 @@ afterAll(() => {
 });
 
 test('syncIgnore items with .syncignore', () => {
-    fs.writeFileSync(syncIgnorePath, syncIgnoreData);
+    fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA);
     expect(getSyncIgnoreItems(repoPath)).toStrictEqual([".DS_Store", ".git", ".node_modules"]);
     fs.rmSync(syncIgnorePath);
 });

@@ -5,7 +5,7 @@ import { IDiff } from "../interface";
 import { CONFIG_PATH, DIFF_SIZE_LIMIT, REQUIRED_DIFF_KEYS,
 	REQUIRED_DIR_RENAME_DIFF_KEYS, REQUIRED_FILE_RENAME_DIFF_KEYS,
 	SHADOW_REPO, ORIGINALS_REPO, DELETED_REPO } from "../constants";
-import { uploadFileToServer } from '../utils/upload_file';
+import { uploadFileToServer } from '../utils/upload_utils';
 import { isBinaryFileSync } from 'isbinaryfile';
 import { diff_match_patch } from 'diff-match-patch';
 import { putLogEvent } from '../logger';

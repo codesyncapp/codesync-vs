@@ -67,9 +67,6 @@ describe("logout",  () => {
 
 describe("createUser",  () => {
     const idToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAY29kZXN5bmMuY29tIn0.bl7QQajhg2IjPp8h0gzFku85qCrXQN4kThoo1AxB_Dc";
-    const decodedSample = {
-        "email": TEST_EMAIL
-    };
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
     const userFilePath = `${baseRepoPath}/user.yml`;

@@ -2,10 +2,67 @@ import fs from 'fs';
 import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
-import { API_FILES } from "../constants";
+import {API_FILES, API_INIT} from "../constants";
 
+
+export const uploadRepoToServer = async (token: string, data: any) => {
+	/*
+    Response from server looks like
+        {
+            'repo_id': repo_id,
+            'branch_id': branch_id,
+			'file_path_and_id': {
+				"file_1": 1,
+				"directory/file_2": 2,
+			},
+			'urls': {
+				"file_1": PRE_SIGNED_URL,
+				"directory/file_2": PRE_SIGNED_URL,
+			},
+            'user': {
+                'email': email,
+                'iam_access_key': <key>,
+                'iam_secret_key': <key>
+            }
+        }
+	*/
+	let error = '';
+	let response = await fetch(API_INIT, {
+			method: 'post',
+			body: JSON.stringify(data),
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Basic ${token}`
+			},
+		}
+	)
+		.then(res => res.json())
+		.then(json => json)
+		.catch(err => error = err);
+
+	if ("error" in response) {
+		error = response.error;
+	}
+	if (error) {
+		response = {};
+	}
+
+	return {
+		response,
+		error
+	};
+};
 
 export const uploadFile = async (token: string, data: any) => {
+	/*
+	Response from server looks like
+
+    	{
+    		'id': file_id,
+    		'url': url
+		}
+
+	*/
 	let error = "";
 	let response = await fetch(API_FILES, {
 			method: 'post',

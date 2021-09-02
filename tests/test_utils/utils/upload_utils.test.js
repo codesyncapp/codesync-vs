@@ -1,10 +1,37 @@
 import fs from "fs";
 
 import fetchMock from "jest-fetch-mock";
-import {INVALID_TOKEN_JSON, PRE_SIGNED_URL, randomRepoPath} from "../../helpers/helpers";
-import {uploadFile, uploadFileTos3, uploadFileToServer} from "../../../src/utils/upload_file";
+import {INVALID_TOKEN_JSON, PRE_SIGNED_URL, randomRepoPath, TEST_REPO_RESPONSE} from "../../helpers/helpers";
+import {uploadFile, uploadFileTos3, uploadFileToServer, uploadRepoToServer} from "../../../src/utils/upload_utils";
 import {DEFAULT_BRANCH} from "../../../src/constants";
 
+
+describe('uploadRepoToServer', () => {
+    beforeEach(() => {
+        fetch.resetMocks();
+    });
+
+    test('Invalid token', async () => {
+        fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
+        const res = await uploadRepoToServer("INVALID_TOKEN", {});
+        expect(res.error).toBe(INVALID_TOKEN_JSON.error);
+        expect(res.response).toStrictEqual({});
+    });
+
+    test('Valid response', async () => {
+        fetchMock.mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
+        const res = await uploadRepoToServer("ACCESS_TOKEN", {});
+        expect(res.error).toBe("");
+        expect(res.response).toStrictEqual(TEST_REPO_RESPONSE);
+    });
+
+    test('null response', async () => {
+        fetchMock.mockResponseOnce(null);
+        const res = await uploadRepoToServer("ACCESS_TOKEN", {});
+        expect(res.error).toBeTruthy();
+        expect(res.response).toStrictEqual({});
+    });
+});
 
 describe('uploadFile', () => {
     beforeEach(() => {
