@@ -85,7 +85,7 @@ export const setupCodeSync = async (repoPath: string) => {
 		return port;
 	}
 
-	if (repoIsNotSynced(repoPath) || !initUtils.successfullySynced(repoPath)) {
+	if (repoIsNotSynced(repoPath) || !new initUtils(repoPath).successfullySynced()) {
 		// Show notification to user to Sync the repo
 		showConnectRepo(repoPath, "", "");
 		return port;
@@ -127,5 +127,5 @@ export const showLogIn = () => {
 };
 
 export const showConnectRepoView = (repoPath: string) => {
-	return repoIsNotSynced(repoPath) || !initUtils.successfullySynced(repoPath);
+	return repoIsNotSynced(repoPath) || !new initUtils(repoPath).successfullySynced();
 };

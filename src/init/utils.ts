@@ -20,8 +20,15 @@ import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
 
 export class initUtils {
+	repoPath: string;
+	settings: any;
 
-	static isValidRepoSize (syncSize: number, userPlan: IUserPlan)  {
+	constructor(repoPath="") {
+		this.repoPath = repoPath;
+		this.settings = generateSettings();
+	}
+
+	isValidRepoSize (syncSize: number, userPlan: IUserPlan)  {
 		const isValid = userPlan.SIZE >= syncSize;
 		if (!isValid) {
 			vscode.window.showErrorMessage(`${NOTIFICATION.REPOS_LIMIT_BREACHED} ${userPlan.SIZE}`);
@@ -29,7 +36,7 @@ export class initUtils {
 		return isValid;
 	}
 
-	static isValidFilesCount (filesCount: number, userPlan: IUserPlan) {
+	isValidFilesCount (filesCount: number, userPlan: IUserPlan) {
 		const isValid = userPlan.FILE_COUNT >= filesCount;
 		if (!isValid) {
 			vscode.window.showErrorMessage(`${NOTIFICATION.FILES_LIMIT_BREACHED}\n
@@ -38,16 +45,13 @@ export class initUtils {
 		return isValid;
 	}
 
-	static successfullySynced (repoPath: string) {
-		const settings = generateSettings();
-		const configPath = settings.CONFIG_PATH;
-
-		const config = readYML(configPath);
-		if (!(repoPath in config.repos)) {
+	successfullySynced () {
+		const config = readYML(this.settings.CONFIG_PATH);
+		if (!(this.repoPath in config.repos)) {
 			return false;
 		}
-		const configRepo = config.repos[repoPath];
-		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+		const configRepo = config.repos[this.repoPath];
+		const branch = getBranchName({ altPath: this.repoPath }) || DEFAULT_BRANCH;
 		// If branch is not synced, daemon will take care of that
 		if (!(branch in configRepo.branches)) { return true; }
 		const configFiles = configRepo.branches[branch];
@@ -61,9 +65,8 @@ export class initUtils {
 		return hasValidFiles;
 	}
 
-	static getSyncablePaths (repoPath: string, userPlan: IUserPlan, isSyncingBranch=false,
-							isPopulatingBuffer = false) {
-		const syncIgnoreItems = getSyncIgnoreItems(repoPath);
+	getSyncablePaths (userPlan: IUserPlan, isSyncingBranch=false, isPopulatingBuffer = false) {
+		const syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
 		const itemPaths: IFileToUpload[] = [];
 		if (!syncIgnoreItems.length) {
 			return itemPaths;
@@ -71,12 +74,13 @@ export class initUtils {
 		let syncSize = 0;
 		let limitReached = false;
 		const ig = ignore().add(syncIgnoreItems);
-		const skipRepos = getSkipRepos(repoPath, syncIgnoreItems);
-
+		const skipRepos = getSkipRepos(this.repoPath, syncIgnoreItems);
+		const repoPath = this.repoPath;
 		const options = {
 			filters: skipRepos,
 			listeners: {
 				file: function (root: string, fileStats: any, next: any) {
+					const self = new initUtils();
 					const filePath = `${root}/${fileStats.name}`;
 					const relPath = filePath.split(`${repoPath}/`)[1];
 					const shouldIgnore = ig.ignores(relPath);
@@ -92,21 +96,21 @@ export class initUtils {
 						syncSize += fileStats.size;
 					}
 					if (!isPopulatingBuffer && !isSyncingBranch &&
-						(!initUtils.isValidRepoSize(syncSize, userPlan) ||
-						!initUtils.isValidFilesCount(itemPaths.length, userPlan))) {
+						(!self.isValidRepoSize(syncSize, userPlan) ||
+						!self.isValidFilesCount(itemPaths.length, userPlan))) {
 						limitReached = true;
 					}
 					next();
 				}
 			}
 		};
-		walk.walkSync(repoPath, options);
+		walk.walkSync(this.repoPath, options);
 		return limitReached ? [] : itemPaths;
 	}
 
-	static copyFilesTo (repoPath: string, filePaths: string[], destination: string) {
+	copyFilesTo (filePaths: string[], destination: string) {
 		filePaths.forEach((filePath) => {
-			const relPath = filePath.split(`${repoPath}/`)[1];
+			const relPath = filePath.split(`${this.repoPath}/`)[1];
 			const destinationPath = path.join(destination, relPath);
 			const directories = path.dirname(destinationPath);
 			if (!fs.existsSync(directories)) {
@@ -122,66 +126,61 @@ export class initUtils {
 		});
 	}
 
-	static saveIamUser (user: any) {
-		const settings = generateSettings();
+	saveIamUser (user: any) {
 		// save iam credentials if not saved already
 		const iamUser = {
 			access_key: user.iam_access_key,
 			secret_key: user.iam_secret_key,
 		};
 
-		if (!fs.existsSync(settings.USER_PATH)) {
+		if (!fs.existsSync(this.settings.USER_PATH)) {
 			const users = <any>{};
 			users[user.email] = iamUser;
-			fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
+			fs.writeFileSync(this.settings.USER_PATH, yaml.safeDump(users));
 		} else {
-			const users = readYML(settings.USER_PATH) || {};
+			const users = readYML(this.settings.USER_PATH) || {};
 			if (!(user.email in users)) {
 				users[user.email] = iamUser;
-				fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
+				fs.writeFileSync(this.settings.USER_PATH, yaml.safeDump(users));
 			}
 		}
 	}
 
-	static saveSequenceTokenFile (email: string) {
-		const settings = generateSettings();
-
+	saveSequenceTokenFile (email: string) {
 		// Save email for sequence_token
-		if (!fs.existsSync(settings.SEQUENCE_TOKEN_PATH)) {
+		if (!fs.existsSync(this.settings.SEQUENCE_TOKEN_PATH)) {
 			const users = <any>{};
 			users[email] = "";
-			fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(users));
+			fs.writeFileSync(this.settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(users));
 		} else {
-			const users = readYML(settings.SEQUENCE_TOKEN_PATH) || {};
+			const users = readYML(this.settings.SEQUENCE_TOKEN_PATH) || {};
 			if (!(email in users)) {
 				users[email] = "";
-				fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(users));
+				fs.writeFileSync(this.settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(users));
 			}
 		}
 	}
 
-	static saveFileIds(repoPath: string, branch: string, token: string, userEmail: string, uploadResponse: any) {
-		const settings = generateSettings();
+	saveFileIds(branch: string, token: string, userEmail: string, uploadResponse: any) {
 		// Save file IDs, repoId and email against repo path
 		const repoId = uploadResponse.repo_id;
 		const filePathAndId = uploadResponse.file_path_and_id;
 		// Write file IDs
-		const configJSON = readYML(settings.CONFIG_PATH);
-		const configRepo = configJSON.repos[repoPath];
+		const configJSON = readYML(this.settings.CONFIG_PATH);
+		const configRepo = configJSON.repos[this.repoPath];
 		configRepo.branches[branch] = filePathAndId;
 		configRepo.id = repoId;
 		configRepo.email = userEmail;
-		fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
+		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
 	}
 
-	static async uploadRepoToS3(repoPath: string, branch: string, token: string, uploadResponse: any,
-								userEmail: string, isSyncingBranch=false, viaDaemon=false) {
-		const settings = generateSettings();
-
+	async uploadRepoToS3(branch: string, token: string, uploadResponse: any,
+						userEmail: string, isSyncingBranch=false, viaDaemon=false) {
 		const repoId = uploadResponse.repo_id;
 		const s3Urls =  uploadResponse.urls;
 		const tasks: any[] = [];
-		const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO, path.join(repoPath, branch));
+		const repoPath = this.repoPath;
+		const originalsRepoBranchPath = path.join(this.settings.ORIGINALS_REPO, path.join(repoPath, branch));
 
 		Object.keys(s3Urls).forEach(relPath => {
 			const presignedUrl = s3Urls[relPath];
@@ -201,12 +200,14 @@ export class initUtils {
 				// the results array will equal ['one','two'] even though
 				// the second function had a shorter timeout.
 				if (err) return;
+				const self = new initUtils();
+
 				const repoData = <any>{
 					id: repoId,
 					email: userEmail,
 					token
 				};
-				const configJSON = readYML(settings.CONFIG_PATH);
+				const configJSON = readYML(self.settings.CONFIG_PATH);
 				Object.keys(repoData).forEach((key) => {
 					configJSON.repos[repoPath][key] = repoData[key];
 				});
@@ -236,14 +237,13 @@ export class initUtils {
 		});
 	}
 
-	static async uploadRepo(repoPath: string, branch: string, token: string, itemPaths: IFileToUpload[],
-							isPublic=false, isSyncingBranch=false, viaDaemon=false,
-							userEmail?: string) {
-		const settings = generateSettings();
-		const splitPath = repoPath.split('/');
+	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
+					isPublic=false, isSyncingBranch=false, viaDaemon=false,
+					userEmail?: string) {
+		const splitPath = this.repoPath.split('/');
 		const repoName = splitPath[splitPath.length-1];
-		const configJSON = readYML(settings.CONFIG_PATH);
-		const repoInConfig = isRepoActive(configJSON, repoPath);
+		const configJSON = readYML(this.settings.CONFIG_PATH);
+		const repoInConfig = isRepoActive(configJSON, this.repoPath);
 		const branchFiles = <any>{};
 		const filesData = <any>{};
 
@@ -257,18 +257,18 @@ export class initUtils {
 		});
 
 		if (!repoInConfig) {
-			configJSON.repos[repoPath] = {branches: {}};
-			configJSON.repos[repoPath].branches[branch] = branchFiles;
-			fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
-		} else if (!(branch in configJSON.repos[repoPath].branches)) {
-			configJSON.repos[repoPath].branches[branch] = branchFiles;
-			fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
+			configJSON.repos[this.repoPath] = {branches: {}};
+			configJSON.repos[this.repoPath].branches[branch] = branchFiles;
+			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
+		} else if (!(branch in configJSON.repos[this.repoPath].branches)) {
+			configJSON.repos[this.repoPath].branches[branch] = branchFiles;
+			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
 		}
 
 		const isServerDown = await checkServerDown(userEmail);
 		if (isServerDown) return;
 
-		console.log(`Uploading new branch: ${branch} for repo: ${repoPath}`);
+		console.log(`Uploading new branch: ${branch} for repo: ${this.repoPath}`);
 
 		const data = {
 			name: repoName,
@@ -304,15 +304,15 @@ export class initUtils {
 		const user = json.response.user;
 
 		// Save IAM credentials
-		initUtils.saveIamUser(user);
+		this.saveIamUser(user);
 
 		// Save email for sequence_token
-		initUtils.saveSequenceTokenFile(user.email);
+		this.saveSequenceTokenFile(user.email);
 
 		// Save file paths and IDs
-		initUtils.saveFileIds(repoPath, branch, token, user.email, json.response);
+		this.saveFileIds(branch, token, user.email, json.response);
 
 		// Upload to s3
-		await initUtils.uploadRepoToS3(repoPath, branch, token, json.response, user.email, isSyncingBranch, viaDaemon);
+		await this.uploadRepoToS3(branch, token, json.response, user.email, isSyncingBranch, viaDaemon);
 	}
 }

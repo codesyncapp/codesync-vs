@@ -125,18 +125,20 @@ const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: 
 		isPublic = buttonSelected === NOTIFICATION.YES;
 	}
 
+	const initUtilsObj = new initUtils(repoPath);
+
 	// get item paths to upload and copy in respective repos
-	const itemPaths = initUtils.getSyncablePaths(repoPath, user.plan, isSyncingBranch);
+	const itemPaths = initUtilsObj.getSyncablePaths(user.plan, isSyncingBranch);
 	const filePaths = itemPaths.map(itemPath => itemPath.file_path);
 	const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO, path.join(repoPath, branch));
 	// copy files to .originals repo
-	initUtils.copyFilesTo(repoPath, filePaths, originalsRepoBranchPath);
+	initUtilsObj.copyFilesTo(filePaths, originalsRepoBranchPath);
 
 	const shadowRepoBranchPath = path.join(settings.SHADOW_REPO, path.join(repoPath, branch));
 	// copy files to .shadow repo
-	initUtils.copyFilesTo(repoPath, filePaths, shadowRepoBranchPath);
+	initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
 
 	// Upload repo/branch
-	await initUtils.uploadRepo(repoPath, branch, accessToken, itemPaths, isPublic, isSyncingBranch, viaDaemon, user.email);
+	await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, isPublic, isSyncingBranch, viaDaemon, user.email);
 
 };

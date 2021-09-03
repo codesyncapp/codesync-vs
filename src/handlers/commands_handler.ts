@@ -23,7 +23,7 @@ export const SignUpHandler = () => {
 export const SyncHandler = () => {
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath) { return; }
-	if (repoIsNotSynced(repoPath) || !initUtils.successfullySynced(repoPath)) {
+	if (repoIsNotSynced(repoPath) || !new initUtils(repoPath).successfullySynced()) {
 		// Show notification to user to choose account
 		showChooseAccount(repoPath);
 		return;
