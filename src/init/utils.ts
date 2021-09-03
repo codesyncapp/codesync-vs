@@ -7,14 +7,10 @@ import ignore from 'ignore';
 import parallel from "run-parallel";
 import getBranchName from 'current-git-branch';
 import { isBinaryFileSync } from 'isbinaryfile';
-
 import {
-	CONFIG_PATH,
 	DEFAULT_BRANCH,
-	NOTIFICATION,
-	ORIGINALS_REPO,
-	SEQUENCE_TOKEN_PATH,
-	USER_PATH
+	generateSettings,
+	NOTIFICATION
 } from '../constants';
 import { IFileToUpload, IUserPlan } from '../interface';
 import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems } from '../utils/common';
@@ -42,7 +38,10 @@ export class initUtils {
 		return isValid;
 	}
 
-	static successfullySynced (repoPath: string, configPath=CONFIG_PATH) {
+	static successfullySynced (repoPath: string) {
+		const settings = generateSettings();
+		const configPath = settings.CONFIG_PATH;
+
 		const config = readYML(configPath);
 		if (!(repoPath in config.repos)) {
 			return false;
@@ -123,62 +122,66 @@ export class initUtils {
 		});
 	}
 
-	static saveIamUser (user: any, userFilePath=USER_PATH) {
+	static saveIamUser (user: any) {
+		const settings = generateSettings();
 		// save iam credentials if not saved already
 		const iamUser = {
 			access_key: user.iam_access_key,
 			secret_key: user.iam_secret_key,
 		};
 
-		if (!fs.existsSync(userFilePath)) {
+		if (!fs.existsSync(settings.USER_PATH)) {
 			const users = <any>{};
 			users[user.email] = iamUser;
-			fs.writeFileSync(userFilePath, yaml.safeDump(users));
+			fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
 		} else {
-			const users = readYML(userFilePath) || {};
+			const users = readYML(settings.USER_PATH) || {};
 			if (!(user.email in users)) {
 				users[user.email] = iamUser;
-				fs.writeFileSync(userFilePath, yaml.safeDump(users));
+				fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
 			}
 		}
 	}
 
-	static saveSequenceTokenFile (email: string, sequenceTokenFilePath=SEQUENCE_TOKEN_PATH) {
+	static saveSequenceTokenFile (email: string) {
+		const settings = generateSettings();
+
 		// Save email for sequence_token
-		if (!fs.existsSync(sequenceTokenFilePath)) {
+		if (!fs.existsSync(settings.SEQUENCE_TOKEN_PATH)) {
 			const users = <any>{};
 			users[email] = "";
-			fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
+			fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(users));
 		} else {
-			const users = readYML(sequenceTokenFilePath) || {};
+			const users = readYML(settings.SEQUENCE_TOKEN_PATH) || {};
 			if (!(email in users)) {
 				users[email] = "";
-				fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
+				fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(users));
 			}
 		}
 	}
 
-	static saveFileIds(repoPath: string, branch: string, token: string, userEmail: string, uploadResponse: any,
-						configPath=CONFIG_PATH) {
+	static saveFileIds(repoPath: string, branch: string, token: string, userEmail: string, uploadResponse: any) {
+		const settings = generateSettings();
 		// Save file IDs, repoId and email against repo path
 		const repoId = uploadResponse.repo_id;
 		const filePathAndId = uploadResponse.file_path_and_id;
 		// Write file IDs
-		const configJSON = readYML(configPath);
+		const configJSON = readYML(settings.CONFIG_PATH);
 		const configRepo = configJSON.repos[repoPath];
 		configRepo.branches[branch] = filePathAndId;
 		configRepo.id = repoId;
 		configRepo.email = userEmail;
-		fs.writeFileSync(configPath, yaml.safeDump(configJSON));
+		fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
 	}
 
 	static async uploadRepoToS3(repoPath: string, branch: string, token: string, uploadResponse: any,
 								userEmail: string, isSyncingBranch=false, viaDaemon=false) {
+		const settings = generateSettings();
 
 		const repoId = uploadResponse.repo_id;
 		const s3Urls =  uploadResponse.urls;
 		const tasks: any[] = [];
-		const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(repoPath, branch));
+		const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO, path.join(repoPath, branch));
 
 		Object.keys(s3Urls).forEach(relPath => {
 			const presignedUrl = s3Urls[relPath];
@@ -203,7 +206,7 @@ export class initUtils {
 					email: userEmail,
 					token
 				};
-				const configJSON = readYML(CONFIG_PATH);
+				const configJSON = readYML(settings.CONFIG_PATH);
 				Object.keys(repoData).forEach((key) => {
 					configJSON.repos[repoPath][key] = repoData[key];
 				});
@@ -236,10 +239,10 @@ export class initUtils {
 	static async uploadRepo(repoPath: string, branch: string, token: string, itemPaths: IFileToUpload[],
 							isPublic=false, isSyncingBranch=false, viaDaemon=false,
 							userEmail?: string) {
+		const settings = generateSettings();
 		const splitPath = repoPath.split('/');
 		const repoName = splitPath[splitPath.length-1];
-
-		const configJSON = readYML(CONFIG_PATH);
+		const configJSON = readYML(settings.CONFIG_PATH);
 		const repoInConfig = isRepoActive(configJSON, repoPath);
 		const branchFiles = <any>{};
 		const filesData = <any>{};
@@ -254,16 +257,16 @@ export class initUtils {
 		});
 
 		if (!repoInConfig) {
-			configJSON.repos[repoPath] = {'branches': {}};
+			configJSON.repos[repoPath] = {branches: {}};
 			configJSON.repos[repoPath].branches[branch] = branchFiles;
-			fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
+			fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
 		} else if (!(branch in configJSON.repos[repoPath].branches)) {
 			configJSON.repos[repoPath].branches[branch] = branchFiles;
-			fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
+			fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
 		}
 
 		const isServerDown = await checkServerDown(userEmail);
-		if (isServerDown) { return; }
+		if (isServerDown) return;
 
 		console.log(`Uploading new branch: ${branch} for repo: ${repoPath}`);
 
@@ -275,9 +278,9 @@ export class initUtils {
 		};
 
 		const json = await uploadRepoToServer(token, data);
-		if (json.error || json.response.error) {
+		if (json.error) {
 			const error = isSyncingBranch ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
-			putLogEvent(`${error}. Reason: ${json.error || json.response.error}`);
+			putLogEvent(`${error}. Reason: ${json.error}`);
 			if (!viaDaemon) {
 				vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			}
@@ -308,6 +311,7 @@ export class initUtils {
 
 		// Save file paths and IDs
 		initUtils.saveFileIds(repoPath, branch, token, user.email, json.response);
+
 		// Upload to s3
 		await initUtils.uploadRepoToS3(repoPath, branch, token, json.response, user.email, isSyncingBranch, viaDaemon);
 	}

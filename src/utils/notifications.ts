@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { NOTIFICATION, USER_PATH } from '../constants';
+import {generateSettings, NOTIFICATION} from '../constants';
 import { syncRepo } from '../init/init_handler';
 import { readYML } from './common';
 import { logout, redirectToBrowser } from './auth_utils';
@@ -41,9 +41,10 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 };
 
 
-export const showChooseAccount = (repoPath: string, userFilePath=USER_PATH) => {
+export const showChooseAccount = (repoPath: string) => {
 	// Check if access token is present against users
-	const users = readYML(userFilePath);
+	const settings = generateSettings();
+	const users = readYML(settings.USER_PATH);
 	const validUsers: any[] = [];
 	Object.keys(users).forEach(key => {
 		const user = users[key];

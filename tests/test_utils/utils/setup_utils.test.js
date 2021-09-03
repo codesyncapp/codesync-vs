@@ -1,16 +1,19 @@
 import fs from "fs";
-import vscode from "vscode";
 import yaml from "js-yaml";
+import vscode from "vscode";
+import untildify from "untildify";
+
 import {randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
 import {createSystemDirectories, setupCodeSync, showConnectRepoView, showLogIn} from "../../../src/utils/setup_utils";
-import {NOTIFICATION} from "../../../out/constants";
+import {NOTIFICATION} from "../../../src/constants";
 
 
 describe("createSystemDirectories",  () => {
     const baseRepoPath = randomBaseRepoPath();
 
     beforeEach(() => {
-        jest.resetModules(); // Most important - it clears the cache
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, { recursive: true });
     });
 
@@ -19,7 +22,7 @@ describe("createSystemDirectories",  () => {
     });
 
     test('createSystemDirectories',  () => {
-        createSystemDirectories(baseRepoPath);
+        createSystemDirectories();
         const lsResult = fs.readdirSync(baseRepoPath);
         expect(lsResult.includes(".diffs")).toBe(true);
         expect(lsResult.includes(".originals")).toBe(true);
@@ -42,6 +45,7 @@ describe("setupCodeSync",  () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
     });
@@ -52,7 +56,7 @@ describe("setupCodeSync",  () => {
     });
 
     test('with no user.yml', async () => {
-        const port = await setupCodeSync(repoPath, baseRepoPath);
+        const port = await setupCodeSync(repoPath);
         const lsResult = fs.readdirSync(baseRepoPath);
         expect(lsResult.includes(".diffs")).toBe(true);
         expect(lsResult.includes(".originals")).toBe(true);
@@ -70,7 +74,7 @@ describe("setupCodeSync",  () => {
 
     test('with empty user.yml', async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump({}));
-        const port = await setupCodeSync(repoPath, baseRepoPath);
+        const port = await setupCodeSync(repoPath);
         // should return port number
         expect(port).toBeTruthy();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -82,7 +86,7 @@ describe("setupCodeSync",  () => {
 
     test('with user and repo not synced', async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
-        const port = await setupCodeSync(repoPath, baseRepoPath);
+        const port = await setupCodeSync(repoPath);
         // should return port number
         expect(port).toBeTruthy();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -95,7 +99,7 @@ describe("setupCodeSync",  () => {
     test('with synced repo',  async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         fs.writeFileSync(configPath, yaml.safeDump(configData));
-        const port = await setupCodeSync(repoPath, baseRepoPath);
+        const port = await setupCodeSync(repoPath);
         // should return port number
         expect(port).toBeFalsy();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -106,9 +110,8 @@ describe("setupCodeSync",  () => {
     });
 
     test('showConnectRepoView',  async () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
-        const shouldShowConnectRepoView = showConnectRepoView(userFilePath);
+        fs.writeFileSync(configPath, yaml.safeDump({repos: {}}));
+        const shouldShowConnectRepoView = showConnectRepoView(repoPath);
         expect(shouldShowConnectRepoView).toBe(true);
     });
 });
@@ -120,7 +123,8 @@ describe("showLogin",  () => {
     const userData = {"dummy_email": {access_token: "ABC"}};
 
     beforeEach(() => {
-        jest.resetModules(); // Most important - it clears the cache
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, { recursive: true });
     });
 
@@ -129,20 +133,20 @@ describe("showLogin",  () => {
     });
 
     test('with no user.yml',   () => {
-        const shouldShowLogin = showLogIn(userFilePath);
+        const shouldShowLogin = showLogIn();
         expect(shouldShowLogin).toBe(true);
     });
 
     test('with empty user.yml',  async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump({}));
-        const shouldShowLogin = showLogIn(userFilePath);
+        const shouldShowLogin = showLogIn();
         expect(shouldShowLogin).toBe(true);
         fs.rmSync(userFilePath);
     });
 
     test('with user',  async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
-        const shouldShowLogin = showLogIn(userFilePath);
+        const shouldShowLogin = showLogIn();
         expect(shouldShowLogin).toBe(false);
         fs.rmSync(userFilePath);
     });

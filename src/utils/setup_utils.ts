@@ -2,7 +2,9 @@ import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 import {
-	CODESYNC_ROOT, USER_PATH, Auth0URLs, NOTIFICATION, CONFIG_PATH
+	Auth0URLs,
+	NOTIFICATION,
+	generateSettings
 } from "../constants";
 import { repoIsNotSynced } from '../events/utils';
 import { initExpressServer, isPortAvailable } from './auth_utils';
@@ -12,23 +14,25 @@ import { initUtils } from '../init/utils';
 import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
 
 
-export const createSystemDirectories = (root=CODESYNC_ROOT) => {
+export const createSystemDirectories = () => {
+	const settings = generateSettings();
 	// Create system directories
 	const paths = [
-		root,
-		`${root}/.diffs/.vscode`,
-		`${root}/.originals`,
-		`${root}/.shadow`,
-		`${root}/.deleted`,
+		settings.CODESYNC_ROOT,
+		settings.DIFFS_REPO,
+		settings.ORIGINALS_REPO,
+		settings.SHADOW_REPO,
+		settings.DELETED_REPO,
 	];
+
 	paths.forEach((path) => {
 		if (!fs.existsSync(path)) {
 			// Add file in originals repo
 			fs.mkdirSync(path, { recursive: true });
 		}
 	});
-	const configPath = `${root}/config.yml`;
-	const sequenceTokenPath = `${root}/sequence_token.yml`;
+	const configPath = settings.CONFIG_PATH;
+	const sequenceTokenPath = settings.SEQUENCE_TOKEN_PATH;
 	// Create config.yml if does not exist
 	const configExists = fs.existsSync(configPath);
 	if (!configExists) {
@@ -40,14 +44,13 @@ export const createSystemDirectories = (root=CODESYNC_ROOT) => {
 	if (!sequenceTokenExists) {
 		fs.writeFileSync(sequenceTokenPath, yaml.safeDump({}));
 	}
+	return settings;
 };
 
 
-export const setupCodeSync = async (repoPath: string, root=CODESYNC_ROOT) => {
-
-	createSystemDirectories(root);
-	const userFilePath = `${root}/user.yml`;
-	const configPath = `${root}/config.yml`;
+export const setupCodeSync = async (repoPath: string) => {
+	const settings = createSystemDirectories();
+	const userFilePath = settings.USER_PATH;
 	let port = 0;
 	for (const _port of Auth0URLs.PORTS) {
 		const isAvailable = await isPortAvailable(_port);
@@ -82,7 +85,7 @@ export const setupCodeSync = async (repoPath: string, root=CODESYNC_ROOT) => {
 		return port;
 	}
 
-	if (repoIsNotSynced(repoPath, configPath) || !initUtils.successfullySynced(repoPath, configPath)) {
+	if (repoIsNotSynced(repoPath) || !initUtils.successfullySynced(repoPath)) {
 		// Show notification to user to Sync the repo
 		showConnectRepo(repoPath, "", "");
 		return port;
@@ -103,13 +106,15 @@ export const setupCodeSync = async (repoPath: string, root=CODESYNC_ROOT) => {
 	});
 };
 
-export const showLogIn = (userFilePath=USER_PATH) => {
-	if (!fs.existsSync(userFilePath)) {
+export const showLogIn = () => {
+	const settings = generateSettings();
+
+	if (!fs.existsSync(settings.USER_PATH)) {
 		return true;
 	}
 
 	// Check if access token is present against users
-	const users = readYML(userFilePath) || {};
+	const users = readYML(settings.USER_PATH) || {};
 	const validUsers: string[] = [];
 	Object.keys(users).forEach(key => {
 		const user = users[key];
@@ -121,6 +126,6 @@ export const showLogIn = (userFilePath=USER_PATH) => {
 	return validUsers.length === 0;
 };
 
-export const showConnectRepoView = (repoPath: string, configPath=CONFIG_PATH) => {
-	return repoIsNotSynced(repoPath, configPath) || !initUtils.successfullySynced(repoPath, configPath);
+export const showConnectRepoView = (repoPath: string) => {
+	return repoIsNotSynced(repoPath) || !initUtils.successfullySynced(repoPath);
 };

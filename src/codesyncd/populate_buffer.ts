@@ -8,13 +8,11 @@ import {isBinaryFileSync} from "isbinaryfile";
 
 import { getSkipRepos, getSyncIgnoreItems, readYML } from "../utils/common";
 import {
-    CONFIG_PATH, DATETIME_FORMAT,
-    DEFAULT_BRANCH, DELETED_REPO,
+    DATETIME_FORMAT,
+    DEFAULT_BRANCH,
     FILE_SIZE_AS_COPY,
-    ORIGINALS_REPO,
-    SEQUENCE_MATCHER_RATIO,
-    SHADOW_REPO,
-    USER_PATH
+    generateSettings,
+    SEQUENCE_MATCHER_RATIO
 } from "../constants";
 import {putLogEvent} from "../logger";
 import {initUtils} from "../init/utils";
@@ -56,15 +54,17 @@ class PopulateBuffer {
     config: any;
     configFiles: any;
     renamedFiles: string[];
+    settings: any
 
     constructor(repoPath: string, branch: string) {
         this.repoPath = repoPath;
         this.branch = branch;
         this.repoModifiedAt = -1;
+        this.settings = generateSettings();
         this.repoBranchPath = path.join(this.repoPath, this.branch);
         this.itemPaths = initUtils.getSyncablePaths(this.repoPath, <IUserPlan>{}, false, true);
         this.modifiedInPast = this.getModifiedInPast();
-        this.config = readYML(CONFIG_PATH);
+        this.config = readYML(this.settings.CONFIG_PATH);
         const configRepo = this.config.repos[this.repoPath];
         this.configFiles = configRepo.branches[this.branch];
         this.renamedFiles = [];
@@ -141,8 +141,8 @@ class PopulateBuffer {
     async populateBufferForRepo() {
         const diffs = <any>{};
         const repoBranchPath = path.join(this.repoPath, this.branch);
-        const shadowRepoBranchPath = path.join(SHADOW_REPO, path.join(this.repoPath, this.branch));
-        const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(this.repoPath, this.branch));
+        const shadowRepoBranchPath = path.join(this.settings.SHADOW_REPO, path.join(this.repoPath, this.branch));
+        const originalsRepoBranchPath = path.join(this.settings.ORIGINALS_REPO, path.join(this.repoPath, this.branch));
         console.log(`Watching Repo: ${this.repoPath}`);
         for (const itemPath of this.itemPaths) {
             let diff = "";
@@ -237,8 +237,8 @@ class PopulateBuffer {
         Object.keys(this.configFiles).forEach(relPath => {
             // Cache path of file
             const fileBranchPath = path.join(this.repoBranchPath, relPath);
-            const cacheFilePath = path.join(DELETED_REPO, fileBranchPath);
-            const shadowFilePath = path.join(SHADOW_REPO, fileBranchPath);
+            const cacheFilePath = path.join(this.settings.DELETED_REPO, fileBranchPath);
+            const shadowFilePath = path.join(this.settings.SHADOW_REPO, fileBranchPath);
             if (activeRelPaths.includes(relPath) || this.renamedFiles.includes(relPath) ||
                 fs.existsSync(cacheFilePath) || !fs.existsSync(shadowFilePath)) {
                 return;
@@ -247,7 +247,7 @@ class PopulateBuffer {
                 'is_deleted': true,
                 'diff': null,  // Computing later while handling buffer
             };
-            const cacheRepoPath = path.join(DELETED_REPO, this.repoPath);
+            const cacheRepoPath = path.join(this.settings.DELETED_REPO, this.repoPath);
             // Pick from .shadow and add file in .deleted repo to avoid duplicate diffs
             initUtils.copyFilesTo(this.repoPath, [shadowFilePath], cacheRepoPath);
         });
@@ -262,8 +262,10 @@ export const detectBranchChange = async () => {
     *
     * */
     // Read config.json
-    const configJSON = readYML(CONFIG_PATH);
-    const users = readYML(USER_PATH) || {};
+    const settings = generateSettings();
+
+    const configJSON = readYML(settings.CONFIG_PATH);
+    const users = readYML(settings.USER_PATH) || {};
     const readyRepos = <any>{};
     for (const repoPath of Object.keys(configJSON.repos)) {
         if (configJSON.repos[repoPath].is_disconnected) {
@@ -280,13 +282,13 @@ export const detectBranchChange = async () => {
             continue;
         }
         const branch = getBranchName({altPath: repoPath}) || DEFAULT_BRANCH;
-        const shadowRepo = path.join(SHADOW_REPO, repoPath);
+        const shadowRepo = path.join(settings.SHADOW_REPO, repoPath);
 
         if (!fs.existsSync(repoPath) || !fs.existsSync(shadowRepo)) {
             // TODO: Handle out of sync repo
             continue;
         }
-        const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(repoPath, branch));
+        const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO, path.join(repoPath, branch));
         const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
         if (!(branch in configRepo.branches)) {
             if (originalsRepoExists) {

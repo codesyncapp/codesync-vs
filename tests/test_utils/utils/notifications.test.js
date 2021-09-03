@@ -4,6 +4,7 @@ import {NOTIFICATION} from "../../../src/constants";
 import {randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
 import yaml from "js-yaml";
 import {askPublicPrivate, askToUpdateSyncIgnore, showChooseAccount} from "../../../src/utils/notifications";
+import untildify from "untildify";
 
 
 describe("showChooseAccount",  () => {
@@ -15,6 +16,7 @@ describe("showChooseAccount",  () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
@@ -27,13 +29,13 @@ describe("showChooseAccount",  () => {
 
     test("with no user",  () => {
         fs.writeFileSync(userFilePath, yaml.safeDump({}));
-        showChooseAccount(repoPath, userFilePath);
+        showChooseAccount(repoPath);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.NO_VALID_ACCOUNT);
     });
 
     test("with valid user",  () => {
-        showChooseAccount(repoPath, userFilePath);
+        showChooseAccount(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.CHOOSE_ACCOUNT);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toStrictEqual(TEST_EMAIL);

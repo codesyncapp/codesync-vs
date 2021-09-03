@@ -1,11 +1,24 @@
 import fetchMock from "jest-fetch-mock";
 import {checkServerDown, createUserWithApi, getUserForToken} from "../../../src/utils/api_utils";
-import {INVALID_TOKEN_JSON} from "../../helpers/helpers";
+import {INVALID_TOKEN_JSON, randomBaseRepoPath, TEST_EMAIL} from "../../helpers/helpers";
+import untildify from "untildify";
+import fs from "fs";
+import yaml from "js-yaml";
 
 
 describe('checkServerDown', () => {
+    const baseRepoPath = randomBaseRepoPath();
+    const userFilePath = `${baseRepoPath}/user.yml`;
+    const sequenceTokenFilePath = `${baseRepoPath}/sequence_token.yml`;
+
     beforeEach(() => {
         fetch.resetMocks();
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
+        fs.mkdirSync(baseRepoPath, {recursive: true});
+        fs.writeFileSync(userFilePath, yaml.safeDump({}));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
+
     });
 
     test("with status: true", async () => {

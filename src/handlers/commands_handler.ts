@@ -3,7 +3,12 @@ import vscode from 'vscode';
 import yaml from "js-yaml";
 import getBranchName from 'current-git-branch';
 
-import { CONFIG_PATH, DEFAULT_BRANCH, NOTIFICATION, USER_PATH, WEB_APP_URL } from '../constants';
+import {
+	DEFAULT_BRANCH,
+	generateSettings,
+	NOTIFICATION,
+	WEB_APP_URL
+} from '../constants';
 import { isRepoActive, readYML } from '../utils/common';
 import { repoIsNotSynced } from '../events/utils';
 import { initUtils } from '../init/utils';
@@ -40,10 +45,11 @@ export const unSyncHandler = async () => {
 		if (!selection || selection !== NOTIFICATION.YES) {
 			return;
 		}
-		const config = readYML(CONFIG_PATH);
+		const settings = generateSettings();
+		const config = readYML(settings.CONFIG_PATH);
 		if (!isRepoActive(config, repoPath)) { return; }
 		const configRepo = config['repos'][repoPath];
-		const users = readYML(USER_PATH);
+		const users = readYML(settings.USER_PATH);
 		const accessToken = users[configRepo.email].access_token;
 		const json = await updateRepo(accessToken, configRepo.id, { is_in_sync: false });
 		if (json.error) {
@@ -51,7 +57,7 @@ export const unSyncHandler = async () => {
 		} else {
 			// Show notification that repo is not in sync
 			configRepo.is_disconnected = true;
-			fs.writeFileSync(CONFIG_PATH, yaml.safeDump(config));
+			fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(config));
 			// TODO: Maybe should delete repo from .shadow and .originals,
 			vscode.commands.executeCommand('setContext', 'showConnectRepoView', true);
 			vscode.window.showInformationMessage(NOTIFICATION.REPO_UNSYNCED);
@@ -62,7 +68,8 @@ export const unSyncHandler = async () => {
 export const trackRepoHandler = () => {
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath) { return; }
-	const config = readYML(CONFIG_PATH);
+	const settings = generateSettings();
+	const config = readYML(settings.CONFIG_PATH);
 	const configRepo = config['repos'][repoPath];
 	// Show notification that repo is in sync
 	const playbackLink = `${WEB_APP_URL}/repos/${configRepo.id}/playback`;
@@ -73,7 +80,8 @@ export const trackRepoHandler = () => {
 export const trackFileHandler = () => {
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath) { return; }
-	const config = readYML(CONFIG_PATH);
+	const settings = generateSettings();
+	const config = readYML(settings.CONFIG_PATH);
 	const configRepo = config['repos'][repoPath];
 	const editor = vscode.window.activeTextEditor;
 	const filePath = editor?.document.fileName;

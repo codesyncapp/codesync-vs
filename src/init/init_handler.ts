@@ -3,8 +3,13 @@ import path from 'path';
 import vscode from 'vscode';
 import getBranchName from 'current-git-branch';
 
-import { CONFIG_PATH, DEFAULT_BRANCH, GITIGNORE, NOTIFICATION,
-	ORIGINALS_REPO, SHADOW_REPO, SYNCIGNORE } from "../constants";
+import {
+	DEFAULT_BRANCH,
+	generateSettings,
+	GITIGNORE,
+	NOTIFICATION,
+	SYNCIGNORE
+} from "../constants";
 import {isRepoActive, readFile, readYML} from "../utils/common";
 import { checkServerDown, getUserForToken } from "../utils/api_utils";
 import { initUtils } from './utils';
@@ -36,10 +41,12 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 		user = json.response;
 	}
 
+	const settings = generateSettings();
+
 	const splitPath = repoPath.split('/');
 	const repoName = splitPath[splitPath.length-1];
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
-	const configJSON = readYML(CONFIG_PATH);
+	const configJSON = readYML(settings.CONFIG_PATH);
 	const isRepoSynced = isRepoActive(configJSON, repoPath);
 
 	if (isRepoSynced && !isSyncingBranch && !viaDaemon) {
@@ -102,6 +109,7 @@ const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: 
 	viaDaemon=false, isSyncingBranch=false) => {
 
 	let isPublic = false;
+	const settings = generateSettings();
 
 	if (!viaDaemon && isSyncingBranch) {
 		vscode.window.showInformationMessage(`Branch: ${branch} is being synced for the repo: ${repoName}`);
@@ -120,11 +128,11 @@ const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: 
 	// get item paths to upload and copy in respective repos
 	const itemPaths = initUtils.getSyncablePaths(repoPath, user.plan, isSyncingBranch);
 	const filePaths = itemPaths.map(itemPath => itemPath.file_path);
-	const originalsRepoBranchPath = path.join(ORIGINALS_REPO, path.join(repoPath, branch));
+	const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO, path.join(repoPath, branch));
 	// copy files to .originals repo
 	initUtils.copyFilesTo(repoPath, filePaths, originalsRepoBranchPath);
 
-	const shadowRepoBranchPath = path.join(SHADOW_REPO, path.join(repoPath, branch));
+	const shadowRepoBranchPath = path.join(settings.SHADOW_REPO, path.join(repoPath, branch));
 	// copy files to .shadow repo
 	initUtils.copyFilesTo(repoPath, filePaths, shadowRepoBranchPath);
 

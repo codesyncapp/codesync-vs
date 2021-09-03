@@ -62,9 +62,5 @@ export const TEST_REPO_RESPONSE = {
         "file_1": PRE_SIGNED_URL,
         "directory/file_2": PRE_SIGNED_URL,
     },
-    'user': {
-        'email': "email",
-        'iam_access_key': "key",
-        'iam_secret_key': "key"
-    }
+    'user': TEST_USER
 };

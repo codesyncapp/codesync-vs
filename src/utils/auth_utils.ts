@@ -7,10 +7,15 @@ import express from "express";
 import detectPort from "detect-port";
 
 import { readYML } from './common';
-import { Auth0URLs, LOGIN_SUCCESS_CALLBACK, NOTIFICATION, USER_PATH } from "../constants";
+import {
+    Auth0URLs, generateSettings,
+    LOGIN_SUCCESS_CALLBACK,
+    NOTIFICATION
+} from "../constants";
 import { repoIsNotSynced } from "../events/utils";
 import { showConnectRepo } from "./notifications";
 import { createUserWithApi } from "./api_utils";
+
 
 export const isPortAvailable = async (port: number) => {
     return detectPort(port)
@@ -58,21 +63,22 @@ export const redirectToBrowser = (skipAskConnect=false) => {
     vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
 };
 
-export const createUser = async (accessToken: string, idToken: string, repoPath: string, userFilePath=USER_PATH) => {
+export const createUser = async (accessToken: string, idToken: string, repoPath: string) => {
     const userResponse = await createUserWithApi(accessToken, idToken);
     if (userResponse.error) {
         vscode.window.showErrorMessage("Sign up to CodeSync failed");
         return;
     }
     const user = userResponse.user;
+    const settings = generateSettings();
     // Save access token of user against email in user.yml
-    const users = readYML(userFilePath) || {};
+    const users = readYML(settings.USER_PATH) || {};
     if (user.email in users) {
         users[user.email].access_token = accessToken;
     } else {
         users[user.email] = {access_token: accessToken};
     }
-    fs.writeFileSync(userFilePath, yaml.safeDump(users));
+    fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
 
     vscode.commands.executeCommand('setContext', 'showLogIn', false);
 

@@ -3,21 +3,26 @@ import * as _ from 'lodash';
 import * as yaml from 'js-yaml';
 import * as AWS from 'aws-sdk';
 import { PutLogEventsRequest } from 'aws-sdk/clients/cloudwatchlogs';
-import { AWS_REGION, CLIENT_LOGS_GROUP_NAME, DIFF_SOURCE, SEQUENCE_TOKEN_PATH, USER_PATH } from './constants';
+import {
+	AWS_REGION,
+	CLIENT_LOGS_GROUP_NAME,
+	DIFF_SOURCE,
+	generateSettings
+} from './constants';
 import { readYML } from './utils/common';
 
 let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 
 export function putLogEvent(error: string, userEmail?: string, retryCount?: number) {
 	console.log(error);
-
-	const users = readYML(USER_PATH);
-	const sequenceTokenConfig = readYML(SEQUENCE_TOKEN_PATH);
+	const settings = generateSettings();
+	const users = readYML(settings.USER_PATH);
+	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
 	let accessKey = '';
 	let secretKey = '';
 	let sequenceToken = '';
 	let email = '';
-	
+
 	if (userEmail && userEmail in users) {
 		const user = users[userEmail];
 		email = userEmail;
@@ -31,11 +36,11 @@ export function putLogEvent(error: string, userEmail?: string, retryCount?: numb
 				const user = users[email];
 				accessKey = user.access_key;
 				secretKey = user.secret_key;
-				sequenceToken = sequenceTokenConfig[email];	
+				sequenceToken = sequenceTokenConfig[email];
 			}
-		});	
+		});
 	}
-	
+
 	if (!(accessKey && secretKey && email)) {
 		return;
 	}
@@ -43,9 +48,9 @@ export function putLogEvent(error: string, userEmail?: string, retryCount?: numb
 	if (_.isEmpty(cloudwatchlogs)) {
 		cloudwatchlogs = new AWS.CloudWatchLogs({
 			accessKeyId: accessKey,
-			secretAccessKey: secretKey, 
+			secretAccessKey: secretKey,
 			region: AWS_REGION
-		});	
+		});
 	}
 
 	const logEvents = [ /* required */
@@ -71,15 +76,15 @@ export function putLogEvent(error: string, userEmail?: string, retryCount?: numb
 	}
 
 	cloudwatchlogs.putLogEvents(params as unknown as PutLogEventsRequest, function(err: any, data) {
-		
-		if (!err) { 
+
+		if (!err) {
 			// successful response
 			sequenceTokenConfig[email] = data.nextSequenceToken;
-			fs.writeFileSync(SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
+			fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
 			return;
 		}
 		// an error occurred
-		/* 
+		/*
 		DataAlreadyAcceptedException: The given batch of log events has already been accepted.
 		The next batch can be sent with sequenceToken: 49615429905286623782064446503967477603282951356289123634
 		*/
@@ -88,12 +93,12 @@ export function putLogEvent(error: string, userEmail?: string, retryCount?: numb
 			const matches = errString.match(/(\d+)/);
 			if (matches[0]) {
 				sequenceTokenConfig[email] = matches[0];
-				fs.writeFileSync(SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
+				fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
 				if (retryCount) {
 					if (retryCount < 10) {
 						retryCount += 1;
 						putLogEvent(error, email, retryCount);
-					} 
+					}
 				} else {
 					putLogEvent(error, email, 1);
 				}

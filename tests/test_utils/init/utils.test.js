@@ -3,17 +3,22 @@ import yaml from "js-yaml";
 import vscode from "vscode";
 import getBranchName from 'current-git-branch';
 import {initUtils} from "../../../src/init/utils";
+import untildify from 'untildify';
+
 import {
     ANOTHER_TEST_EMAIL,
     DUMMY_FILE_CONTENT,
-    randomBaseRepoPath,
-    randomRepoPath,
-    SYNC_IGNORE_DATA, TEST_EMAIL, TEST_REPO_RESPONSE,
+    SYNC_IGNORE_DATA,
+    TEST_EMAIL,
+    TEST_REPO_RESPONSE,
     TEST_USER,
-    USER_PLAN
+    USER_PLAN,
+    randomBaseRepoPath,
+    randomRepoPath
 } from "../../helpers/helpers";
 import {DEFAULT_BRANCH, NOTIFICATION, SYNCIGNORE} from "../../../src/constants";
 import {readYML} from "../../../src/utils/common";
+import fetchMock from "jest-fetch-mock";
 
 
 describe("isValidRepoSize",  () => {
@@ -63,6 +68,8 @@ describe("successfullySynced",  () => {
     const configData = {repos: {}};
 
     beforeEach(() => {
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.safeDump(configData));
@@ -74,14 +81,14 @@ describe("successfullySynced",  () => {
     });
 
     test("Non-Synced Repo",  () => {
-        const isSynced = initUtils.successfullySynced(repoPath, configPath);
+        const isSynced = initUtils.successfullySynced(repoPath);
         expect(isSynced).toBe(false);
     });
 
     test("Non Synced Branch",  () => {
         configData.repos[repoPath] = {branches: {}};
         fs.writeFileSync(configPath, yaml.safeDump(configData));
-        const isSynced = initUtils.successfullySynced(repoPath, configPath);
+        const isSynced = initUtils.successfullySynced(repoPath);
         expect(isSynced).toBe(true);
     });
 
@@ -93,7 +100,7 @@ describe("successfullySynced",  () => {
         };
         fs.writeFileSync(configPath, yaml.safeDump(configData));
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
-        const isSynced = initUtils.successfullySynced(repoPath, configPath);
+        const isSynced = initUtils.successfullySynced(repoPath);
         expect(isSynced).toBe(false);
     });
 
@@ -105,7 +112,7 @@ describe("successfullySynced",  () => {
         };
         fs.writeFileSync(configPath, yaml.safeDump(configData));
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
-        const isSynced = initUtils.successfullySynced(repoPath, configPath);
+        const isSynced = initUtils.successfullySynced(repoPath);
         expect(isSynced).toBe(true);
     });
 });
@@ -117,6 +124,8 @@ describe("getSyncablePaths",  () => {
     const filePath = `${repoPath}/file.js`;
 
     beforeEach(() => {
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
     });
@@ -152,8 +161,9 @@ describe("getSyncablePaths",  () => {
         fs.writeFileSync(filePath, "");
         fs.writeFileSync(`${repoPath}/ignore.js`, "DUMMY FILE CONTENT");
         fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
-        USER_PLAN.SIZE = 0;
-        const paths = initUtils.getSyncablePaths(repoPath, USER_PLAN);
+        const userPlan = Object.assign({}, USER_PLAN);
+        userPlan.SIZE = 0;
+        const paths = initUtils.getSyncablePaths(repoPath, userPlan);
         expect(paths).toHaveLength(0);
     });
 });
@@ -168,6 +178,8 @@ describe("copyFilesTo",  () => {
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         fs.mkdirSync(baseRepoPath, {recursive: true});
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
     });
 
     afterEach(() => {
@@ -198,6 +210,8 @@ describe("saveIamUser",  () => {
 
     beforeEach(() => {
         fs.mkdirSync(baseRepoPath, {recursive: true});
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
     });
 
     afterEach(() => {
@@ -205,7 +219,7 @@ describe("saveIamUser",  () => {
     });
 
     test("With no user.yml",  () => {
-        initUtils.saveIamUser(TEST_USER, userFilePath);
+        initUtils.saveIamUser(TEST_USER);
         expect(fs.existsSync(userFilePath)).toBe(true);
         const users = readYML(userFilePath);
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
@@ -214,8 +228,9 @@ describe("saveIamUser",  () => {
 
     test("User not in user.yml",  () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
-        TEST_USER.email = ANOTHER_TEST_EMAIL;
-        initUtils.saveIamUser(TEST_USER, userFilePath);
+        const testUser = Object.assign({}, TEST_USER);
+        testUser.email = ANOTHER_TEST_EMAIL;
+        initUtils.saveIamUser(testUser);
         expect(fs.existsSync(userFilePath)).toBe(true);
         const users = readYML(userFilePath);
         expect(users[ANOTHER_TEST_EMAIL].access_key).toStrictEqual(TEST_USER.iam_access_key);
@@ -230,6 +245,8 @@ describe("saveSequenceTokenFile",  () => {
     sequenceTokenFileData[TEST_EMAIL] = "";
 
     beforeEach(() => {
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
     });
 
@@ -238,7 +255,7 @@ describe("saveSequenceTokenFile",  () => {
     });
 
     test("With no sequence_token.yml",  () => {
-        initUtils.saveSequenceTokenFile(TEST_EMAIL, sequenceTokenFilePath);
+        initUtils.saveSequenceTokenFile(TEST_EMAIL);
         expect(fs.existsSync(sequenceTokenFilePath)).toBe(true);
         const users = readYML(sequenceTokenFilePath);
         expect(users[TEST_EMAIL]).toStrictEqual("");
@@ -246,7 +263,7 @@ describe("saveSequenceTokenFile",  () => {
 
     test("User not in user.yml",  () => {
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(sequenceTokenFileData));
-        initUtils.saveSequenceTokenFile(ANOTHER_TEST_EMAIL, sequenceTokenFilePath);
+        initUtils.saveSequenceTokenFile(ANOTHER_TEST_EMAIL);
         expect(fs.existsSync(sequenceTokenFilePath)).toBe(true);
         const users = readYML(sequenceTokenFilePath);
         expect(users[ANOTHER_TEST_EMAIL]).toStrictEqual("");
@@ -261,6 +278,8 @@ describe("saveFileIds",  () => {
     configData.repos[repoPath] = {branches: {}};
 
     beforeEach(() => {
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.safeDump(configData));
@@ -273,8 +292,129 @@ describe("saveFileIds",  () => {
 
     test("Should save file IDs",  () => {
         initUtils.saveFileIds(repoPath, DEFAULT_BRANCH, "ACCESS_TOKEN", TEST_EMAIL,
-            TEST_REPO_RESPONSE, configPath);
+            TEST_REPO_RESPONSE);
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
+    });
+});
+
+describe("uploadRepo",  () => {
+    const baseRepoPath = randomBaseRepoPath();
+    const repoPath = randomRepoPath();
+    const syncIgnorePath = `${repoPath}/.syncignore`;
+    const filePath = `${repoPath}/file.js`;
+    const configPath = `${baseRepoPath}/config.yml`;
+    const userFilePath = `${baseRepoPath}/user.yml`;
+    const sequenceTokenFilePath = `${baseRepoPath}/sequence_token.yml`;
+    const configData = {repos: {}};
+
+    beforeEach(() => {
+        fetch.resetMocks();
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
+        fs.mkdirSync(baseRepoPath, {recursive: true});
+        fs.mkdirSync(repoPath, {recursive: true});
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
+        fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
+        fs.writeFileSync(`${repoPath}/ignore.js`, DUMMY_FILE_CONTENT);
+    });
+
+    afterEach(() => {
+        fs.rmdirSync(repoPath, {recursive: true});
+        fs.rmdirSync(baseRepoPath, {recursive: true});
+    });
+
+    test("repo In Config",  async () => {
+        untildify.mockReturnValue(baseRepoPath);
+        // Add repo in config
+        configData.repos[repoPath] = {branches: {}};
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        // Generate ItemPaths
+        const itemPaths = initUtils.getSyncablePaths(repoPath, USER_PLAN);
+        // 1 is .syncignore, other is file.js
+        expect(itemPaths).toHaveLength(2);
+        // Mock response for checkServerDown
+        fetchMock
+            .mockResponseOnce(JSON.stringify({status: true}))
+            .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
+
+        await initUtils.uploadRepo(repoPath, DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
+            false, false, false, TEST_EMAIL);
+
+        // Verify file Ids have been added in config
+        const config = readYML(configPath);
+        expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
+
+        // Verify sequence_token.yml
+        let users = readYML(sequenceTokenFilePath);
+        expect(users[TEST_EMAIL]).toStrictEqual("");
+
+        // verify user.yml
+        users = readYML(userFilePath);
+        expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
+        expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
+    });
+
+    test("repo Not In Config",  async () => {
+        const configData = {repos: {}};
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        const itemPaths = initUtils.getSyncablePaths(repoPath, USER_PLAN);
+        // 1 is .syncignore, other is file.js
+        expect(itemPaths).toHaveLength(2);
+        // Mock response for checkServerDown
+        fetchMock
+            .mockResponseOnce(JSON.stringify({status: true}))
+            .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
+
+        await initUtils.uploadRepo(repoPath, DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
+            false, false, false,
+            TEST_EMAIL);
+
+        // Verify file Ids have been added in config
+        const config = readYML(configPath);
+        expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
+
+        // Verify sequence_token.yml
+        let users = readYML(sequenceTokenFilePath);
+        expect(users[TEST_EMAIL]).toStrictEqual("");
+
+        // verify user.yml
+        users = readYML(userFilePath);
+        expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
+        expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
+    });
+
+    test("Error in uploadRepoToServer",  async () => {
+        // Write these files as putLogEvent is called when error occurs
+        fs.writeFileSync(userFilePath, yaml.safeDump({}));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
+
+        const itemPaths = initUtils.getSyncablePaths(repoPath, USER_PLAN);
+        // 1 is .syncignore, other is file.js
+        expect(itemPaths).toHaveLength(2);
+        // Mock response for checkServerDown
+        fetchMock
+            .mockResponseOnce(JSON.stringify({status: true}))
+            .mockResponseOnce(null);
+
+        await initUtils.uploadRepo(repoPath, DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
+            false, false, false,
+            TEST_EMAIL);
+
+        // Verify file Ids have been added in config
+        const config = readYML(configPath);
+        expect(DEFAULT_BRANCH in config.repos[repoPath].branches[DEFAULT_BRANCH]).toBe(false);
+
+        // Verify sequence_token.yml
+        const sequenceTokenUsers = readYML(sequenceTokenFilePath);
+        expect(TEST_EMAIL in sequenceTokenUsers).toBe(false);
+        // verify user.yml
+        const users = readYML(userFilePath);
+        expect(TEST_EMAIL in users).toBe(false);
+        // Verify error msg
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.SYNC_FAILED);
+
     });
 });

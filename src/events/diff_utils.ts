@@ -5,21 +5,22 @@ import path from 'path';
 import dateFormat from "dateformat";
 import { IDiff } from "../interface";
 import {
-	DIFFS_REPO, DIFF_SOURCE,
+	DIFF_SOURCE,
 	DATETIME_FORMAT,
-	SHADOW_REPO,
-	DELETED_REPO
+	generateSettings
 } from "../constants";
 
 
 export function manageDiff(repoPath: string, branch: string, fileRelPath: string, diff: string,
-							isNewFile?: boolean, isRename?: boolean, isDeleted?: boolean, createdAt?: string,
-							diffsRepo=DIFFS_REPO) {
+							isNewFile?: boolean, isRename?: boolean, isDeleted?: boolean, createdAt?: string) {
 	// Skip empty diffs
 	if (!diff && !isNewFile && !isDeleted) {
 		console.log(`Skipping: Empty diffs`);
 		return;
 	}
+
+	const settings = generateSettings();
+
 	if (!createdAt) {
 		createdAt = dateFormat(new Date(), DATETIME_FORMAT);
 	}
@@ -43,12 +44,11 @@ export function manageDiff(repoPath: string, branch: string, fileRelPath: string
 		newDiff.is_deleted = true;
 	}
 	// Append new diff in the buffer
-	fs.writeFileSync(`${diffsRepo}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+	fs.writeFileSync(`${settings.DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
 }
 
 
-export const handleDirectoryRenameDiffs = async (repoPath: string, branch: string, diff: string,
-												diffsRepo=DIFFS_REPO) => {
+export const handleDirectoryRenameDiffs = async (repoPath: string, branch: string, diff: string) => {
 	const diffJSON = JSON.parse(diff);
 	// No need to skip repos here as it is for specific repo
 	const walker = walk.walk(diffJSON.new_path);
@@ -64,22 +64,21 @@ export const handleDirectoryRenameDiffs = async (repoPath: string, branch: strin
 			'new_abs_path': newFilePath
 		});
 		manageDiff(repoPath, branch, newRelPath, diff, false, true, false,
-			"", diffsRepo);
+			"");
 		next();
 	});
 };
 
 export const handleDirectoryDeleteDiffs = async (
-	repoPath: string, branch: string, relPath: string,
-	shadowRepo=SHADOW_REPO, cacheRepo = DELETED_REPO,
-	diffsRepo = DIFFS_REPO) => {
-	const shadowPath = path.join(shadowRepo, `${repoPath}/${branch}/${relPath}`);
+	repoPath: string, branch: string, relPath: string) => {
+	const settings = generateSettings();
+	const shadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
 	// No need to skip repos here as it is for specific repo
 	const walker = walk.walk(shadowPath);
 	walker.on("file", function (root, fileStats, next) {
 		const filePath = `${root}/${fileStats.name}`;
 		const relPath = filePath.split(`${repoPath}/${branch}/`)[1];
-		const destDeleted = path.join(cacheRepo, `${repoPath}/${branch}/${relPath}`);
+		const destDeleted = path.join(settings.DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
 		const destDeletedPathSplit = destDeleted.split("/");
 		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join("/");
 
@@ -92,7 +91,7 @@ export const handleDirectoryDeleteDiffs = async (
 		// File destination will be created or overwritten by default.
 		fs.copyFileSync(filePath, destDeleted);
 		manageDiff(repoPath, branch, relPath, "", false, false, true,
-			"", diffsRepo);
+			"");
 		next();
 	});
 };
