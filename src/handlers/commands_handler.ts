@@ -5,9 +5,7 @@ import getBranchName from 'current-git-branch';
 
 import {
 	DEFAULT_BRANCH,
-	generateSettings,
-	NOTIFICATION,
-	WEB_APP_URL
+	NOTIFICATION
 } from '../constants';
 import { isRepoActive, readYML } from '../utils/common';
 import { repoIsNotSynced } from '../events/utils';
@@ -15,6 +13,7 @@ import { initUtils } from '../init/utils';
 import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
 import { updateRepo } from '../utils/sync_repo_utils';
+import {generateSettings, WEB_APP_URL} from "../settings";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();

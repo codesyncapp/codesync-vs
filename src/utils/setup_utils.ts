@@ -3,8 +3,7 @@ import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 import {
 	Auth0URLs,
-	NOTIFICATION,
-	generateSettings
+	NOTIFICATION
 } from "../constants";
 import { repoIsNotSynced } from '../events/utils';
 import { initExpressServer, isPortAvailable } from './auth_utils';
@@ -12,6 +11,7 @@ import { showConnectRepo, showSignUpButtons } from './notifications';
 import { readYML } from './common';
 import { initUtils } from '../init/utils';
 import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
+import {generateSettings} from "../settings";
 
 
 export const createSystemDirectories = () => {

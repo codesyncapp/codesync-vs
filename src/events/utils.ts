@@ -2,11 +2,11 @@ import fs from 'fs';
 import path from "path";
 import ignore from 'ignore';
 import {
-	GIT_REPO,
-	generateSettings
+	GIT_REPO
 } from "../constants";
 import { handleDirectoryRenameDiffs, manageDiff } from './diff_utils';
 import {isRepoActive, readYML} from '../utils/common';
+import {generateSettings} from "../settings";
 
 export function isGitFile(path: string) {
 	return path.startsWith(GIT_REPO);

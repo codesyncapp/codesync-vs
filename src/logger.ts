@@ -6,10 +6,10 @@ import { PutLogEventsRequest } from 'aws-sdk/clients/cloudwatchlogs';
 import {
 	AWS_REGION,
 	CLIENT_LOGS_GROUP_NAME,
-	DIFF_SOURCE,
-	generateSettings
+	DIFF_SOURCE
 } from './constants';
 import { readYML } from './utils/common';
+import {generateSettings} from "./settings";
 
 let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 

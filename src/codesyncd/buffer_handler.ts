@@ -15,11 +15,11 @@ import {
 import {IFileToDiff, IRepoDiffs} from '../interface';
 import {
 	DIFF_FILES_PER_ITERATION,
-	generateSettings,
 	STATUS_BAR_MSGS,
 	WEBSOCKET_ENDPOINT
 } from "../constants";
 import {recallDaemon} from "./codesyncd";
+import {generateSettings} from "../settings";
 
 export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 	/*

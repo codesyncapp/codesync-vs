@@ -6,9 +6,9 @@ import dateFormat from "dateformat";
 import { IDiff } from "../interface";
 import {
 	DIFF_SOURCE,
-	DATETIME_FORMAT,
-	generateSettings
+	DATETIME_FORMAT
 } from "../constants";
+import {generateSettings} from "../settings";
 
 
 export function manageDiff(repoPath: string, branch: string, fileRelPath: string, diff: string,

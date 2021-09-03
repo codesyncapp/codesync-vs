@@ -5,7 +5,6 @@ import getBranchName from 'current-git-branch';
 
 import {
 	DEFAULT_BRANCH,
-	generateSettings,
 	GITIGNORE,
 	NOTIFICATION,
 	SYNCIGNORE
@@ -16,6 +15,7 @@ import { initUtils } from './utils';
 import { askPublicPrivate, askToUpdateSyncIgnore } from '../utils/notifications';
 import { askAndTriggerSignUp } from '../utils/auth_utils';
 import { IUser, IUserPlan } from '../interface';
+import {generateSettings} from "../settings";
 
 
 export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=false, isSyncingBranch=false) => {

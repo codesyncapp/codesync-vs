@@ -6,13 +6,13 @@ import {
 	DIFF_SIZE_LIMIT,
 	REQUIRED_DIFF_KEYS,
 	REQUIRED_DIR_RENAME_DIFF_KEYS,
-	REQUIRED_FILE_RENAME_DIFF_KEYS,
-	generateSettings
+	REQUIRED_FILE_RENAME_DIFF_KEYS
 } from "../constants";
 import { uploadFileToServer } from '../utils/upload_utils';
 import { isBinaryFileSync } from 'isbinaryfile';
 import { diff_match_patch } from 'diff-match-patch';
 import { putLogEvent } from '../logger';
+import {generateSettings} from "../settings";
 
 
 export const isValidDiff = (diffData: IDiff) => {

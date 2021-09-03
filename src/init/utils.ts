@@ -9,7 +9,6 @@ import getBranchName from 'current-git-branch';
 import { isBinaryFileSync } from 'isbinaryfile';
 import {
 	DEFAULT_BRANCH,
-	generateSettings,
 	NOTIFICATION
 } from '../constants';
 import { IFileToUpload, IUserPlan } from '../interface';
@@ -18,6 +17,7 @@ import { checkServerDown } from '../utils/api_utils';
 import { putLogEvent } from '../logger';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
+import {generateSettings} from "../settings";
 
 export class initUtils {
 	repoPath: string;

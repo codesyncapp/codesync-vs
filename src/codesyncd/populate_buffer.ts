@@ -11,7 +11,6 @@ import {
     DATETIME_FORMAT,
     DEFAULT_BRANCH,
     FILE_SIZE_AS_COPY,
-    generateSettings,
     SEQUENCE_MATCHER_RATIO
 } from "../constants";
 import {putLogEvent} from "../logger";
@@ -21,6 +20,7 @@ import {syncRepo} from "../init/init_handler";
 import {similarity} from "./utils";
 import {diff_match_patch} from "diff-match-patch";
 import {manageDiff} from "../events/diff_utils";
+import {generateSettings} from "../settings";
 
 
 export const populateBuffer = async () => {

@@ -4,9 +4,10 @@ import vscode from 'vscode';
 import { diff_match_patch } from 'diff-match-patch';
 import getBranchName from 'current-git-branch';
 
-import { DEFAULT_BRANCH, generateSettings} from "../constants";
+import { DEFAULT_BRANCH} from "../constants";
 import { handleDirectoryDeleteDiffs, manageDiff } from './diff_utils';
 import { repoIsNotSynced, shouldIgnoreFile, handleRename, handleNewFile } from './utils';
+import {generateSettings} from "../settings";
 
 
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {

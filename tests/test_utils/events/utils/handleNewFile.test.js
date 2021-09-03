@@ -3,7 +3,7 @@ import path from "path";
 
 import {readYML} from "../../../../src/utils/common";
 import {handleNewFile} from "../../../../src/events/utils";
-import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../../out/constants";
+import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../../src/constants";
 import {randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
 import untildify from "untildify";
 

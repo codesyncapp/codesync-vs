@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
-import {generateSettings, NOTIFICATION} from '../constants';
+import {NOTIFICATION} from '../constants';
 import { syncRepo } from '../init/init_handler';
 import { readYML } from './common';
 import { logout, redirectToBrowser } from './auth_utils';
+import {generateSettings} from "../settings";
 
 export const showSignUpButtons = () => {
 	vscode.window.showInformationMessage(

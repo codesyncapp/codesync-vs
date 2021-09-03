@@ -3,7 +3,7 @@ import fs from "fs";
 import {handleRename} from "../../../../src/events/utils";
 import {randomBaseRepoPath, randomRepoPath, waitFor} from "../../../helpers/helpers";
 import {readYML} from "../../../../src/utils/common";
-import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../../out/constants";
+import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../../src/constants";
 import untildify from "untildify";
 
 
