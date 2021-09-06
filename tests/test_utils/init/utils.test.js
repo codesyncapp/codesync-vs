@@ -19,6 +19,7 @@ import {
 import {DEFAULT_BRANCH, NOTIFICATION, SYNCIGNORE} from "../../../src/constants";
 import {readYML} from "../../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
+import {isBinaryFileSync} from "isbinaryfile";
 
 
 describe("isValidRepoSize",  () => {
@@ -150,6 +151,7 @@ describe("getSyncablePaths",  () => {
     });
 
     test("Ignore file and match rest",  () => {
+        isBinaryFileSync.mockReturnValue(false);
         fs.writeFileSync(filePath, "");
         fs.writeFileSync(`${repoPath}/ignore.js`, DUMMY_FILE_CONTENT);
         fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");

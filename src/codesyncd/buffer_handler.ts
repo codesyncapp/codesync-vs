@@ -187,7 +187,8 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 									if (!newFiles.includes(relPath)) {
 										newFiles.push(relPath);
 									}
-									const json = await handleNewFileUpload(accessToken, diffData, relPath, configRepo.id, configJSON);
+									const json = await handleNewFileUpload(accessToken, diffData.repo_path,
+										diffData.branch, diffData.created_at, relPath, configRepo.id, configJSON);
 									if (json.uploaded) {
 										configJSON = json.config;
 									}

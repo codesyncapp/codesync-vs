@@ -1,3 +1,5 @@
+import {DIFF_SOURCE} from "../../src/constants";
+
 export function getRandomString(length) {
     var randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     var result = '';
@@ -63,4 +65,13 @@ export const TEST_REPO_RESPONSE = {
         "directory/file_2": PRE_SIGNED_URL,
     },
     'user': TEST_USER
+};
+
+export const DIFF_DATA = {
+    repo_path: "",
+    branch: "",
+    file_relative_path: "",
+    created_at: "",
+    diff: null,
+    source: DIFF_SOURCE
 };

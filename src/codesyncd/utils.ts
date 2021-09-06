@@ -25,9 +25,11 @@ export const isValidDiff = (diffData: IDiff) => {
 	if (isRename || isDirRename) {
 		if (!diff) { return false; }
 		let diffJSON = {};
-		try {
-			diffJSON = yaml.load(diff);
-		} catch (e) {
+		diffJSON = yaml.load(diff);
+		if (typeof diffJSON !== "object") {
+			return false;
+		}
+		if (isRename && isDirRename) {
 			return false;
 		}
 		if (isRename) {
@@ -42,23 +44,22 @@ export const isValidDiff = (diffData: IDiff) => {
 	return true;
 };
 
-export const handleNewFileUpload = async (access_token: string, diffData: IDiff, relPath: string, repoId: number,
-	configJSON: any) => {
+export const handleNewFileUpload = async (accessToken: string, repoPath: string, branch: string, createdAt: string,
+											relPath: string, repoId: number, configJSON: any) => {
 	/*
-	Uplaods new file to server and adds it in config
-	Ignore if file is not present in .originals repo
+		Uploads new file to server and adds it in config
+		Ignores if file is not present in .originals repo
 	*/
 	const settings = generateSettings();
 
-	const originalsPath = path.join(settings.ORIGINALS_REPO, `${diffData.repo_path}/${diffData.branch}/${relPath}`);
+	const originalsPath = path.join(settings.ORIGINALS_REPO, `${repoPath}/${branch}/${relPath}`);
 	if (!fs.existsSync(originalsPath)) {
 		return {
 			uploaded: false,
 			config: configJSON
 		};
 	}
-	const response = await uploadFileToServer(access_token, repoId, diffData.branch, originalsPath,
-		relPath, diffData.created_at);
+	const response = await uploadFileToServer(accessToken, repoId, branch, originalsPath, relPath, createdAt);
 	if (response.error) {
 		putLogEvent(`Error uploading to server: ${response.error}`);
 		return {
@@ -66,7 +67,7 @@ export const handleNewFileUpload = async (access_token: string, diffData: IDiff,
 			config: configJSON
 		};
 	}
-	configJSON.repos[diffData.repo_path].branches[diffData.branch][relPath] = response.fileId;
+	configJSON.repos[repoPath].branches[branch][relPath] = response.fileId;
 	// write file id to config.yml
 	fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
 	return {
