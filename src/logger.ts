@@ -1,7 +1,7 @@
-import * as fs from 'fs';
-import * as _ from 'lodash';
-import * as yaml from 'js-yaml';
-import * as AWS from 'aws-sdk';
+import fs from 'fs';
+import _ from 'lodash';
+import yaml from 'js-yaml';
+import AWS from 'aws-sdk';
 import { PutLogEventsRequest } from 'aws-sdk/clients/cloudwatchlogs';
 import {
 	AWS_REGION,
@@ -9,7 +9,7 @@ import {
 	DIFF_SOURCE
 } from './constants';
 import { readYML } from './utils/common';
-import {generateSettings} from "./settings";
+import { generateSettings } from "./settings";
 
 let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 
@@ -44,7 +44,6 @@ export function putLogEvent(error: string, userEmail?: string, retryCount?: numb
 	if (!(accessKey && secretKey && email)) {
 		return;
 	}
-
 	if (_.isEmpty(cloudwatchlogs)) {
 		cloudwatchlogs = new AWS.CloudWatchLogs({
 			accessKeyId: accessKey,
@@ -79,8 +78,7 @@ export function putLogEvent(error: string, userEmail?: string, retryCount?: numb
 
 		if (!err) {
 			// successful response
-			sequenceTokenConfig[email] = data.nextSequenceToken;
-			fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
+			updateSequenceToken(email, data.nextSequenceToken || "");
 			return;
 		}
 		// an error occurred
@@ -110,3 +108,10 @@ export function putLogEvent(error: string, userEmail?: string, retryCount?: numb
 		}
 	});
 }
+
+export const updateSequenceToken = (email: string, nextSequenceToken: string) => {
+	const settings = generateSettings();
+	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
+	sequenceTokenConfig[email] = nextSequenceToken;
+	fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
+};
