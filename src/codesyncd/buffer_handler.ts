@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as vscode from "vscode";
+import fs from 'fs';
+import vscode from "vscode";
 import {client} from "websocket";
 
 import {putLogEvent} from '../logger';

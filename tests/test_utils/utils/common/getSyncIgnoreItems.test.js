@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import fs from "fs";
 import { getSyncIgnoreItems } from "../../../../src/utils/common";
 import {randomRepoPath, SYNC_IGNORE_DATA} from "../../../helpers/helpers";
 

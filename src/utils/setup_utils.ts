@@ -1,6 +1,6 @@
-import * as fs from 'fs';
-import * as yaml from 'js-yaml';
-import * as vscode from 'vscode';
+import fs from 'fs';
+import yaml from 'js-yaml';
+import vscode from 'vscode';
 import {
 	Auth0URLs,
 	NOTIFICATION

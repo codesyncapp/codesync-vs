@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import vscode from 'vscode';
 import {NOTIFICATION} from '../constants';
 import { syncRepo } from '../init/init_handler';
 import { readYML } from './common';

@@ -1,6 +1,6 @@
 'use strict';
 
-import * as vscode from 'vscode';
+import vscode from 'vscode';
 
 import { handleChangeEvent, handleFilesCreated, handleFilesDeleted,
 	handleFilesRenamed, handlePastedFile } from "./events/event_handler";
