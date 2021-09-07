@@ -1,9 +1,9 @@
-import fetchMock from "jest-fetch-mock";
-import {checkServerDown, createUserWithApi, getUserForToken} from "../../../src/utils/api_utils";
-import {INVALID_TOKEN_JSON, randomBaseRepoPath, TEST_EMAIL} from "../../helpers/helpers";
-import untildify from "untildify";
 import fs from "fs";
 import yaml from "js-yaml";
+import untildify from "untildify";
+import fetchMock from "jest-fetch-mock";
+import {checkServerDown, createUserWithApi, getUserForToken} from "../../../src/utils/api_utils";
+import {INVALID_TOKEN_JSON, randomBaseRepoPath} from "../../helpers/helpers";
 
 
 describe('checkServerDown', () => {
@@ -19,6 +19,10 @@ describe('checkServerDown', () => {
         fs.writeFileSync(userFilePath, yaml.safeDump({}));
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
 
+    });
+
+    afterEach(() => {
+        fs.rmdirSync(baseRepoPath, { recursive: true});
     });
 
     test("with status: true", async () => {
