@@ -1,13 +1,12 @@
 import fs from "fs";
-import path from "path";
 import yaml from "js-yaml";
-
+import AWS from "aws-sdk";
 import untildify from "untildify";
-import {randomBaseRepoPath, randomRepoPath, TEST_EMAIL, TEST_USER} from "../helpers/helpers";
-import {AWS_REGION, DEFAULT_BRANCH} from "../../src/constants";
+
+import {randomBaseRepoPath, TEST_EMAIL, TEST_USER} from "../helpers/helpers";
+import {AWS_REGION} from "../../src/constants";
 import {putLogEvent, updateSequenceToken} from "../../src/logger";
 import {readYML} from "../../out/utils/common";
-import AWS from "aws-sdk";
 
 
 describe("putLogEvent",  () => {
@@ -44,7 +43,7 @@ describe("putLogEvent",  () => {
 
         putLogEvent("Error message");
 
-        expect(AWS.CloudWatchLogs.mock.calls).toHaveLength(1);
+        expect(AWS.CloudWatchLogs.mock.instances).toHaveLength(1);
         expect(AWS.CloudWatchLogs.mock.calls[0][0]).toStrictEqual({
             accessKeyId: TEST_USER.iam_access_key,
             secretAccessKey: TEST_USER.iam_secret_key,

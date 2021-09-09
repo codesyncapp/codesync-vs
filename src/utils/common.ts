@@ -18,7 +18,7 @@ export const readYML = (filePath: string) => {
 	try {
 		return yaml.load(readFile(filePath));
 	} catch (e) {
-		return;
+		return {};
 	}
 };
 

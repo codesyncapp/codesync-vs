@@ -74,6 +74,8 @@ export const handleRename = (repoPath: string, branch: string, oldAbsPath: strin
 };
 
 export const handleNewFile = (repoPath: string, branch: string, filePath: string) => {
+	// Do not continue if file does not exist
+	if (!fs.existsSync(filePath)) { return; }
 	// Skip for directory
 	const lstat = fs.lstatSync(filePath);
 	if (lstat.isDirectory()) { return; }
@@ -98,6 +100,5 @@ export const handleNewFile = (repoPath: string, branch: string, filePath: string
 	// File destination will be created or overwritten by default.
 	fs.copyFileSync(filePath, destOriginals);
 	// Add new diff in the buffer
-	manageDiff(repoPath, branch, relPath, "", true, false,
-		false, "");
+	manageDiff(repoPath, branch, relPath, "", true);
 };

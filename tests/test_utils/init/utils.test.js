@@ -145,6 +145,7 @@ describe("getSyncablePaths",  () => {
     });
 
     test("No .syncignore",  () => {
+        fs.writeFileSync(filePath, "");
         const initUtilsObj = new initUtils(repoPath);
         const paths = initUtilsObj.getSyncablePaths(USER_PLAN);
         expect(paths).toHaveLength(0);

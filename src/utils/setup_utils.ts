@@ -116,10 +116,10 @@ export const showLogIn = () => {
 	// Check if access token is present against users
 	const users = readYML(settings.USER_PATH) || {};
 	const validUsers: string[] = [];
-	Object.keys(users).forEach(key => {
-		const user = users[key];
+	Object.keys(users).forEach(email => {
+		const user = users[email];
 		if (user.access_token) {
-			validUsers.push(user.email);
+			validUsers.push(email);
 		}
 	});
 

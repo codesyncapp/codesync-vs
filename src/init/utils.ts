@@ -17,7 +17,7 @@ import { checkServerDown } from '../utils/api_utils';
 import { putLogEvent } from '../logger';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
-import {generateSettings} from "../settings";
+import { generateSettings } from "../settings";
 
 export class initUtils {
 	repoPath: string;
@@ -200,17 +200,6 @@ export class initUtils {
 				// the results array will equal ['one','two'] even though
 				// the second function had a shorter timeout.
 				if (err) return;
-				const self = new initUtils();
-
-				const repoData = <any>{
-					id: repoId,
-					email: userEmail,
-					token
-				};
-				const configJSON = readYML(self.settings.CONFIG_PATH);
-				Object.keys(repoData).forEach((key) => {
-					configJSON.repos[repoPath][key] = repoData[key];
-				});
 
 				// delete .originals repo
 				fs.rmdirSync(originalsRepoBranchPath, { recursive: true });

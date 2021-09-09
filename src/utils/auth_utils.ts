@@ -8,13 +8,14 @@ import detectPort from "detect-port";
 
 import { readYML } from './common';
 import {
-    Auth0URLs, LOGIN_SUCCESS_CALLBACK,
+    Auth0URLs,
+    LOGIN_SUCCESS_CALLBACK,
     NOTIFICATION
 } from "../constants";
 import { repoIsNotSynced } from "../events/utils";
 import { showConnectRepo } from "./notifications";
 import { createUserWithApi } from "./api_utils";
-import {generateSettings} from "../settings";
+import { generateSettings } from "../settings";
 
 
 export const isPortAvailable = async (port: number) => {

@@ -6,7 +6,6 @@ import { IAuth0User } from "../interface";
 import jwt_decode from "jwt-decode";
 
 
-
 export const checkServerDown = async (userEmail?: string) => {
 	let isDown = false;
 	const response = await fetch(API_HEALTHCHECK)

@@ -27,6 +27,6 @@ test('reads yml file', () => {
 });
 
 test('reads yml file with non-existing file path', () => {
-    expect(readYML("dummyPath")).toEqual(undefined);
+    expect(readYML("dummyPath")).toStrictEqual({});
 });
 
