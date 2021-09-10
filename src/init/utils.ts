@@ -65,9 +65,15 @@ export class initUtils {
 		return hasValidFiles;
 	}
 
-	getSyncablePaths (userPlan: IUserPlan, isSyncingBranch=false, isPopulatingBuffer = false) {
+	isSyncAble(relPath: string) {
 		const syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
+		const ig = ignore().add(syncIgnoreItems);
+		return !ig.ignores(relPath);
+	}
+
+	getSyncablePaths (userPlan: IUserPlan, isSyncingBranch=false, isPopulatingBuffer = false) {
 		const itemPaths: IFileToUpload[] = [];
+		const syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
 		if (!syncIgnoreItems.length) {
 			return itemPaths;
 		}
@@ -83,8 +89,8 @@ export class initUtils {
 					const self = new initUtils();
 					const filePath = `${root}/${fileStats.name}`;
 					const relPath = filePath.split(`${repoPath}/`)[1];
-					const shouldIgnore = ig.ignores(relPath);
-					if (!shouldIgnore) {
+					const isSyncAbleFile = self.isSyncAble(relPath);
+					if (isSyncAbleFile) {
 						itemPaths.push({
 							file_path: filePath,
 							rel_path: relPath,

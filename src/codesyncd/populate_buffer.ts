@@ -228,10 +228,12 @@ class PopulateBuffer {
 
     getDiffForDeletedFiles() {
         /*
-         Pick files that are present in
-         .yml but not present in
-         - actual repo
-         - shadow repo
+         Pick files that are present in config.yml but
+         - is sync able file
+         - not present in actual repo
+         - is not in renamed files
+         - not present in .deleted repo
+         - present in .shadow repo
         */
         const diffs = <any>{};
         const initUtilsObj = new initUtils(this.repoPath);
@@ -241,10 +243,15 @@ class PopulateBuffer {
             const fileBranchPath = path.join(this.repoBranchPath, relPath);
             const cacheFilePath = path.join(this.settings.DELETED_REPO, fileBranchPath);
             const shadowFilePath = path.join(this.settings.SHADOW_REPO, fileBranchPath);
-            if (activeRelPaths.includes(relPath) || this.renamedFiles.includes(relPath) ||
-                fs.existsSync(cacheFilePath) || !fs.existsSync(shadowFilePath)) {
+            // See if should discard this file
+            if (!initUtilsObj.isSyncAble(relPath) ||
+                activeRelPaths.includes(relPath) ||
+                this.renamedFiles.includes(relPath) ||
+                fs.existsSync(cacheFilePath) ||
+                !fs.existsSync(shadowFilePath)) {
                 return;
             }
+
             diffs[relPath] = {
                 'is_deleted': true,
                 'diff': null,  // Computing later while handling buffer
