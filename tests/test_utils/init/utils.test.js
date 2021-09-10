@@ -356,7 +356,7 @@ describe("uploadRepo",  () => {
         // 1 is .syncignore, other is file.js
         expect(itemPaths).toHaveLength(2);
         // Mock response for checkServerDown
-        fetchMock.mockResponseOnce(JSON.stringify({status: false}))
+        fetchMock.mockResponseOnce(JSON.stringify({status: false}));
 
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
             false, false, false, TEST_EMAIL);

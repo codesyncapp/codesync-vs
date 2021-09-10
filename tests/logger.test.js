@@ -3,10 +3,10 @@ import yaml from "js-yaml";
 import AWS from "aws-sdk";
 import untildify from "untildify";
 
-import {randomBaseRepoPath, TEST_EMAIL, TEST_USER} from "../helpers/helpers";
-import {AWS_REGION} from "../../src/constants";
-import {putLogEvent, updateSequenceToken} from "../../src/logger";
-import {readYML} from "../../out/utils/common";
+import {randomBaseRepoPath, TEST_EMAIL, TEST_USER} from "./helpers/helpers";
+import {AWS_REGION} from "../src/constants";
+import {putLogEvent, updateSequenceToken} from "../src/logger";
+import {readYML} from "../src/utils/common";
 
 
 describe("putLogEvent",  () => {

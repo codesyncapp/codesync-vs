@@ -41,27 +41,31 @@ export const unSyncHandler = async () => {
 		NOTIFICATION.YES,
 		NOTIFICATION.CANCEL
 	]).then(async selection => {
-		if (!selection || selection !== NOTIFICATION.YES) {
-			return;
-		}
-		const settings = generateSettings();
-		const config = readYML(settings.CONFIG_PATH);
-		if (!isRepoActive(config, repoPath)) { return; }
-		const configRepo = config['repos'][repoPath];
-		const users = readYML(settings.USER_PATH);
-		const accessToken = users[configRepo.email].access_token;
-		const json = await updateRepo(accessToken, configRepo.id, { is_in_sync: false });
-		if (json.error) {
-			vscode.window.showErrorMessage(NOTIFICATION.REPO_UNSYNC_FAILED);
-		} else {
-			// Show notification that repo is not in sync
-			configRepo.is_disconnected = true;
-			fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(config));
-			// TODO: Maybe should delete repo from .shadow and .originals,
-			vscode.commands.executeCommand('setContext', 'showConnectRepoView', true);
-			vscode.window.showInformationMessage(NOTIFICATION.REPO_UNSYNCED);
-		}
+		await postSelectionUnsync(repoPath, selection);
 	});
+};
+
+export const postSelectionUnsync = async (repoPath: string, selection?: string) => {
+	if (!selection || selection !== NOTIFICATION.YES) {
+		return;
+	}
+	const settings = generateSettings();
+	const config = readYML(settings.CONFIG_PATH);
+	if (!isRepoActive(config, repoPath)) { return; }
+	const configRepo = config['repos'][repoPath];
+	const users = readYML(settings.USER_PATH);
+	const accessToken = users[configRepo.email].access_token;
+	const json = await updateRepo(accessToken, configRepo.id, { is_in_sync: false });
+	if (json.error) {
+		vscode.window.showErrorMessage(NOTIFICATION.REPO_UNSYNC_FAILED);
+	} else {
+		// Show notification that repo is not in sync
+		configRepo.is_disconnected = true;
+		fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(config));
+		// TODO: Maybe should delete repo from .shadow and .originals,
+		vscode.commands.executeCommand('setContext', 'showConnectRepoView', true);
+		vscode.window.showInformationMessage(NOTIFICATION.REPO_UNSYNCED);
+	}
 };
 
 export const trackRepoHandler = () => {
@@ -73,6 +77,7 @@ export const trackRepoHandler = () => {
 	// Show notification that repo is in sync
 	const playbackLink = `${WEB_APP_URL}/repos/${configRepo.id}/playback`;
 	vscode.env.openExternal(vscode.Uri.parse(playbackLink));
+	return playbackLink;
 };
 
 

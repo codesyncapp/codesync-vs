@@ -15,7 +15,7 @@ const window = {
     showInformationMessage: jest.fn(() => ({
         then: jest.fn()
     })),
-    createTextEditorDecorationType: jest.fn()
+    createTextEditorDecorationType: jest.fn(),
 };
 
 const workspace = {
@@ -23,6 +23,12 @@ const workspace = {
     workspaceFolders: [],
     onDidSaveTextDocument: jest.fn()
 };
+
+Object.defineProperty(workspace, 'rootPath', {
+    get: jest.fn(() => undefined),
+    set: jest.fn(),
+    configurable: true
+}, );
 
 const OverviewRulerLane = {
     Left: null

@@ -48,14 +48,21 @@ describe("createRedirectUri",  () => {
 });
 
 describe("redirectToBrowser",  () => {
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
     test("skipAskConnect=false",  () => {
         redirectToBrowser();
         expect(global.skipAskConnect).toBe(false);
+        expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
     });
 
     test("skipAskConnect=true",  () => {
         redirectToBrowser(true);
         expect(global.skipAskConnect).toBe(true);
+        expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
     });
 });
 
