@@ -158,6 +158,7 @@ describe("getSyncablePaths",  () => {
         fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
         const initUtilsObj = new initUtils(repoPath);
         const paths = initUtilsObj.getSyncablePaths(USER_PLAN);
+
         // 1 is .syncignore, other is file.js
         expect(paths).toHaveLength(2);
         expect(paths[0].rel_path).toStrictEqual(SYNCIGNORE);
@@ -343,6 +344,30 @@ describe("uploadRepo",  () => {
     afterEach(() => {
         fs.rmdirSync(repoPath, {recursive: true});
         fs.rmdirSync(baseRepoPath, {recursive: true});
+    });
+
+    test("Server Down",  async () => {
+        // Add repo in config
+        configData.repos[repoPath] = {branches: {}};
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        // Generate ItemPaths
+        const initUtilsObj = new initUtils(repoPath);
+        const itemPaths = initUtilsObj.getSyncablePaths(USER_PLAN);
+        // 1 is .syncignore, other is file.js
+        expect(itemPaths).toHaveLength(2);
+        // Mock response for checkServerDown
+        fetchMock.mockResponseOnce(JSON.stringify({status: false}))
+
+        await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
+            false, false, false, TEST_EMAIL);
+
+        // Verify file Ids have been added in config
+        const config = readYML(configPath);
+        expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual({
+            ".syncignore": null,
+            "file.js": null,
+        });
+        expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
     test("repo In Config",  async () => {

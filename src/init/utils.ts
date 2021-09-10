@@ -73,20 +73,21 @@ export class initUtils {
 
 	getSyncablePaths (userPlan: IUserPlan, isSyncingBranch=false, isPopulatingBuffer = false) {
 		const itemPaths: IFileToUpload[] = [];
-		const syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
+		const repoPath = this.repoPath;
+		const syncIgnoreItems = getSyncIgnoreItems(repoPath);
 		if (!syncIgnoreItems.length) {
 			return itemPaths;
 		}
+
 		let syncSize = 0;
 		let limitReached = false;
-		const ig = ignore().add(syncIgnoreItems);
-		const skipRepos = getSkipRepos(this.repoPath, syncIgnoreItems);
-		const repoPath = this.repoPath;
+		const skipRepos = getSkipRepos(repoPath, syncIgnoreItems);
+
 		const options = {
 			filters: skipRepos,
 			listeners: {
 				file: function (root: string, fileStats: any, next: any) {
-					const self = new initUtils();
+					const self = new initUtils(repoPath);
 					const filePath = `${root}/${fileStats.name}`;
 					const relPath = filePath.split(`${repoPath}/`)[1];
 					const isSyncAbleFile = self.isSyncAble(relPath);
@@ -110,7 +111,7 @@ export class initUtils {
 				}
 			}
 		};
-		walk.walkSync(this.repoPath, options);
+		walk.walkSync(repoPath, options);
 		return limitReached ? [] : itemPaths;
 	}
 
