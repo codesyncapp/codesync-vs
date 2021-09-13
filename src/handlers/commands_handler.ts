@@ -84,12 +84,12 @@ export const trackRepoHandler = () => {
 export const trackFileHandler = () => {
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath) { return; }
-	const settings = generateSettings();
-	const config = readYML(settings.CONFIG_PATH);
-	const configRepo = config['repos'][repoPath];
 	const editor = vscode.window.activeTextEditor;
 	const filePath = editor?.document.fileName;
 	if (!filePath) { return; }
+	const settings = generateSettings();
+	const config = readYML(settings.CONFIG_PATH);
+	const configRepo = config['repos'][repoPath];
 	const branch = getBranchName({altPath: repoPath}) || DEFAULT_BRANCH;
 	const configFiles = configRepo.branches[branch];
 	const relPath = filePath.split(`${repoPath}/`)[1];

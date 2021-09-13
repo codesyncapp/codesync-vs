@@ -18,6 +18,12 @@ const window = {
     createTextEditorDecorationType: jest.fn(),
 };
 
+Object.defineProperty(window, 'activeTextEditor', {
+    get: jest.fn(() => undefined),
+    set: jest.fn(),
+    configurable: true
+});
+
 const workspace = {
     getConfiguration: jest.fn(),
     workspaceFolders: [],
@@ -28,7 +34,7 @@ Object.defineProperty(workspace, 'rootPath', {
     get: jest.fn(() => undefined),
     set: jest.fn(),
     configurable: true
-}, );
+});
 
 const OverviewRulerLane = {
     Left: null

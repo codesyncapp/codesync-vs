@@ -16,6 +16,8 @@ import {randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../helpers/helpers
 import {NOTIFICATION} from "../../src/constants";
 import {WEB_APP_URL} from "../../src/settings";
 import {readYML} from "../../out/utils/common";
+import {DEFAULT_BRANCH} from "../../out/constants";
+import getBranchName from "current-git-branch";
 
 
 describe("SignUpHandler",  () => {
@@ -273,6 +275,60 @@ describe("trackFileHandler",  () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(undefined);
         trackFileHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(0);
+    });
+
+    test("No file is opened",  () => {
+        // Mock data
+        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
+            document: {
+                fileName: undefined
+            }
+        });
+        trackFileHandler();
+        expect(vscode.env.openExternal).toHaveBeenCalledTimes(0);
+    });
+
+    test("File Path not in config",  () => {
+        // Mock data
+        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
+            document: {
+                fileName: undefined
+            }
+        });
+        getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
+        // Update config file
+        configData.repos[repoPath] = {
+            id: 1234,
+            branches: {},
+        };
+        configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+
+        trackFileHandler();
+        expect(vscode.env.openExternal).toHaveBeenCalledTimes(0);
+    });
+
+    test("File Path in config",  () => {
+        // Mock data
+        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
+            document: {
+                fileName: `${repoPath}/file.js`
+            }
+        });
+        getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
+        // Update config file
+        configData.repos[repoPath] = {
+            id: 1234,
+            branches: {}
+        };
+        configData.repos[repoPath].branches[DEFAULT_BRANCH] = {"file.js": 1234};
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+
+        trackFileHandler();
+        expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
     });
 
 });
