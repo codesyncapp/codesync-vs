@@ -15,7 +15,7 @@ import {
 import {randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../helpers/helpers";
 import {NOTIFICATION} from "../../src/constants";
 import {WEB_APP_URL} from "../../src/settings";
-import {readYML} from "../../out/utils/common";
+import {readYML} from "../../src/utils/common";
 import {DEFAULT_BRANCH} from "../../out/constants";
 import getBranchName from "current-git-branch";
 
@@ -294,7 +294,7 @@ describe("trackFileHandler",  () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document: {
-                fileName: undefined
+                fileName: `${repoPath}/file.js`
             }
         });
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);

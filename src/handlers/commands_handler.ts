@@ -27,7 +27,6 @@ export const SyncHandler = () => {
 		showChooseAccount(repoPath);
 		return;
 	}
-
 	// Show notification that repo is in sync
 	vscode.window.showInformationMessage(NOTIFICATION.REPO_IN_SYNC);
 
