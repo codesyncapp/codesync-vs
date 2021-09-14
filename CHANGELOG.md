@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2.25.0] - 2021-09-14
+### Added
+- Using "esModuleInterop": true, changed all import statements
+- Configured Jest for unit tests
+- Written Unit tests for utils, logger and commands_handler
+
 ## [2.24.0] - 2021-08-24
 ### Added
 - Creating separate socket connection per repo in buffer handler

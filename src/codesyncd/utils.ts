@@ -1,14 +1,18 @@
-import * as fs from 'fs';
-import * as yaml from 'js-yaml';
-import * as path from 'path';
+import fs from 'fs';
+import yaml from 'js-yaml';
+import path from 'path';
 import { IDiff } from "../interface";
-import { CONFIG_PATH, DIFF_SIZE_LIMIT, REQUIRED_DIFF_KEYS,
-	REQUIRED_DIR_RENAME_DIFF_KEYS, REQUIRED_FILE_RENAME_DIFF_KEYS,
-	SHADOW_REPO, ORIGINALS_REPO, DELETED_REPO } from "../constants";
-import { uploadFileToServer } from '../utils/upload_file';
+import {
+	DIFF_SIZE_LIMIT,
+	REQUIRED_DIFF_KEYS,
+	REQUIRED_DIR_RENAME_DIFF_KEYS,
+	REQUIRED_FILE_RENAME_DIFF_KEYS
+} from "../constants";
+import { uploadFileToServer } from '../utils/upload_utils';
 import { isBinaryFileSync } from 'isbinaryfile';
 import { diff_match_patch } from 'diff-match-patch';
 import { putLogEvent } from '../logger';
+import {generateSettings} from "../settings";
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -21,9 +25,11 @@ export const isValidDiff = (diffData: IDiff) => {
 	if (isRename || isDirRename) {
 		if (!diff) { return false; }
 		let diffJSON = {};
-		try {
-			diffJSON = yaml.load(diff);
-		} catch (e) {
+		diffJSON = yaml.load(diff);
+		if (typeof diffJSON !== "object") {
+			return false;
+		}
+		if (isRename && isDirRename) {
 			return false;
 		}
 		if (isRename) {
@@ -38,20 +44,22 @@ export const isValidDiff = (diffData: IDiff) => {
 	return true;
 };
 
-export const handleNewFileUpload = async (access_token: string, diffData: IDiff, relPath: string, repoId: number,
-	configJSON: any) => {
+export const handleNewFileUpload = async (accessToken: string, repoPath: string, branch: string, createdAt: string,
+											relPath: string, repoId: number, configJSON: any) => {
 	/*
-	Uplaods new file to server and adds it in config
-	Ignore if file is not present in .originals repo
+		Uploads new file to server and adds it in config
+		Ignores if file is not present in .originals repo
 	*/
-	const originalsPath = path.join(ORIGINALS_REPO, `${diffData.repo_path}/${diffData.branch}/${relPath}`);
+	const settings = generateSettings();
+
+	const originalsPath = path.join(settings.ORIGINALS_REPO, `${repoPath}/${branch}/${relPath}`);
 	if (!fs.existsSync(originalsPath)) {
 		return {
 			uploaded: false,
 			config: configJSON
 		};
 	}
-	const response = await uploadFileToServer(access_token, repoId, diffData.branch, originalsPath, relPath, diffData.created_at);
+	const response = await uploadFileToServer(accessToken, repoId, branch, originalsPath, relPath, createdAt);
 	if (response.error) {
 		putLogEvent(`Error uploading to server: ${response.error}`);
 		return {
@@ -59,9 +67,9 @@ export const handleNewFileUpload = async (access_token: string, diffData: IDiff,
 			config: configJSON
 		};
 	}
-	configJSON.repos[diffData.repo_path].branches[diffData.branch][relPath] = response.fileId;
+	configJSON.repos[repoPath].branches[branch][relPath] = response.fileId;
 	// write file id to config.yml
-	fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
+	fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
 	return {
 		uploaded: true,
 		config: configJSON
@@ -70,21 +78,22 @@ export const handleNewFileUpload = async (access_token: string, diffData: IDiff,
 
 export const handleFilesRename = (configJSON: any, repoPath: string, branch: string,
 	relPath: string, oldFileId: number, oldRelPath: string) => {
-
-	const oldShadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${oldRelPath}`);
-	const newShadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+	const settings = generateSettings();
+	const oldShadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${oldRelPath}`);
+	const newShadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
 	if (fs.existsSync(oldShadowPath)) {
 		fs.renameSync(oldShadowPath, newShadowPath);
 	}
 	configJSON.repos[repoPath].branches[branch][relPath] = oldFileId;
 	// write file id to config.yml
-	fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
+	fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
 };
 
 export const cleanUpDeleteDiff = (repoPath: string, branch: string, relPath: string, configJSON: any) => {
-	const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
-	const originalsPath = path.join(ORIGINALS_REPO, `${repoPath}/${branch}/${relPath}`);
-	const cacheFilePath = path.join(DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
+	const settings = generateSettings();
+	const shadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+	const originalsPath = path.join(settings.ORIGINALS_REPO, `${repoPath}/${branch}/${relPath}`);
+	const cacheFilePath = path.join(settings.DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
 	[shadowPath, originalsPath, cacheFilePath].forEach((path) => {
 		if (fs.existsSync(path)) {
 			fs.unlinkSync(path);
@@ -92,11 +101,13 @@ export const cleanUpDeleteDiff = (repoPath: string, branch: string, relPath: str
 	});
 	delete configJSON.repos[repoPath].branches[branch][relPath];
 	// write file id to config.yml
-	fs.writeFileSync(CONFIG_PATH, yaml.safeDump(configJSON));
+	fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
 };
 
 export const getDIffForDeletedFile = (repoPath: string, branch: string, relPath: string, configJSON: any) => {
-	const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+	const settings = generateSettings();
+
+	const shadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
 	let diff = "";
 	if (!fs.existsSync(shadowPath)) {
 		cleanUpDeleteDiff(repoPath, branch, relPath, configJSON);

@@ -1,9 +1,9 @@
-import * as fs from 'fs';
-import * as yaml from 'js-yaml';
-import * as vscode from 'vscode';
+import fs from 'fs';
+import yaml from 'js-yaml';
+import vscode from 'vscode';
 import {
-	CODESYNC_ROOT, SHADOW_REPO, DIFFS_REPO, ORIGINALS_REPO,
-	DELETED_REPO, USER_PATH, Auth0URLs, CONFIG_PATH, SEQUENCE_TOKEN_PATH, NOTIFICATION, WEB_APP_URL
+	Auth0URLs,
+	NOTIFICATION
 } from "../constants";
 import { repoIsNotSynced } from '../events/utils';
 import { initExpressServer, isPortAvailable } from './auth_utils';
@@ -11,35 +11,46 @@ import { showConnectRepo, showSignUpButtons } from './notifications';
 import { readYML } from './common';
 import { initUtils } from '../init/utils';
 import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
+import {generateSettings} from "../settings";
 
 
-const createSystemDirectories = () => {
+export const createSystemDirectories = () => {
+	const settings = generateSettings();
 	// Create system directories
-	const paths = [CODESYNC_ROOT, DIFFS_REPO, ORIGINALS_REPO, SHADOW_REPO, DELETED_REPO];
+	const paths = [
+		settings.CODESYNC_ROOT,
+		settings.DIFFS_REPO,
+		settings.ORIGINALS_REPO,
+		settings.SHADOW_REPO,
+		settings.DELETED_REPO,
+	];
+
 	paths.forEach((path) => {
 		if (!fs.existsSync(path)) {
 			// Add file in originals repo
 			fs.mkdirSync(path, { recursive: true });
 		}
 	});
+	const configPath = settings.CONFIG_PATH;
+	const sequenceTokenPath = settings.SEQUENCE_TOKEN_PATH;
 	// Create config.yml if does not exist
-	const configExists = fs.existsSync(CONFIG_PATH);
+	const configExists = fs.existsSync(configPath);
 	if (!configExists) {
-		fs.writeFileSync(CONFIG_PATH, yaml.safeDump({ repos: {} }));
+		fs.writeFileSync(configPath, yaml.safeDump({ repos: {} }));
 	}
 
 	// Create sequence_token.yml if does not exist
-	const sequenceTokenExists = fs.existsSync(SEQUENCE_TOKEN_PATH);
+	const sequenceTokenExists = fs.existsSync(sequenceTokenPath);
 	if (!sequenceTokenExists) {
-		fs.writeFileSync(SEQUENCE_TOKEN_PATH, yaml.safeDump({}));
+		fs.writeFileSync(sequenceTokenPath, yaml.safeDump({}));
 	}
+	return settings;
 };
 
 
 export const setupCodeSync = async (repoPath: string) => {
-
-	createSystemDirectories();
-
+	const settings = createSystemDirectories();
+	const userFilePath = settings.USER_PATH;
 	let port = 0;
 	for (const _port of Auth0URLs.PORTS) {
 		const isAvailable = await isPortAvailable(_port);
@@ -54,13 +65,13 @@ export const setupCodeSync = async (repoPath: string) => {
 
 	initExpressServer();
 
-	if (!fs.existsSync(USER_PATH)) {
+	if (!fs.existsSync(userFilePath)) {
 		showSignUpButtons();
-		return;
+		return port;
 	}
 
 	// Check if access token is present against users
-	const users = readYML(USER_PATH) || {};
+	const users = readYML(userFilePath) || {};
 	const validUsers: string[] = [];
 	Object.keys(users).forEach(email => {
 		const user = users[email];
@@ -71,13 +82,13 @@ export const setupCodeSync = async (repoPath: string) => {
 
 	if (validUsers.length === 0) {
 		showSignUpButtons();
-		return;
+		return port;
 	}
 
-	if (repoIsNotSynced(repoPath) || !initUtils.successfullySynced(repoPath)) {
+	if (repoIsNotSynced(repoPath) || !new initUtils(repoPath).successfullySynced()) {
 		// Show notification to user to Sync the repo
 		showConnectRepo(repoPath, "", "");
-		return;
+		return port;
 	}
 
 	// Show notification that repo is in sync
@@ -96,17 +107,19 @@ export const setupCodeSync = async (repoPath: string) => {
 };
 
 export const showLogIn = () => {
-	if (!fs.existsSync(USER_PATH)) {
+	const settings = generateSettings();
+
+	if (!fs.existsSync(settings.USER_PATH)) {
 		return true;
 	}
 
 	// Check if access token is present against users
-	const users = readYML(USER_PATH) || {};
+	const users = readYML(settings.USER_PATH) || {};
 	const validUsers: string[] = [];
-	Object.keys(users).forEach(key => {
-		const user = users[key];
+	Object.keys(users).forEach(email => {
+		const user = users[email];
 		if (user.access_token) {
-			validUsers.push(user.email);
+			validUsers.push(email);
 		}
 	});
 
@@ -114,5 +127,5 @@ export const showLogIn = () => {
 };
 
 export const showConnectRepoView = (repoPath: string) => {
-	return repoIsNotSynced(repoPath) || !initUtils.successfullySynced(repoPath);
+	return repoIsNotSynced(repoPath) || !new initUtils(repoPath).successfullySynced();
 };

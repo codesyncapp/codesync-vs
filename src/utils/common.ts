@@ -1,7 +1,7 @@
-import * as fs from 'fs';
-import * as vscode from 'vscode';
-import * as yaml from 'js-yaml';
-import * as path from "path";
+import fs from 'fs';
+import vscode from 'vscode';
+import yaml from 'js-yaml';
+import path from "path";
 
 import {
 	COMMAND,
@@ -18,7 +18,7 @@ export const readYML = (filePath: string) => {
 	try {
 		return yaml.load(readFile(filePath));
 	} catch (e) {
-		return;
+		return {};
 	}
 };
 

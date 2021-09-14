@@ -1,24 +1,26 @@
 'use strict';
 
-import * as fs from "fs";
-import * as vscode from 'vscode';
-import * as yaml from 'js-yaml';
-import * as express from "express";
-import * as detectPort from "detect-port";
-
-import fetch from "node-fetch";
-import jwt_decode from "jwt-decode";
+import fs from "fs";
+import vscode from 'vscode';
+import yaml from 'js-yaml';
+import express from "express";
+import detectPort from "detect-port";
 
 import { readYML } from './common';
-import { IAuth0User } from '../interface';
-import { API_USERS, Auth0URLs, LOGIN_SUCCESS_CALLBACK, NOTIFICATION, USER_PATH } from "../constants";
+import {
+    Auth0URLs,
+    LOGIN_SUCCESS_CALLBACK,
+    NOTIFICATION
+} from "../constants";
 import { repoIsNotSynced } from "../events/utils";
 import { showConnectRepo } from "./notifications";
+import { createUserWithApi } from "./api_utils";
+import { generateSettings } from "../settings";
+
 
 export const isPortAvailable = async (port: number) => {
     return detectPort(port)
         .then(_port => {
-            if (port !== _port) { console.log(`${port} not available`); }
             return port === _port;
         })
         .catch(err => {
@@ -39,7 +41,8 @@ export const initExpressServer = () => {
 
     // define a route handler for the authorization callback
     expressApp.get(LOGIN_SUCCESS_CALLBACK, async (req: any, res: any) => {
-        await createUser(req.query.access_token, req.query.id_token);
+        const repoPath = vscode.workspace.rootPath || "";
+        await createUser(req.query.access_token, req.query.id_token, repoPath);
         res.send(NOTIFICATION.LOGIN_SUCCESS);
     });
 
@@ -61,40 +64,25 @@ export const redirectToBrowser = (skipAskConnect=false) => {
     vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
 };
 
-export const createUser = async (accessToken: string, idToken: string) => {
-    let error = "";
-    let user = <IAuth0User>{};
-    user = jwt_decode(idToken);
-    const userResponse = await fetch(API_USERS, {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json',
-                'Authorization': `Basic ${accessToken}`
-            },
-            body: JSON.stringify(user)
-        }
-    )
-        .then(res => res.json())
-        .then(json => json)
-        .catch(err => error = err);
-
-    if (error || 'error' in userResponse) {
+export const createUser = async (accessToken: string, idToken: string, repoPath: string) => {
+    const userResponse = await createUserWithApi(accessToken, idToken);
+    if (userResponse.error) {
         vscode.window.showErrorMessage("Sign up to CodeSync failed");
         return;
     }
-
+    const user = userResponse.user;
+    const settings = generateSettings();
     // Save access token of user against email in user.yml
-    const users = readYML(USER_PATH) || {};
+    const users = readYML(settings.USER_PATH) || {};
     if (user.email in users) {
         users[user.email].access_token = accessToken;
     } else {
         users[user.email] = {access_token: accessToken};
     }
-    fs.writeFileSync(USER_PATH, yaml.safeDump(users));
+    fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
 
     vscode.commands.executeCommand('setContext', 'showLogIn', false);
 
-    const repoPath = vscode.workspace.rootPath;
     if (!repoPath) { return; }
 
 	if (repoIsNotSynced(repoPath)) {
@@ -110,6 +98,7 @@ export const logout = () => {
     });
     const logoutUrl = `${Auth0URLs.LOGOUT}?${params}`;
     vscode.env.openExternal(vscode.Uri.parse(logoutUrl));
+    return logoutUrl;
 };
 
 export const askAndTriggerSignUp = () => {
@@ -123,5 +112,4 @@ export const askAndTriggerSignUp = () => {
             redirectToBrowser(true);
         }
     });
-
 };

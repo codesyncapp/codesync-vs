@@ -8,3 +8,5 @@ yarn-error.log
 .git/
 .idea/
 .vscode/*
+coverage/
+tests/tests_data

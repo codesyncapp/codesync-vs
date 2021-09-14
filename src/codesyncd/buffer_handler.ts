@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as vscode from "vscode";
+import fs from 'fs';
+import vscode from "vscode";
 import {client} from "websocket";
 
 import {putLogEvent} from '../logger';
@@ -14,14 +14,12 @@ import {
 } from './utils';
 import {IFileToDiff, IRepoDiffs} from '../interface';
 import {
-    CONFIG_PATH,
-    DIFF_FILES_PER_ITERATION,
-    DIFFS_REPO,
-    STATUS_BAR_MSGS,
-    USER_PATH,
-    WEBSOCKET_ENDPOINT
+	DIFF_FILES_PER_ITERATION,
+	STATUS_BAR_MSGS,
+	WEBSOCKET_ENDPOINT
 } from "../constants";
 import {recallDaemon} from "./codesyncd";
+import {generateSettings} from "../settings";
 
 export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 	/*
@@ -70,8 +68,10 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 				- Remove the diff file if data is successfully uploaded
 	*/
 	try {
+		const settings = generateSettings();
+
 		// Read config.json
-		let configJSON = readYML(CONFIG_PATH);
+		let configJSON = readYML(settings.CONFIG_PATH);
 		if (!configJSON) {
 			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.CONNECT_REPO);
 			return recallDaemon(statusBarItem);
@@ -84,8 +84,7 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 		// Update status bar msg
 		const msg =  isRepoActive(configJSON, repoPath) ? STATUS_BAR_MSGS.DEFAULT : STATUS_BAR_MSGS.CONNECT_REPO;
 		updateStatusBarItem(statusBarItem, msg);
-
-		let diffFiles = fs.readdirSync(DIFFS_REPO);
+		let diffFiles = fs.readdirSync(settings.DIFFS_REPO);
 		// Pick only yml files
 		diffFiles = diffFiles.filter(file => file.endsWith('.yml'));
 		if (!diffFiles.length) {
@@ -100,11 +99,11 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 
 		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
 
-		const users = readYML(USER_PATH) || {};
+		const users = readYML(settings.USER_PATH) || {};
 
 		const repoDiffs: IRepoDiffs[] = [];
 		for (const diffFile of diffFiles) {
-			const filePath = `${DIFFS_REPO}/${diffFile}`;
+			const filePath = `${settings.DIFFS_REPO}/${diffFile}`;
 			const diffData = readYML(filePath);
 			if (!diffData) { continue; }
 			if (!isValidDiff(diffData)) {
@@ -147,11 +146,11 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 			// Making a new socket connection per repo
 			const WebSocketClient = new client();
 			WebSocketClient.connect(WEBSOCKET_ENDPOINT);
-	
+
 			WebSocketClient.on('connectFailed', function(error) {
 				putLogEvent('Socket Connect Error: ' + error.toString());
 			});
-	
+
 			WebSocketClient.on('connect', function(connection) {
 				connection.on('error', function(error) {
 					putLogEvent("Socket Connection Error: " + error.toString());
@@ -159,7 +158,7 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 				connection.on('close', function() {
 					putLogEvent('echo-protocol Connection Closed');
 				});
-	
+
 				const newFiles: string[] = [];
 				const configRepo = configJSON.repos[repoDiff.path];
 				const accessToken = users[configRepo.email].access_token;
@@ -188,7 +187,8 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 									if (!newFiles.includes(relPath)) {
 										newFiles.push(relPath);
 									}
-									const json = await handleNewFileUpload(accessToken, diffData, relPath, configRepo.id, configJSON);
+									const json = await handleNewFileUpload(accessToken, diffData.repo_path,
+										diffData.branch, diffData.created_at, relPath, configRepo.id, configJSON);
 									if (json.uploaded) {
 										configJSON = json.config;
 									}

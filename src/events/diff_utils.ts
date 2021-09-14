@@ -1,15 +1,14 @@
-import * as fs from 'fs';
-import * as walk from 'walk';
-import * as yaml from 'js-yaml';
-import * as path from 'path';
-import * as dateFormat from "dateformat";
+import fs from 'fs';
+import walk from 'walk';
+import yaml from 'js-yaml';
+import path from 'path';
+import dateFormat from "dateformat";
 import { IDiff } from "../interface";
 import {
-	DIFFS_REPO, DIFF_SOURCE,
-	DATETIME_FORMAT,
-	SHADOW_REPO,
-	DELETED_REPO
+	DIFF_SOURCE,
+	DATETIME_FORMAT
 } from "../constants";
+import {generateSettings} from "../settings";
 
 
 export function manageDiff(repoPath: string, branch: string, fileRelPath: string, diff: string,
@@ -19,6 +18,9 @@ export function manageDiff(repoPath: string, branch: string, fileRelPath: string
 		console.log(`Skipping: Empty diffs`);
 		return;
 	}
+
+	const settings = generateSettings();
+
 	if (!createdAt) {
 		createdAt = dateFormat(new Date(), DATETIME_FORMAT);
 	}
@@ -42,7 +44,7 @@ export function manageDiff(repoPath: string, branch: string, fileRelPath: string
 		newDiff.is_deleted = true;
 	}
 	// Append new diff in the buffer
-	fs.writeFileSync(`${DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+	fs.writeFileSync(`${settings.DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
 }
 
 
@@ -66,14 +68,16 @@ export const handleDirectoryRenameDiffs = async (repoPath: string, branch: strin
 	});
 };
 
-export const handleDirectoryDeleteDiffs = async (repoPath: string, branch: string, relPath: string) => {
-	const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+export const handleDirectoryDeleteDiffs = async (
+	repoPath: string, branch: string, relPath: string) => {
+	const settings = generateSettings();
+	const shadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
 	// No need to skip repos here as it is for specific repo
 	const walker = walk.walk(shadowPath);
 	walker.on("file", function (root, fileStats, next) {
 		const filePath = `${root}/${fileStats.name}`;
 		const relPath = filePath.split(`${repoPath}/${branch}/`)[1];
-		const destDeleted = path.join(DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
+		const destDeleted = path.join(settings.DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
 		const destDeletedPathSplit = destDeleted.split("/");
 		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join("/");
 

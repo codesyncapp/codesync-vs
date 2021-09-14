@@ -1,12 +1,13 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as vscode from 'vscode';
+import fs from 'fs';
+import path from 'path';
+import vscode from 'vscode';
 import { diff_match_patch } from 'diff-match-patch';
-import * as getBranchName from 'current-git-branch';
+import getBranchName from 'current-git-branch';
 
-import { SHADOW_REPO, DEFAULT_BRANCH, DELETED_REPO } from "../constants";
+import { DEFAULT_BRANCH} from "../constants";
 import { handleDirectoryDeleteDiffs, manageDiff } from './diff_utils';
 import { repoIsNotSynced, shouldIgnoreFile, handleRename, handleNewFile } from './utils';
+import {generateSettings} from "../settings";
 
 
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
@@ -31,11 +32,13 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 		console.log(`Skipping: No repoPath`);
 		return;
 	}
-	const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+	const settings = generateSettings();
+
+	const shadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
 	const shadowExists = fs.existsSync(shadowPath);
 	if (!shadowExists) {
 		// Creating shadow file if shadow does not exist somehow
-		const destShadow = `${SHADOW_REPO}/${repoPath.slice(1)}/${branch}/${relPath}`;
+		const destShadow = `${settings.SHADOW_REPO}/${repoPath.slice(1)}/${branch}/${relPath}`;
 		const destShadowPathSplit = destShadow.split("/");
 		const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length - 1).join("/");
 		// Add file in shadow repo
@@ -78,9 +81,9 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
-
+	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	changeEvent.files.forEach((file) => {
-		handleNewFile(repoPath, file.path);
+		handleNewFile(repoPath, branch, file.path);
 	});
 }
 
@@ -88,7 +91,8 @@ export function handlePastedFile(filePath: string) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
-	handleNewFile(repoPath, filePath);
+	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+	handleNewFile(repoPath, branch, filePath);
 }
 
 export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
@@ -106,6 +110,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
+	const settings = generateSettings();
 
 	changeEvent.files.forEach((item) => {
 		const itemPath = item.path;
@@ -117,7 +122,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 
 		// Shadow path
-		const shadowPath = path.join(SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+		const shadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
 
 		if (!fs.existsSync(shadowPath)) { return; }
 
@@ -133,7 +138,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 		console.log(`FileDeleted: ${itemPath}`);
 
 		// Cache path
-		const destDeleted = path.join(DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
+		const destDeleted = path.join(settings.DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
 		const destDeletedPathSplit = destDeleted.split("/");
 		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join("/");
 

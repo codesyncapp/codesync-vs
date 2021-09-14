@@ -6,3 +6,5 @@ out/
 .vs/
 yarn-error.log
 .idea/
+coverage/*
+tests/tests_data

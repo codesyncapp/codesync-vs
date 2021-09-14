@@ -1,23 +1,6 @@
 "use strict";
 
-import untildify =  require('untildify');
-
-// export const CODESYNC_ROOT = untildify('~/.codesync-local');
-// export const CODESYNC_DOMAIN = '127.0.0.1:8000';
-// export const CODESYNC_HOST = 'http://127.0.0.1:8000';
-// export const WEB_APP_URL = "http://localhost:3000";
-export const CODESYNC_ROOT = untildify('~/.codesync');
-export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
-export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
-export const WEB_APP_URL = "https://www.codesync.com";
-
-export const DIFFS_REPO = `${CODESYNC_ROOT}/.diffs/.vscode`;
-export const ORIGINALS_REPO = `${CODESYNC_ROOT}/.originals`;
-export const SHADOW_REPO = `${CODESYNC_ROOT}/.shadow`;
-export const DELETED_REPO = `${CODESYNC_ROOT}/.deleted`;
-export const CONFIG_PATH = `${CODESYNC_ROOT}/config.yml`;
-export const USER_PATH = `${CODESYNC_ROOT}/user.yml`;
-export const SEQUENCE_TOKEN_PATH = `${CODESYNC_ROOT}/sequence_token.yml`;
+import {CODESYNC_DOMAIN, CODESYNC_HOST, WEB_APP_URL} from "./settings";
 
 export const SYNCIGNORE = ".syncignore";
 export const GITIGNORE = ".gitignore";
