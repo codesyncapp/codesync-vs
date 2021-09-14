@@ -14,11 +14,9 @@ import { detectBranchChange } from "./codesyncd/populate_buffer";
 
 
 export async function activate(context: vscode.ExtensionContext) {
-	// Get the active text editor
-	const editor = vscode.window.activeTextEditor;
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath || !repoName || !editor) { return; }
+	if (!repoPath || !repoName) { return; }
 
 	vscode.commands.executeCommand('setContext', 'showLogIn', showLogIn());
 	vscode.commands.executeCommand('setContext', 'showConnectRepoView', showConnectRepoView(repoPath));

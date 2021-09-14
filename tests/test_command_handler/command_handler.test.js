@@ -277,10 +277,18 @@ describe("trackFileHandler",  () => {
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(0);
     });
 
+    test("No editor is opened",  () => {
+        // Mock data
+        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce(undefined);
+        trackFileHandler();
+        expect(vscode.env.openExternal).toHaveBeenCalledTimes(0);
+    });
+
     test("No file is opened",  () => {
         // Mock data
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
-        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
             document: {
                 fileName: undefined
             }

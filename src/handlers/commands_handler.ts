@@ -82,10 +82,11 @@ export const trackRepoHandler = () => {
 
 export const trackFileHandler = () => {
 	const repoPath = vscode.workspace.rootPath;
-	if (!repoPath) { return; }
+	if (!repoPath) return;
 	const editor = vscode.window.activeTextEditor;
+	if (!editor) return;
 	const filePath = editor?.document.fileName;
-	if (!filePath) { return; }
+	if (!filePath) return;
 	const settings = generateSettings();
 	const config = readYML(settings.CONFIG_PATH);
 	const configRepo = config['repos'][repoPath];
