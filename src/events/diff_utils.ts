@@ -63,8 +63,7 @@ export const handleDirectoryRenameDiffs = async (repoPath: string, branch: strin
 			'old_abs_path': oldFilePath,
 			'new_abs_path': newFilePath
 		});
-		manageDiff(repoPath, branch, newRelPath, diff, false, true, false,
-			"");
+		manageDiff(repoPath, branch, newRelPath, diff, false, true);
 		next();
 	});
 };
@@ -90,8 +89,7 @@ export const handleDirectoryDeleteDiffs = async (
 		}
 		// File destination will be created or overwritten by default.
 		fs.copyFileSync(filePath, destDeleted);
-		manageDiff(repoPath, branch, relPath, "", false, false, true,
-			"");
+		manageDiff(repoPath, branch, relPath, "", false, false, true);
 		next();
 	});
 };
