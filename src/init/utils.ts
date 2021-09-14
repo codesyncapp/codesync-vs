@@ -75,9 +75,6 @@ export class initUtils {
 		const itemPaths: IFileToUpload[] = [];
 		const repoPath = this.repoPath;
 		const syncIgnoreItems = getSyncIgnoreItems(repoPath);
-		if (!syncIgnoreItems.length) {
-			return itemPaths;
-		}
 
 		let syncSize = 0;
 		let limitReached = false;

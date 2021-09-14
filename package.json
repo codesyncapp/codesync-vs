@@ -71,7 +71,7 @@
     "viewsWelcome": [
       {
         "view": "codesync-open-repo",
-        "contents": "In order to use CodeSync features, you can open a folder containing a git repository or clone from a URL.\n[Open Folder](command:vscode.openFolder)\n[Clone Repository](command:git.clone)\n"
+        "contents": "In order to use CodeSync features, you can open a folder.\n[Open Folder](command:vscode.openFolder)"
       },
       {
         "view": "codesync-signup",

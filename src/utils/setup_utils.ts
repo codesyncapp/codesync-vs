@@ -11,7 +11,7 @@ import { showConnectRepo, showSignUpButtons } from './notifications';
 import { readYML } from './common';
 import { initUtils } from '../init/utils';
 import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
-import {generateSettings} from "../settings";
+import { generateSettings } from "../settings";
 
 
 export const createSystemDirectories = () => {

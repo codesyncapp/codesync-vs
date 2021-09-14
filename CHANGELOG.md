@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2.27.0] - 2021-09-14
+### Fixed
+- Fixed a bug in creating .syncignore from .gitignore
+- Removed Clone Repository button from left panel
+- Updated notification msg for .syncignore, removed Cancel button 
+- Syncing everything if .syncignore is empty
+
 ## [2.26.0] - 2021-09-14
 ### Fixed
 - Fixed CodeSync Left Panel if no editor is opened

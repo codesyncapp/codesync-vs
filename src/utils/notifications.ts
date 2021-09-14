@@ -86,10 +86,11 @@ export const askPublicPrivate = async () => {
 	return buttonSelected;
 };
 
-export const askToUpdateSyncIgnore = async () => {
+export const askToUpdateSyncIgnore = async (syncignoreExists: boolean) => {
+	const msg = syncignoreExists ? NOTIFICATION.UPDATE_SYNCIGNORE : NOTIFICATION.SYNC_IGNORE_CREATED;
 	const selectedValue = await vscode.window.showInformationMessage(
-		NOTIFICATION.UPDATE_SYNCIGNORE,
-		...[NOTIFICATION.OK, NOTIFICATION.CANCEL]
+		msg,
+		NOTIFICATION.OK
 	).then(selection => selection);
 	return selectedValue;
 };

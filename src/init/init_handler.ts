@@ -9,13 +9,13 @@ import {
 	NOTIFICATION,
 	SYNCIGNORE
 } from "../constants";
-import {isRepoActive, readFile, readYML} from "../utils/common";
+import { isRepoActive, readFile, readYML } from "../utils/common";
 import { checkServerDown, getUserForToken } from "../utils/api_utils";
 import { initUtils } from './utils';
 import { askPublicPrivate, askToUpdateSyncIgnore } from '../utils/notifications';
 import { askAndTriggerSignUp } from '../utils/auth_utils';
 import { IUser, IUserPlan } from '../interface';
-import {generateSettings} from "../settings";
+import { generateSettings } from "../settings";
 
 
 export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=false, isSyncingBranch=false) => {
@@ -71,10 +71,8 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 
 	const gitignorePath = path.join(repoPath, GITIGNORE);
 	const gitignoreExists  = fs.existsSync(gitignorePath);
-	if (!syncignoreExists || (syncignoreExists && !syncignoreData) && gitignoreExists && !viaDaemon) {
+	if ((!syncignoreExists || (syncignoreExists && !syncignoreData)) && gitignoreExists && !viaDaemon) {
 		fs.copyFileSync(gitignorePath, syncignorePath);
-		// Notify the user that .syncignore was created from .syncignore
-		vscode.window.showInformationMessage(`${SYNCIGNORE} was created from ${GITIGNORE}`);
 	}
 
 	if (viaDaemon) {
@@ -95,8 +93,8 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 					}
 				});
 			}
-			const selectedValue = await askToUpdateSyncIgnore();
-			const shouldExit = selectedValue && selectedValue === NOTIFICATION.CANCEL;
+			const selectedValue = await askToUpdateSyncIgnore(syncignoreExists);
+			const shouldExit = !selectedValue;
 			if (shouldExit) {
 				vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
 				return;

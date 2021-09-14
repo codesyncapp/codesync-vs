@@ -148,7 +148,7 @@ describe("getSyncablePaths",  () => {
         fs.writeFileSync(filePath, "");
         const initUtilsObj = new initUtils(repoPath);
         const paths = initUtilsObj.getSyncablePaths(USER_PLAN);
-        expect(paths).toHaveLength(0);
+        expect(paths).toHaveLength(1);
     });
 
     test("Ignore file and match rest",  () => {
