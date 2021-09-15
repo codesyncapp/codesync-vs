@@ -2,8 +2,13 @@
 
 import vscode from 'vscode';
 
-import { handleChangeEvent, handleFilesCreated, handleFilesDeleted,
-	handleFilesRenamed, handlePastedFile } from "./events/event_handler";
+import {
+	handleChangeEvent,
+	handleFilesCreated,
+	handleFilesDeleted,
+	handleFilesRenamed,
+	handlePastedFile
+ } from "./events/event_handler";
 import { handleBuffer } from "./codesyncd/buffer_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
 import { COMMAND, STATUS_BAR_MSGS } from './constants';

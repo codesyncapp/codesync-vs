@@ -31,7 +31,6 @@ export const API_INIT =  `${API_ENDPOINT}/init`;
 export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v1/websocket`;
-export const LOGIN_SUCCESS_CALLBACK = "/login-success";
 
 export const PLANS_URL = `${WEB_APP_URL}/plans`;
 // Diff utils
@@ -54,7 +53,8 @@ export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Pleas
 export const Auth0URLs = {
 	AUTHORIZE: `${CODESYNC_HOST}/authorize`,
     LOGOUT: `${CODESYNC_HOST}/auth-logout`,
-    LOGIN_SUCCESS_CALLBACK: "/login-success",
+	LOGIN_CALLBACK_PATH: "/login-callback",
+
 	// Pre defined ports
 	PORTS: [
 		49160,
@@ -84,7 +84,7 @@ export const NOTIFICATION = {
 	TRACK_IT: "Track it",
 	UNSYNC_REPO: "Unsync",
 	WELCOME_MSG: "Welcome to CodeSync!",
-	LOGIN_SUCCESS: "Successfully Authenticated. Please check your IDE for further instructions",
+	LOGIN_SUCCESS: "Success! Now, switch back to Visual Studio Code to connect your repo.",
 	CONNECT_REPO: "Connect your repo with CodeSync",
 	CONNECT_AFTER_JOIN: "Successfully logged in to CodeSync. Let's connect your repo",
 	CHOOSE_ACCOUNT: "Choose account to sync your repo",
@@ -133,3 +133,14 @@ export const COMMAND = {
 	trackRepo: 'codesync.trackRepo',
 	trackFile: 'codesync.trackFile'
 };
+
+export class staticFiles {
+	LOGIN_SUCCESS: string;
+	LOGIN_FAILURE: string;
+
+	constructor(baseRepo: string) {
+		const rootPath = baseRepo.replace("out", "src");
+		this.LOGIN_SUCCESS = path.join(path.join(rootPath, path.join("static", "login-success.html")));
+		this.LOGIN_FAILURE = path.join(path.join(rootPath, path.join("static", "login-failure.html")));
+	}
+}

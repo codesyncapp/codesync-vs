@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.28.0] - 2021-09-15
 ### Updated
 - Notification msg updated from _Repo is in sync_ to _Repo XYZ is in sync_
+- Refactored Express server using HTML/CSS for better UX
 
 ## [2.27.0] - 2021-09-14
 ### Fixed

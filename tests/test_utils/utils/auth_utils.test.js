@@ -1,19 +1,19 @@
 import fs from "fs";
 import yaml from "js-yaml";
 import vscode from "vscode";
+import untildify from "untildify";
 import fetchMock from "jest-fetch-mock";
 import {
     askAndTriggerSignUp,
     createRedirectUri,
-    createUser, initExpressServer,
-    isPortAvailable,
+    createUser, isPortAvailable,
     logout,
     redirectToBrowser
 } from "../../../src/utils/auth_utils";
-import {Auth0URLs, LOGIN_SUCCESS_CALLBACK, NOTIFICATION} from "../../../src/constants";
+import { Auth0URLs, NOTIFICATION } from "../../../src/constants";
 import {INVALID_TOKEN_JSON, randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
 import { readYML } from "../../../src/utils/common";
-import untildify from "untildify";
+import { initExpressServer } from "../../../src/server/server";
 
 describe("isPortAvailable",  () => {
     test("random free port", async () => {
@@ -31,7 +31,7 @@ describe("initExpressServer",  () => {
         global.port = port;
         initExpressServer();
 
-        const refUrl = `http://localhost:${port}${LOGIN_SUCCESS_CALLBACK}`;
+        const refUrl = `http://localhost:${port}${Auth0URLs.LOGIN_CALLBACK_PATH}`;
         const url = createRedirectUri();
         expect(url).toEqual(refUrl);
     });
@@ -41,7 +41,7 @@ describe("createRedirectUri",  () => {
     test("createRedirectUri",  () => {
         const port = 1234;
         global.port = port;
-        const refUrl = `http://localhost:${port}${LOGIN_SUCCESS_CALLBACK}`;
+        const refUrl = `http://localhost:${port}${Auth0URLs.LOGIN_CALLBACK_PATH}`;
         const url = createRedirectUri();
         expect(url).toEqual(refUrl);
     });
