@@ -62,3 +62,7 @@ export const getSkipRepos = (repoPath: string, syncignoreItems: string[]) => {
 	});
 	return skipRepos;
 };
+
+export const isEmpty = (obj: any) => {
+    return Object.keys(obj).length === 0;
+};

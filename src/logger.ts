@@ -1,5 +1,4 @@
 import fs from 'fs';
-import _ from 'lodash';
 import yaml from 'js-yaml';
 import AWS from 'aws-sdk';
 import { PutLogEventsRequest } from 'aws-sdk/clients/cloudwatchlogs';
@@ -8,7 +7,7 @@ import {
 	CLIENT_LOGS_GROUP_NAME,
 	DIFF_SOURCE
 } from './constants';
-import { readYML } from './utils/common';
+import { readYML, isEmpty } from './utils/common';
 import { generateSettings } from "./settings";
 
 let cloudwatchlogs = <AWS.CloudWatchLogs>{};
@@ -44,7 +43,7 @@ export function putLogEvent(error: string, userEmail?: string, retryCount?: numb
 	if (!(accessKey && secretKey && email)) {
 		return;
 	}
-	if (_.isEmpty(cloudwatchlogs)) {
+	if (isEmpty(cloudwatchlogs)) {
 		cloudwatchlogs = new AWS.CloudWatchLogs({
 			accessKeyId: accessKey,
 			secretAccessKey: secretKey,

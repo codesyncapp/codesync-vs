@@ -3,6 +3,7 @@ import yaml from 'js-yaml';
 import vscode from 'vscode';
 import {
 	Auth0URLs,
+	getRepoInSyncMsg,
 	NOTIFICATION
 } from "../constants";
 import { repoIsNotSynced } from '../events/utils';
@@ -92,7 +93,7 @@ export const setupCodeSync = async (repoPath: string) => {
 	}
 
 	// Show notification that repo is in sync
-	vscode.window.showInformationMessage(NOTIFICATION.REPO_IN_SYNC, ...[
+	vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath), ...[
 		NOTIFICATION.TRACK_IT,
 		NOTIFICATION.UNSYNC_REPO
 	]).then(selection => {

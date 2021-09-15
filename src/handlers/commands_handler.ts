@@ -5,6 +5,7 @@ import getBranchName from 'current-git-branch';
 
 import {
 	DEFAULT_BRANCH,
+	getRepoInSyncMsg,
 	NOTIFICATION
 } from '../constants';
 import { isRepoActive, readYML } from '../utils/common';
@@ -28,7 +29,7 @@ export const SyncHandler = () => {
 		return;
 	}
 	// Show notification that repo is in sync
-	vscode.window.showInformationMessage(NOTIFICATION.REPO_IN_SYNC);
+	vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
 
 };
 

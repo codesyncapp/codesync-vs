@@ -2,6 +2,7 @@ import fs from "fs";
 import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
+import getBranchName from "current-git-branch";
 import fetchMock from "jest-fetch-mock";
 
 import {
@@ -13,11 +14,13 @@ import {
     unSyncHandler
 } from "../../src/handlers/commands_handler";
 import {randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../helpers/helpers";
-import {NOTIFICATION} from "../../src/constants";
+import {
+    NOTIFICATION,
+    DEFAULT_BRANCH,
+    getRepoInSyncMsg
+} from "../../src/constants";
 import {WEB_APP_URL} from "../../src/settings";
 import {readYML} from "../../src/utils/common";
-import {DEFAULT_BRANCH} from "../../out/constants";
-import getBranchName from "current-git-branch";
 
 
 describe("SignUpHandler",  () => {
@@ -72,7 +75,8 @@ describe("SyncHandler",  () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         SyncHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_IN_SYNC);
+        const repoInSyncMsg = getRepoInSyncMsg(repoPath);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(repoInSyncMsg);
     });
 
 });

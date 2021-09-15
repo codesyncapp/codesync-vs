@@ -1,6 +1,11 @@
 "use strict";
 
-import {CODESYNC_DOMAIN, CODESYNC_HOST, WEB_APP_URL} from "./settings";
+import path from "path";
+import {
+	CODESYNC_DOMAIN,
+	CODESYNC_HOST,
+	WEB_APP_URL
+} from "./settings";
 
 export const SYNCIGNORE = ".syncignore";
 export const GITIGNORE = ".gitignore";
@@ -96,13 +101,18 @@ export const NOTIFICATION = {
 	UPGRADE_PLAN: `Upgrade your plan: ${PLANS_URL}`,
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
-	REPO_IN_SYNC: "Repo is in sync with CodeSync.",
+	REPO_IN_SYNC: "is in sync with CodeSync.",
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again",
 	ERROR_SYNCING_REPO: "Error syncing repo.",
 	ERROR_SYNCING_BRANCH: "Error syncing branch",
 	REPO_UNSYNCED: "Repo disconnected successfully",
 	REPO_UNSYNC_FAILED: "Could not unsync the repo",
 	REPO_UNSYNC_CONFIRMATION: "Are you sure to continue? You won't be able to revert this!",
+};
+
+export const getRepoInSyncMsg = (repoPath: string) => {
+    const repoName = path.basename(repoPath);
+    return `Repo ${repoName} ${NOTIFICATION.REPO_IN_SYNC}`;
 };
 
 export const STATUS_BAR_MSGS = {
