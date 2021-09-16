@@ -1,5 +1,5 @@
 import vscode from 'vscode';
-import {NOTIFICATION} from '../constants';
+import {getPublicPrivateMsg, NOTIFICATION} from '../constants';
 import { syncRepo } from '../init/init_handler';
 import { readYML } from './common';
 import { logout, redirectToBrowser } from './auth_utils';
@@ -76,12 +76,11 @@ export const showChooseAccount = (repoPath: string) => {
 	});
 };
 
-export const askPublicPrivate = async () => {
-	const buttonSelected = await vscode.window.showInformationMessage(
-		NOTIFICATION.PUBLIC_OR_PRIVATE,
-		{ modal: true }, ...[
-		NOTIFICATION.YES,
-		NOTIFICATION.NO
+export const askPublicPrivate = async (repoPath: string) => {
+	const msg = getPublicPrivateMsg(repoPath);
+	const buttonSelected = await vscode.window.showInformationMessage(msg, { modal: true }, ...[
+		NOTIFICATION.PUBLIC,
+		NOTIFICATION.PRIVATE
 	]).then(selection => selection);
 	return buttonSelected;
 };

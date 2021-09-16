@@ -18,7 +18,7 @@ describe("createSystemDirectories",  () => {
     });
 
     afterEach(() => {
-        fs.rmdirSync(baseRepoPath, { recursive: true });
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
     test('createSystemDirectories',  () => {
@@ -51,8 +51,8 @@ describe("setupCodeSync",  () => {
     });
 
     afterEach(() => {
-        fs.rmdirSync(baseRepoPath, {recursive: true});
-        fs.rmdirSync(repoPath, {recursive: true});
+        fs.rmSync(repoPath, { recursive: true, force: true });
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
     test('with no user.yml', async () => {
@@ -130,7 +130,7 @@ describe("showLogin",  () => {
     });
 
     afterEach(() => {
-        fs.rmdirSync(baseRepoPath, { recursive: true });
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
     test('with no user.yml',   () => {

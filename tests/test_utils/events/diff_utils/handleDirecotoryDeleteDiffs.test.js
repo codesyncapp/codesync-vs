@@ -32,8 +32,8 @@ describe("handleDirectoryDeleteDiffs", () => {
     });
 
     afterEach(() => {
-        fs.rmdirSync(baseRepo, { recursive: true });
-        fs.rmdirSync(repoPath, { recursive: true });
+        fs.rmSync(repoPath, { recursive: true, force: true });
+        fs.rmSync(baseRepo, { recursive: true, force: true });
     });
 
     test("NOT in .deleted",  async () => {

@@ -72,7 +72,7 @@ describe('uploadFileTos3', () => {
     });
 
     afterEach(() => {
-        fs.rmdirSync(repoPath, {recursive: true});
+        fs.rmSync(repoPath, { recursive: true, force: true });
     });
 
     test('Non Existing File', async () => {
@@ -105,7 +105,7 @@ describe('uploadFileToServer', () => {
     });
 
     afterEach(() => {
-        fs.rmdirSync(repoPath, {recursive: true});
+        fs.rmSync(repoPath, { recursive: true, force: true });
     });
 
     test('Auth Error', async () => {

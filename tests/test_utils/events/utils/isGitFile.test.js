@@ -9,15 +9,11 @@ const normalFilePath = "abc/12345.js";
 const repoPath = randomRepoPath();
 
 beforeAll(() => {
-    if (fs.existsSync(repoPath)) {
-        fs.rmdirSync(repoPath);
-    }
-    // Create directories
     fs.mkdirSync(repoPath, { recursive: true });
 });
 
 afterAll(() => {
-    fs.rmdirSync(repoPath, { recursive: true });
+    fs.rmSync(repoPath, { recursive: true, force: true });
 });
 
 test("isGitFile to be true",  () => {

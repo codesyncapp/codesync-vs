@@ -5,10 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [2.28.0] - 2021-09-15
+## [2.28.0] - 2021-09-
 ### Updated
 - Notification msg updated from _Repo is in sync_ to _Repo XYZ is in sync_
 - Refactored Express server using HTML/CSS for better UX
+- Improved UX for asking if repo should be public or private
 
 ## [2.27.0] - 2021-09-14
 ### Fixed

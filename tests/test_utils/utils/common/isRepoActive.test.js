@@ -9,15 +9,12 @@ const configPath = `${repoPath}/config.yml`;
 const fileData = {"repos": {"path1": {}, "path2": {is_disconnected: true}}};
 
 beforeAll(() => {
-    if (fs.existsSync(repoPath)) {
-        fs.rmdirSync(repoPath);
-    }
     fs.mkdirSync(repoPath, { recursive: true });
     fs.writeFileSync(configPath, yaml.safeDump(fileData));
 });
 
 afterAll(() => {
-    fs.rmdirSync(repoPath, { recursive: true });
+    fs.rmSync(repoPath, { recursive: true, force: true });
 });
 
 test('Active Repo', () => {

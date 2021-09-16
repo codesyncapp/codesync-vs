@@ -88,8 +88,9 @@ export const NOTIFICATION = {
 	CONNECT_REPO: "Connect your repo with CodeSync",
 	CONNECT_AFTER_JOIN: "Successfully logged in to CodeSync. Let's connect your repo",
 	CHOOSE_ACCOUNT: "Choose account to sync your repo",
-	USE_DIFFERENT_ACCOUNT: "Use differnet account",
-	PUBLIC_OR_PRIVATE: "Do you want to make the repo public?",
+	USE_DIFFERENT_ACCOUNT: "Use different account",
+	PUBLIC: "Public",
+	PRIVATE: "Private",
 	REPO_SYNCED: "Repo synced successfully!",
 	BRANCH_SYNCED: "Branch synced successfully!",
 	UPDATE_SYNCIGNORE: ".syncignore has the same format as .gitignore. You can add all the files you don't want to sync to your .syncignore",
@@ -113,6 +114,12 @@ export const NOTIFICATION = {
 export const getRepoInSyncMsg = (repoPath: string) => {
     const repoName = path.basename(repoPath);
     return `Repo ${repoName} ${NOTIFICATION.REPO_IN_SYNC}`;
+};
+
+export const getPublicPrivateMsg = (repoPath: string) => {
+	// Do you want the repo <name> public or private?
+	const repoName = path.basename(repoPath);
+	return `Do you want the repo ${repoName} public or private?`;
 };
 
 export const STATUS_BAR_MSGS = {

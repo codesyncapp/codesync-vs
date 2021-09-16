@@ -19,7 +19,7 @@ beforeEach(() => {
 
 afterEach(() => {
     fs.rmSync(filePath);
-    fs.rmdirSync(repoPath, {recursive: true});
+    fs.rmSync(repoPath, { recursive: true, force: true });
 });
 
 test('reads yml file', () => {

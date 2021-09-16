@@ -24,7 +24,7 @@ describe("putLogEvent",  () => {
     });
 
     afterEach(() => {
-        fs.rmdirSync(baseRepoPath, {recursive: true});
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
     test("No User", () => {

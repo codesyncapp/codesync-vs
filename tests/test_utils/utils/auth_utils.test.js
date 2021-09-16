@@ -92,8 +92,8 @@ describe("createUser",  () => {
     });
 
     afterEach(() => {
-        fs.rmdirSync(repoPath, {recursive: true});
-        fs.rmdirSync(baseRepoPath, {recursive: true});
+        fs.rmSync(repoPath, { recursive: true, force: true });
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
     test("with invalid token", async () => {

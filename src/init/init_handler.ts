@@ -115,12 +115,12 @@ const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: 
 
 	// Only ask for public/private in case of Repo Sync. Do not ask for Branch Sync.
 	if (!viaDaemon && !isSyncingBranch) {
-		const buttonSelected = await askPublicPrivate();
+		const buttonSelected = await askPublicPrivate(repoPath);
 		if (buttonSelected == undefined) {
 			vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
 			return;
 		}
-		isPublic = buttonSelected === NOTIFICATION.YES;
+		isPublic = buttonSelected === NOTIFICATION.PUBLIC;
 	}
 
 	const initUtilsObj = new initUtils(repoPath);

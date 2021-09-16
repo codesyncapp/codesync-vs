@@ -1,6 +1,6 @@
 import fs from "fs";
 import vscode from "vscode";
-import {NOTIFICATION} from "../../../src/constants";
+import {getPublicPrivateMsg, NOTIFICATION} from "../../../src/constants";
 import {randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
 import yaml from "js-yaml";
 import {askPublicPrivate, askToUpdateSyncIgnore, showChooseAccount} from "../../../src/utils/notifications";
@@ -23,8 +23,8 @@ describe("showChooseAccount",  () => {
     });
 
     afterEach(() => {
-        fs.rmdirSync(repoPath, {recursive: true});
-        fs.rmdirSync(baseRepoPath, {recursive: true});
+        fs.rmSync(repoPath, { recursive: true, force: true });
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
     test("with no user",  () => {
@@ -45,17 +45,20 @@ describe("showChooseAccount",  () => {
 });
 
 describe("askPublicPrivate",  () => {
+    const repoPath = randomRepoPath();
+
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
     test("askPublicPrivate",  async () => {
-        await askPublicPrivate();
+        await askPublicPrivate(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.PUBLIC_OR_PRIVATE);
+        const msg = getPublicPrivateMsg(repoPath);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(msg);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toStrictEqual({ modal: true });
-        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.YES);
-        expect(vscode.window.showInformationMessage.mock.calls[0][3]).toStrictEqual(NOTIFICATION.NO);
+        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.PUBLIC);
+        expect(vscode.window.showInformationMessage.mock.calls[0][3]).toStrictEqual(NOTIFICATION.PRIVATE);
     });
 });
 
