@@ -11,10 +11,10 @@ describe("handleDirectoryDeleteDiffs", () => {
 
     const repoPath = randomRepoPath();
 
-    const baseRepo = randomBaseRepoPath();
-    const shadowRepoPath = path.join(baseRepo, ".shadow");
-    const cacheRepoPath = path.join(baseRepo, ".deleted");
-    const diffsRepo = path.join(baseRepo, ".diffs/.vscode");
+    const baseRepoPath = randomBaseRepoPath();
+    const shadowRepoPath = path.join(baseRepoPath, ".shadow");
+    const cacheRepoPath = path.join(baseRepoPath, ".deleted");
+    const diffsRepo = path.join(baseRepoPath, ".diffs/.vscode");
     const shadowRepoBranchPath = path.join(shadowRepoPath, `${repoPath}/${DEFAULT_BRANCH}`);
     const cacheRepoBranchPath = path.join(cacheRepoPath, `${repoPath}/${DEFAULT_BRANCH}`);
 
@@ -33,7 +33,7 @@ describe("handleDirectoryDeleteDiffs", () => {
 
     afterEach(() => {
         fs.rmSync(repoPath, { recursive: true, force: true });
-        fs.rmSync(baseRepo, { recursive: true, force: true });
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
     test("NOT in .deleted",  async () => {
@@ -50,7 +50,7 @@ describe("handleDirectoryDeleteDiffs", () => {
           }
         *
         * */
-        untildify.mockReturnValue(baseRepo);
+        untildify.mockReturnValue(baseRepoPath);
         await handleDirectoryDeleteDiffs(repoPath, DEFAULT_BRANCH, "directory");
         await waitFor(1);
         // Verify file has been renamed in the shadow repo
@@ -72,7 +72,7 @@ describe("handleDirectoryDeleteDiffs", () => {
     });
 
     test("with file already in .deleted",  async () => {
-        untildify.mockReturnValue(baseRepo);
+        untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(`${cacheRepoBranchPath}/directory`, { recursive: true });
         fs.writeFileSync(cacheFilePath, "use babel;");
         await handleDirectoryDeleteDiffs(repoPath, DEFAULT_BRANCH, "directory");

@@ -10,9 +10,9 @@ import untildify from "untildify";
 describe("handleNewFile",  () => {
     const repoPath = randomRepoPath();
 
-    const baseRepo = randomBaseRepoPath();
-    const shadowRepoPath = path.join(baseRepo, ".shadow");
-    const diffsRepo = path.join(baseRepo, ".diffs/.vscode");
+    const baseRepoPath = randomBaseRepoPath();
+    const shadowRepoPath = path.join(baseRepoPath, ".shadow");
+    const diffsRepo = path.join(baseRepoPath, ".diffs/.vscode");
     const shadowRepoBranchPath = path.join(shadowRepoPath, `${repoPath}/${DEFAULT_BRANCH}`);
 
     // For file rename
@@ -33,7 +33,7 @@ describe("handleNewFile",  () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        untildify.mockReturnValue(baseRepo);
+        untildify.mockReturnValue(baseRepoPath);
 
         // Create directories
         fs.mkdirSync(repoPath, { recursive: true });
@@ -52,7 +52,7 @@ describe("handleNewFile",  () => {
 
     afterEach(() => {
         fs.rmSync(repoPath, { recursive: true, force: true });
-        fs.rmSync(baseRepo, { recursive: true, force: true });
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
     test("handleRename for File",  () => {

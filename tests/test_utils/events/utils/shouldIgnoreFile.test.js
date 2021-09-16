@@ -2,7 +2,7 @@ import {shouldIgnoreFile} from "../../../../src/events/utils";
 import fs from "fs";
 import {randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
 
-const baseRepo = randomBaseRepoPath();
+const baseRepoPath = randomBaseRepoPath();
 
 const gitFilePath = ".git/objects/12345";
 const normalFilePath = "abc/12345.js";
@@ -16,12 +16,12 @@ beforeAll(() => {
     // Create directories
     fs.mkdirSync(repoPath, { recursive: true });
     // Create directories
-    fs.mkdirSync(baseRepo, { recursive: true });
+    fs.mkdirSync(baseRepoPath, { recursive: true });
 });
 
 afterAll(() => {
     fs.rmSync(repoPath, { recursive: true, force: true });
-    fs.rmSync(baseRepo, { recursive: true, force: true });
+    fs.rmSync(baseRepoPath, { recursive: true, force: true });
 });
 
 test("shouldIgnoreFile with git file",  () => {

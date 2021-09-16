@@ -6,8 +6,8 @@ import untildify from "untildify";
 
 
 describe("repoIsNotSynced", () => {
-    const baseRepo = randomBaseRepoPath();
-    const configPath = `${baseRepo}/config.yml`;
+    const baseRepoPath = randomBaseRepoPath();
+    const configPath = `${baseRepoPath}/config.yml`;
 
     const repoPath = randomRepoPath();
 
@@ -15,14 +15,14 @@ describe("repoIsNotSynced", () => {
         // Create directories
         fs.mkdirSync(repoPath, {recursive: true});
         // Create directories
-        fs.mkdirSync(baseRepo, {recursive: true});
+        fs.mkdirSync(baseRepoPath, {recursive: true});
         jest.clearAllMocks();
-        untildify.mockReturnValue(baseRepo);
+        untildify.mockReturnValue(baseRepoPath);
     });
 
     afterEach(() => {
         fs.rmSync(repoPath, { recursive: true, force: true });
-        fs.rmSync(baseRepo, { recursive: true, force: true });
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
     test("with no config.yml", () => {
