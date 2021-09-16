@@ -36,21 +36,21 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 				return;
 			}
 
-			showChooseAccount(repoPath);
+			await showChooseAccount(repoPath);
 		}
 	});
 };
 
 
-export const showChooseAccount = (repoPath: string) => {
+export const showChooseAccount = async (repoPath: string) => {
 	// Check if access token is present against users
 	const settings = generateSettings();
 	const users = readYML(settings.USER_PATH);
 	const validUsers: any[] = [];
-	Object.keys(users).forEach(key => {
-		const user = users[key];
+	Object.keys(users).forEach(email => {
+		const user = users[email];
 		if (user.access_token) {
-			validUsers.push({ email: key, access_token: user.access_token });
+			validUsers.push({ email, access_token: user.access_token });
 		}
 	});
 
@@ -59,21 +59,25 @@ export const showChooseAccount = (repoPath: string) => {
 		return;
 	}
 
-	const emails = validUsers.map(account => account.email);
-	const options = [...emails, NOTIFICATION.USE_DIFFERENT_ACCOUNT];
-	vscode.window.showInformationMessage(
-		NOTIFICATION.CHOOSE_ACCOUNT,
-		...options)
-		.then(async selection => {
-			if (selection === NOTIFICATION.USE_DIFFERENT_ACCOUNT) {
-				(global as any).skipAskConnect = true;
-				return logout();
-			}
-		const index = validUsers.findIndex(user => user.email === selection);
-		const user = validUsers[index];
-		// We have token, repoPath Trigger Init
-		await syncRepo(repoPath, user.access_token);
-	});
+	// By Default choosing first account
+	const user = validUsers[0];
+	await syncRepo(repoPath, user.access_token);
+	// TODO: Option to choose different account
+	// const emails = validUsers.map(account => account.email);
+	// const options = [...emails, NOTIFICATION.USE_DIFFERENT_ACCOUNT];
+	// vscode.window.showInformationMessage(
+	// 	NOTIFICATION.CHOOSE_ACCOUNT,
+	// 	...options)
+	// 	.then(async selection => {
+	// 		if (selection === NOTIFICATION.USE_DIFFERENT_ACCOUNT) {
+	// 			(global as any).skipAskConnect = true;
+	// 			return logout();
+	// 		}
+	// 	const index = validUsers.findIndex(user => user.email === selection);
+	// 	const user = validUsers[index];
+	// 	// We have token, repoPath Trigger Init
+	// 	await syncRepo(repoPath, user.access_token);
+	// });
 };
 
 export const askPublicPrivate = async (repoPath: string) => {

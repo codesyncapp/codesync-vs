@@ -25,6 +25,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	vscode.commands.executeCommand('setContext', 'showLogIn', showLogIn());
 	vscode.commands.executeCommand('setContext', 'showConnectRepoView', showConnectRepoView(repoPath));
+	vscode.commands.executeCommand('setContext', 'CodeSyncActivated', true);
 
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, SignUpHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSync, SyncHandler));

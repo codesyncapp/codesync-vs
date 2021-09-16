@@ -18,7 +18,8 @@ import { IUser, IUserPlan } from '../interface';
 import { generateSettings } from "../settings";
 
 
-export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=false, isSyncingBranch=false) => {
+export const syncRepo = async (repoPath: string, accessToken: string,
+								viaDaemon=false, isSyncingBranch=false) => {
 	/* Syncs a repo with CodeSync */
 	const isServerDown = await checkServerDown();
 
@@ -89,7 +90,8 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 				vscode.workspace.onDidSaveTextDocument(async event => {
 					const fileName = event.fileName;
 					if (fileName.endsWith(SYNCIGNORE)) {
-						await postSyncIgnoreUpdate(repoName, branch, repoPath, user, accessToken, viaDaemon, isSyncingBranch);
+						await postSyncIgnoreUpdate(repoName, branch, repoPath, user,
+							accessToken, viaDaemon, isSyncingBranch);
 					}
 				});
 			}
@@ -103,8 +105,9 @@ export const syncRepo = async (repoPath: string, accessToken: string, viaDaemon=
 	});
 };
 
-const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: string, user: IUser, accessToken: string,
-	viaDaemon=false, isSyncingBranch=false) => {
+const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: string,
+									user: IUser, accessToken: string,
+									viaDaemon=false, isSyncingBranch=false) => {
 
 	let isPublic = false;
 	const settings = generateSettings();

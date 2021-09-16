@@ -55,25 +55,27 @@ describe("SyncHandler",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("No Repo Path",  () => {
-        SyncHandler();
+    test("No Repo Path",  async () => {
+        await SyncHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("repo Not In Config",() => {
+    test("repo Not In Config",async () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
-        SyncHandler();
-        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.CHOOSE_ACCOUNT);
-        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toStrictEqual(TEST_EMAIL);
-        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.USE_DIFFERENT_ACCOUNT);
+        await SyncHandler();
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
+        // TODO: In case we activate choose account option
+        // expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        // expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.CHOOSE_ACCOUNT);
+        // expect(vscode.window.showInformationMessage.mock.calls[0][1]).toStrictEqual(TEST_EMAIL);
+        // expect(vscode.window.showInformationMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.USE_DIFFERENT_ACCOUNT);
     });
 
-    test("repo In Config", () => {
+    test("repo In Config", async () => {
         configData.repos[repoPath] = {branches: {}};
         fs.writeFileSync(configPath, yaml.safeDump(configData));
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
-        SyncHandler();
+        await SyncHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const repoInSyncMsg = getRepoInSyncMsg(repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(repoInSyncMsg);

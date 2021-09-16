@@ -6,10 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [2.28.0] - 2021-09-
-### Updated
+### Changed
+- Choosing first user account by default if there are multiple, not supporting multiple accounts for now
+
+### Improved
 - Notification msg updated from _Repo is in sync_ to _Repo XYZ is in sync_
 - Refactored Express server using HTML/CSS for better UX
 - Improved UX for asking if repo should be public or private
+- Added Loading... view for left panel
 
 ## [2.27.0] - 2021-09-14
 ### Fixed

@@ -14,18 +14,18 @@ import { initUtils } from '../init/utils';
 import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
 import { updateRepo } from '../utils/sync_repo_utils';
-import {generateSettings, WEB_APP_URL} from "../settings";
+import { generateSettings, WEB_APP_URL } from "../settings";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
 };
 
-export const SyncHandler = () => {
+export const SyncHandler = async () => {
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath) { return; }
 	if (repoIsNotSynced(repoPath) || !new initUtils(repoPath).successfullySynced()) {
 		// Show notification to user to choose account
-		showChooseAccount(repoPath);
+		await showChooseAccount(repoPath);
 		return;
 	}
 	// Show notification that repo is in sync

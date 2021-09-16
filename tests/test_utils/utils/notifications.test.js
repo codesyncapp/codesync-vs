@@ -1,10 +1,11 @@
 import fs from "fs";
 import vscode from "vscode";
+import yaml from "js-yaml";
+import untildify from "untildify";
+
 import {getPublicPrivateMsg, NOTIFICATION} from "../../../src/constants";
 import {randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
-import yaml from "js-yaml";
 import {askPublicPrivate, askToUpdateSyncIgnore, showChooseAccount} from "../../../src/utils/notifications";
-import untildify from "untildify";
 
 
 describe("showChooseAccount",  () => {
@@ -36,10 +37,12 @@ describe("showChooseAccount",  () => {
 
     test("with valid user",  () => {
         showChooseAccount(repoPath);
-        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.CHOOSE_ACCOUNT);
-        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toStrictEqual(TEST_EMAIL);
-        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.USE_DIFFERENT_ACCOUNT);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
+        // TODO: In case we activate choose account option
+        // expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        // expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.CHOOSE_ACCOUNT);
+        // expect(vscode.window.showInformationMessage.mock.calls[0][1]).toStrictEqual(TEST_EMAIL);
+        // expect(vscode.window.showInformationMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.USE_DIFFERENT_ACCOUNT);
     });
 
 });
