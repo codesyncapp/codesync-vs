@@ -284,6 +284,9 @@ export const detectBranchChange = async () => {
         if (!configRepo.email) {
             continue;
         }
+        if (!(configRepo.email in users)) {
+            continue;
+        }
         const accessToken = users[configRepo.email].access_token;
         const userEmail = configRepo.email;
         if (!accessToken) {

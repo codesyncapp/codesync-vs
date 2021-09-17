@@ -135,6 +135,7 @@ export const STATUS_BAR_MSGS = {
 
 export const COMMAND = {
 	triggerSignUp: 'codesync.signup',
+	triggerLogout: 'codesync.logout',
 	triggerSync: 'codesync.sync',
 	triggerUnsync: 'codesync.unsync',
 	trackRepo: 'codesync.trackRepo',

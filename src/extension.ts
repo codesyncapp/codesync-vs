@@ -16,6 +16,7 @@ import { updateStatusBarItem } from "./utils/common";
 
 import { unSyncHandler, SignUpHandler, SyncHandler, trackRepoHandler, trackFileHandler } from './handlers/commands_handler';
 import { detectBranchChange } from "./codesyncd/populate_buffer";
+import { logout } from './utils/auth_utils';
 
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -28,6 +29,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.commands.executeCommand('setContext', 'CodeSyncActivated', true);
 
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, SignUpHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerLogout, logout));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSync, SyncHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerUnsync, unSyncHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackRepo, trackRepoHandler));

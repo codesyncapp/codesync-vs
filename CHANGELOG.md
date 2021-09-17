@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored Express server using HTML/CSS for better UX
 - Improved UX for asking if repo should be public or private
 - Added Loading... view for left panel
+- Menu options change on the fly with 100% coverage
 
 ## [2.27.0] - 2021-09-14
 ### Fixed

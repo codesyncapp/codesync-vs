@@ -20,19 +20,27 @@
     "commands": [
       {
         "command": "codesync.signup",
-        "title": "CodeSync: Sign Up"
+        "title": "Authenticate"
+      },
+      {
+        "command": "codesync.logout",
+        "title": "Logout"
       },
       {
         "command": "codesync.sync",
-        "title": "CodeSync: Connect Repo"
+        "title": "Connect Repo"
       },
       {
         "command": "codesync.unsync",
-        "title": "CodeSync: Disconnet Repo"
+        "title": "Disconnet Repo"
+      },
+      {
+        "command": "codesync.trackRepo",
+        "title": "View Repo Playback"
       },
       {
         "command": "codesync.trackFile",
-        "title": "View File Playback on CodeSync"
+        "title": "View File Playback"
       }
     ],
     "viewsContainers": {
@@ -95,11 +103,60 @@
         "contents": "Loading..."
       }
     ],
+    "submenus": [
+      {
+        "id": "codesync-submenu",
+        "label": "CodeSync"
+      }
+    ],
     "menus": {
       "editor/context": [
         {
-          "group": "CodeSync",
+          "submenu": "codesync-submenu",
+          "group": "CodeSync"
+        }
+      ],
+      "editor/title": [
+        {
+          "submenu": "codesync-submenu",
+          "group": "CodeSync"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "codesync-submenu",
+          "group": "CodeSync"
+        }
+      ],
+      "codesync-submenu": [
+        {
+          "group": "navigation",
+          "command": "codesync.signup",
+          "when": "workbenchState != empty && showLogIn"
+        },
+        {
+          "group": "navigation",
+          "command": "codesync.logout",
+          "when": "workbenchState != empty && !showLogIn"
+        },
+        {
+          "group": "1_modification",
+          "command": "codesync.sync",
+          "when": "workbenchState != empty && !showLogIn && showConnectRepoView"
+        },
+        {
+          "group": "1_modification",
+          "command": "codesync.unsync",
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView"
+        },
+        {
+          "group": "1_modification",
           "command": "codesync.trackFile",
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView"
+        },
+        {
+          "group": "1_modification",
+          "command": "codesync.trackRepo",
           "when": "workbenchState != empty && !showLogIn && !showConnectRepoView"
         }
       ]
