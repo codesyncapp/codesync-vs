@@ -20,27 +20,33 @@
     "commands": [
       {
         "command": "codesync.signup",
-        "title": "Authenticate"
+        "title": "Authenticate",
+        "category": "CodeSync"
       },
       {
         "command": "codesync.logout",
-        "title": "Logout"
+        "title": "Logout",
+        "category": "CodeSync"
       },
       {
         "command": "codesync.sync",
-        "title": "Connect Repo"
+        "title": "Connect Repo",
+        "category": "CodeSync"
       },
       {
         "command": "codesync.unsync",
-        "title": "Disconnet Repo"
+        "title": "Disconnet Repo",
+        "category": "CodeSync"
       },
       {
         "command": "codesync.trackRepo",
-        "title": "View Repo Playback"
+        "title": "View Repo Playback",
+        "category": "CodeSync"
       },
       {
         "command": "codesync.trackFile",
-        "title": "View File Playback"
+        "title": "View File Playback",
+        "category": "CodeSync"
       }
     ],
     "viewsContainers": {
