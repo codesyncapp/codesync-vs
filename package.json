@@ -168,7 +168,7 @@
       ]
     }
   },
-  "main": "./out/extension",
+  "main": "./dist/extension",
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
