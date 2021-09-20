@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2.28.1] - 2021-09-20
+### Updated
+- Using esbuild to bundle the extension
+
 ## [2.28.0] - 2021-09-20
 ### Changed
 - Choosing first user account by default if there are multiple, not supporting multiple accounts for now

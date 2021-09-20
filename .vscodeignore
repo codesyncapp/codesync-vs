@@ -3,6 +3,14 @@
 __mocks__
 tests/
 coverage/
-__mocks__
 .git/
 .idea/
+.vscode
+node_modules
+out/
+src/
+demo.gif
+setUpJest.js
+yarn-error.log
+README.md
+babel.config.js

@@ -10,3 +10,4 @@ yarn-error.log
 .vscode/*
 coverage/
 tests/tests_data
+dist/

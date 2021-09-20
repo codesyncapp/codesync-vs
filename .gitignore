@@ -8,3 +8,4 @@ yarn-error.log
 .idea/
 coverage/*
 tests/tests_data
+dist/
