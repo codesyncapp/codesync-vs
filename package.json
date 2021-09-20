@@ -83,7 +83,7 @@
         {
           "id": "codesync-is-loading",
           "name": "CodeSync",
-          "when": "!CodeSyncActivated"
+          "when": "workbenchState != empty && !CodeSyncActivated"
         }
       ]
     },
