@@ -152,3 +152,5 @@ export class staticFiles {
 		this.LOGIN_FAILURE = path.join(path.join(rootPath, path.join("static", "login-failure.html")));
 	}
 }
+
+export const DAY = 24 * 60 * 60;

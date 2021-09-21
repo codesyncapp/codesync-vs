@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import vscode from "vscode";
 import {client} from "websocket";
 
@@ -16,10 +17,14 @@ import {IFileToDiff, IRepoDiffs} from '../interface';
 import {
 	DIFF_FILES_PER_ITERATION,
 	STATUS_BAR_MSGS,
-	WEBSOCKET_ENDPOINT
+	WEBSOCKET_ENDPOINT,
+	DAY
 } from "../constants";
 import {recallDaemon} from "./codesyncd";
 import {generateSettings} from "../settings";
+import {initUtils} from "../init/utils";
+
+const WAITING_FILES = <any>{};
 
 export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 	/*
@@ -228,7 +233,36 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 								const fileId = configFiles[relPath];
 
 								if (!fileId && !isDeleted && !diffData.is_rename) {
-									putLogEvent(`File ID not found for; ${relPath}`, configRepo.email);
+									if (relPath in WAITING_FILES) {
+										const now = (new Date()).getTime() / 1000;
+										if ((now - WAITING_FILES[relPath]) > DAY) {
+											putLogEvent(`File ID not found for: ${relPath}`, configRepo.email);
+											delete WAITING_FILES[relPath];
+											fs.unlinkSync(fileToDiff.file_path);
+										}
+									} else {
+										WAITING_FILES[relPath] = (new Date()).getTime() / 1000;
+										console.log(`Uploading the file ${relPath} first`);
+										const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO,
+											diffData.repo_path, diffData.branch);
+										const originalsFilePath = path.join(originalsRepoBranchPath, relPath);
+										if (!fs.existsSync(originalsFilePath)) {
+											const initUtilsObj = new initUtils(diffData.repo_path);
+											const filePath = path.join(diffData.repo_path, relPath);
+											initUtilsObj.copyFilesTo([filePath], originalsRepoBranchPath);
+										}
+										if (newFiles.indexOf(relPath) > -1) {
+											newFiles.push(relPath);
+										}
+										const json = await handleNewFileUpload(accessToken, diffData.repo_path,
+											diffData.branch, diffData.created_at, relPath, configRepo.id, configJSON);
+										if (json.uploaded) {
+											configJSON = json.config;
+                                            if (fs.existsSync(originalsFilePath)) {
+                                                fs.unlinkSync(originalsFilePath);
+                                            }
+										}
+									}
 									continue;
 								}
 

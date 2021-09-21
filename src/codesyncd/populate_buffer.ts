@@ -45,6 +45,27 @@ const populateBufferForMissedEvents = async (readyRepos: any) => {
 
 
 class PopulateBuffer {
+    /*
+        This class will handle non-IDE events, it will look through the files in
+            1. config.yml file
+            2. shadow repo
+            3. project files
+        To see if changes were made that were not captured by the IDE, if yes then a new diff file for those changes will
+        be created and placed in the .diff directory.
+        Changes that will be detected are
+        1. new file creation events.
+            If we find a file that is present in the project directory and is not present in shadow repo or
+            the config file and is not a rename (We will detect this in step 2) then file must be newly created.
+        2. file rename events
+            If we find a new file whose content match with some file in the shadow repo,
+            then file is probably a rename of that shadow file.
+        3. file change events
+            This is the simplest to handle, if the project file and shadow file do not have the same
+            content then it means file was updated.
+        4. file delete events
+            If a file is not in the project repo but is present in the shadow repo and the config file then it was deleted.
+    */
+
     repoPath: string;
     branch: string;
     repoBranchPath: string;
