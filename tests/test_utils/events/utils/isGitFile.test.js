@@ -1,10 +1,11 @@
 import fs from "fs";
+import path from "path";
 
 import {isGitFile} from "../../../../src/events/utils";
 import {randomRepoPath} from "../../../helpers/helpers";
 
-const gitFilePath = ".git/objects/12345";
-const normalFilePath = "abc/12345.js";
+const gitFilePath = path.join(".git", "objects", "12345");
+const normalFilePath = path.join("abc", "12345.js");
 
 const repoPath = randomRepoPath();
 

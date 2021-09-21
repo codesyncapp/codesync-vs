@@ -1,10 +1,11 @@
 import fs from "fs";
+import path from "path";
 import yaml from "js-yaml";
 import { readYML } from "../../../../src/utils/common";
-import {randomRepoPath} from "../../../helpers/helpers";
+import { randomRepoPath } from "../../../helpers/helpers";
 
 const repoPath = randomRepoPath();
-const filePath = `${repoPath}/test.yml`;
+const filePath = path.join(repoPath, "test.yml");
 
 const fileData = {"key": {"key1": "value1", "key2": "value2"}};
 

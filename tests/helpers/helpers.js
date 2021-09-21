@@ -1,3 +1,4 @@
+import path from "path";
 import {DIFF_SOURCE} from "../../src/constants";
 
 export function getRandomString(length) {
@@ -14,13 +15,28 @@ export function randomName() {
 }
 
 export function randomBaseRepoPath() {
-    return `tests/tests_data/.codesync_${randomName()}`;
+    return path.join("tests", "tests_data", `.codesync_${randomName()}`);
 }
 
 export function randomRepoPath() {
-    return `tests/tests_data/test_repo_${randomName()}`;
+    return path.join("tests", "tests_data", `test_repo_${randomName()}`);
 }
 
+export function getConfigFilePath(baseRepoPath) {
+    return path.join(baseRepoPath, "config.yml");
+}
+
+export function getUserFilePath(baseRepoPath) {
+    return path.join(baseRepoPath, "user.yml");
+}
+
+export function getSeqTokenFilePath(baseRepoPath) {
+    return path.join(baseRepoPath, "sequence_token.yml");
+}
+
+export function getSyncIgnoreFilePath(repoPath) {
+    return path.join(repoPath, ".syncignore");
+}
 export async function waitFor(seconds) {
     return await new Promise((r) => setTimeout(r, seconds*1000));
 }

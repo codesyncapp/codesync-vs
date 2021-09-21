@@ -11,7 +11,13 @@ import {
     redirectToBrowser
 } from "../../../src/utils/auth_utils";
 import { Auth0URLs, NOTIFICATION } from "../../../src/constants";
-import {INVALID_TOKEN_JSON, randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
+import {
+    getUserFilePath,
+    INVALID_TOKEN_JSON,
+    randomBaseRepoPath,
+    randomRepoPath,
+    TEST_EMAIL
+} from "../../helpers/helpers";
 import { readYML } from "../../../src/utils/common";
 import { initExpressServer } from "../../../src/server/server";
 
@@ -79,7 +85,7 @@ describe("createUser",  () => {
     const idToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAY29kZXN5bmMuY29tIn0.bl7QQajhg2IjPp8h0gzFku85qCrXQN4kThoo1AxB_Dc";
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
-    const userFilePath = `${baseRepoPath}/user.yml`;
+    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {"dummy_email": {access_token: "ABC"}};
 
     beforeEach(() => {

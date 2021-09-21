@@ -4,12 +4,10 @@ import {COMMAND, STATUS_BAR_MSGS} from "../../../../src/constants";
 
 const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 
-
 test('updateStatusBarItem', () => {
     updateStatusBarItem(statusBarItem, "text");
     expect(statusBarItem.text).toEqual("text");
     expect(statusBarItem.command).toEqual(undefined);
-
 });
 
 test('updateStatusBarItem for Auth Failed', () => {

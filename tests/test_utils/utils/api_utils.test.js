@@ -3,13 +3,13 @@ import yaml from "js-yaml";
 import untildify from "untildify";
 import fetchMock from "jest-fetch-mock";
 import {checkServerDown, createUserWithApi, getUserForToken} from "../../../src/utils/api_utils";
-import {INVALID_TOKEN_JSON, randomBaseRepoPath} from "../../helpers/helpers";
+import {getSeqTokenFilePath, getUserFilePath, INVALID_TOKEN_JSON, randomBaseRepoPath} from "../../helpers/helpers";
 
 
 describe('checkServerDown', () => {
     const baseRepoPath = randomBaseRepoPath();
-    const userFilePath = `${baseRepoPath}/user.yml`;
-    const sequenceTokenFilePath = `${baseRepoPath}/sequence_token.yml`;
+    const userFilePath = getUserFilePath(baseRepoPath);
+    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
 
     beforeEach(() => {
         fetch.resetMocks();

@@ -1,5 +1,5 @@
 import fs from "fs";
-
+import path from "path";
 import fetchMock from "jest-fetch-mock";
 import {INVALID_TOKEN_JSON, PRE_SIGNED_URL, randomRepoPath, TEST_REPO_RESPONSE} from "../../helpers/helpers";
 import {uploadFile, uploadFileTos3, uploadFileToServer, uploadRepoToServer} from "../../../src/utils/upload_utils";
@@ -64,7 +64,7 @@ describe('uploadFile', () => {
 
 describe('uploadFileTos3', () => {
     const repoPath = randomRepoPath();
-    const filePath = `${repoPath}/file.txt`;
+    const filePath = path.join(repoPath, "file.txt");
 
     beforeEach(() => {
         fetch.resetMocks();
@@ -96,7 +96,7 @@ describe('uploadFileTos3', () => {
 
 describe('uploadFileToServer', () => {
     const repoPath = randomRepoPath();
-    const filePath = `${repoPath}/file.txt`;
+    const filePath = path.join(repoPath, "file.txt");
 
     beforeEach(() => {
         fetch.resetMocks();

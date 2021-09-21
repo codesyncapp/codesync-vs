@@ -13,11 +13,12 @@ import {generateSettings} from "../settings";
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
+	if (!repoPath || !repoName) return;
 	const filePath = changeEvent.document.fileName;
-	const relPath = filePath.split(`${repoPath}/`)[1];
+	const relPath = filePath.split(path.join(repoPath, path.sep))[1];
 	// Skip .git/ and syncignore files
-	if (!repoPath || !repoName || repoIsNotSynced(repoPath) || shouldIgnoreFile(repoPath, relPath)) { return; }
-	if (!changeEvent.contentChanges.length) { return; }
+	if (repoIsNotSynced(repoPath) || shouldIgnoreFile(repoPath, relPath)) return;
+	if (!changeEvent.contentChanges.length) return;
 
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	// If you only care about changes to the active editor's text,
@@ -34,17 +35,16 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	}
 	const settings = generateSettings();
 
-	const shadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+	const shadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, relPath);
 	const shadowExists = fs.existsSync(shadowPath);
 	if (!shadowExists) {
 		// Creating shadow file if shadow does not exist somehow
-		const destShadow = `${settings.SHADOW_REPO}/${repoPath.slice(1)}/${branch}/${relPath}`;
-		const destShadowPathSplit = destShadow.split("/");
-		const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length - 1).join("/");
+		const destShadowPathSplit = shadowPath.split(path.sep);
+		const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length - 1).join(path.sep);
 		// Add file in shadow repo
 		fs.mkdirSync(destShadowBasePath, {recursive: true});
 		// File destination will be created or overwritten by default.
-		fs.copyFileSync(filePath, destShadow);
+		fs.copyFileSync(filePath, shadowPath);
 		return;
 	}
 	// Read shadow file
@@ -114,7 +114,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 
 	changeEvent.files.forEach((item) => {
 		const itemPath = item.path;
-		const relPath = itemPath.split(`${repoPath}/`)[1];
+		const relPath = itemPath.split(path.join(repoPath, path.sep))[1];
 
 		// Skip .git/ and syncignore files
 		if (shouldIgnoreFile(repoPath, relPath)) { return; }
@@ -122,7 +122,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 
 		// Shadow path
-		const shadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+		const shadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, relPath);
 
 		if (!fs.existsSync(shadowPath)) { return; }
 
@@ -138,9 +138,9 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 		console.log(`FileDeleted: ${itemPath}`);
 
 		// Cache path
-		const destDeleted = path.join(settings.DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
-		const destDeletedPathSplit = destDeleted.split("/");
-		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join("/");
+		const destDeleted = path.join(settings.DELETED_REPO, repoPath, branch, relPath);
+		const destDeletedPathSplit = destDeleted.split(path.sep);
+		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join(path.sep);
 
 		if (fs.existsSync(destDeleted)) { return; }
 		// Add file in .deleted repo
@@ -180,7 +180,7 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 	changeEvent.files.forEach((event) => {
 		const oldAbsPath = event.oldUri.path;
 		const newAbsPath = event.newUri.path;
-		const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
+		const newRelPath = newAbsPath.split(path.join(repoPath, path.sep))[1];
 		// Skip .git/ and syncignore files
 		if (shouldIgnoreFile(repoPath, newRelPath)) { return; }
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;

@@ -44,7 +44,8 @@ export function manageDiff(repoPath: string, branch: string, fileRelPath: string
 		newDiff.is_deleted = true;
 	}
 	// Append new diff in the buffer
-	fs.writeFileSync(`${settings.DIFFS_REPO}/${new Date().getTime()}.yml`, yaml.safeDump(newDiff));
+	const diffFilePath = path.join(settings.DIFFS_REPO, `${new Date().getTime()}.yml`);
+	fs.writeFileSync(diffFilePath, yaml.safeDump(newDiff));
 }
 
 
@@ -53,10 +54,10 @@ export const handleDirectoryRenameDiffs = async (repoPath: string, branch: strin
 	// No need to skip repos here as it is for specific repo
 	const walker = walk.walk(diffJSON.new_path);
 	walker.on("file", function (root, fileStats, next) {
-		const newFilePath = `${root}/${fileStats.name}`;
+		const newFilePath = path.join(root, fileStats.name);
 		const oldFilePath = newFilePath.replace(diffJSON.new_path, diffJSON.old_path);
-		const oldRelPath = oldFilePath.split(`${repoPath}/`)[1];
-		const newRelPath = newFilePath.split(`${repoPath}/`)[1];
+		const oldRelPath = oldFilePath.split(path.join(repoPath, path.sep))[1];
+		const newRelPath = newFilePath.split(path.join(repoPath, path.sep))[1];
 		const diff = JSON.stringify({
 			'old_rel_path': oldRelPath,
 			'new_rel_path': newRelPath,
@@ -71,15 +72,15 @@ export const handleDirectoryRenameDiffs = async (repoPath: string, branch: strin
 export const handleDirectoryDeleteDiffs = async (
 	repoPath: string, branch: string, relPath: string) => {
 	const settings = generateSettings();
-	const shadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
+	const shadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, relPath);
 	// No need to skip repos here as it is for specific repo
 	const walker = walk.walk(shadowPath);
 	walker.on("file", function (root, fileStats, next) {
-		const filePath = `${root}/${fileStats.name}`;
-		const relPath = filePath.split(`${repoPath}/${branch}/`)[1];
-		const destDeleted = path.join(settings.DELETED_REPO, `${repoPath}/${branch}/${relPath}`);
-		const destDeletedPathSplit = destDeleted.split("/");
-		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join("/");
+		const filePath = path.join(root, fileStats.name);
+		const relPath = filePath.split(path.join(repoPath, branch, path.sep))[1];
+		const destDeleted = path.join(settings.DELETED_REPO, repoPath, branch, relPath);
+		const destDeletedPathSplit = destDeleted.split(path.sep);
+		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join(path.sep);
 
 		if (fs.existsSync(destDeleted)) { return; }
 		// Create directories

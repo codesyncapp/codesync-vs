@@ -15,7 +15,7 @@ import {
 } from "../../../src/codesyncd/utils";
 import {
     DIFF_DATA,
-    DUMMY_FILE_CONTENT,
+    DUMMY_FILE_CONTENT, getConfigFilePath, getSeqTokenFilePath, getUserFilePath,
     INVALID_TOKEN_JSON,
     PRE_SIGNED_URL,
     randomBaseRepoPath,
@@ -112,13 +112,13 @@ describe("similarity",  () => {
 
 describe("handleNewFileUpload",  () => {
     const baseRepoPath = randomBaseRepoPath();
-    const userFilePath = `${baseRepoPath}/user.yml`;
-    const sequenceTokenFilePath = `${baseRepoPath}/sequence_token.yml`;
+    const configPath = getConfigFilePath(baseRepoPath);
+    const userFilePath = getUserFilePath(baseRepoPath);
+    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
     const originalsRepo = path.join(baseRepoPath, ".originals");
     const repoPath = randomRepoPath();
     const fileRelPath = "file.js";
-    const configPath = `${baseRepoPath}/config.yml`;
-    const filePath = `${repoPath}/file.js`;
+    const filePath = path.join(repoPath, "file.js");
     const configData = {repos: {}};
     configData.repos[repoPath] = {branches: {}};
     configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
@@ -148,9 +148,9 @@ describe("handleNewFileUpload",  () => {
     });
 
     test("Invalid Token",  async () => {
-        const originalsBranchPath = path.join(originalsRepo, `${repoPath}/${DEFAULT_BRANCH}`);
+        const originalsBranchPath = path.join(originalsRepo, repoPath, DEFAULT_BRANCH);
         fs.mkdirSync(originalsBranchPath, {recursive: true});
-        fs.writeFileSync(`${originalsBranchPath}/${fileRelPath}`, DUMMY_FILE_CONTENT);
+        fs.writeFileSync(path.join(originalsBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
         const result = await handleNewFileUpload("TOKEN", repoPath, DEFAULT_BRANCH, "",
             fileRelPath, 1234, configData);
@@ -161,9 +161,9 @@ describe("handleNewFileUpload",  () => {
     test("Should Upload",  async () => {
         const response = {id: 1234, url: PRE_SIGNED_URL};
         fetchMock.mockResponseOnce(JSON.stringify(response));
-        const originalsBranchPath = path.join(originalsRepo, `${repoPath}/${DEFAULT_BRANCH}`);
+        const originalsBranchPath = path.join(originalsRepo, repoPath, DEFAULT_BRANCH);
         fs.mkdirSync(originalsBranchPath, {recursive: true});
-        fs.writeFileSync(`${originalsBranchPath}/${fileRelPath}`, DUMMY_FILE_CONTENT);
+        fs.writeFileSync(path.join(originalsBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         const diffData = Object.assign({}, DIFF_DATA);
         diffData.repo_path = repoPath;
@@ -183,7 +183,7 @@ describe("handleFilesRename",  () => {
     const repoPath = randomRepoPath();
     const fileRelPath = "file.js";
     const renamedFileRelPath = "file_renamed.js";
-    const configPath = `${baseRepoPath}/config.yml`;
+    const configPath = getConfigFilePath(baseRepoPath);
     const configData = {repos: {}};
     configData.repos[repoPath] = {branches: {}};
     configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
@@ -202,22 +202,22 @@ describe("handleFilesRename",  () => {
     });
 
     test("Old file is in .shadow",  () => {
-        const shadowBranchPath = path.join(shadowRepo, `${repoPath}/${DEFAULT_BRANCH}`);
+        const shadowBranchPath = path.join(shadowRepo, repoPath, DEFAULT_BRANCH);
         fs.mkdirSync(shadowBranchPath, {recursive: true});
-        fs.writeFileSync(`${shadowBranchPath}/${fileRelPath}`, DUMMY_FILE_CONTENT);
+        fs.writeFileSync(path.join(shadowBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
         handleFilesRename(configData, repoPath, DEFAULT_BRANCH, renamedFileRelPath, 1234,
             fileRelPath);
-        expect(fs.existsSync(`${shadowBranchPath}/${renamedFileRelPath}`)).toBe(true);
+        expect(fs.existsSync(path.join(shadowBranchPath, renamedFileRelPath))).toBe(true);
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH][renamedFileRelPath]).toStrictEqual(1234);
     });
 
     // TODO: If old file is not in .shadow, can we create new file in .shadow?
     test("Old file NOT in .shadow",  () => {
-        const shadowBranchPath = path.join(shadowRepo, `${repoPath}/${DEFAULT_BRANCH}`);
+        const shadowBranchPath = path.join(shadowRepo, repoPath, DEFAULT_BRANCH);
         handleFilesRename(configData, repoPath, DEFAULT_BRANCH, renamedFileRelPath, 1234,
             fileRelPath);
-        expect(fs.existsSync(`${shadowBranchPath}/${renamedFileRelPath}`)).toBe(false);
+        expect(fs.existsSync(path.join(shadowBranchPath, renamedFileRelPath))).toBe(false);
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH][renamedFileRelPath]).toStrictEqual(1234);
     });
@@ -231,16 +231,19 @@ describe("cleanUpDeleteDiff",  () => {
     const originalsRepo = path.join(baseRepoPath, ".originals");
     const cacheRepo = path.join(baseRepoPath, ".deleted");
 
-    const shadowBranchPath = path.join(shadowRepo, `${repoPath}/${DEFAULT_BRANCH}`);        fs.mkdirSync(shadowBranchPath, {recursive: true});
-    const originalsBranchPath = path.join(originalsRepo, `${repoPath}/${DEFAULT_BRANCH}`);        fs.mkdirSync(shadowBranchPath, {recursive: true});
-    const cacheBranchPath = path.join(cacheRepo, `${repoPath}/${DEFAULT_BRANCH}`);        fs.mkdirSync(shadowBranchPath, {recursive: true});
+    const shadowBranchPath = path.join(shadowRepo, repoPath, DEFAULT_BRANCH);
+    fs.mkdirSync(shadowBranchPath, {recursive: true});
+    const originalsBranchPath = path.join(originalsRepo, repoPath, DEFAULT_BRANCH);
+    fs.mkdirSync(shadowBranchPath, {recursive: true});
+    const cacheBranchPath = path.join(cacheRepo, repoPath, DEFAULT_BRANCH);
+    fs.mkdirSync(shadowBranchPath, {recursive: true});
 
     const fileRelPath = "file.js";
-    const shadowFilePath = `${shadowBranchPath}/${fileRelPath}`;
-    const originalsFilePath = `${originalsBranchPath}/${fileRelPath}`;
-    const cacheFilePath = `${cacheBranchPath}/${fileRelPath}`;
+    const shadowFilePath = path.join(shadowBranchPath, fileRelPath);
+    const originalsFilePath = path.join(originalsBranchPath, fileRelPath);
+    const cacheFilePath = path.join(cacheBranchPath, fileRelPath);
 
-    const configPath = `${baseRepoPath}/config.yml`;
+    const configPath = getConfigFilePath(baseRepoPath);
     const configData = {repos: {}};
     configData.repos[repoPath] = {branches: {}};
     configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
@@ -287,16 +290,19 @@ describe("getDIffForDeletedFile",  () => {
     const originalsRepo = path.join(baseRepoPath, ".originals");
     const cacheRepo = path.join(baseRepoPath, ".deleted");
 
-    const shadowBranchPath = path.join(shadowRepo, `${repoPath}/${DEFAULT_BRANCH}`);        fs.mkdirSync(shadowBranchPath, {recursive: true});
-    const originalsBranchPath = path.join(originalsRepo, `${repoPath}/${DEFAULT_BRANCH}`);        fs.mkdirSync(shadowBranchPath, {recursive: true});
-    const cacheBranchPath = path.join(cacheRepo, `${repoPath}/${DEFAULT_BRANCH}`);        fs.mkdirSync(shadowBranchPath, {recursive: true});
+    const shadowBranchPath = path.join(shadowRepo, repoPath, DEFAULT_BRANCH);
+    fs.mkdirSync(shadowBranchPath, {recursive: true});
+    const originalsBranchPath = path.join(originalsRepo, repoPath, DEFAULT_BRANCH);
+    fs.mkdirSync(shadowBranchPath, {recursive: true});
+    const cacheBranchPath = path.join(cacheRepo, repoPath, DEFAULT_BRANCH);
+    fs.mkdirSync(shadowBranchPath, {recursive: true});
 
     const fileRelPath = "file.js";
-    const shadowFilePath = `${shadowBranchPath}/${fileRelPath}`;
-    const originalsFilePath = `${originalsBranchPath}/${fileRelPath}`;
-    const cacheFilePath = `${cacheBranchPath}/${fileRelPath}`;
+    const shadowFilePath = path.join(shadowBranchPath, fileRelPath);
+    const originalsFilePath = path.join(originalsBranchPath, fileRelPath);
+    const cacheFilePath = path.join(cacheBranchPath, fileRelPath);
 
-    const configPath = `${baseRepoPath}/config.yml`;
+    const configPath = getConfigFilePath(baseRepoPath);
     const configData = {repos: {}};
     configData.repos[repoPath] = {branches: {}};
     configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
@@ -346,7 +352,6 @@ describe("getDIffForDeletedFile",  () => {
         expect(fs.existsSync(shadowFilePath)).toBe(false);
         expect(fs.existsSync(originalsFilePath)).toBe(false);
         expect(fs.existsSync(cacheFilePath)).toBe(false);
-
     });
 
 });

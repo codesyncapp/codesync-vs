@@ -83,7 +83,8 @@ class PopulateBuffer {
         this.repoModifiedAt = -1;
         this.settings = generateSettings();
         this.repoBranchPath = path.join(this.repoPath, this.branch);
-        this.itemPaths = new initUtils(this.repoPath).getSyncablePaths(<IUserPlan>{}, false, true);
+        this.itemPaths = new initUtils(this.repoPath).getSyncablePaths(<IUserPlan>{}, false,
+            true);
         this.modifiedInPast = this.getModifiedInPast();
         this.config = readYML(this.settings.CONFIG_PATH);
         const configRepo = this.config.repos[this.repoPath];
@@ -124,8 +125,8 @@ class PopulateBuffer {
             filters: skipRepos,
             listeners: {
                 file: function (root: string, fileStats: any, next: any) {
-                    const oldFilePath = `${root}/${fileStats.name}`;
-                    const relPath = oldFilePath.split(`${shadowRepoBranchPath}/`)[1];
+                    const oldFilePath = path.join(root, fileStats.name);
+                    const relPath = oldFilePath.split(path.join(shadowRepoBranchPath, path.sep))[1];
                     const isBinary = isBinaryFileSync(oldFilePath);
                     // skip syncIgnored files
                     const shouldIgnore = ig.ignores(relPath);
@@ -163,8 +164,8 @@ class PopulateBuffer {
         const diffs = <any>{};
         const initUtilsObj = new initUtils(this.repoPath);
         const repoBranchPath = path.join(this.repoPath, this.branch);
-        const shadowRepoBranchPath = path.join(this.settings.SHADOW_REPO, path.join(this.repoPath, this.branch));
-        const originalsRepoBranchPath = path.join(this.settings.ORIGINALS_REPO, path.join(this.repoPath, this.branch));
+        const shadowRepoBranchPath = path.join(this.settings.SHADOW_REPO, this.repoPath, this.branch);
+        const originalsRepoBranchPath = path.join(this.settings.ORIGINALS_REPO, this.repoPath, this.branch);
         console.log(`Watching Repo: ${this.repoPath}`);
         for (const itemPath of this.itemPaths) {
             let diff = "";
@@ -193,7 +194,7 @@ class PopulateBuffer {
             if (!(itemPath.rel_path in this.configFiles) && !shadowExists && !itemPath.is_binary) {
                 const renameResult = this.checkForRename(shadowRepoBranchPath, itemPath.file_path);
                 if (renameResult.isRename) {
-                    const oldRelPath = renameResult.shadowFilePath.split(`${shadowRepoBranchPath}/`)[1];
+                    const oldRelPath = renameResult.shadowFilePath.split(path.join(shadowRepoBranchPath, path.sep))[1];
                     const oldAbsPath = path.join(repoBranchPath, oldRelPath);
                     const newAbsPath = path.join(repoBranchPath, itemPath.rel_path);
                     isRename = oldRelPath !== itemPath.rel_path;
@@ -323,7 +324,7 @@ export const detectBranchChange = async () => {
         }
         const initUtilsObj = new initUtils(repoPath);
 
-        const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO, path.join(repoPath, branch));
+        const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO, repoPath, branch);
         const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
         if (!(branch in configRepo.branches)) {
             if (originalsRepoExists) {

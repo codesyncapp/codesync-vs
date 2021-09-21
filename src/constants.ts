@@ -12,7 +12,7 @@ export const GITIGNORE = ".gitignore";
 
 export const DIFF_SOURCE = 'vs-code';
 export const DEFAULT_BRANCH = 'default';
-export const GIT_REPO = '.git/';
+export const GIT_REPO = '.git';
 
 // TODO: Use standard .gitignore
 export const IGNORABLE_DIRECTORIES = [
@@ -148,8 +148,8 @@ export class staticFiles {
 
 	constructor(baseRepo: string) {
 		const rootPath = baseRepo.replace("out", "src");
-		this.LOGIN_SUCCESS = path.join(path.join(rootPath, path.join("static", "login-success.html")));
-		this.LOGIN_FAILURE = path.join(path.join(rootPath, path.join("static", "login-failure.html")));
+		this.LOGIN_SUCCESS = path.join(rootPath, "static", "login-success.html");
+		this.LOGIN_FAILURE = path.join(rootPath, "static", "login-failure.html");
 	}
 }
 

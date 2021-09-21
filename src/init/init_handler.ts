@@ -44,7 +44,7 @@ export const syncRepo = async (repoPath: string, accessToken: string,
 
 	const settings = generateSettings();
 
-	const splitPath = repoPath.split('/');
+	const splitPath = repoPath.split(path.sep);
 	const repoName = splitPath[splitPath.length-1];
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	const configJSON = readYML(settings.CONFIG_PATH);
@@ -81,7 +81,7 @@ export const syncRepo = async (repoPath: string, accessToken: string,
 		return;
 	}
 	// Open .syncignore and ask for user input for Continue/Cancel
-	const setting: vscode.Uri = vscode.Uri.parse("file:" + `${repoPath}/${SYNCIGNORE}`);
+	const setting: vscode.Uri = vscode.Uri.parse("file:" + path.join(repoPath, SYNCIGNORE));
 	// Opening .syncignore
 	await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
 		await vscode.window.showTextDocument(a, 1, false).then(async e => {
@@ -131,11 +131,11 @@ const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: 
 	// get item paths to upload and copy in respective repos
 	const itemPaths = initUtilsObj.getSyncablePaths(user.plan, isSyncingBranch);
 	const filePaths = itemPaths.map(itemPath => itemPath.file_path);
-	const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO, path.join(repoPath, branch));
+	const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO, repoPath, branch);
 	// copy files to .originals repo
 	initUtilsObj.copyFilesTo(filePaths, originalsRepoBranchPath);
 
-	const shadowRepoBranchPath = path.join(settings.SHADOW_REPO, path.join(repoPath, branch));
+	const shadowRepoBranchPath = path.join(settings.SHADOW_REPO, repoPath, branch);
 	// copy files to .shadow repo
 	initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
 

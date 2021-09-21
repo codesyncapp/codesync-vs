@@ -13,8 +13,8 @@ describe("manageDiff", () => {
 
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
-    const diffsRepo = path.join(baseRepoPath, ".diffs/.vscode");
-    const newFilePath = `${repoPath}/new.js`;
+    const diffsRepo = path.join(baseRepoPath, ".diffs", ".vscode");
+    const newFilePath = path.join(repoPath, "new.js");
 
     beforeEach(() => {
         // Create directories
@@ -45,7 +45,7 @@ describe("manageDiff", () => {
         // Verify no diff file should be generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(1);
-        const diffFilePath = `${diffsRepo}/${diffFiles[0]}`;
+        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
         const diffData = readYML(diffFilePath);
         expect(diffData.source).toEqual(DIFF_SOURCE);
         expect(diffData.created_at).toEqual(createdAt);

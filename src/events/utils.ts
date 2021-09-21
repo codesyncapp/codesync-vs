@@ -15,7 +15,7 @@ export function isGitFile(path: string) {
 export function shouldIgnoreFile(repoPath: string, relPath: string) {
 	// Always ignore .git/
 	if (isGitFile(relPath)) { return true; }
-	const syncIgnorePath = `${repoPath}/.syncignore`;
+	const syncIgnorePath = path.join(repoPath, ".syncignore");
 	// TODO: See what to do if syncignore is not there
 	if (!fs.existsSync(syncIgnorePath)) { return true; }
 	const syncignorePaths = fs.readFileSync(syncIgnorePath, "utf8");
@@ -46,10 +46,10 @@ export const handleRename = (repoPath: string, branch: string, oldAbsPath: strin
 							newAbsPath: string, isFile: boolean) => {
 	const settings = generateSettings();
 
-	const oldRelPath = oldAbsPath.split(`${repoPath}/`)[1];
-	const newRelPath = newAbsPath.split(`${repoPath}/`)[1];
-	const oldShadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${oldRelPath}`);
-	const newShadowPath = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${newRelPath}`);
+	const oldRelPath = oldAbsPath.split(path.join(repoPath, path.sep))[1];
+	const newRelPath = newAbsPath.split(path.join(repoPath, path.sep))[1];
+	const oldShadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, oldRelPath);
+	const newShadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, newRelPath);
 
 	// rename file in shadow repo
 	fs.renameSync(oldShadowPath, newShadowPath);
@@ -69,8 +69,7 @@ export const handleRename = (repoPath: string, branch: string, oldAbsPath: strin
 		old_rel_path: oldRelPath,
 		new_rel_path: newRelPath
 	});
-	manageDiff(repoPath, branch, newRelPath, diff, false, true, false,
-		"");
+	manageDiff(repoPath, branch, newRelPath, diff, false, true);
 };
 
 export const handleNewFile = (repoPath: string, branch: string, filePath: string) => {
@@ -80,15 +79,15 @@ export const handleNewFile = (repoPath: string, branch: string, filePath: string
 	const lstat = fs.lstatSync(filePath);
 	if (lstat.isDirectory()) { return; }
 	const settings = generateSettings();
-	const relPath = filePath.split(`${repoPath}/`)[1];
+	const relPath = filePath.split(path.join(repoPath, path.sep))[1];
 	// Skip .git/ and syncignore files
 	if (shouldIgnoreFile(repoPath, relPath)) { return; }
-	const destShadow = path.join(settings.SHADOW_REPO, `${repoPath}/${branch}/${relPath}`);
-	const destShadowPathSplit = destShadow.split("/");
-	const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length-1).join("/");
-	const destOriginals = path.join(settings.ORIGINALS_REPO, `${repoPath}/${branch}/${relPath}`);
-	const destOriginalsPathSplit = destOriginals.split("/");
-	const destOriginalsBasePath = destOriginalsPathSplit.slice(0, destOriginalsPathSplit.length-1).join("/");
+	const destShadow = path.join(settings.SHADOW_REPO, repoPath, branch, relPath);
+	const destShadowPathSplit = destShadow.split(path.sep);
+	const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length-1).join(path.sep);
+	const destOriginals = path.join(settings.ORIGINALS_REPO, repoPath, branch, relPath);
+	const destOriginalsPathSplit = destOriginals.split(path.sep);
+	const destOriginalsBasePath = destOriginalsPathSplit.slice(0, destOriginalsPathSplit.length-1).join(path.sep);
 	if (fs.existsSync(destShadow) || fs.existsSync(destOriginals)) { return; }
 	console.log(`FileCreated: ${filePath}`);
 	// Add file in shadow repo

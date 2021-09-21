@@ -108,7 +108,7 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 
 		const repoDiffs: IRepoDiffs[] = [];
 		for (const diffFile of diffFiles) {
-			const filePath = `${settings.DIFFS_REPO}/${diffFile}`;
+			const filePath = path.join(settings.DIFFS_REPO, diffFile);
 			const diffData = readYML(filePath);
 			if (!diffData) { continue; }
 			if (!isValidDiff(diffData)) {
@@ -216,7 +216,7 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 
 									if  (!oldFileId) {
 										putLogEvent(`old_file: ${oldRelPath} was not 
-										synced for rename of ${repoDiff.path}/${relPath}`, configRepo.email);
+										synced for rename of ${path.join(repoDiff.path, relPath)}`, configRepo.email);
 										fs.unlinkSync(fileToDiff.file_path);
 										continue;
 									}
@@ -268,7 +268,8 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 
 								if (!fileId && isDeleted) {
 									// It can be a directory delete
-									putLogEvent(`is_deleted non-synced file found: ${diffData.repo_path}/${relPath}`, configRepo.email);
+									putLogEvent(`is_deleted non-synced file found: ${path.join(diffData.repo_path, relPath)}`,
+										configRepo.email);
 									cleanUpDeleteDiff(diffData.repo_path, diffData.branch, relPath, configJSON);
 									fs.unlinkSync(fileToDiff.file_path);
 									continue;
