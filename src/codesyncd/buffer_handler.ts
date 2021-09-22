@@ -23,6 +23,7 @@ import {
 import {recallDaemon} from "./codesyncd";
 import {generateSettings} from "../settings";
 import {initUtils} from "../init/utils";
+import {pathUtils} from "../utils/path_utils";
 
 const WAITING_FILES = <any>{};
 
@@ -243,8 +244,8 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 									} else {
 										WAITING_FILES[relPath] = (new Date()).getTime() / 1000;
 										console.log(`Uploading the file ${relPath} first`);
-										const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO,
-											diffData.repo_path, diffData.branch);
+										const pathUtilsObj = new pathUtils(diffData.repo_path, diffData.branch);
+										const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 										const originalsFilePath = path.join(originalsRepoBranchPath, relPath);
 										if (!fs.existsSync(originalsFilePath)) {
 											const initUtilsObj = new initUtils(diffData.repo_path);

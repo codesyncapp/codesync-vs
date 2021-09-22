@@ -23,6 +23,7 @@ import {
 } from "../../helpers/helpers";
 import {DEFAULT_BRANCH} from "../../../src/constants";
 import {readYML} from "../../../src/utils/common";
+import {pathUtils} from "../../../src/utils/path_utils";
 
 
 describe("isValidDiff",  () => {
@@ -148,9 +149,10 @@ describe("handleNewFileUpload",  () => {
     });
 
     test("Invalid Token",  async () => {
-        const originalsBranchPath = path.join(originalsRepo, repoPath, DEFAULT_BRANCH);
-        fs.mkdirSync(originalsBranchPath, {recursive: true});
-        fs.writeFileSync(path.join(originalsBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
+        const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+        fs.mkdirSync(originalsRepoBranchPath, {recursive: true});
+        fs.writeFileSync(path.join(originalsRepoBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
         const result = await handleNewFileUpload("TOKEN", repoPath, DEFAULT_BRANCH, "",
             fileRelPath, 1234, configData);
@@ -161,9 +163,10 @@ describe("handleNewFileUpload",  () => {
     test("Should Upload",  async () => {
         const response = {id: 1234, url: PRE_SIGNED_URL};
         fetchMock.mockResponseOnce(JSON.stringify(response));
-        const originalsBranchPath = path.join(originalsRepo, repoPath, DEFAULT_BRANCH);
-        fs.mkdirSync(originalsBranchPath, {recursive: true});
-        fs.writeFileSync(path.join(originalsBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
+        const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+        fs.mkdirSync(originalsRepoBranchPath, {recursive: true});
+        fs.writeFileSync(path.join(originalsRepoBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         const diffData = Object.assign({}, DIFF_DATA);
         diffData.repo_path = repoPath;
@@ -202,7 +205,8 @@ describe("handleFilesRename",  () => {
     });
 
     test("Old file is in .shadow",  () => {
-        const shadowBranchPath = path.join(shadowRepo, repoPath, DEFAULT_BRANCH);
+        const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        const shadowBranchPath = pathUtilsObj.getShadowRepoBranchPath();
         fs.mkdirSync(shadowBranchPath, {recursive: true});
         fs.writeFileSync(path.join(shadowBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
         handleFilesRename(configData, repoPath, DEFAULT_BRANCH, renamedFileRelPath, 1234,
@@ -212,9 +216,10 @@ describe("handleFilesRename",  () => {
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH][renamedFileRelPath]).toStrictEqual(1234);
     });
 
-    // TODO: If old file is not in .shadow, can we create new file in .shadow?
+    // TODO: If old file is not in .shadow, should we create new file in .shadow?
     test("Old file NOT in .shadow",  () => {
-        const shadowBranchPath = path.join(shadowRepo, repoPath, DEFAULT_BRANCH);
+        const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        const shadowBranchPath = pathUtilsObj.getShadowRepoBranchPath();
         handleFilesRename(configData, repoPath, DEFAULT_BRANCH, renamedFileRelPath, 1234,
             fileRelPath);
         expect(fs.existsSync(path.join(shadowBranchPath, renamedFileRelPath))).toBe(false);
@@ -227,16 +232,12 @@ describe("handleFilesRename",  () => {
 describe("cleanUpDeleteDiff",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
-    const shadowRepo = path.join(baseRepoPath, ".shadow");
-    const originalsRepo = path.join(baseRepoPath, ".originals");
-    const cacheRepo = path.join(baseRepoPath, ".deleted");
+    untildify.mockReturnValue(baseRepoPath);
 
-    const shadowBranchPath = path.join(shadowRepo, repoPath, DEFAULT_BRANCH);
-    fs.mkdirSync(shadowBranchPath, {recursive: true});
-    const originalsBranchPath = path.join(originalsRepo, repoPath, DEFAULT_BRANCH);
-    fs.mkdirSync(shadowBranchPath, {recursive: true});
-    const cacheBranchPath = path.join(cacheRepo, repoPath, DEFAULT_BRANCH);
-    fs.mkdirSync(shadowBranchPath, {recursive: true});
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const shadowBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+    const originalsBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+    const cacheBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
 
     const fileRelPath = "file.js";
     const shadowFilePath = path.join(shadowBranchPath, fileRelPath);
@@ -253,7 +254,6 @@ describe("cleanUpDeleteDiff",  () => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
-        fs.mkdirSync(shadowRepo, {recursive: true});
         fs.mkdirSync(shadowBranchPath, {recursive: true});
         fs.mkdirSync(originalsBranchPath, {recursive: true});
         fs.mkdirSync(cacheBranchPath, {recursive: true});
@@ -286,16 +286,13 @@ describe("cleanUpDeleteDiff",  () => {
 describe("getDIffForDeletedFile",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
-    const shadowRepo = path.join(baseRepoPath, ".shadow");
-    const originalsRepo = path.join(baseRepoPath, ".originals");
-    const cacheRepo = path.join(baseRepoPath, ".deleted");
 
-    const shadowBranchPath = path.join(shadowRepo, repoPath, DEFAULT_BRANCH);
-    fs.mkdirSync(shadowBranchPath, {recursive: true});
-    const originalsBranchPath = path.join(originalsRepo, repoPath, DEFAULT_BRANCH);
-    fs.mkdirSync(shadowBranchPath, {recursive: true});
-    const cacheBranchPath = path.join(cacheRepo, repoPath, DEFAULT_BRANCH);
-    fs.mkdirSync(shadowBranchPath, {recursive: true});
+    untildify.mockReturnValue(baseRepoPath);
+
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const shadowBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+    const originalsBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+    const cacheBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
 
     const fileRelPath = "file.js";
     const shadowFilePath = path.join(shadowBranchPath, fileRelPath);
@@ -312,7 +309,6 @@ describe("getDIffForDeletedFile",  () => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
-        fs.mkdirSync(shadowRepo, {recursive: true});
         fs.mkdirSync(shadowBranchPath, {recursive: true});
         fs.mkdirSync(originalsBranchPath, {recursive: true});
         fs.mkdirSync(cacheBranchPath, {recursive: true});

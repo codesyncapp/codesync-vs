@@ -5,6 +5,7 @@ import {readYML} from "../../../../src/utils/common";
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../../src/constants";
 import {randomBaseRepoPath, randomRepoPath, waitFor} from "../../../helpers/helpers";
 import {handleDirectoryDeleteDiffs} from "../../../../src/events/diff_utils";
+import {pathUtils} from "../../../../src/utils/path_utils";
 
 
 describe("handleDirectoryDeleteDiffs", () => {
@@ -12,16 +13,20 @@ describe("handleDirectoryDeleteDiffs", () => {
     const repoPath = randomRepoPath();
 
     const baseRepoPath = randomBaseRepoPath();
-    const shadowRepoPath = path.join(baseRepoPath, ".shadow");
     const cacheRepoPath = path.join(baseRepoPath, ".deleted");
     const diffsRepo = path.join(baseRepoPath, ".diffs", ".vscode");
-    const shadowRepoBranchPath = path.join(shadowRepoPath, repoPath, DEFAULT_BRANCH);
-    const cacheRepoBranchPath = path.join(cacheRepoPath, repoPath, DEFAULT_BRANCH);
+
+    untildify.mockReturnValue(baseRepoPath);
+
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+    const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
 
     const shadowDirectoryPath = path.join(shadowRepoBranchPath, "directory");
     const shadowFilePath = path.join(shadowDirectoryPath, "file.js");
     const relFilePath = path.join("directory", "file.js");
     const cacheFilePath = path.join(cacheRepoBranchPath, relFilePath);
+
     beforeEach(() => {
         jest.clearAllMocks();
         fs.mkdirSync(repoPath, { recursive: true });

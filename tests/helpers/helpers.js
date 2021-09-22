@@ -14,12 +14,26 @@ export function randomName() {
     return getRandomString(10);
 }
 
+function randomBaseRepoName() {
+    return `.codesync_${randomName()}`;
+}
+
+function randomRepoName() {
+    return `test_repo_${randomName()}`;
+}
+
 export function randomBaseRepoPath() {
-    return path.join("tests", "tests_data", `.codesync_${randomName()}`);
+    const posixPath = path.join("tests", "tests_data", randomBaseRepoName());
+    const windowPath = path.join("tests", "tests_data", "C:", randomBaseRepoName());
+    const paths = [posixPath, windowPath];
+    return paths[Math.floor(Math.random() * paths.length)];
 }
 
 export function randomRepoPath() {
-    return path.join("tests", "tests_data", `test_repo_${randomName()}`);
+    const posixPath = path.join("tests", "tests_data", randomRepoName());
+    const windowPath = path.join("tests", "tests_data", "C:", randomRepoName());
+    const paths = [posixPath, windowPath];
+    return paths[Math.floor(Math.random() * paths.length)];
 }
 
 export function getConfigFilePath(baseRepoPath) {

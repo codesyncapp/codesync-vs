@@ -7,7 +7,8 @@ import getBranchName from 'current-git-branch';
 import { DEFAULT_BRANCH} from "../constants";
 import { handleDirectoryDeleteDiffs, manageDiff } from './diff_utils';
 import { repoIsNotSynced, shouldIgnoreFile, handleRename, handleNewFile } from './utils';
-import {generateSettings} from "../settings";
+import { generateSettings } from "../settings";
+import { pathUtils } from "../utils/path_utils";
 
 
 export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
@@ -33,14 +34,11 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 		console.log(`Skipping: No repoPath`);
 		return;
 	}
-	const settings = generateSettings();
-
-	const shadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, relPath);
-	const shadowExists = fs.existsSync(shadowPath);
-	if (!shadowExists) {
+	const pathUtilsObj = new pathUtils(repoPath, branch);
+	const shadowPath = path.join(pathUtilsObj.getShadowRepoBranchPath(), relPath);
+	if (!fs.existsSync(shadowPath)) {
 		// Creating shadow file if shadow does not exist somehow
-		const destShadowPathSplit = shadowPath.split(path.sep);
-		const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length - 1).join(path.sep);
+		const destShadowBasePath = path.dirname(shadowPath);
 		// Add file in shadow repo
 		fs.mkdirSync(destShadowBasePath, {recursive: true});
 		// File destination will be created or overwritten by default.
@@ -121,8 +119,10 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 
+		const pathUtilsObj = new pathUtils(repoPath, branch);
+
 		// Shadow path
-		const shadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, relPath);
+		const shadowPath = path.join(pathUtilsObj.getShadowRepoBranchPath(), relPath);
 
 		if (!fs.existsSync(shadowPath)) { return; }
 
@@ -138,18 +138,17 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 		console.log(`FileDeleted: ${itemPath}`);
 
 		// Cache path
-		const destDeleted = path.join(settings.DELETED_REPO, repoPath, branch, relPath);
-		const destDeletedPathSplit = destDeleted.split(path.sep);
-		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join(path.sep);
+		const cacheFilePath = path.join(pathUtilsObj.getDeletedRepoBranchPath(), relPath);
+		const cacheDirectories = path.dirname(cacheFilePath);
 
-		if (fs.existsSync(destDeleted)) { return; }
+		if (fs.existsSync(cacheFilePath)) { return; }
 		// Add file in .deleted repo
-		if (!fs.existsSync(destDeletedBasePath)) {
+		if (!fs.existsSync(cacheDirectories)) {
 			// Create directories
-			fs.mkdirSync(destDeletedBasePath, { recursive: true });
+			fs.mkdirSync(cacheDirectories, { recursive: true });
 		}
 		// File destination will be created or overwritten by default.
-		fs.copyFileSync(shadowPath, destDeleted);
+		fs.copyFileSync(shadowPath, cacheFilePath);
 		manageDiff(repoPath, branch, relPath, "", false, false, true);
 	});
 }

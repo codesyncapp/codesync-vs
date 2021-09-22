@@ -1,12 +1,11 @@
 import fs from 'fs';
 import path from "path";
 import ignore from 'ignore';
-import {
-	GIT_REPO
-} from "../constants";
+import { GIT_REPO } from "../constants";
 import { handleDirectoryRenameDiffs, manageDiff } from './diff_utils';
-import {isRepoActive, readYML} from '../utils/common';
-import {generateSettings} from "../settings";
+import { isRepoActive, readYML } from '../utils/common';
+import { generateSettings } from "../settings";
+import { pathUtils } from "../utils/path_utils";
 
 export function isGitFile(path: string) {
 	return path.startsWith(GIT_REPO);
@@ -44,12 +43,14 @@ export const repoIsNotSynced = (repoPath: string) => {
 
 export const handleRename = (repoPath: string, branch: string, oldAbsPath: string,
 							newAbsPath: string, isFile: boolean) => {
-	const settings = generateSettings();
 
 	const oldRelPath = oldAbsPath.split(path.join(repoPath, path.sep))[1];
 	const newRelPath = newAbsPath.split(path.join(repoPath, path.sep))[1];
-	const oldShadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, oldRelPath);
-	const newShadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, newRelPath);
+
+	const pathUtilsObj = new pathUtils(repoPath, branch);
+	const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+	const oldShadowPath = path.join(shadowRepoBranchPath, oldRelPath);
+	const newShadowPath = path.join(shadowRepoBranchPath, newRelPath);
 
 	// rename file in shadow repo
 	fs.renameSync(oldShadowPath, newShadowPath);
@@ -75,29 +76,32 @@ export const handleRename = (repoPath: string, branch: string, oldAbsPath: strin
 export const handleNewFile = (repoPath: string, branch: string, filePath: string) => {
 	// Do not continue if file does not exist
 	if (!fs.existsSync(filePath)) { return; }
-	// Skip for directory
+	// Skip directory
 	const lstat = fs.lstatSync(filePath);
 	if (lstat.isDirectory()) { return; }
-	const settings = generateSettings();
+
 	const relPath = filePath.split(path.join(repoPath, path.sep))[1];
 	// Skip .git/ and syncignore files
 	if (shouldIgnoreFile(repoPath, relPath)) { return; }
-	const destShadow = path.join(settings.SHADOW_REPO, repoPath, branch, relPath);
-	const destShadowPathSplit = destShadow.split(path.sep);
-	const destShadowBasePath = destShadowPathSplit.slice(0, destShadowPathSplit.length-1).join(path.sep);
-	const destOriginals = path.join(settings.ORIGINALS_REPO, repoPath, branch, relPath);
-	const destOriginalsPathSplit = destOriginals.split(path.sep);
-	const destOriginalsBasePath = destOriginalsPathSplit.slice(0, destOriginalsPathSplit.length-1).join(path.sep);
-	if (fs.existsSync(destShadow) || fs.existsSync(destOriginals)) { return; }
+
+	const pathUtilsObj = new pathUtils(repoPath, branch);
+	const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+	const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+
+	const shadowPath = path.join(shadowRepoBranchPath, relPath);
+	const destShadowBasePath = path.dirname(shadowPath);
+	const originalsPath = path.join(originalsRepoBranchPath, relPath);
+	const destOriginalsBasePath = path.dirname(originalsPath);
+	if (fs.existsSync(shadowPath) || fs.existsSync(originalsPath)) { return; }
 	console.log(`FileCreated: ${filePath}`);
 	// Add file in shadow repo
 	fs.mkdirSync(destShadowBasePath, { recursive: true });
 	// File destination will be created or overwritten by default.
-	fs.copyFileSync(filePath, destShadow);
+	fs.copyFileSync(filePath, shadowPath);
 	// Add file in originals repo
 	fs.mkdirSync(destOriginalsBasePath, { recursive: true });
 	// File destination will be created or overwritten by default.
-	fs.copyFileSync(filePath, destOriginals);
+	fs.copyFileSync(filePath, originalsPath);
 	// Add new diff in the buffer
 	manageDiff(repoPath, branch, relPath, "", true);
 };

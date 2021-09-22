@@ -5,15 +5,18 @@ import {handleRename} from "../../../../src/events/utils";
 import {randomBaseRepoPath, randomRepoPath, waitFor} from "../../../helpers/helpers";
 import {readYML} from "../../../../src/utils/common";
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../../src/constants";
+import {pathUtils} from "../../../../src/utils/path_utils";
 
 
-describe("handleNewFile",  () => {
+describe("handleRenameFile",  () => {
     const repoPath = randomRepoPath();
-
     const baseRepoPath = randomBaseRepoPath();
-    const shadowRepoPath = path.join(baseRepoPath, ".shadow");
+
+    untildify.mockReturnValue(baseRepoPath);
+
     const diffsRepo = path.join(baseRepoPath, ".diffs", ".vscode");
-    const shadowRepoBranchPath = path.join(shadowRepoPath, repoPath, DEFAULT_BRANCH);
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
 
     // For file rename
     const oldFilePath = path.join(repoPath, "old.js");
@@ -34,7 +37,6 @@ describe("handleNewFile",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
-
         // Create directories
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
@@ -55,7 +57,7 @@ describe("handleNewFile",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("handleRename for File",  () => {
+    test("for File",  () => {
         /*
          *
          {
@@ -91,7 +93,7 @@ describe("handleNewFile",  () => {
         fs.rmSync(diffFilePath);
     });
 
-    test("handleRename for Directory",  async() => {
+    test("for Directory",  async() => {
         handleRename(repoPath, DEFAULT_BRANCH, oldDirectoryPath, newDirectoryPath, false);
         expect(fs.existsSync(renamedShadowDirectoryPath)).toBe(true);
         expect(fs.existsSync(renamedShadowDirectoryFilePath)).toBe(true);

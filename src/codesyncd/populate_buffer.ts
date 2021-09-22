@@ -21,6 +21,7 @@ import {similarity} from "./utils";
 import {diff_match_patch} from "diff-match-patch";
 import {manageDiff} from "../events/diff_utils";
 import {generateSettings} from "../settings";
+import {pathUtils} from "../utils/path_utils";
 
 
 export const populateBuffer = async () => {
@@ -163,9 +164,11 @@ class PopulateBuffer {
     async populateBufferForRepo() {
         const diffs = <any>{};
         const initUtilsObj = new initUtils(this.repoPath);
-        const repoBranchPath = path.join(this.repoPath, this.branch);
-        const shadowRepoBranchPath = path.join(this.settings.SHADOW_REPO, this.repoPath, this.branch);
-        const originalsRepoBranchPath = path.join(this.settings.ORIGINALS_REPO, this.repoPath, this.branch);
+
+        const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
+        const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+        const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+
         console.log(`Watching Repo: ${this.repoPath}`);
         for (const itemPath of this.itemPaths) {
             let diff = "";
@@ -195,8 +198,8 @@ class PopulateBuffer {
                 const renameResult = this.checkForRename(shadowRepoBranchPath, itemPath.file_path);
                 if (renameResult.isRename) {
                     const oldRelPath = renameResult.shadowFilePath.split(path.join(shadowRepoBranchPath, path.sep))[1];
-                    const oldAbsPath = path.join(repoBranchPath, oldRelPath);
-                    const newAbsPath = path.join(repoBranchPath, itemPath.rel_path);
+                    const oldAbsPath = path.join(this.repoBranchPath, oldRelPath);
+                    const newAbsPath = path.join(this.repoBranchPath, itemPath.rel_path);
                     isRename = oldRelPath !== itemPath.rel_path;
                     if (isRename) {
                         // Remove old file from shadow repo
@@ -259,12 +262,17 @@ class PopulateBuffer {
         */
         const diffs = <any>{};
         const initUtilsObj = new initUtils(this.repoPath);
+
+        const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
+        const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+        const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
+
         const activeRelPaths = this.itemPaths.map(itemPath => itemPath.rel_path);
+
         Object.keys(this.configFiles).forEach(relPath => {
             // Cache path of file
-            const fileBranchPath = path.join(this.repoBranchPath, relPath);
-            const cacheFilePath = path.join(this.settings.DELETED_REPO, fileBranchPath);
-            const shadowFilePath = path.join(this.settings.SHADOW_REPO, fileBranchPath);
+            const cacheFilePath = path.join(cacheRepoBranchPath, relPath);
+            const shadowFilePath = path.join(shadowRepoBranchPath, relPath);
             // See if should discard this file
             if (!initUtilsObj.isSyncAble(relPath) ||
                 activeRelPaths.includes(relPath) ||
@@ -278,7 +286,7 @@ class PopulateBuffer {
                 'is_deleted': true,
                 'diff': null,  // Computing later while handling buffer
             };
-            const cacheRepoPath = path.join(this.settings.DELETED_REPO, this.repoPath);
+            const cacheRepoPath = pathUtilsObj.getDeletedRepoPath();
             // Pick from .shadow and add file in .deleted repo to avoid duplicate diffs
             initUtilsObj.copyFilesTo( [shadowFilePath], cacheRepoPath);
         });
@@ -316,7 +324,9 @@ export const detectBranchChange = async () => {
             continue;
         }
         const branch = getBranchName({altPath: repoPath}) || DEFAULT_BRANCH;
-        const shadowRepo = path.join(settings.SHADOW_REPO, repoPath);
+        const pathUtilsObj = new pathUtils(repoPath, branch);
+
+        const shadowRepo = pathUtilsObj.getShadowRepoPath();
 
         if (!fs.existsSync(repoPath) || !fs.existsSync(shadowRepo)) {
             // TODO: Handle out of sync repo
@@ -324,7 +334,7 @@ export const detectBranchChange = async () => {
         }
         const initUtilsObj = new initUtils(repoPath);
 
-        const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO, repoPath, branch);
+        const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
         if (!(branch in configRepo.branches)) {
             if (originalsRepoExists) {

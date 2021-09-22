@@ -6,16 +6,17 @@ import {readYML} from "../../../../src/utils/common";
 import {handleNewFile} from "../../../../src/events/utils";
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../../src/constants";
 import {getSyncIgnoreFilePath, randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
+import {pathUtils} from "../../../../src/utils/path_utils";
 
 describe("handleNewFile",  () => {
     const repoPath = randomRepoPath();
-
     const baseRepoPath = randomBaseRepoPath();
-    const shadowRepoPath = path.join(baseRepoPath, ".shadow");
-    const originalsRepoPath = path.join(baseRepoPath, ".originals");
+    untildify.mockReturnValue(baseRepoPath);
+
     const diffsRepo = path.join(baseRepoPath, ".diffs", ".vscode");
-    const shadowRepoBranchPath = path.join(shadowRepoPath, repoPath, DEFAULT_BRANCH);
-    const originalsRepoBranchPath = path.join(originalsRepoPath, repoPath, DEFAULT_BRANCH);
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+    const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 
     const newFilePath = path.join(repoPath, "new.js");
     const newDirectoryPath = path.join(repoPath, "new");

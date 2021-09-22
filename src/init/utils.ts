@@ -18,6 +18,7 @@ import { putLogEvent } from '../logger';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
 import { generateSettings } from "../settings";
+import { pathUtils } from '../utils/path_utils';
 
 export class initUtils {
 	repoPath: string;
@@ -183,8 +184,8 @@ export class initUtils {
 		const repoId = uploadResponse.repo_id;
 		const s3Urls =  uploadResponse.urls;
 		const tasks: any[] = [];
-		const repoPath = this.repoPath;
-		const originalsRepoBranchPath = path.join(this.settings.ORIGINALS_REPO, repoPath, branch);
+		const pathUtilsObj = new pathUtils(this.repoPath, branch);
+		const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 
 		Object.keys(s3Urls).forEach(relPath => {
 			const presignedUrl = s3Urls[relPath];

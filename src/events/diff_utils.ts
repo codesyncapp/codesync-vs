@@ -9,6 +9,7 @@ import {
 	DATETIME_FORMAT
 } from "../constants";
 import {generateSettings} from "../settings";
+import {pathUtils} from "../utils/path_utils";
 
 
 export function manageDiff(repoPath: string, branch: string, fileRelPath: string, diff: string,
@@ -70,26 +71,27 @@ export const handleDirectoryRenameDiffs = async (repoPath: string, branch: strin
 };
 
 export const handleDirectoryDeleteDiffs = async (
-	repoPath: string, branch: string, relPath: string) => {
-	const settings = generateSettings();
-	const shadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, relPath);
+	repoPath: string, branch: string, dirRelPath: string) => {
+	const pathUtilsObj = new pathUtils(repoPath, branch);
+	const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+	const shadowDirPath = path.join(shadowRepoBranchPath, dirRelPath);
 	// No need to skip repos here as it is for specific repo
-	const walker = walk.walk(shadowPath);
+	const walker = walk.walk(shadowDirPath);
 	walker.on("file", function (root, fileStats, next) {
 		const filePath = path.join(root, fileStats.name);
-		const relPath = filePath.split(path.join(repoPath, branch, path.sep))[1];
-		const destDeleted = path.join(settings.DELETED_REPO, repoPath, branch, relPath);
-		const destDeletedPathSplit = destDeleted.split(path.sep);
-		const destDeletedBasePath = destDeletedPathSplit.slice(0, destDeletedPathSplit.length-1).join(path.sep);
+		const relPath = filePath.split(path.join(pathUtilsObj.formattedRepoPath, branch, path.sep))[1];
+		const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
+		const cacheFilePath = path.join(cacheRepoBranchPath, relPath);
+		const cacheDirectories = path.dirname(cacheFilePath);
 
-		if (fs.existsSync(destDeleted)) { return; }
+		if (fs.existsSync(cacheFilePath)) { return; }
 		// Create directories
-		if (!fs.existsSync(destDeletedBasePath)) {
+		if (!fs.existsSync(cacheDirectories)) {
 			// Add file in .deleted repo
-			fs.mkdirSync(destDeletedBasePath, { recursive: true });
+			fs.mkdirSync(cacheDirectories, { recursive: true });
 		}
 		// File destination will be created or overwritten by default.
-		fs.copyFileSync(filePath, destDeleted);
+		fs.copyFileSync(filePath, cacheFilePath);
 		manageDiff(repoPath, branch, relPath, "", false, false, true);
 		next();
 	});

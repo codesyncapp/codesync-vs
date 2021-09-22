@@ -12,7 +12,8 @@ import { uploadFileToServer } from '../utils/upload_utils';
 import { isBinaryFileSync } from 'isbinaryfile';
 import { diff_match_patch } from 'diff-match-patch';
 import { putLogEvent } from '../logger';
-import {generateSettings} from "../settings";
+import { generateSettings } from "../settings";
+import { pathUtils } from "../utils/path_utils";
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -51,14 +52,15 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		Ignores if file is not present in .originals repo
 	*/
 	const settings = generateSettings();
-
-	const originalsPath = path.join(settings.ORIGINALS_REPO, repoPath, branch, relPath);
+	const pathUtilsObj = new pathUtils(repoPath, branch);
+	const originalsPath = path.join(pathUtilsObj.getOriginalsRepoBranchPath(), relPath);
 	if (!fs.existsSync(originalsPath)) {
 		return {
 			uploaded: false,
 			config: configJSON
 		};
 	}
+
 	const response = await uploadFileToServer(accessToken, repoId, branch, originalsPath, relPath, createdAt);
 	if (response.error) {
 		putLogEvent(`Error uploading to server: ${response.error}`);
@@ -79,8 +81,10 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 export const handleFilesRename = (configJSON: any, repoPath: string, branch: string,
 	relPath: string, oldFileId: number, oldRelPath: string) => {
 	const settings = generateSettings();
-	const oldShadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, oldRelPath);
-	const newShadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, relPath);
+	const pathUtilsObj = new pathUtils(repoPath, branch);
+	const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+	const oldShadowPath = path.join(shadowRepoBranchPath, oldRelPath);
+	const newShadowPath = path.join(shadowRepoBranchPath, relPath);
 	if (fs.existsSync(oldShadowPath)) {
 		fs.renameSync(oldShadowPath, newShadowPath);
 	}
@@ -91,9 +95,10 @@ export const handleFilesRename = (configJSON: any, repoPath: string, branch: str
 
 export const cleanUpDeleteDiff = (repoPath: string, branch: string, relPath: string, configJSON: any) => {
 	const settings = generateSettings();
-	const shadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, relPath);
-	const originalsPath = path.join(settings.ORIGINALS_REPO, repoPath, branch, relPath);
-	const cacheFilePath = path.join(settings.DELETED_REPO, repoPath, branch, relPath);
+	const pathUtilsObj = new pathUtils(repoPath, branch);
+	const shadowPath = path.join(pathUtilsObj.getShadowRepoBranchPath(), relPath);
+	const originalsPath = path.join(pathUtilsObj.getOriginalsRepoBranchPath(), relPath);
+	const cacheFilePath = path.join(pathUtilsObj.getDeletedRepoBranchPath(), relPath);
 	[shadowPath, originalsPath, cacheFilePath].forEach((path) => {
 		if (fs.existsSync(path)) {
 			fs.unlinkSync(path);
@@ -105,10 +110,9 @@ export const cleanUpDeleteDiff = (repoPath: string, branch: string, relPath: str
 };
 
 export const getDIffForDeletedFile = (repoPath: string, branch: string, relPath: string, configJSON: any) => {
-	const settings = generateSettings();
-
-	const shadowPath = path.join(settings.SHADOW_REPO, repoPath, branch, relPath);
 	let diff = "";
+	const pathUtilsObj = new pathUtils(repoPath, branch);
+	const shadowPath = path.join(pathUtilsObj.getShadowRepoBranchPath(), relPath);
 	if (!fs.existsSync(shadowPath)) {
 		cleanUpDeleteDiff(repoPath, branch, relPath, configJSON);
 		return diff;
