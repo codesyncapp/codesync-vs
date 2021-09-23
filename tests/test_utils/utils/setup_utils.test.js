@@ -3,7 +3,7 @@ import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
 
-import {randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
+import {getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
 import {createSystemDirectories, setupCodeSync, showConnectRepoView, showLogIn} from "../../../src/utils/setup_utils";
 import {getRepoInSyncMsg, NOTIFICATION} from "../../../src/constants";
 
@@ -36,10 +36,10 @@ describe("createSystemDirectories",  () => {
 describe("setupCodeSync",  () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
-    const userFilePath = `${baseRepoPath}/user.yml`;
+    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {"dummy_email": {access_token: "ABC"}};
 
-    const configPath = `${baseRepoPath}/config.yml`;
+    const configPath = getConfigFilePath(baseRepoPath);
     const configData = {repos: {}};
     configData.repos[repoPath] = {branches: {}};
 
@@ -120,7 +120,7 @@ describe("setupCodeSync",  () => {
 
 describe("showLogin",  () => {
     const baseRepoPath = randomBaseRepoPath();
-    const userFilePath = `${baseRepoPath}/user.yml`;
+    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {"dummy_email": {access_token: "ABC"}};
 
     beforeEach(() => {

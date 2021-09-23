@@ -1,13 +1,13 @@
 import fs from "fs";
 import yaml from "js-yaml";
 import {repoIsNotSynced} from "../../../../src/events/utils";
-import {randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
+import {getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
 import untildify from "untildify";
 
 
 describe("repoIsNotSynced", () => {
     const baseRepoPath = randomBaseRepoPath();
-    const configPath = `${baseRepoPath}/config.yml`;
+    const configPath = getConfigFilePath(baseRepoPath);
 
     const repoPath = randomRepoPath();
 

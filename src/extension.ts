@@ -1,5 +1,6 @@
 'use strict';
 
+import path from "path";
 import vscode from 'vscode';
 
 import {
@@ -43,7 +44,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	console.log(`Configured repo: ${repoPath}`);
 
-	const watcher = vscode.workspace.createFileSystemWatcher("**/*"); //glob search string
+	const watcher = vscode.workspace.createFileSystemWatcher(`**${path.sep}*`); //glob search string
 
 	watcher.onDidCreate((e) => {
 		handlePastedFile(e.path);

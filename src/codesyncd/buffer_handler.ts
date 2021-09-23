@@ -23,6 +23,7 @@ import {
 import {recallDaemon} from "./codesyncd";
 import {generateSettings} from "../settings";
 import {initUtils} from "../init/utils";
+import {pathUtils} from "../utils/path_utils";
 
 const WAITING_FILES = <any>{};
 
@@ -108,7 +109,7 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 
 		const repoDiffs: IRepoDiffs[] = [];
 		for (const diffFile of diffFiles) {
-			const filePath = `${settings.DIFFS_REPO}/${diffFile}`;
+			const filePath = path.join(settings.DIFFS_REPO, diffFile);
 			const diffData = readYML(filePath);
 			if (!diffData) { continue; }
 			if (!isValidDiff(diffData)) {
@@ -216,7 +217,7 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 
 									if  (!oldFileId) {
 										putLogEvent(`old_file: ${oldRelPath} was not 
-										synced for rename of ${repoDiff.path}/${relPath}`, configRepo.email);
+										synced for rename of ${path.join(repoDiff.path, relPath)}`, configRepo.email);
 										fs.unlinkSync(fileToDiff.file_path);
 										continue;
 									}
@@ -243,8 +244,8 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 									} else {
 										WAITING_FILES[relPath] = (new Date()).getTime() / 1000;
 										console.log(`Uploading the file ${relPath} first`);
-										const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO,
-											diffData.repo_path, diffData.branch);
+										const pathUtilsObj = new pathUtils(diffData.repo_path, diffData.branch);
+										const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 										const originalsFilePath = path.join(originalsRepoBranchPath, relPath);
 										if (!fs.existsSync(originalsFilePath)) {
 											const initUtilsObj = new initUtils(diffData.repo_path);
@@ -268,7 +269,8 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 
 								if (!fileId && isDeleted) {
 									// It can be a directory delete
-									putLogEvent(`is_deleted non-synced file found: ${diffData.repo_path}/${relPath}`, configRepo.email);
+									putLogEvent(`is_deleted non-synced file found: ${path.join(diffData.repo_path, relPath)}`,
+										configRepo.email);
 									cleanUpDeleteDiff(diffData.repo_path, diffData.branch, relPath, configJSON);
 									fs.unlinkSync(fileToDiff.file_path);
 									continue;

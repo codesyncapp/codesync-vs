@@ -5,26 +5,27 @@ import untildify from "untildify";
 import {readYML} from "../../../../src/utils/common";
 import {handleNewFile} from "../../../../src/events/utils";
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../../src/constants";
-import {randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
+import {getSyncIgnoreFilePath, randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
+import {pathUtils} from "../../../../src/utils/path_utils";
 
 describe("handleNewFile",  () => {
     const repoPath = randomRepoPath();
-
     const baseRepoPath = randomBaseRepoPath();
-    const shadowRepoPath = path.join(baseRepoPath, ".shadow");
-    const originalsRepoPath = path.join(baseRepoPath, ".originals");
-    const diffsRepo = path.join(baseRepoPath, ".diffs/.vscode");
-    const shadowRepoBranchPath = path.join(shadowRepoPath, `${repoPath}/${DEFAULT_BRANCH}`);
-    const originalsRepoBranchPath = path.join(originalsRepoPath, `${repoPath}/${DEFAULT_BRANCH}`);
+    untildify.mockReturnValue(baseRepoPath);
 
-    const newFilePath = `${repoPath}/new.js`;
-    const newDirectoryPath = `${repoPath}/new`;
-    const syncIgnorePath = `${repoPath}/.syncignore`;
-    const shadowFilePath = `${shadowRepoBranchPath}/new.js`;
-    const originalsFilePath = `${originalsRepoBranchPath}/new.js`;
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const diffsRepo = pathUtilsObj.getDiffsRepo();
+    const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+    const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+
+    const newFilePath = path.join(repoPath, "new.js");
+    const newDirectoryPath = path.join(repoPath, "new");
+    const syncIgnorePath = getSyncIgnoreFilePath(repoPath);
+    const shadowFilePath = path.join(shadowRepoBranchPath, "new.js");
+    const originalsFilePath = path.join(originalsRepoBranchPath, "new.js");
     const syncIgnoreData = ".git\n\n\n.skip_repo_1\nignore.js";
 
-    const ignorableFilePath = `${repoPath}/ignore.js`;
+    const ignorableFilePath = path.join(repoPath, "ignore.js");
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -65,7 +66,7 @@ describe("handleNewFile",  () => {
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(1);
-        const diffFilePath = `${diffsRepo}/${diffFiles[0]}`;
+        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
         const diffData = readYML(diffFilePath);
         expect(diffData.source).toEqual(DIFF_SOURCE);
         expect(diffData.is_new_file).toBe(true);
@@ -80,8 +81,8 @@ describe("handleNewFile",  () => {
     test("with syncignored file",  async () => {
         handleNewFile(repoPath, DEFAULT_BRANCH, ignorableFilePath);
         // Verify file has been created in the .shadow repo and .originals repos
-        expect(fs.existsSync(`${shadowRepoBranchPath}/ignore.js`)).toBe(false);
-        expect(fs.existsSync(`${originalsRepoBranchPath}/ignore.js`)).toBe(false);
+        expect(fs.existsSync(path.join(shadowRepoBranchPath, "ignore.js"))).toBe(false);
+        expect(fs.existsSync(path.join(originalsRepoBranchPath, "ignore.js"))).toBe(false);
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);

@@ -9,13 +9,14 @@ import {
 	NOTIFICATION,
 	SYNCIGNORE
 } from "../constants";
-import { isRepoActive, readFile, readYML } from "../utils/common";
-import { checkServerDown, getUserForToken } from "../utils/api_utils";
 import { initUtils } from './utils';
-import { askPublicPrivate, askToUpdateSyncIgnore } from '../utils/notifications';
-import { askAndTriggerSignUp } from '../utils/auth_utils';
 import { IUser, IUserPlan } from '../interface';
 import { generateSettings } from "../settings";
+import { askAndTriggerSignUp } from '../utils/auth_utils';
+import { checkServerDown, getUserForToken } from "../utils/api_utils";
+import { isRepoActive, readFile, readYML } from "../utils/common";
+import { askPublicPrivate, askToUpdateSyncIgnore } from '../utils/notifications';
+import { pathUtils } from "../utils/path_utils";
 
 
 export const syncRepo = async (repoPath: string, accessToken: string,
@@ -43,9 +44,7 @@ export const syncRepo = async (repoPath: string, accessToken: string,
 	}
 
 	const settings = generateSettings();
-
-	const splitPath = repoPath.split('/');
-	const repoName = splitPath[splitPath.length-1];
+	const repoName = path.basename(repoPath);
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	const configJSON = readYML(settings.CONFIG_PATH);
 	const isRepoSynced = isRepoActive(configJSON, repoPath);
@@ -81,7 +80,7 @@ export const syncRepo = async (repoPath: string, accessToken: string,
 		return;
 	}
 	// Open .syncignore and ask for user input for Continue/Cancel
-	const setting: vscode.Uri = vscode.Uri.parse("file:" + `${repoPath}/${SYNCIGNORE}`);
+	const setting: vscode.Uri = vscode.Uri.parse("file:" + syncignorePath);
 	// Opening .syncignore
 	await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
 		await vscode.window.showTextDocument(a, 1, false).then(async e => {
@@ -127,16 +126,18 @@ const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: 
 	}
 
 	const initUtilsObj = new initUtils(repoPath);
+	const pathUtilsObj = new pathUtils(repoPath, branch);
 
 	// get item paths to upload and copy in respective repos
 	const itemPaths = initUtilsObj.getSyncablePaths(user.plan, isSyncingBranch);
 	const filePaths = itemPaths.map(itemPath => itemPath.file_path);
-	const originalsRepoBranchPath = path.join(settings.ORIGINALS_REPO, path.join(repoPath, branch));
+
 	// copy files to .originals repo
+	const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 	initUtilsObj.copyFilesTo(filePaths, originalsRepoBranchPath);
 
-	const shadowRepoBranchPath = path.join(settings.SHADOW_REPO, path.join(repoPath, branch));
 	// copy files to .shadow repo
+	const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
 	initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
 
 	// Upload repo/branch

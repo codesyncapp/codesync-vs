@@ -4,14 +4,14 @@ import yaml from "js-yaml";
 import untildify from "untildify";
 
 import {getPublicPrivateMsg, NOTIFICATION} from "../../../src/constants";
-import {randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
+import {getUserFilePath, randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
 import {askPublicPrivate, askToUpdateSyncIgnore, showChooseAccount} from "../../../src/utils/notifications";
 
 
 describe("showChooseAccount",  () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
-    const userFilePath = `${baseRepoPath}/user.yml`;
+    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {};
     userData[TEST_EMAIL] = {access_token: "ABC"};
 

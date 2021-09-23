@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
@@ -13,7 +14,13 @@ import {
     trackRepoHandler,
     unSyncHandler
 } from "../../src/handlers/commands_handler";
-import {randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../helpers/helpers";
+import {
+    getConfigFilePath,
+    getUserFilePath,
+    randomBaseRepoPath,
+    randomRepoPath,
+    TEST_EMAIL
+} from "../helpers/helpers";
 import {
     NOTIFICATION,
     DEFAULT_BRANCH,
@@ -35,9 +42,9 @@ describe("SignUpHandler",  () => {
 describe("SyncHandler",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
-    const configPath = `${baseRepoPath}/config.yml`;
+    const configPath = getConfigFilePath(baseRepoPath);
     const configData = {repos: {}};
-    const userFilePath = `${baseRepoPath}/user.yml`;
+    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {};
     userData[TEST_EMAIL] = {access_token: "ABC"};
 
@@ -86,9 +93,9 @@ describe("SyncHandler",  () => {
 describe("unSyncHandler",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
-    const configPath = `${baseRepoPath}/config.yml`;
+    const configPath = getConfigFilePath(baseRepoPath);
     const configData = {repos: {}};
-    const userFilePath = `${baseRepoPath}/user.yml`;
+    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {};
     userData[TEST_EMAIL] = {access_token: "ABC"};
 
@@ -125,9 +132,9 @@ describe("unSyncHandler",  () => {
 describe("postSelectionUnsync",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
-    const configPath = `${baseRepoPath}/config.yml`;
+    const configPath = getConfigFilePath(baseRepoPath);
     const configData = {repos: {}};
-    const userFilePath = `${baseRepoPath}/user.yml`;
+    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {};
     userData[TEST_EMAIL] = {access_token: "ABC"};
 
@@ -215,9 +222,9 @@ describe("postSelectionUnsync",  () => {
 describe("trackRepoHandler",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
-    const configPath = `${baseRepoPath}/config.yml`;
+    const configPath = getConfigFilePath(baseRepoPath);
     const configData = {repos: {}};
-    const userFilePath = `${baseRepoPath}/user.yml`;
+    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {};
     userData[TEST_EMAIL] = {access_token: "ABC"};
 
@@ -257,9 +264,9 @@ describe("trackRepoHandler",  () => {
 describe("trackFileHandler",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
-    const configPath = `${baseRepoPath}/config.yml`;
+    const configPath = getConfigFilePath(baseRepoPath);
     const configData = {repos: {}};
-    const userFilePath = `${baseRepoPath}/user.yml`;
+    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {};
     userData[TEST_EMAIL] = {access_token: "ABC"};
 
@@ -308,7 +315,7 @@ describe("trackFileHandler",  () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document: {
-                fileName: `${repoPath}/file.js`
+                fileName: path.join(repoPath, "file.js")
             }
         });
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
@@ -329,7 +336,7 @@ describe("trackFileHandler",  () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document: {
-                fileName: `${repoPath}/file.js`
+                fileName: path.join(repoPath, "file.js")
             }
         });
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);

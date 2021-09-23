@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import vscode from 'vscode';
 import yaml from "js-yaml";
 import getBranchName from 'current-git-branch';
@@ -93,7 +94,7 @@ export const trackFileHandler = () => {
 	const configRepo = config['repos'][repoPath];
 	const branch = getBranchName({altPath: repoPath}) || DEFAULT_BRANCH;
 	const configFiles = configRepo.branches[branch];
-	const relPath = filePath.split(`${repoPath}/`)[1];
+	const relPath = filePath.split(path.join(repoPath, path.sep))[1];
 	if (!(relPath in configFiles )) { return; }
 	const fileId = configFiles[relPath];
 	// Show notification that repo is in sync

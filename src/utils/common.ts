@@ -1,7 +1,7 @@
 import fs from 'fs';
+import path from "path";
 import vscode from 'vscode';
 import yaml from 'js-yaml';
-import path from "path";
 
 import {
 	COMMAND,
@@ -9,6 +9,7 @@ import {
 	STATUS_BAR_MSGS,
 	SYNCIGNORE
 } from "../constants";
+import {generateSettings} from "../settings";
 
 export const readFile = (filePath: string) => {
 	return fs.readFileSync(filePath, "utf8");
@@ -53,9 +54,9 @@ export const getSyncIgnoreItems = (repoPath: string) => {
 export const getSkipRepos = (repoPath: string, syncignoreItems: string[]) => {
 	const skipRepos = [...IGNORABLE_DIRECTORIES];
 	syncignoreItems.forEach((pattern) => {
-		const path = `${repoPath}/${pattern}`;
-		if (!fs.existsSync(path)) { return; }
-		const lstat = fs.lstatSync(path);
+		const itemPath = path.join(repoPath, pattern);
+		if (!fs.existsSync(itemPath)) { return; }
+		const lstat = fs.lstatSync(itemPath);
 		if (lstat.isDirectory()) {
 			skipRepos.push(pattern);
 		}

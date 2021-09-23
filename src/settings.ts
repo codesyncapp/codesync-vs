@@ -1,3 +1,4 @@
+import path from "path";
 import untildify from "untildify";
 
 const ROOT_REPO_NAME = '~/.codesync';
@@ -15,12 +16,12 @@ export const generateSettings = () => {
     const rootRepo = untildify(ROOT_REPO_NAME);
     return {
         CODESYNC_ROOT: rootRepo,
-        DIFFS_REPO: `${rootRepo}/.diffs/.vscode`,
-        ORIGINALS_REPO: `${rootRepo}/.originals`,
-        SHADOW_REPO: `${rootRepo}/.shadow`,
-        DELETED_REPO: `${rootRepo}/.deleted`,
-        CONFIG_PATH: `${rootRepo}/config.yml`,
-        USER_PATH: `${rootRepo}/user.yml`,
-        SEQUENCE_TOKEN_PATH: `${rootRepo}/sequence_token.yml`
+        DIFFS_REPO: path.join(rootRepo, ".diffs", ".vscode"),
+        ORIGINALS_REPO: path.join(rootRepo, ".originals"),
+        SHADOW_REPO: path.join(rootRepo, ".shadow"),
+        DELETED_REPO: path.join(rootRepo, ".deleted"),
+        CONFIG_PATH: path.join(rootRepo, "config.yml"),
+        USER_PATH: path.join(rootRepo, "user.yml"),
+        SEQUENCE_TOKEN_PATH: path.join(rootRepo, "sequence_token.yml")
     };
 };

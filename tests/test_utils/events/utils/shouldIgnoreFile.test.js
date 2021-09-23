@@ -1,15 +1,16 @@
-import {shouldIgnoreFile} from "../../../../src/events/utils";
 import fs from "fs";
-import {randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
+import path from "path";
+import {shouldIgnoreFile} from "../../../../src/events/utils";
+import {getSyncIgnoreFilePath, randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
 
 const baseRepoPath = randomBaseRepoPath();
 
-const gitFilePath = ".git/objects/12345";
-const normalFilePath = "abc/12345.js";
+const gitFilePath = path.join(".git", "objects", "12345");
+const normalFilePath = path.join("abc", "12345.js");
 const ignorableFilePath = "ignore.js";
 
 const repoPath = randomRepoPath();
-const syncIgnorePath = `${repoPath}/.syncignore`;
+const syncIgnorePath = getSyncIgnoreFilePath(repoPath);
 const syncIgnoreData = ".git\n\n\n.skip_repo_1\nignore.js";
 
 beforeAll(() => {

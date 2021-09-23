@@ -18,6 +18,7 @@ import { putLogEvent } from '../logger';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
 import { generateSettings } from "../settings";
+import { pathUtils } from '../utils/path_utils';
 
 export class initUtils {
 	repoPath: string;
@@ -85,8 +86,8 @@ export class initUtils {
 			listeners: {
 				file: function (root: string, fileStats: any, next: any) {
 					const self = new initUtils(repoPath);
-					const filePath = `${root}/${fileStats.name}`;
-					const relPath = filePath.split(`${repoPath}/`)[1];
+					const filePath = path.join(root, fileStats.name);
+					const relPath = filePath.split(path.join(repoPath, path.sep))[1];
 					const isSyncAbleFile = self.isSyncAble(relPath);
 					if (isSyncAbleFile) {
 						itemPaths.push({
@@ -114,7 +115,7 @@ export class initUtils {
 
 	copyFilesTo (filePaths: string[], destination: string) {
 		filePaths.forEach((filePath) => {
-			const relPath = filePath.split(`${this.repoPath}/`)[1];
+			const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
 			const destinationPath = path.join(destination, relPath);
 			const directories = path.dirname(destinationPath);
 			if (!fs.existsSync(directories)) {
@@ -180,11 +181,10 @@ export class initUtils {
 
 	async uploadRepoToS3(branch: string, token: string, uploadResponse: any,
 						userEmail: string, isSyncingBranch=false, viaDaemon=false) {
-		const repoId = uploadResponse.repo_id;
 		const s3Urls =  uploadResponse.urls;
 		const tasks: any[] = [];
-		const repoPath = this.repoPath;
-		const originalsRepoBranchPath = path.join(this.settings.ORIGINALS_REPO, path.join(repoPath, branch));
+		const pathUtilsObj = new pathUtils(this.repoPath, branch);
+		const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 
 		Object.keys(s3Urls).forEach(relPath => {
 			const presignedUrl = s3Urls[relPath];
@@ -207,7 +207,6 @@ export class initUtils {
 
 				// delete .originals repo
 				fs.rmdirSync(originalsRepoBranchPath, { recursive: true });
-
 				// Hide Connect Repo
 				vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
 
@@ -233,8 +232,7 @@ export class initUtils {
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
 					isPublic=false, isSyncingBranch=false, viaDaemon=false,
 					userEmail?: string) {
-		const splitPath = this.repoPath.split('/');
-		const repoName = splitPath[splitPath.length-1];
+		const repoName = path.basename(this.repoPath);
 		const configJSON = readYML(this.settings.CONFIG_PATH);
 		const repoInConfig = isRepoActive(configJSON, this.repoPath);
 		const branchFiles = <any>{};
