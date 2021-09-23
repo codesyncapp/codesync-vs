@@ -112,11 +112,6 @@ describe("similarity",  () => {
 
 
 describe("handleNewFileUpload",  () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const configPath = getConfigFilePath(baseRepoPath);
-    const userFilePath = getUserFilePath(baseRepoPath);
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-    const originalsRepo = path.join(baseRepoPath, ".originals");
     const repoPath = randomRepoPath();
     const fileRelPath = "file.js";
     const filePath = path.join(repoPath, "file.js");
@@ -124,12 +119,21 @@ describe("handleNewFileUpload",  () => {
     configData.repos[repoPath] = {branches: {}};
     configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
 
+    const baseRepoPath = randomBaseRepoPath();
+    const configPath = getConfigFilePath(baseRepoPath);
+    const userFilePath = getUserFilePath(baseRepoPath);
+    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
+
+    untildify.mockReturnValue(baseRepoPath);
+
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
-        fs.mkdirSync(originalsRepo, {recursive: true});
         fs.writeFileSync(configPath, yaml.safeDump(configData));
         fs.writeFileSync(userFilePath, yaml.safeDump({}));
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
@@ -149,8 +153,6 @@ describe("handleNewFileUpload",  () => {
     });
 
     test("Invalid Token",  async () => {
-        const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-        const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         fs.mkdirSync(originalsRepoBranchPath, {recursive: true});
         fs.writeFileSync(path.join(originalsRepoBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
@@ -182,7 +184,6 @@ describe("handleNewFileUpload",  () => {
 
 describe("handleFilesRename",  () => {
     const baseRepoPath = randomBaseRepoPath();
-    const shadowRepo = path.join(baseRepoPath, ".shadow");
     const repoPath = randomRepoPath();
     const fileRelPath = "file.js";
     const renamedFileRelPath = "file_renamed.js";
@@ -191,11 +192,15 @@ describe("handleFilesRename",  () => {
     configData.repos[repoPath] = {branches: {}};
     configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
 
+    untildify.mockReturnValue(baseRepoPath);
+
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const shadowBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
-        fs.mkdirSync(shadowRepo, {recursive: true});
         fs.writeFileSync(configPath, yaml.safeDump(configData));
     });
 
@@ -205,8 +210,6 @@ describe("handleFilesRename",  () => {
     });
 
     test("Old file is in .shadow",  () => {
-        const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-        const shadowBranchPath = pathUtilsObj.getShadowRepoBranchPath();
         fs.mkdirSync(shadowBranchPath, {recursive: true});
         fs.writeFileSync(path.join(shadowBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
         handleFilesRename(configData, repoPath, DEFAULT_BRANCH, renamedFileRelPath, 1234,

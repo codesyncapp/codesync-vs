@@ -11,9 +11,7 @@ import {pathUtils} from "../../../../src/utils/path_utils";
 describe("handleDirectoryDeleteDiffs", () => {
 
     const repoPath = randomRepoPath();
-
     const baseRepoPath = randomBaseRepoPath();
-    const cacheRepoPath = path.join(baseRepoPath, ".deleted");
 
     untildify.mockReturnValue(baseRepoPath);
 
@@ -31,7 +29,6 @@ describe("handleDirectoryDeleteDiffs", () => {
         jest.clearAllMocks();
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
-        fs.mkdirSync(cacheRepoPath, { recursive: true });
         fs.mkdirSync(shadowDirectoryPath, { recursive: true });
         fs.writeFileSync(shadowFilePath, "use babel;");
     });

@@ -19,8 +19,12 @@ export class pathUtils {
         return this.repoPath.replace(":", "");
     };
 
+    getOriginalsRepoPath = () => {
+        return path.join(this.settings.ORIGINALS_REPO, this.formattedRepoPath);
+    };
+
     getOriginalsRepoBranchPath = () => {
-        return path.join(this.settings.ORIGINALS_REPO, this.formattedRepoPath, this.branch);
+        return path.join(this.getOriginalsRepoPath(), this.branch);
     };
 
     getShadowRepoPath = () => {
