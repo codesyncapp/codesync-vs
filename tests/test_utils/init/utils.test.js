@@ -193,6 +193,7 @@ describe("copyFilesTo",  () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
     const filePath = path.join(repoPath, "file.js");
+    untildify.mockReturnValue(baseRepoPath);
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
     const shadowRepo = pathUtilsObj.getShadowRepoPath();
 
