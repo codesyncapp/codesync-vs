@@ -137,18 +137,19 @@ export class initUtils {
 			access_key: user.iam_access_key,
 			secret_key: user.iam_secret_key,
 		};
-
+		let users = <any>{};
 		if (!fs.existsSync(this.settings.USER_PATH)) {
-			const users = <any>{};
 			users[user.email] = iamUser;
-			fs.writeFileSync(this.settings.USER_PATH, yaml.safeDump(users));
 		} else {
-			const users = readYML(this.settings.USER_PATH) || {};
-			if (!(user.email in users)) {
+			users = readYML(this.settings.USER_PATH) || {};
+			if (user.email in users) {
+				users[user.email].access_key = iamUser.access_key;
+				users[user.email].secret_key = iamUser.secret_key;
+			} else {
 				users[user.email] = iamUser;
-				fs.writeFileSync(this.settings.USER_PATH, yaml.safeDump(users));
 			}
 		}
+		fs.writeFileSync(this.settings.USER_PATH, yaml.safeDump(users));
 	}
 
 	saveSequenceTokenFile (email: string) {

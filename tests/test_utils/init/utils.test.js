@@ -263,6 +263,22 @@ describe("saveIamUser",  () => {
         expect(users[ANOTHER_TEST_EMAIL].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[ANOTHER_TEST_EMAIL].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
     });
+
+    test("User user in user.yml with only access token",  () => {
+        userFileData[TEST_USER.email] = {
+            access_token: "TOKEN ABC"
+        };
+        fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
+        const testUser = Object.assign({}, TEST_USER);
+        testUser.email = TEST_EMAIL;
+        const initUtilsObj = new initUtils();
+        initUtilsObj.saveIamUser(testUser);
+        expect(fs.existsSync(userFilePath)).toBe(true);
+        const users = readYML(userFilePath);
+        expect(users[TEST_EMAIL].access_key).toStrictEqual(TEST_USER.iam_access_key);
+        expect(users[TEST_EMAIL].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
+        expect(users[TEST_EMAIL].access_token).toStrictEqual("TOKEN ABC");
+    });
 });
 
 describe("saveSequenceTokenFile",  () => {

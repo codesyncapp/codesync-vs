@@ -109,7 +109,6 @@ const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: 
 									viaDaemon=false, isSyncingBranch=false) => {
 
 	let isPublic = false;
-	const settings = generateSettings();
 
 	if (!viaDaemon && isSyncingBranch) {
 		vscode.window.showInformationMessage(`Branch: ${branch} is being synced for the repo: ${repoName}`);
@@ -142,5 +141,4 @@ const postSyncIgnoreUpdate = async (repoName: string, branch: string, repoPath: 
 
 	// Upload repo/branch
 	await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, isPublic, isSyncingBranch, viaDaemon, user.email);
-
 };
