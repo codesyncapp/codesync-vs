@@ -21,6 +21,7 @@ import {DEFAULT_BRANCH, NOTIFICATION, SYNCIGNORE} from "../../../src/constants";
 import {readYML} from "../../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {isBinaryFileSync} from "isbinaryfile";
+import {pathUtils} from "../../../src/utils/path_utils";
 
 
 describe("isValidRepoSize",  () => {
@@ -192,7 +193,8 @@ describe("copyFilesTo",  () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
     const filePath = path.join(repoPath, "file.js");
-    const shadowRepo = path.join(baseRepoPath, ".shadow", repoPath);
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const shadowRepo = pathUtilsObj.getShadowRepoPath();
 
     beforeEach(() => {
         fs.mkdirSync(repoPath, {recursive: true});
