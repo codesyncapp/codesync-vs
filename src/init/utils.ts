@@ -181,7 +181,6 @@ export class initUtils {
 
 	async uploadRepoToS3(branch: string, token: string, uploadResponse: any,
 						userEmail: string, isSyncingBranch=false, viaDaemon=false) {
-		const repoId = uploadResponse.repo_id;
 		const s3Urls =  uploadResponse.urls;
 		const tasks: any[] = [];
 		const pathUtilsObj = new pathUtils(this.repoPath, branch);
@@ -233,8 +232,7 @@ export class initUtils {
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
 					isPublic=false, isSyncingBranch=false, viaDaemon=false,
 					userEmail?: string) {
-		const splitPath = this.repoPath.split(path.sep);
-		const repoName = splitPath[splitPath.length-1];
+		const repoName = path.basename(this.repoPath);
 		const configJSON = readYML(this.settings.CONFIG_PATH);
 		const repoInConfig = isRepoActive(configJSON, this.repoPath);
 		const branchFiles = <any>{};

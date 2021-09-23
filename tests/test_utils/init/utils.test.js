@@ -53,7 +53,6 @@ describe("isValidFilesCount",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
-
     });
 
     test("true result",  () => {
@@ -468,6 +467,5 @@ describe("uploadRepo",  () => {
         // Verify error msg
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.SYNC_FAILED);
-
     });
 });

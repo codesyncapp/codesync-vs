@@ -38,4 +38,9 @@ export class pathUtils {
     getDeletedRepoBranchPath = () => {
         return path.join(this.getDeletedRepoPath(), this.branch);
     };
+
+    getDiffsRepo = () => {
+        return path.join(this.settings.DIFFS_REPO);
+    }
+
 }

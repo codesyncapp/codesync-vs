@@ -108,7 +108,6 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = vscode.workspace.rootPath;
 	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
-	const settings = generateSettings();
 
 	changeEvent.files.forEach((item) => {
 		const itemPath = item.path;
@@ -119,9 +118,8 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 
 		const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 
-		const pathUtilsObj = new pathUtils(repoPath, branch);
-
 		// Shadow path
+		const pathUtilsObj = new pathUtils(repoPath, branch);
 		const shadowPath = path.join(pathUtilsObj.getShadowRepoBranchPath(), relPath);
 
 		if (!fs.existsSync(shadowPath)) { return; }

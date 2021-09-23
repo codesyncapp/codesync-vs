@@ -13,8 +13,8 @@ describe("handleNewFile",  () => {
     const baseRepoPath = randomBaseRepoPath();
     untildify.mockReturnValue(baseRepoPath);
 
-    const diffsRepo = path.join(baseRepoPath, ".diffs", ".vscode");
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const diffsRepo = pathUtilsObj.getDiffsRepo();
     const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
     const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 

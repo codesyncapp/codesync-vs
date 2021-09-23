@@ -14,11 +14,11 @@ describe("handleDirectoryDeleteDiffs", () => {
 
     const baseRepoPath = randomBaseRepoPath();
     const cacheRepoPath = path.join(baseRepoPath, ".deleted");
-    const diffsRepo = path.join(baseRepoPath, ".diffs", ".vscode");
 
     untildify.mockReturnValue(baseRepoPath);
 
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const diffsRepo = pathUtilsObj.getDiffsRepo();
     const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
     const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
 

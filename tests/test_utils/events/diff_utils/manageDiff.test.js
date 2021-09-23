@@ -7,13 +7,18 @@ import {manageDiff} from "../../../../src/events/diff_utils";
 import dateFormat from "dateformat";
 import {readYML} from "../../../../src/utils/common";
 import {DIFF_SOURCE} from "../../../../src/constants";
+import {pathUtils} from "../../../../src/utils/path_utils";
 
 
 describe("manageDiff", () => {
 
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
-    const diffsRepo = path.join(baseRepoPath, ".diffs", ".vscode");
+
+    untildify.mockReturnValue(baseRepoPath);
+
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const diffsRepo = pathUtilsObj.getDiffsRepo();
     const newFilePath = path.join(repoPath, "new.js");
 
     beforeEach(() => {
@@ -22,7 +27,6 @@ describe("manageDiff", () => {
         fs.mkdirSync(diffsRepo, { recursive: true });
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
-
     });
 
     afterEach(() => {
