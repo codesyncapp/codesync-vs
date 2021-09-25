@@ -82,7 +82,7 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.CONNECT_REPO);
 			return recallDaemon(statusBarItem);
 		}
-		const repoPath = vscode.workspace.rootPath;
+		const repoPath = pathUtils.getRootPath();
 		if (!repoPath) {
 			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.NO_REPO_OPEN);
 			return recallDaemon(statusBarItem);

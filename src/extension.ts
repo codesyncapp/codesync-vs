@@ -18,11 +18,12 @@ import { updateStatusBarItem } from "./utils/common";
 import { unSyncHandler, SignUpHandler, SyncHandler, trackRepoHandler, trackFileHandler } from './handlers/commands_handler';
 import { detectBranchChange } from "./codesyncd/populate_buffer";
 import { logout } from './utils/auth_utils';
+import { pathUtils } from "./utils/path_utils";
 
 
 export async function activate(context: vscode.ExtensionContext) {
 	const repoName = vscode.workspace.name;
-	const repoPath = vscode.workspace.rootPath;
+	const repoPath = pathUtils.getRootPath();
 	if (!repoPath || !repoName) { return; }
 
 	vscode.commands.executeCommand('setContext', 'showLogIn', showLogIn());

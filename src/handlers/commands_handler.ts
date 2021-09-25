@@ -16,13 +16,14 @@ import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
 import { updateRepo } from '../utils/sync_repo_utils';
 import { generateSettings, WEB_APP_URL } from "../settings";
+import { pathUtils } from "../utils/path_utils";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
 };
 
 export const SyncHandler = async () => {
-	const repoPath = vscode.workspace.rootPath;
+	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) { return; }
 	if (repoIsNotSynced(repoPath) || !new initUtils(repoPath).successfullySynced()) {
 		// Show notification to user to choose account
@@ -35,7 +36,7 @@ export const SyncHandler = async () => {
 };
 
 export const unSyncHandler = async () => {
-	const repoPath = vscode.workspace.rootPath;
+	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) { return; }
 	vscode.window.showWarningMessage(
 		NOTIFICATION.REPO_UNSYNC_CONFIRMATION, ...[
@@ -70,7 +71,7 @@ export const postSelectionUnsync = async (repoPath: string, selection?: string) 
 };
 
 export const trackRepoHandler = () => {
-	const repoPath = vscode.workspace.rootPath;
+	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) { return; }
 	const settings = generateSettings();
 	const config = readYML(settings.CONFIG_PATH);
@@ -83,7 +84,7 @@ export const trackRepoHandler = () => {
 
 
 export const trackFileHandler = () => {
-	const repoPath = vscode.workspace.rootPath;
+	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) return;

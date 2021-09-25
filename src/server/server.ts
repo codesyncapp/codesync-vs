@@ -6,6 +6,7 @@ import {
     Auth0URLs,
     staticFiles
 } from "../constants";
+import {pathUtils} from "../utils/path_utils";
 
 export const initExpressServer = () => {
     // Create an express server
@@ -23,7 +24,7 @@ export const initExpressServer = () => {
 
     // define a route handler for the authorization callback
     expressApp.get(Auth0URLs.LOGIN_CALLBACK_PATH, async (req: any, res: any) => {
-        const repoPath = vscode.workspace.rootPath || "";
+        const repoPath = pathUtils.getRootPath() || "";
         const files = new staticFiles(__dirname);
         try {
             await createUser(req.query.access_token, req.query.id_token, repoPath);

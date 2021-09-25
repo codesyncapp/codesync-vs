@@ -1,4 +1,6 @@
 import path from "path";
+import vscode from "vscode";
+
 import { generateSettings } from "../settings";
 
 
@@ -14,6 +16,16 @@ export class pathUtils {
         this.branch = branch;
         this.settings = generateSettings();
     }
+
+    static getRootPath = () => {
+        let rootPath = vscode.workspace.rootPath;
+        // For window paths, capitalizing drive name
+        // e.g. c:\Users\repo to C:\Users\repo
+        if (rootPath && rootPath.indexOf(":") > -1 && !rootPath.startsWith("/")) {
+            rootPath = rootPath.charAt(0).toUpperCase() + rootPath.slice(1);
+        }
+        return rootPath;
+    };
 
     formatRepoPath = () => {
         return this.repoPath.replace(":", "");
