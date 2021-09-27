@@ -106,7 +106,6 @@ describe("setupCodeSync",  () => {
         const repoInSyncMsg = getRepoInSyncMsg(repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(repoInSyncMsg);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_IT);
-        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.UNSYNC_REPO);
         fs.rmSync(userFilePath);
     });
 

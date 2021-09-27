@@ -119,7 +119,7 @@ export const getRepoInSyncMsg = (repoPath: string) => {
 export const getPublicPrivateMsg = (repoPath: string) => {
 	// Do you want the repo <name> public or private?
 	const repoName = path.basename(repoPath);
-	return `Do you want the repo ${repoName} public or private?`;
+	return `Do you want the repo ${repoName} public or private? (You can change this later)`;
 };
 
 export const STATUS_BAR_MSGS = {

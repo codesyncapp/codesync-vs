@@ -11,7 +11,7 @@ import { isPortAvailable } from './auth_utils';
 import { showConnectRepo, showSignUpButtons } from './notifications';
 import { readYML } from './common';
 import { initUtils } from '../init/utils';
-import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
+import { trackRepoHandler } from '../handlers/commands_handler';
 import { generateSettings } from "../settings";
 import { initExpressServer } from "../server/server";
 
@@ -95,15 +95,11 @@ export const setupCodeSync = async (repoPath: string) => {
 
 	// Show notification that repo is in sync
 	vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath), ...[
-		NOTIFICATION.TRACK_IT,
-		NOTIFICATION.UNSYNC_REPO
+		NOTIFICATION.TRACK_IT
 	]).then(selection => {
 		if (!selection) { return; }
 		if (selection === NOTIFICATION.TRACK_IT) {
 			trackRepoHandler();
-		}
-		if (selection === NOTIFICATION.UNSYNC_REPO) {
-			unSyncHandler();
 		}
 	});
 };

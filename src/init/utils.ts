@@ -16,7 +16,7 @@ import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems } from '../util
 import { checkServerDown } from '../utils/api_utils';
 import { putLogEvent } from '../logger';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
-import { trackRepoHandler, unSyncHandler } from '../handlers/commands_handler';
+import { trackRepoHandler } from '../handlers/commands_handler';
 import { generateSettings } from "../settings";
 import { pathUtils } from '../utils/path_utils';
 
@@ -215,15 +215,11 @@ export class initUtils {
 				if (!viaDaemon) {
 					const successMsg = isSyncingBranch ? NOTIFICATION.BRANCH_SYNCED : NOTIFICATION.REPO_SYNCED;
 					vscode.window.showInformationMessage(successMsg, ...[
-						NOTIFICATION.TRACK_IT,
-						NOTIFICATION.UNSYNC_REPO,
+						NOTIFICATION.TRACK_IT
 					]).then(selection => {
 						if (!selection) { return; }
 						if (selection === NOTIFICATION.TRACK_IT) {
 							trackRepoHandler();
-						}
-						if (selection === NOTIFICATION.UNSYNC_REPO) {
-							unSyncHandler();
 						}
 					});
 				}
