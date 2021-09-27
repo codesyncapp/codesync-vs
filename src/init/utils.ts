@@ -113,9 +113,15 @@ export class initUtils {
 		return limitReached ? [] : itemPaths;
 	}
 
-	copyFilesTo (filePaths: string[], destination: string) {
+	copyFilesTo (filePaths: string[], destination: string, useFormattedRepoPath=false) {
 		filePaths.forEach((filePath) => {
-			const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
+			let repoPath = this.repoPath;
+			// Need formatted repo path for .shadow directory
+			if (useFormattedRepoPath) {
+				const pathUtilsObj = new pathUtils(this.repoPath, "");
+				repoPath = pathUtilsObj.formattedRepoPath;
+			}
+			const relPath = filePath.split(path.join(repoPath, path.sep))[1];
 			const destinationPath = path.join(destination, relPath);
 			const directories = path.dirname(destinationPath);
 			if (!fs.existsSync(directories)) {

@@ -288,7 +288,7 @@ class PopulateBuffer {
             };
             const cacheRepoPath = pathUtilsObj.getDeletedRepoPath();
             // Pick from .shadow and add file in .deleted repo to avoid duplicate diffs
-            initUtilsObj.copyFilesTo( [shadowFilePath], cacheRepoPath);
+            initUtilsObj.copyFilesTo( [shadowFilePath], cacheRepoPath, true);
         });
         return diffs;
     }
