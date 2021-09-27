@@ -90,7 +90,8 @@ export function handlePastedFile(filePath: string) {
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
-	handleNewFile(repoPath, branch, filePath);
+	const normalizePath = pathUtils.normalizePath(filePath);
+	handleNewFile(repoPath, branch, normalizePath);
 }
 
 export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
