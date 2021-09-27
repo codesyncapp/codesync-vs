@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.29.6] - 2021-09-27
 ### Changed
-- Using --sourcemap instead of --minify in esbuild
+- Using --sourcemap instead of --minify in esbuild for easy debugging
 
 ## [2.29.5] - 2021-09-25
 ### Added
