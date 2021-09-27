@@ -7,6 +7,7 @@ import {
 	DEFAULT_BRANCH,
 	GITIGNORE,
 	NOTIFICATION,
+	SYNC_IGNORE_FILE_DATA,
 	SYNCIGNORE
 } from "../constants";
 import { initUtils } from './utils';
@@ -66,7 +67,7 @@ export const syncRepo = async (repoPath: string, accessToken: string,
 	if (syncignoreExists) {
 		syncignoreData = readFile(syncignorePath);
 	} else {
-		fs.writeFileSync(syncignorePath, "");
+		fs.writeFileSync(syncignorePath, SYNC_IGNORE_FILE_DATA);
 	}
 
 	const gitignorePath = path.join(repoPath, GITIGNORE);
@@ -79,27 +80,12 @@ export const syncRepo = async (repoPath: string, accessToken: string,
 		await postSyncIgnoreUpdate(repoName, branch, repoPath, user, accessToken, viaDaemon, isSyncingBranch);
 		return;
 	}
-	// Open .syncignore and ask for user input for Continue/Cancel
+	// Open .syncignore and ask public/private info
 	const setting: vscode.Uri = vscode.Uri.parse("file:" + syncignorePath);
 	// Opening .syncignore
 	await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
 		await vscode.window.showTextDocument(a, 1, false).then(async e => {
-			if (!(global as any).didSaveSyncIgnoreEventAdded) {
-				(global as any).didSaveSyncIgnoreEventAdded = true;
-				vscode.workspace.onDidSaveTextDocument(async event => {
-					const fileName = event.fileName;
-					if (fileName.endsWith(SYNCIGNORE)) {
-						await postSyncIgnoreUpdate(repoName, branch, repoPath, user,
-							accessToken, viaDaemon, isSyncingBranch);
-					}
-				});
-			}
-			const selectedValue = await askToUpdateSyncIgnore(syncignoreExists);
-			const shouldExit = !selectedValue;
-			if (shouldExit) {
-				vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
-				return;
-			}
+			await postSyncIgnoreUpdate(repoName, branch, repoPath, user, accessToken, viaDaemon, isSyncingBranch);
 		});
 	});
 };
