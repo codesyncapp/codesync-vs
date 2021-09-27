@@ -19,12 +19,18 @@ export class pathUtils {
 
     static getRootPath = () => {
         let rootPath = vscode.workspace.rootPath;
+        if (!rootPath) { return rootPath; }
+        rootPath = pathUtils.normalizePath(rootPath);
+        return rootPath;
+    };
+
+    static normalizePath = (itemPath: string) => {
         // For window paths, capitalizing drive name
         // e.g. c:\Users\repo to C:\Users\repo
-        if (rootPath && rootPath.indexOf(":") > -1 && !rootPath.startsWith("/")) {
-            rootPath = rootPath.charAt(0).toUpperCase() + rootPath.slice(1);
+        if (itemPath && itemPath.indexOf(":") > -1 && !itemPath.startsWith("/")) {
+            itemPath = itemPath.charAt(0).toUpperCase() + itemPath.slice(1);
         }
-        return rootPath;
+        return itemPath;
     };
 
     formatRepoPath = () => {

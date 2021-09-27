@@ -14,7 +14,7 @@ export function handleChangeEvent(changeEvent: vscode.TextDocumentChangeEvent) {
 	const repoName = vscode.workspace.name;
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath || !repoName) return;
-	const filePath = changeEvent.document.fileName;
+	const filePath = pathUtils.normalizePath(changeEvent.document.fileName);
 	const relPath = filePath.split(path.join(repoPath, path.sep))[1];
 	// Skip .git/ and syncignore files
 	if (repoIsNotSynced(repoPath) || shouldIgnoreFile(repoPath, relPath)) return;
@@ -80,7 +80,8 @@ export function handleFilesCreated(changeEvent: vscode.FileCreateEvent) {
 	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
 	const branch = getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 	changeEvent.files.forEach((file) => {
-		handleNewFile(repoPath, branch, file.path);
+		const filePath = pathUtils.normalizePath(file.fsPath);
+		handleNewFile(repoPath, branch, filePath);
 	});
 }
 
@@ -109,7 +110,7 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
 
 	changeEvent.files.forEach((item) => {
-		const itemPath = item.path;
+		const itemPath = pathUtils.normalizePath(item.fsPath);
 		const relPath = itemPath.split(path.join(repoPath, path.sep))[1];
 
 		// Skip .git/ and syncignore files
@@ -174,8 +175,8 @@ export function handleFilesRenamed(changeEvent: vscode.FileRenameEvent) {
 
 	if (!repoPath || !repoName || repoIsNotSynced(repoPath)) { return; }
 	changeEvent.files.forEach((event) => {
-		const oldAbsPath = event.oldUri.path;
-		const newAbsPath = event.newUri.path;
+		const oldAbsPath = pathUtils.normalizePath(event.oldUri.fsPath);
+		const newAbsPath = pathUtils.normalizePath(event.newUri.fsPath);
 		const newRelPath = newAbsPath.split(path.join(repoPath, path.sep))[1];
 		// Skip .git/ and syncignore files
 		if (shouldIgnoreFile(repoPath, newRelPath)) { return; }
