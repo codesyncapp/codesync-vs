@@ -88,8 +88,9 @@ export const trackFileHandler = () => {
 	if (!repoPath) return;
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) return;
-	const filePath = editor?.document.fileName;
+	let filePath = editor?.document.fileName;
 	if (!filePath) return;
+	filePath = pathUtils.normalizePath(filePath);
 	const settings = generateSettings();
 	const config = readYML(settings.CONFIG_PATH);
 	const configRepo = config['repos'][repoPath];
