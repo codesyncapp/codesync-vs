@@ -83,8 +83,9 @@ export const handleDirectoryDeleteDiffs = async (
 		const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
 		const cacheFilePath = path.join(cacheRepoBranchPath, relPath);
 		const cacheDirectories = path.dirname(cacheFilePath);
-
-		if (fs.existsSync(cacheFilePath)) { return; }
+		if (fs.existsSync(cacheFilePath)) {
+			return next();
+		}
 		// Create directories
 		if (!fs.existsSync(cacheDirectories)) {
 			// Add file in .deleted repo
