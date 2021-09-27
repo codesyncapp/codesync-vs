@@ -129,8 +129,9 @@ export function handleFilesDeleted(changeEvent: vscode.FileDeleteEvent) {
 
 		if (lstat.isDirectory()) {
 			console.log(`DirectoryDeleted: ${itemPath}`);
-			handleDirectoryDeleteDiffs(repoPath, branch, relPath);
-			return;
+			return handleDirectoryDeleteDiffs(repoPath, branch, relPath).then(() => {
+				return;
+			});
 		}
 		if (!lstat.isFile()) { return; }
 

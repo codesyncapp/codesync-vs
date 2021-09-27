@@ -277,7 +277,7 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 								}
 
 								if (isDeleted) {
-									diffData.diff =  getDIffForDeletedFile(diffData.repo_path, diffData.branch, relPath, configJSON);
+									diffData.diff = getDIffForDeletedFile(diffData.repo_path, diffData.branch, relPath, configJSON);
 								}
 
 								// Diff data to be sent to server
