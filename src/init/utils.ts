@@ -115,9 +115,7 @@ export class initUtils {
 
 	copyFilesTo (filePaths: string[], destination: string) {
 		filePaths.forEach((filePath) => {
-			const pathUtilsObj = new pathUtils(this.repoPath, "");
-			const repoPath = pathUtilsObj.formattedRepoPath;
-			const relPath = filePath.split(path.join(repoPath, path.sep))[1];
+			const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
 			const destinationPath = path.join(destination, relPath);
 			const directories = path.dirname(destinationPath);
 			if (!fs.existsSync(directories)) {
