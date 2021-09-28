@@ -1,6 +1,5 @@
 'use strict';
 
-import path from "path";
 import vscode from 'vscode';
 
 import {
