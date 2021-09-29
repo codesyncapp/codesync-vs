@@ -28,6 +28,6 @@ test('reads yml file', () => {
 });
 
 test('reads yml file with non-existing file path', () => {
-    expect(readYML("dummyPath")).toStrictEqual({});
+    expect(readYML("dummyPath")).toStrictEqual(null);
 });
 

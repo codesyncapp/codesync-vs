@@ -9,7 +9,7 @@ import {
 	STATUS_BAR_MSGS,
 	SYNCIGNORE
 } from "../constants";
-import {generateSettings} from "../settings";
+
 
 export const readFile = (filePath: string) => {
 	return fs.readFileSync(filePath, "utf8");
@@ -19,7 +19,7 @@ export const readYML = (filePath: string) => {
 	try {
 		return yaml.load(readFile(filePath));
 	} catch (e) {
-		return {};
+		return null;
 	}
 };
 
