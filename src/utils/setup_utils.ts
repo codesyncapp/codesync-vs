@@ -87,11 +87,13 @@ export const setupCodeSync = async (repoPath: string) => {
 		return port;
 	}
 
-	if (repoIsNotSynced(repoPath) || !new initUtils(repoPath).successfullySynced()) {
+	if (showConnectRepoView(repoPath)) {
 		// Show notification to user to Sync the repo
 		showConnectRepo(repoPath, "", "");
 		return port;
 	}
+
+	if (!repoPath) { return; }
 
 	// Show notification that repo is in sync
 	vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath), ...[
@@ -125,5 +127,6 @@ export const showLogIn = () => {
 };
 
 export const showConnectRepoView = (repoPath: string) => {
+	if (!repoPath) { return false; }
 	return repoIsNotSynced(repoPath) || !new initUtils(repoPath).successfullySynced();
 };

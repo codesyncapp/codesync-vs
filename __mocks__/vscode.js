@@ -27,7 +27,14 @@ Object.defineProperty(window, 'activeTextEditor', {
 const workspace = {
     getConfiguration: jest.fn(),
     workspaceFolders: [],
-    onDidSaveTextDocument: jest.fn()
+    onDidSaveTextDocument: jest.fn(),
+    createFileSystemWatcher: jest.fn(() => ({
+        onDidCreate: jest.fn()
+    })),
+    onDidChangeTextDocument: jest.fn(),
+    onDidCreateFiles: jest.fn(),
+    onDidDeleteFiles: jest.fn(),
+    onDidRenameFiles: jest.fn(),
 };
 
 Object.defineProperty(workspace, 'rootPath', {
@@ -54,11 +61,16 @@ const debug = {
 };
 
 const commands = {
-    executeCommand: jest.fn()
+    executeCommand: jest.fn(),
+    registerCommand: jest.fn()
 };
 
 const env = {
     openExternal: jest.fn()
+};
+
+const ExtensionContext = {
+    subscriptions: []
 };
 
 const vscode = {
@@ -73,7 +85,8 @@ const vscode = {
     DiagnosticSeverity,
     debug,
     commands,
-    env
+    env,
+    ExtensionContext
 };
 
 module.exports = vscode;

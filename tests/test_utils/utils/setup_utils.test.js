@@ -56,7 +56,7 @@ describe("setupCodeSync",  () => {
     });
 
     test('with no user.yml', async () => {
-        const port = await setupCodeSync(repoPath);
+        const port = await setupCodeSync(undefined);
         const lsResult = fs.readdirSync(baseRepoPath);
         expect(lsResult.includes(".diffs")).toBe(true);
         expect(lsResult.includes(".originals")).toBe(true);
@@ -74,7 +74,7 @@ describe("setupCodeSync",  () => {
 
     test('with empty user.yml', async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump({}));
-        const port = await setupCodeSync(repoPath);
+        const port = await setupCodeSync(undefined);
         // should return port number
         expect(port).toBeTruthy();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -82,6 +82,12 @@ describe("setupCodeSync",  () => {
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.JOIN);
         expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.IGNORE);
         fs.rmSync(userFilePath);
+    });
+
+    test('with user no repo opened', async () => {
+        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        await setupCodeSync(undefined);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
     test('with user and repo not synced', async () => {

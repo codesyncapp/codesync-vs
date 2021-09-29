@@ -14,16 +14,21 @@ import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_uti
 import { COMMAND, STATUS_BAR_MSGS } from './constants';
 import { updateStatusBarItem } from "./utils/common";
 
-import { unSyncHandler, SignUpHandler, SyncHandler, trackRepoHandler, trackFileHandler } from './handlers/commands_handler';
 import { detectBranchChange } from "./codesyncd/populate_buffer";
 import { logout } from './utils/auth_utils';
 import { pathUtils } from "./utils/path_utils";
 
+import {
+	unSyncHandler,
+	SignUpHandler,
+	SyncHandler,
+	trackRepoHandler,
+	trackFileHandler
+} from './handlers/commands_handler';
+
 
 export async function activate(context: vscode.ExtensionContext) {
-	const repoName = vscode.workspace.name;
-	const repoPath = pathUtils.getRootPath();
-	if (!repoPath || !repoName) { return; }
+	const repoPath = pathUtils.getRootPath() || "";
 
 	vscode.commands.executeCommand('setContext', 'showLogIn', showLogIn());
 	vscode.commands.executeCommand('setContext', 'showConnectRepoView', showConnectRepoView(repoPath));
@@ -42,9 +47,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	await setupCodeSync(repoPath);
 
-	console.log(`Configured repo: ${repoPath}`);
+	if (repoPath) {
+		console.log(`Configured repo: ${repoPath}`);
+	}
 
-	const watcher = vscode.workspace.createFileSystemWatcher(`**/*`); //glob search string
+	const watcher = vscode.workspace.createFileSystemWatcher("**/*"); //glob search string
 
 	watcher.onDidCreate((e) => {
 		handlePastedFile(e.fsPath);
@@ -69,7 +76,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	await detectBranchChange();
 
 	updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.GETTING_READY);
-	await handleBuffer(statusBarItem);
 
+	// Do not run daemon in case of tests
+	if ((global as any).IS_CODESYNC_DEV) return;
+
+	await handleBuffer(statusBarItem);
 }
 
