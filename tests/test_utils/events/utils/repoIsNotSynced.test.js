@@ -1,8 +1,8 @@
 import fs from "fs";
 import yaml from "js-yaml";
+import untildify from "untildify";
 import {repoIsNotSynced} from "../../../../src/events/utils";
 import {getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
-import untildify from "untildify";
 
 
 describe("repoIsNotSynced", () => {
@@ -36,7 +36,6 @@ describe("repoIsNotSynced", () => {
     test("with repo not in config.yml", () => {
         fs.writeFileSync(configPath, yaml.safeDump({'repos': {}}));
         expect(repoIsNotSynced(repoPath)).toBe(true);
-        fs.rmSync(configPath);
     });
 
     test("with repo in config.yml", () => {
@@ -44,12 +43,14 @@ describe("repoIsNotSynced", () => {
         config.repos[repoPath] = {'branches': {}};
         fs.writeFileSync(configPath, yaml.safeDump(config));
         expect(repoIsNotSynced(repoPath)).toBe(false);
-        fs.rmSync(configPath);
     });
 
     test("repoIsNotSynced with invalid config.yml", () => {
         fs.writeFileSync(configPath, "");
         expect(repoIsNotSynced(repoPath)).toBe(true);
-        fs.rmSync(configPath);
+    });
+
+    test("With no repo opened", () => {
+        expect(repoIsNotSynced("")).toBe(true);
     });
 });

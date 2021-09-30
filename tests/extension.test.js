@@ -1,5 +1,6 @@
 import fs from "fs";
 import vscode from "vscode";
+import yaml from "js-yaml";
 import untildify from "untildify";
 
 import {activate} from "../src/extension";
@@ -14,10 +15,9 @@ import {
 import {createSystemDirectories} from "../src/utils/setup_utils";
 import {getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath} from "./helpers/helpers";
 import {logout} from "../src/utils/auth_utils";
-import yaml from "js-yaml";
 
 
-describe("putLogEvent",() => {
+describe("Extension",() => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
     const userFilePath = getUserFilePath(baseRepoPath);

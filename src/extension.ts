@@ -2,13 +2,7 @@
 
 import vscode from 'vscode';
 
-import {
-	handleChangeEvent,
-	handleFilesCreated,
-	handleFilesDeleted,
-	handleFilesRenamed,
-	handlePastedFile
- } from "./events/event_handler";
+import { eventHandler } from "./events/event_handler";
 import { handleBuffer } from "./codesyncd/buffer_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
 import { COMMAND, STATUS_BAR_MSGS } from './constants';
@@ -51,26 +45,28 @@ export async function activate(context: vscode.ExtensionContext) {
 		console.log(`Configured repo: ${repoPath}`);
 	}
 
+	const handler = new eventHandler();
+
 	const watcher = vscode.workspace.createFileSystemWatcher("**/*"); //glob search string
 
 	watcher.onDidCreate((e) => {
-		handlePastedFile(e.fsPath);
+		handler.handlePastedFile(e.fsPath);
 	});
 
 	vscode.workspace.onDidChangeTextDocument(changeEvent => {
-		handleChangeEvent(changeEvent);
+		handler.handleChangeEvent(changeEvent);
 	});
 
 	vscode.workspace.onDidCreateFiles(changeEvent => {
-		handleFilesCreated(changeEvent);
+		handler.handleFilesCreated(changeEvent);
 	});
 
 	vscode.workspace.onDidDeleteFiles(changeEvent => {
-		handleFilesDeleted(changeEvent);
+		handler.handleFilesDeleted(changeEvent);
 	});
 
 	vscode.workspace.onDidRenameFiles(changeEvent => {
-		handleFilesRenamed(changeEvent);
+		handler.handleRenameEvent(changeEvent);
 	});
 
 	await detectBranchChange();

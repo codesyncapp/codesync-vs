@@ -19,7 +19,7 @@ export class pathUtils {
 
     static getRootPath = () => {
         let rootPath = vscode.workspace.rootPath;
-        if (!rootPath) { return rootPath; }
+        if (!rootPath) return "";
         rootPath = pathUtils.normalizePath(rootPath);
         return rootPath;
     };
