@@ -10,7 +10,7 @@ import {
 	NOTIFICATION
 } from '../constants';
 import { isRepoActive, readYML } from '../utils/common';
-import { repoIsNotSynced } from '../events/utils';
+import { isRepoSynced } from '../events/utils';
 import { initUtils } from '../init/utils';
 import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
@@ -25,7 +25,7 @@ export const SignUpHandler = () => {
 export const SyncHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) { return; }
-	if (repoIsNotSynced(repoPath) || !new initUtils(repoPath).successfullySynced()) {
+	if (!isRepoSynced(repoPath) || !new initUtils(repoPath).successfullySynced()) {
 		// Show notification to user to choose account
 		await showChooseAccount(repoPath);
 		return;

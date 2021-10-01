@@ -6,8 +6,12 @@ import getBranchName from 'current-git-branch';
 
 import { DEFAULT_BRANCH} from "../constants";
 import { pathUtils } from "../utils/path_utils";
-import {handleDirectoryDeleteDiffs, handleDirectoryRenameDiffs, manageDiff} from './diff_utils';
-import { repoIsNotSynced, shouldIgnoreFile } from './utils';
+import { isRepoSynced, shouldIgnoreFile } from './utils';
+import {
+	handleDirectoryDeleteDiffs,
+	handleDirectoryRenameDiffs,
+	manageDiff
+} from './diff_utils';
 
 
 export class eventHandler {
@@ -23,7 +27,7 @@ export class eventHandler {
 	constructor() {
 		this.repoPath = pathUtils.getRootPath();
 		this.branch = getBranchName({ altPath: this.repoPath }) || DEFAULT_BRANCH;
-		this.repoIsNotSynced = repoIsNotSynced(this.repoPath);
+		this.repoIsNotSynced = !isRepoSynced(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
 		this.shadowRepoBranchPath = this.pathUtils.getShadowRepoBranchPath();
 		this.deletedRepoBranchPath = this.pathUtils.getDeletedRepoBranchPath();
@@ -37,14 +41,6 @@ export class eventHandler {
 		// Skip .git and .syncignore files
 		if (shouldIgnoreFile(this.repoPath, relPath)) return;
 		if (!changeEvent.contentChanges.length) return;
-		// If you only care about changes to the active editor's text,
-		// just check to see if changeEvent.document matches the active editor's document.
-		const editor = vscode.window.activeTextEditor;
-		if (!editor || editor.document !== changeEvent.document) {
-			console.log("Skipping InActive Editor's document");
-			return;
-		}
-		const text = changeEvent.document.getText();
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
 		if (!fs.existsSync(shadowPath)) {
 			// Creating shadow file if shadow does not exist somehow
@@ -55,6 +51,7 @@ export class eventHandler {
 			fs.copyFileSync(filePath, shadowPath);
 			return;
 		}
+		const text = changeEvent.document.getText();
 		// Read shadow file
 		const shadowText = fs.readFileSync(shadowPath, "utf8");
 		// If shadow text is same as current content, no need to compute diffs

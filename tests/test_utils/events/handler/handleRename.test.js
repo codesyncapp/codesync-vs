@@ -98,6 +98,28 @@ describe("handleRenameFile",  () => {
         expect(fs.existsSync(renamedShadowFilePath)).toBe(false);
     });
 
+    test("Event: Synced repo, Ignorable file", () => {
+        const config = {'repos': {}};
+        config.repos[repoPath] = {'branches': {}};
+        fs.writeFileSync(configPath, yaml.safeDump(config));
+        const event = {
+            files: [{
+                oldUri: {
+                    fsPath: path.join(repoPath, ".git", "objects", "abcdef")
+                },
+                newUri: {
+                    fsPath: path.join(repoPath, ".git", "objects", "12345")
+                }
+            }]
+        };
+
+        const handler = new eventHandler();
+        handler.handleRenameEvent(event);
+        // Verify correct diff file has been generated
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+    });
+
     test("Event: Repo synced",  () => {
         const config = {'repos': {}};
         config.repos[repoPath] = {'branches': {}};

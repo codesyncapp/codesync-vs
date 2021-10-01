@@ -12,7 +12,6 @@ export const GITIGNORE = ".gitignore";
 
 export const DIFF_SOURCE = 'vs-code';
 export const DEFAULT_BRANCH = 'default';
-export const GIT_REPO = '.git';
 
 // TODO: Use standard .gitignore
 export const IGNORABLE_DIRECTORIES = [

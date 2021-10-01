@@ -89,6 +89,22 @@ describe("handleFilesDeleted",  () => {
         expect(fs.existsSync(cacheFilePath)).toBe(false);
     });
 
+    test("Event: Synced repo, Ignorable file", () => {
+        const config = {'repos': {}};
+        config.repos[repoPath] = {'branches': {}};
+        fs.writeFileSync(configPath, yaml.safeDump(config));
+        const event = {
+            files: [{
+                fsPath: path.join(repoPath, "node_modules", "express", "index.js")
+            }]
+        };
+        const handler = new eventHandler();
+        handler.handleFilesDeleted(event);
+        // Verify correct diff file has been generated
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+    });
+
     test("Repo synced, shadow exists",  () => {
         const config = {'repos': {}};
         config.repos[repoPath] = {'branches': {}};
@@ -177,7 +193,7 @@ describe("handleFilesDeleted",  () => {
         };
         const handler = new eventHandler();
         handler.handleFilesDeleted(event);
-        await waitFor(2);
+        await waitFor(1);
         // Verify that file is copied to .delete directory
         expect(fs.existsSync(cacheDirectoryPath)).toBe(true);
         // Verify correct diff file has been generated

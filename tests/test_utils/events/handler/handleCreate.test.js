@@ -83,6 +83,22 @@ describe("handleNewFile",  () => {
         expect(fs.existsSync(originalsFilePath)).toBe(false);
     });
 
+    test("Event: Synced repo, Ignorable file", () => {
+        const config = {'repos': {}};
+        config.repos[repoPath] = {'branches': {}};
+        fs.writeFileSync(configPath, yaml.safeDump(config));
+        const event = {
+            files: [{
+                fsPath: path.join(repoPath, "node_modules", "express", "index.js")
+            }]
+        };
+        const handler = new eventHandler();
+        handler.handleFilesCreated(event);
+        // Verify correct diff file has been generated
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+    });
+
     test("Event: Synced repo, Valid File", () => {
         const config = {'repos': {}};
         config.repos[repoPath] = {'branches': {}};

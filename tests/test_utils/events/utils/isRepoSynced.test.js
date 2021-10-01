@@ -1,7 +1,7 @@
 import fs from "fs";
 import yaml from "js-yaml";
 import untildify from "untildify";
-import {repoIsNotSynced} from "../../../../src/events/utils";
+import {isRepoSynced} from "../../../../src/events/utils";
 import {getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
 
 
@@ -26,31 +26,31 @@ describe("repoIsNotSynced", () => {
     });
 
     test("with no config.yml", () => {
-        expect(repoIsNotSynced(repoPath)).toBe(true);
+        expect(isRepoSynced(repoPath)).toBe(false);
     });
 
     test("with default config.yml", () => {
-        expect(repoIsNotSynced(repoPath)).toBe(true);
+        expect(isRepoSynced(repoPath)).toBe(false);
     });
 
     test("with repo not in config.yml", () => {
         fs.writeFileSync(configPath, yaml.safeDump({'repos': {}}));
-        expect(repoIsNotSynced(repoPath)).toBe(true);
+        expect(isRepoSynced(repoPath)).toBe(false);
     });
 
     test("with repo in config.yml", () => {
         const config = {'repos': {}};
         config.repos[repoPath] = {'branches': {}};
         fs.writeFileSync(configPath, yaml.safeDump(config));
-        expect(repoIsNotSynced(repoPath)).toBe(false);
+        expect(isRepoSynced(repoPath)).toBe(true);
     });
 
     test("repoIsNotSynced with invalid config.yml", () => {
         fs.writeFileSync(configPath, "");
-        expect(repoIsNotSynced(repoPath)).toBe(true);
+        expect(isRepoSynced(repoPath)).toBe(false);
     });
 
     test("With no repo opened", () => {
-        expect(repoIsNotSynced("")).toBe(true);
+        expect(isRepoSynced("")).toBe(false);
     });
 });
