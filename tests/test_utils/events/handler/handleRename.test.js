@@ -164,21 +164,27 @@ describe("handleRenameFile",  () => {
     });
 
     test("for File",  () => {
-        /*
-         *
-         {
-            source: 'vs-code',
-            created_at: '2021-08-26 18:59:51.954',
-            diff: '{"old_abs_path":"tests/tests_data/test_repo_sNIVUqukDv/old.js","new_abs_path":"tests/tests_data/test_repo_sNIVUqukDv/new.js","old_rel_path":"old.js","new_rel_path":"new.js"}',
-            repo_path: 'tests/tests_data/test_repo_sNIVUqukDv',
-            branch: 'default',
-            file_relative_path: 'new.js',
-            is_rename: true
-          }
-        *
-        * */
+        const config = {'repos': {}};
+        config.repos[repoPath] = {'branches': {}};
+        fs.writeFileSync(configPath, yaml.safeDump(config));
+        fs.writeFileSync(newFilePath, "use babel;");
+
+        const event = {
+            files: [{
+                oldUri: {
+                    fsPath: oldFilePath,
+                    path: oldFilePath,
+                    scheme: "file"
+                },
+                newUri: {
+                    fsPath: newFilePath,
+                    path: newFilePath,
+                    scheme: "file"
+                }
+            }]
+        };
         const handler = new eventHandler();
-        handler.handleRename(oldFilePath, newFilePath, true);
+        handler.handleRenameEvent(event);
         // Verify file has been renamed in the shadow repo
         expect(fs.existsSync(renamedShadowFilePath)).toBe(true);
         // Verify correct diff file has been generated
@@ -200,8 +206,21 @@ describe("handleRenameFile",  () => {
     });
 
     test("for Directory",  async() => {
+        const config = {'repos': {}};
+        config.repos[repoPath] = {'branches': {}};
+        fs.writeFileSync(configPath, yaml.safeDump(config));
+        const event = {
+            files: [{
+                oldUri: {
+                    fsPath: oldDirectoryPath
+                },
+                newUri: {
+                    fsPath: newDirectoryPath
+                }
+            }]
+        };
         const handler = new eventHandler();
-        handler.handleRename(oldDirectoryPath, newDirectoryPath, false);
+        handler.handleRenameEvent(event);
         expect(fs.existsSync(renamedShadowDirectoryPath)).toBe(true);
         expect(fs.existsSync(renamedShadowDirectoryFilePath)).toBe(true);
         await waitFor(1);

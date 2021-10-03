@@ -29,10 +29,6 @@ describe("repoIsNotSynced", () => {
         expect(isRepoSynced(repoPath)).toBe(false);
     });
 
-    test("with default config.yml", () => {
-        expect(isRepoSynced(repoPath)).toBe(false);
-    });
-
     test("with repo not in config.yml", () => {
         fs.writeFileSync(configPath, yaml.safeDump({'repos': {}}));
         expect(isRepoSynced(repoPath)).toBe(false);

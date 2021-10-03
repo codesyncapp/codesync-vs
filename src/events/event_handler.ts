@@ -195,36 +195,32 @@ export class eventHandler {
 		event.files.forEach(_event => {
 			const oldAbsPath = pathUtils.normalizePath(_event.oldUri.fsPath);
 			const newAbsPath = pathUtils.normalizePath(_event.newUri.fsPath);
+			const oldRelPath = oldAbsPath.split(path.join(this.repoPath, path.sep))[1];
 			const newRelPath = newAbsPath.split(path.join(this.repoPath, path.sep))[1];
+
 			if (shouldIgnoreFile(this.repoPath, newRelPath)) { return; }
-			this.handleRename(oldAbsPath, newAbsPath, fs.lstatSync(newAbsPath).isFile());
+			const oldShadowPath = path.join(this.shadowRepoBranchPath, oldRelPath);
+			const newShadowPath = path.join(this.shadowRepoBranchPath, newRelPath);
+			// rename file in shadow repo
+			fs.renameSync(oldShadowPath, newShadowPath);
+
+			const isDirectory = fs.lstatSync(newAbsPath).isDirectory();
+			if (isDirectory) {
+				console.log(`DirectoryRenamed: ${oldAbsPath} -> ${newAbsPath}`);
+				const diff = JSON.stringify({ old_path: oldAbsPath, new_path: newAbsPath });
+				handleDirectoryRenameDiffs(this.repoPath, this.branch, diff);
+				return;
+			}
+
+			console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
+			// Create diff
+			const diff = JSON.stringify({
+				old_abs_path: oldAbsPath,
+				new_abs_path: newAbsPath,
+				old_rel_path: oldRelPath,
+				new_rel_path: newRelPath
+			});
+			manageDiff(this.repoPath, this.branch, newRelPath, diff, false, true);
 		});
 	}
-
-	handleRename = (oldAbsPath: string, newAbsPath: string, isFile: boolean) => {
-		const oldRelPath = oldAbsPath.split(path.join(this.repoPath, path.sep))[1];
-		const newRelPath = newAbsPath.split(path.join(this.repoPath, path.sep))[1];
-
-		const oldShadowPath = path.join(this.shadowRepoBranchPath, oldRelPath);
-		const newShadowPath = path.join(this.shadowRepoBranchPath, newRelPath);
-		// rename file in shadow repo
-		fs.renameSync(oldShadowPath, newShadowPath);
-
-		if (!isFile) {
-			console.log(`DirectoryRenamed: ${oldAbsPath} -> ${newAbsPath}`);
-			const diff = JSON.stringify({ old_path: oldAbsPath, new_path: newAbsPath });
-			handleDirectoryRenameDiffs(this.repoPath, this.branch, diff);
-			return;
-		}
-
-		console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
-		// Create diff
-		const diff = JSON.stringify({
-			old_abs_path: oldAbsPath,
-			new_abs_path: newAbsPath,
-			old_rel_path: oldRelPath,
-			new_rel_path: newRelPath
-		});
-		manageDiff(this.repoPath, this.branch, newRelPath, diff, false, true);
-	};
 }
