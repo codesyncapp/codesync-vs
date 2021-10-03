@@ -7,7 +7,7 @@ import detectPort from "detect-port";
 
 import {readYML} from './common';
 import { Auth0URLs, NOTIFICATION } from "../constants";
-import {repoIsNotSynced} from "../events/utils";
+import {isRepoSynced} from "../events/utils";
 import {showConnectRepo} from "./notifications";
 import {createUserWithApi} from "./api_utils";
 import {generateSettings} from "../settings";
@@ -57,7 +57,7 @@ export const createUser = async (accessToken: string, idToken: string, repoPath:
 
     if (!repoPath) { return; }
 
-	if (repoIsNotSynced(repoPath)) {
+	if (!isRepoSynced(repoPath)) {
         // Show notification to user to Sync the repo
         showConnectRepo(repoPath, user.email, accessToken);
     }

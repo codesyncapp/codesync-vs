@@ -6,7 +6,7 @@ import {
 	getRepoInSyncMsg,
 	NOTIFICATION
 } from "../constants";
-import { repoIsNotSynced } from '../events/utils';
+import { isRepoSynced } from '../events/utils';
 import { isPortAvailable } from './auth_utils';
 import { showConnectRepo, showSignUpButtons } from './notifications';
 import { readYML } from './common';
@@ -128,5 +128,5 @@ export const showLogIn = () => {
 
 export const showConnectRepoView = (repoPath: string) => {
 	if (!repoPath) { return false; }
-	return repoIsNotSynced(repoPath) || !new initUtils(repoPath).successfullySynced();
+	return !isRepoSynced(repoPath) || !new initUtils(repoPath).successfullySynced();
 };
