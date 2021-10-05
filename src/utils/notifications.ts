@@ -1,6 +1,6 @@
 import vscode from 'vscode';
 import {getPublicPrivateMsg, NOTIFICATION} from '../constants';
-import { syncRepo } from '../init/init_handler';
+import { initHandler } from '../init/init_handler';
 import { readYML } from './common';
 import { logout, redirectToBrowser } from './auth_utils';
 import {generateSettings} from "../settings";
@@ -20,7 +20,8 @@ export const showSignUpButtons = () => {
 export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 	const skipAskConnect = (global as any).skipAskConnect;
 	if (skipAskConnect && email && accessToken) {
-		syncRepo(repoPath, accessToken);
+		const handler = new initHandler(repoPath, accessToken);
+		handler.syncRepo();
 		(global as any).skipAskConnect = false;
 		return;
 	}
@@ -32,7 +33,8 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 		if (selection === NOTIFICATION.CONNECT) {
 
 			if (email && accessToken) {
-				await syncRepo(repoPath, accessToken);
+				const handler = new initHandler(repoPath, accessToken);
+				await handler.syncRepo();
 				return;
 			}
 
@@ -61,7 +63,8 @@ export const showChooseAccount = async (repoPath: string) => {
 
 	// By Default choosing first account
 	const user = validUsers[0];
-	await syncRepo(repoPath, user.access_token);
+	const handler = new initHandler(repoPath, user.access_token);
+	await handler.syncRepo();
 	// TODO: Option to choose different account
 	// const emails = validUsers.map(account => account.email);
 	// const options = [...emails, NOTIFICATION.USE_DIFFERENT_ACCOUNT];
@@ -87,13 +90,4 @@ export const askPublicPrivate = async (repoPath: string) => {
 		NOTIFICATION.PRIVATE
 	]).then(selection => selection);
 	return buttonSelected;
-};
-
-export const askToUpdateSyncIgnore = async (syncignoreExists: boolean) => {
-	const msg = syncignoreExists ? NOTIFICATION.UPDATE_SYNCIGNORE : NOTIFICATION.SYNC_IGNORE_CREATED;
-	const selectedValue = await vscode.window.showInformationMessage(
-		msg,
-		NOTIFICATION.OK
-	).then(selection => selection);
-	return selectedValue;
 };

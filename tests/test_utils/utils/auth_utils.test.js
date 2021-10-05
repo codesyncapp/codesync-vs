@@ -143,9 +143,9 @@ describe("createUser",  () => {
 describe("askAndTriggerSignUp",  () => {
     test("askAndTriggerSignUp", () => {
         askAndTriggerSignUp();
-        expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.AUTHENTICATION_FAILED);
-        expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.LOGIN);
-        expect(vscode.window.showWarningMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.IGNORE);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.AUTHENTICATION_FAILED);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.LOGIN);
+        expect(vscode.window.showErrorMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.IGNORE);
     });
 });

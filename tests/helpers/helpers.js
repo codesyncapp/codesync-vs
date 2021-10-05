@@ -82,7 +82,7 @@ export const TEST_REPO_RESPONSE = {
     'repo_id': 123,
     'branch_id': 456,
     'file_path_and_id': {
-        "file_1": 1,
+        "file_1.js": 1,
         "directory/file_2": 2,
     },
     'urls': {

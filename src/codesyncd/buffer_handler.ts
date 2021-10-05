@@ -248,7 +248,7 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 										const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 										const originalsFilePath = path.join(originalsRepoBranchPath, relPath);
 										if (!fs.existsSync(originalsFilePath)) {
-											const initUtilsObj = new initUtils(diffData.repo_path);
+											const initUtilsObj = new initUtils(diffData.repo_path, true);
 											const filePath = path.join(diffData.repo_path, relPath);
 											initUtilsObj.copyFilesTo([filePath], originalsRepoBranchPath);
 										}

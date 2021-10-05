@@ -22,11 +22,13 @@ import { pathUtils } from '../utils/path_utils';
 
 export class initUtils {
 	repoPath: string;
+	viaDaemon: boolean;
 	settings: any;
 
-	constructor(repoPath="") {
-		this.repoPath = repoPath;
+	constructor(repoPath="", viaDaemon=false) {
 		this.settings = generateSettings();
+		this.repoPath = repoPath;
+		this.viaDaemon = viaDaemon;
 	}
 
 	isValidRepoSize (syncSize: number, userPlan: IUserPlan)  {
@@ -72,9 +74,10 @@ export class initUtils {
 		return !ig.ignores(relPath);
 	}
 
-	getSyncablePaths (userPlan: IUserPlan, isSyncingBranch=false, isPopulatingBuffer = false) {
+	getSyncablePaths (userPlan: IUserPlan, isPopulatingBuffer = false) {
 		const itemPaths: IFileToUpload[] = [];
 		const repoPath = this.repoPath;
+		const viaDaemon = this.viaDaemon;
 		const syncIgnoreItems = getSyncIgnoreItems(repoPath);
 
 		let syncSize = 0;
@@ -85,9 +88,9 @@ export class initUtils {
 			filters: skipRepos,
 			listeners: {
 				file: function (root: string, fileStats: any, next: any) {
-					const self = new initUtils(repoPath);
 					const filePath = path.join(root, fileStats.name);
 					const relPath = filePath.split(path.join(repoPath, path.sep))[1];
+					const self = new initUtils(repoPath, viaDaemon);
 					const isSyncAbleFile = self.isSyncAble(relPath);
 					if (isSyncAbleFile) {
 						itemPaths.push({
@@ -100,7 +103,7 @@ export class initUtils {
 						});
 						syncSize += fileStats.size;
 					}
-					if (!isPopulatingBuffer && !isSyncingBranch &&
+					if (!viaDaemon && !isPopulatingBuffer &&
 						(!self.isValidRepoSize(syncSize, userPlan) ||
 						!self.isValidFilesCount(itemPaths.length, userPlan))) {
 						limitReached = true;
@@ -180,8 +183,8 @@ export class initUtils {
 		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
 	}
 
-	async uploadRepoToS3(branch: string, token: string, uploadResponse: any,
-						userEmail: string, isSyncingBranch=false, viaDaemon=false) {
+	async uploadRepoToS3(branch: string, token: string, uploadResponse: any) {
+		const viaDaemon = this.viaDaemon;
 		const s3Urls =  uploadResponse.urls;
 		const tasks: any[] = [];
 		const pathUtilsObj = new pathUtils(this.repoPath, branch);
@@ -205,7 +208,6 @@ export class initUtils {
 				// the results array will equal ['one','two'] even though
 				// the second function had a shorter timeout.
 				if (err) return;
-
 				// delete .originals repo
 				fs.rmdirSync(originalsRepoBranchPath, { recursive: true });
 				// Hide Connect Repo
@@ -213,8 +215,7 @@ export class initUtils {
 
 				// Show success notification
 				if (!viaDaemon) {
-					const successMsg = isSyncingBranch ? NOTIFICATION.BRANCH_SYNCED : NOTIFICATION.REPO_SYNCED;
-					vscode.window.showInformationMessage(successMsg, ...[
+					vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
 						NOTIFICATION.TRACK_IT
 					]).then(selection => {
 						if (!selection) { return; }
@@ -227,8 +228,7 @@ export class initUtils {
 	}
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
-					isPublic=false, isSyncingBranch=false, viaDaemon=false,
-					userEmail?: string) {
+					isPublic=false, userEmail?: string) {
 		const repoName = path.basename(this.repoPath);
 		const configJSON = readYML(this.settings.CONFIG_PATH);
 		const repoInConfig = isRepoActive(configJSON, this.repoPath);
@@ -267,9 +267,9 @@ export class initUtils {
 
 		const json = await uploadRepoToServer(token, data);
 		if (json.error) {
-			const error = isSyncingBranch ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
+			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
 			putLogEvent(`${error}. Reason: ${json.error}`);
-			if (!viaDaemon) {
+			if (!this.viaDaemon) {
 				vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			}
 			return;
@@ -301,6 +301,6 @@ export class initUtils {
 		this.saveFileIds(branch, token, user.email, json.response);
 
 		// Upload to s3
-		await this.uploadRepoToS3(branch, token, json.response, user.email, isSyncingBranch, viaDaemon);
+		await this.uploadRepoToS3(branch, token, json.response);
 	}
 }

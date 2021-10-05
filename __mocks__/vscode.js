@@ -8,7 +8,9 @@ const window = {
     createStatusBarItem: jest.fn(() => ({
         show: jest.fn()
     })),
-    showErrorMessage: jest.fn(),
+    showErrorMessage: jest.fn(() => ({
+        then: jest.fn()
+    })),
     showWarningMessage: jest.fn(() => ({
         then: jest.fn()
     })),
@@ -16,6 +18,9 @@ const window = {
         then: jest.fn()
     })),
     createTextEditorDecorationType: jest.fn(),
+    showTextDocument: jest.fn(() => ({
+        then: jest.fn()
+    }))
 };
 
 Object.defineProperty(window, 'activeTextEditor', {
@@ -35,6 +40,9 @@ const workspace = {
     onDidCreateFiles: jest.fn(),
     onDidDeleteFiles: jest.fn(),
     onDidRenameFiles: jest.fn(),
+    openTextDocument: jest.fn(() => ({
+        then: jest.fn()
+    }))
 };
 
 Object.defineProperty(workspace, 'rootPath', {

@@ -16,7 +16,7 @@ import {
 import {putLogEvent} from "../logger";
 import {initUtils} from "../init/utils";
 import {IFileToUpload, IUserPlan} from "../interface";
-import {syncRepo} from "../init/init_handler";
+import {initHandler} from "../init/init_handler";
 import {similarity} from "./utils";
 import {diff_match_patch} from "diff-match-patch";
 import {manageDiff} from "../events/diff_utils";
@@ -84,8 +84,7 @@ class PopulateBuffer {
         this.repoModifiedAt = -1;
         this.settings = generateSettings();
         this.repoBranchPath = path.join(this.repoPath, this.branch);
-        this.itemPaths = new initUtils(this.repoPath).getSyncablePaths(<IUserPlan>{}, false,
-            true);
+        this.itemPaths = new initUtils(this.repoPath, true).getSyncablePaths(<IUserPlan>{}, true);
         this.modifiedInPast = this.getModifiedInPast();
         this.config = readYML(this.settings.CONFIG_PATH);
         const configRepo = this.config.repos[this.repoPath];
@@ -163,7 +162,7 @@ class PopulateBuffer {
 
     async populateBufferForRepo() {
         const diffs = <any>{};
-        const initUtilsObj = new initUtils(this.repoPath);
+        const initUtilsObj = new initUtils(this.repoPath, true);
 
         const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
         const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
@@ -261,7 +260,7 @@ class PopulateBuffer {
          - present in .shadow repo
         */
         const diffs = <any>{};
-        const initUtilsObj = new initUtils(this.repoPath);
+        const initUtilsObj = new initUtils(this.repoPath, true);
 
         const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
         const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
@@ -332,18 +331,18 @@ export const detectBranchChange = async () => {
             // TODO: Handle out of sync repo
             continue;
         }
-        const initUtilsObj = new initUtils(repoPath);
 
         const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
         if (!(branch in configRepo.branches)) {
             if (originalsRepoExists) {
+                const initUtilsObj = new initUtils(repoPath, true);
                 // init has been called, now see if we can upload the repo/branch
                 const itemPaths = initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
-                await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, false,
-                    true, true, configRepo.email);
+                await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, false, configRepo.email);
             } else {
-                await syncRepo(repoPath, accessToken, true, true);
+                const handler = new initHandler(repoPath, accessToken, true);
+                await handler.syncRepo();
             }
             continue;
         }
@@ -352,9 +351,9 @@ export const detectBranchChange = async () => {
         // If all files IDs are None in config.yml, we need to sync the branch
         const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
         if (shouldSyncBranch) {
+            const initUtilsObj = new initUtils(repoPath, true);
             const itemPaths = initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
-            await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, false, true,
-                true, configRepo.email);
+            await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, false, configRepo.email);
         }
         readyRepos[repoPath] = branch;
     }

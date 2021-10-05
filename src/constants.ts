@@ -97,7 +97,7 @@ export const NOTIFICATION = {
 	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later",
 	REPOS_LIMIT_BREACHED: "Repo size exceeds the limit. Allowed repo size is",
 	FILES_LIMIT_BREACHED: "FIles count exceeds the limit.",
-	SERVICE_NOT_AVAILABLE: "Service is unavailable. Please try again in a moment.",
+	SERVICE_NOT_AVAILABLE: "CodeSync service is unavailable. Please try again in a moment.",
 	UPGRADE_PLAN: `Upgrade your plan: ${PLANS_URL}`,
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",

@@ -75,7 +75,7 @@ export const logout = () => {
 
 export const askAndTriggerSignUp = () => {
     // Trigger sign up process
-    vscode.window.showWarningMessage(
+    vscode.window.showErrorMessage(
         NOTIFICATION.AUTHENTICATION_FAILED, ...[
         NOTIFICATION.LOGIN,
         NOTIFICATION.IGNORE
