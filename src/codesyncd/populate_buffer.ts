@@ -76,7 +76,8 @@ class PopulateBuffer {
     config: any;
     configFiles: any;
     renamedFiles: string[];
-    settings: any
+    settings: any;
+    initUtilsObj: any;
 
     constructor(repoPath: string, branch: string) {
         this.repoPath = repoPath;
@@ -84,7 +85,8 @@ class PopulateBuffer {
         this.repoModifiedAt = -1;
         this.settings = generateSettings();
         this.repoBranchPath = path.join(this.repoPath, this.branch);
-        this.itemPaths = new initUtils(this.repoPath, true).getSyncablePaths(<IUserPlan>{}, true);
+        this.initUtilsObj = new initUtils(this.repoPath, true);
+        this.itemPaths = this.initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
         this.modifiedInPast = this.getModifiedInPast();
         this.config = readYML(this.settings.CONFIG_PATH);
         const configRepo = this.config.repos[this.repoPath];
@@ -162,7 +164,6 @@ class PopulateBuffer {
 
     async populateBufferForRepo() {
         const diffs = <any>{};
-        const initUtilsObj = new initUtils(this.repoPath, true);
 
         const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
         const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
@@ -219,10 +220,10 @@ class PopulateBuffer {
             // For new file, copy it in .originals. If already exists there, skip it
             if (isNewFile) {
                 diff = "";
-                initUtilsObj.copyFilesTo([itemPath.file_path], originalsRepoBranchPath);
+                this.initUtilsObj.copyFilesTo([itemPath.file_path], originalsRepoBranchPath);
             }
             // Sync file in shadow repo with latest content
-            initUtilsObj.copyFilesTo( [itemPath.file_path], shadowRepoBranchPath);
+            this.initUtilsObj.copyFilesTo( [itemPath.file_path], shadowRepoBranchPath);
 
             // Add diff only if it is non-empty or it is new file in which case diff will probably be empty initially
             if (diff || isNewFile) {
@@ -260,7 +261,6 @@ class PopulateBuffer {
          - present in .shadow repo
         */
         const diffs = <any>{};
-        const initUtilsObj = new initUtils(this.repoPath, true);
 
         const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
         const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
@@ -273,7 +273,7 @@ class PopulateBuffer {
             const cacheFilePath = path.join(cacheRepoBranchPath, relPath);
             const shadowFilePath = path.join(shadowRepoBranchPath, relPath);
             // See if should discard this file
-            if (!initUtilsObj.isSyncAble(relPath) ||
+            if (!this.initUtilsObj.isSyncAble(relPath) ||
                 activeRelPaths.includes(relPath) ||
                 this.renamedFiles.includes(relPath) ||
                 fs.existsSync(cacheFilePath) ||
@@ -287,7 +287,7 @@ class PopulateBuffer {
             };
             const cacheRepoPath = pathUtilsObj.getDeletedRepoPath();
             // Pick from .shadow and add file in .deleted repo to avoid duplicate diffs
-            initUtilsObj.copyFilesTo( [shadowFilePath], cacheRepoPath);
+            this.initUtilsObj.copyFilesTo( [shadowFilePath], cacheRepoPath);
         });
         return diffs;
     }
@@ -331,12 +331,12 @@ export const detectBranchChange = async () => {
             // TODO: Handle out of sync repo
             continue;
         }
+        const initUtilsObj = new initUtils(repoPath, true);
 
         const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
         if (!(branch in configRepo.branches)) {
             if (originalsRepoExists) {
-                const initUtilsObj = new initUtils(repoPath, true);
                 // init has been called, now see if we can upload the repo/branch
                 const itemPaths = initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
                 await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, false, configRepo.email);
@@ -351,7 +351,6 @@ export const detectBranchChange = async () => {
         // If all files IDs are None in config.yml, we need to sync the branch
         const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
         if (shouldSyncBranch) {
-            const initUtilsObj = new initUtils(repoPath, true);
             const itemPaths = initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
             await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, false, configRepo.email);
         }

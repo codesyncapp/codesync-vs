@@ -25,7 +25,7 @@ export class initUtils {
 	viaDaemon: boolean;
 	settings: any;
 
-	constructor(repoPath="", viaDaemon=false) {
+	constructor(repoPath: string, viaDaemon= false) {
 		this.settings = generateSettings();
 		this.repoPath = repoPath;
 		this.viaDaemon = viaDaemon;
