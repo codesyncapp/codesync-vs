@@ -53,7 +53,7 @@ describe("handleDirectoryDeleteDiffs", () => {
         *
         * */
         untildify.mockReturnValue(baseRepoPath);
-        await handleDirectoryDeleteDiffs(repoPath, DEFAULT_BRANCH, "directory");
+        await handleDirectoryDeleteDiffs(repoPath, "directory");
         await waitFor(1);
         // Verify file has been renamed in the shadow repo
         expect(fs.existsSync(cacheFilePath)).toBe(true);
@@ -77,7 +77,7 @@ describe("handleDirectoryDeleteDiffs", () => {
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(path.join(cacheRepoBranchPath, "directory"), { recursive: true });
         fs.writeFileSync(cacheFilePath, "use babel;");
-        await handleDirectoryDeleteDiffs(repoPath, DEFAULT_BRANCH, "directory");
+        await handleDirectoryDeleteDiffs(repoPath, "directory");
         await waitFor(1);
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);

@@ -15,6 +15,7 @@ let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 export function putLogEvent(error: string, userEmail?: string, retryCount?: number) {
 	console.log(error);
 	const settings = generateSettings();
+	if (!fs.existsSync(settings.USER_PATH)) { return; }
 	const users = readYML(settings.USER_PATH);
 	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
 	let accessKey = '';

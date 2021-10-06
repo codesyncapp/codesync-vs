@@ -27,7 +27,13 @@ describe("putLogEvent",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("No User", () => {
+    test("No user.yml", () => {
+        putLogEvent("Error message");
+        const sequenceTokenUsers = readYML(sequenceTokenFilePath);
+        expect(sequenceTokenUsers).toStrictEqual({});
+    });
+
+    test("No User in user.yml", () => {
         putLogEvent("Error message");
         const sequenceTokenUsers = readYML(sequenceTokenFilePath);
         expect(sequenceTokenUsers).toStrictEqual({});

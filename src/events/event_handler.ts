@@ -2,9 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import vscode from 'vscode';
 import { diff_match_patch } from 'diff-match-patch';
-import getBranchName from 'current-git-branch';
-
-import { DEFAULT_BRANCH} from "../constants";
 import { pathUtils } from "../utils/path_utils";
 import { isRepoSynced, shouldIgnoreFile } from './utils';
 import {
@@ -12,6 +9,7 @@ import {
 	handleDirectoryRenameDiffs,
 	manageDiff
 } from './diff_utils';
+import {getBranch} from "../utils/common";
 
 
 export class eventHandler {
@@ -26,8 +24,8 @@ export class eventHandler {
 
 	constructor() {
 		this.repoPath = pathUtils.getRootPath();
-		this.branch = getBranchName({ altPath: this.repoPath }) || DEFAULT_BRANCH;
 		this.repoIsNotSynced = !isRepoSynced(this.repoPath);
+		this.branch = getBranch(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
 		this.shadowRepoBranchPath = this.pathUtils.getShadowRepoBranchPath();
 		this.deletedRepoBranchPath = this.pathUtils.getDeletedRepoBranchPath();
@@ -151,7 +149,7 @@ export class eventHandler {
 
 			if (lstat.isDirectory()) {
 				console.log(`DirectoryDeleted: ${itemPath}`);
-				handleDirectoryDeleteDiffs(this.repoPath, this.branch, relPath);
+				handleDirectoryDeleteDiffs(this.repoPath, relPath);
 			}
 			if (!lstat.isFile()) { return; }
 

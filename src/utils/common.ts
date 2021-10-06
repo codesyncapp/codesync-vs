@@ -5,10 +5,12 @@ import yaml from 'js-yaml';
 
 import {
 	COMMAND,
+	DEFAULT_BRANCH,
 	IGNORABLE_DIRECTORIES,
 	STATUS_BAR_MSGS,
 	SYNCIGNORE
 } from "../constants";
+import getBranchName from "current-git-branch";
 
 
 export const readFile = (filePath: string) => {
@@ -66,4 +68,8 @@ export const getSkipRepos = (repoPath: string, syncignoreItems: string[]) => {
 
 export const isEmpty = (obj: any) => {
     return Object.keys(obj).length === 0;
+};
+
+export const getBranch = (repoPath: string) => {
+	return getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
 };

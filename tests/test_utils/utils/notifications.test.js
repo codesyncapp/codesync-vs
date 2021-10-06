@@ -64,25 +64,3 @@ describe("askPublicPrivate",  () => {
         expect(vscode.window.showInformationMessage.mock.calls[0][3]).toStrictEqual(NOTIFICATION.PRIVATE);
     });
 });
-
-
-describe("askToUpdateSyncIgnore",  () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
-
-    test("New .syncignore",  async () => {
-        const selection = await askToUpdateSyncIgnore(false);
-        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.SYNC_IGNORE_CREATED);
-        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.OK);
-    });
-
-    test(".syncignore exists",  async () => {
-        const selection = await askToUpdateSyncIgnore(true);
-        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.UPDATE_SYNCIGNORE);
-        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.OK);
-    });
-
-});

@@ -383,7 +383,7 @@ describe("uploadRepo",  () => {
         fetchMock.mockResponseOnce(JSON.stringify({status: false}));
 
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
-            false, false, false, TEST_EMAIL);
+            false, TEST_EMAIL);
 
         // Verify file Ids have been added in config
         const config = readYML(configPath);
@@ -409,7 +409,7 @@ describe("uploadRepo",  () => {
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
-            false, false, false, TEST_EMAIL);
+            false, TEST_EMAIL);
 
         // Verify file Ids have been added in config
         const config = readYML(configPath);
@@ -423,6 +423,8 @@ describe("uploadRepo",  () => {
         users = readYML(userFilePath);
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_SYNCED);
     });
 
     test("repo Not In Config",  async () => {
@@ -437,9 +439,7 @@ describe("uploadRepo",  () => {
             .mockResponseOnce(JSON.stringify({status: true}))
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
-        await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
-            false, false, false,
-            TEST_EMAIL);
+        await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths, false, TEST_EMAIL);
 
         // Verify file Ids have been added in config
         const config = readYML(configPath);
@@ -453,6 +453,10 @@ describe("uploadRepo",  () => {
         users = readYML(userFilePath);
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
+        // Verify error msg
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_SYNCED);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
     });
 
     test("Error in uploadRepoToServer",  async () => {
@@ -470,8 +474,7 @@ describe("uploadRepo",  () => {
             .mockResponseOnce(null);
 
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
-            false, false, false,
-            TEST_EMAIL);
+            false, TEST_EMAIL);
 
         // Verify file Ids have been added in config
         const config = readYML(configPath);
