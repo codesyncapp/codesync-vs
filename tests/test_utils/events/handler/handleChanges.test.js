@@ -115,16 +115,21 @@ describe("handleChangeEvent",  () => {
         const config = {'repos': {}};
         config.repos[repoPath] = {'branches': {}};
         fs.writeFileSync(configPath, yaml.safeDump(config));
+
+        const document = {
+            fileName: filePath,
+            getText: function () {
+                return DUMMY_FILE_CONTENT;
+            }
+        };
         const handler = new eventHandler();
         const event = {
-            document: {
-                fileName: filePath,
-                getText: function () {
-                    return DUMMY_FILE_CONTENT;
-                }
-            },
+            document,
             contentChanges: [" Change "]
         };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+            document
+        });
         handler.handleChangeEvent(event);
         expect(fs.existsSync(shadowFilePath)).toBe(true);
         let diffFiles = fs.readdirSync(diffsRepo);
@@ -136,6 +141,31 @@ describe("handleChangeEvent",  () => {
         config.repos[repoPath] = {'branches': {}};
         fs.writeFileSync(configPath, yaml.safeDump(config));
         const handler = new eventHandler();
+        const event = {
+            document: {
+                fileName: ignorableFilePath,
+                getText: function () {
+                    return DUMMY_FILE_CONTENT;
+                }
+            },
+            contentChanges: [" Change "]
+        };
+        handler.handleChangeEvent(event);
+        expect(fs.existsSync(shadowFilePath)).toBe(false);
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+    });
+
+    test("Synced repo, Inactive Editor's document", () => {
+        const config = {'repos': {}};
+        config.repos[repoPath] = {'branches': {}};
+        fs.writeFileSync(configPath, yaml.safeDump(config));
+        const handler = new eventHandler();
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+            document: {
+                filePath: filePath
+            }
+        });
         const event = {
             document: {
                 fileName: ignorableFilePath,
@@ -177,16 +207,20 @@ describe("handleChangeEvent",  () => {
         const config = {'repos': {}};
         config.repos[repoPath] = {'branches': {}};
         fs.writeFileSync(configPath, yaml.safeDump(config));
+        const document = {
+            fileName: filePath,
+            getText: function () {
+                return updatedText;
+            }
+        };
         const handler = new eventHandler();
         const event = {
-            document: {
-                fileName: filePath,
-                getText: function () {
-                    return updatedText;
-                }
-            },
+            document,
             contentChanges: [" Change "]
         };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+            document
+        });
         handler.handleChangeEvent(event);
         // Read shadow file
         const shadowText = fs.readFileSync(shadowFilePath, "utf8");
