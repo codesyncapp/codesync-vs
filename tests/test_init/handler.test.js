@@ -4,19 +4,19 @@ import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from 'untildify';
 
-import {DEFAULT_BRANCH, GITIGNORE, NOTIFICATION} from "../../../src/constants";
+import {DEFAULT_BRANCH, GITIGNORE, NOTIFICATION} from "../../src/constants";
 import fetchMock from "jest-fetch-mock";
-import {initHandler} from "../../../src/init/init_handler";
+import {initHandler} from "../../src/init/init_handler";
 import {
     DUMMY_FILE_CONTENT,
     getConfigFilePath, getSeqTokenFilePath, getUserFilePath,
     INVALID_TOKEN_JSON,
     randomBaseRepoPath,
     randomRepoPath, TEST_EMAIL, TEST_REPO_RESPONSE, TEST_USER
-} from "../../helpers/helpers";
-import {SYNC_IGNORE_FILE_DATA} from "../../../src/constants";
-import {pathUtils} from "../../../src/utils/path_utils";
-import {readYML} from "../../../src/utils/common";
+} from "../helpers/helpers";
+import {SYNC_IGNORE_FILE_DATA} from "../../src/constants";
+import {pathUtils} from "../../src/utils/path_utils";
+import {readYML} from "../../src/utils/common";
 
 describe("initHandler",  () => {
     const baseRepoPath = randomBaseRepoPath();

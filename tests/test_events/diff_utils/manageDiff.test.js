@@ -1,13 +1,13 @@
 import fs from "fs";
 import path from "path";
 import untildify from "untildify";
-import {DATETIME_FORMAT, DEFAULT_BRANCH} from "../../../../src/constants";
-import {randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
-import {manageDiff} from "../../../../src/events/diff_utils";
+import {DATETIME_FORMAT, DEFAULT_BRANCH} from "../../../src/constants";
+import {randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
+import {manageDiff} from "../../../src/events/diff_utils";
 import dateFormat from "dateformat";
-import {readYML} from "../../../../src/utils/common";
-import {DIFF_SOURCE} from "../../../../src/constants";
-import {pathUtils} from "../../../../src/utils/path_utils";
+import {readYML} from "../../../src/utils/common";
+import {DIFF_SOURCE} from "../../../src/constants";
+import {pathUtils} from "../../../src/utils/path_utils";
 
 
 describe("manageDiff", () => {

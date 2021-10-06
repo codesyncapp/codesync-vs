@@ -1,11 +1,11 @@
 import fs from "fs";
 import path from "path";
 import untildify from "untildify";
-import {readYML} from "../../../../src/utils/common";
-import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../../src/constants";
-import {randomBaseRepoPath, randomRepoPath, waitFor} from "../../../helpers/helpers";
-import {handleDirectoryDeleteDiffs} from "../../../../src/events/diff_utils";
-import {pathUtils} from "../../../../src/utils/path_utils";
+import {readYML} from "../../../src/utils/common";
+import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../src/constants";
+import {randomBaseRepoPath, randomRepoPath, waitFor} from "../../helpers/helpers";
+import {handleDirectoryDeleteDiffs} from "../../../src/events/diff_utils";
+import {pathUtils} from "../../../src/utils/path_utils";
 
 
 describe("handleDirectoryDeleteDiffs", () => {

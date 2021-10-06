@@ -1,7 +1,7 @@
 import fs from "fs";
 import yaml from "js-yaml";
-import { isRepoActive, readYML } from "../../../../src/utils/common";
-import { getConfigFilePath, randomBaseRepoPath } from "../../../helpers/helpers";
+import { isRepoActive, readYML } from "../../../src/utils/common";
+import { getConfigFilePath, randomBaseRepoPath } from "../../helpers/helpers";
 
 const baseRepoPath = randomBaseRepoPath();
 const configPath = getConfigFilePath(baseRepoPath);

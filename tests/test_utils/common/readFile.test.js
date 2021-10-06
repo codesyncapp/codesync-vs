@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
-import { readFile } from "../../../../src/utils/common";
-import { randomRepoPath } from "../../../helpers/helpers";
+import { readFile } from "../../../src/utils/common";
+import { randomRepoPath } from "../../helpers/helpers";
 
 const repoPath = randomRepoPath();
 const filePath = path.join(repoPath, "empty.txt");

@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
-import { getSkipRepos, getSyncIgnoreItems } from "../../../../src/utils/common";
-import { getSyncIgnoreFilePath, randomRepoPath } from "../../../helpers/helpers";
-import { IGNORABLE_DIRECTORIES } from "../../../../src/constants";
+import { getSkipRepos, getSyncIgnoreItems } from "../../../src/utils/common";
+import { getSyncIgnoreFilePath, randomRepoPath } from "../../helpers/helpers";
+import { IGNORABLE_DIRECTORIES } from "../../../src/constants";
 
 
 describe("getSkipRepos",  () => {

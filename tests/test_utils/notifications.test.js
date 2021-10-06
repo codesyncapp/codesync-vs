@@ -3,9 +3,9 @@ import vscode from "vscode";
 import yaml from "js-yaml";
 import untildify from "untildify";
 
-import {getPublicPrivateMsg, NOTIFICATION} from "../../../src/constants";
-import {getUserFilePath, randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../../helpers/helpers";
-import {askPublicPrivate, askToUpdateSyncIgnore, showChooseAccount} from "../../../src/utils/notifications";
+import {getPublicPrivateMsg, NOTIFICATION} from "../../src/constants";
+import {getUserFilePath, randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../helpers/helpers";
+import {askPublicPrivate, askToUpdateSyncIgnore, showChooseAccount} from "../../src/utils/notifications";
 
 
 describe("showChooseAccount",  () => {
@@ -55,6 +55,7 @@ describe("askPublicPrivate",  () => {
     });
 
     test("askPublicPrivate",  async () => {
+
         await askPublicPrivate(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const msg = getPublicPrivateMsg(repoPath);

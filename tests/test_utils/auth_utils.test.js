@@ -9,17 +9,17 @@ import {
     createUser, isPortAvailable,
     logout,
     redirectToBrowser
-} from "../../../src/utils/auth_utils";
-import { Auth0URLs, NOTIFICATION } from "../../../src/constants";
+} from "../../src/utils/auth_utils";
+import { Auth0URLs, NOTIFICATION } from "../../src/constants";
 import {
     getUserFilePath,
     INVALID_TOKEN_JSON,
     randomBaseRepoPath,
     randomRepoPath,
     TEST_EMAIL
-} from "../../helpers/helpers";
-import { readYML } from "../../../src/utils/common";
-import { initExpressServer } from "../../../src/server/server";
+} from "../helpers/helpers";
+import { readYML } from "../../src/utils/common";
+import { initExpressServer } from "../../src/server/server";
 
 describe("isPortAvailable",  () => {
     test("random free port", async () => {

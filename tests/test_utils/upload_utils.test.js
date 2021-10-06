@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
 import fetchMock from "jest-fetch-mock";
-import {INVALID_TOKEN_JSON, PRE_SIGNED_URL, randomRepoPath, TEST_REPO_RESPONSE} from "../../helpers/helpers";
-import {uploadFile, uploadFileTos3, uploadFileToServer, uploadRepoToServer} from "../../../src/utils/upload_utils";
-import {DEFAULT_BRANCH} from "../../../src/constants";
+import {INVALID_TOKEN_JSON, PRE_SIGNED_URL, randomRepoPath, TEST_REPO_RESPONSE} from "../helpers/helpers";
+import {uploadFile, uploadFileTos3, uploadFileToServer, uploadRepoToServer} from "../../src/utils/upload_utils";
+import {DEFAULT_BRANCH} from "../../src/constants";
 
 
 describe('uploadRepoToServer', () => {

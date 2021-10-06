@@ -4,18 +4,18 @@ import vscode from "vscode";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
 
-import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../../src/constants";
+import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../src/constants";
 import {
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
     getSyncIgnoreFilePath,
     randomBaseRepoPath,
     randomRepoPath
-} from "../../../helpers/helpers";
-import {pathUtils} from "../../../../src/utils/path_utils";
-import {eventHandler} from "../../../../src/events/event_handler";
+} from "../../helpers/helpers";
+import {pathUtils} from "../../../src/utils/path_utils";
+import {eventHandler} from "../../../src/events/event_handler";
 import yaml from "js-yaml";
-import {readYML} from "../../../../src/utils/common";
+import {readYML} from "../../../src/utils/common";
 import {diff_match_patch} from "diff-match-patch";
 
 

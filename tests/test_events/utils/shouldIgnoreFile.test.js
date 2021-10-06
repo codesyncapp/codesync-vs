@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
-import {shouldIgnoreFile} from "../../../../src/events/utils";
-import {getSyncIgnoreFilePath, randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
-import {IGNORABLE_DIRECTORIES} from "../../../../src/constants";
+import {shouldIgnoreFile} from "../../../src/events/utils";
+import {getSyncIgnoreFilePath, randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
+import {IGNORABLE_DIRECTORIES} from "../../../src/constants";
 
 const baseRepoPath = randomBaseRepoPath();
 

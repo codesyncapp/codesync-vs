@@ -81,6 +81,10 @@ class PopulateBuffer {
     renamedFiles: string[];
     settings: any;
     initUtilsObj: any;
+    pathUtils: any;
+    shadowRepoBranchPath: string;
+    deletedRepoBranchPath: string;
+    originalsRepoBranchPath: string;
 
     constructor(repoPath: string, branch: string) {
         this.repoPath = repoPath;
@@ -95,6 +99,10 @@ class PopulateBuffer {
         const configRepo = this.config.repos[this.repoPath];
         this.configFiles = configRepo.branches[this.branch];
         this.renamedFiles = [];
+        this.pathUtils = new pathUtils(this.repoPath, this.branch);
+        this.shadowRepoBranchPath = this.pathUtils.getShadowRepoBranchPath();
+        this.deletedRepoBranchPath = this.pathUtils.getDeletedRepoBranchPath();
+        this.originalsRepoBranchPath = this.pathUtils.getOriginalsRepoBranchPath();
     }
 
     getModifiedInPast() {
@@ -110,9 +118,10 @@ class PopulateBuffer {
         return lastSyncedAt && lastSyncedAt >= this.repoModifiedAt;
     }
 
-    checkForRename(shadowRepoBranchPath: string, filePath: string) {
+    checkForRename(filePath: string) {
         // Check for rename only for non-empty files
         const repoPath = this.repoPath;
+        const shadowRepoBranchPath = this.shadowRepoBranchPath;
         let shadowFilePath = '';
         let matchingFilesCount = 0;
         const content = fs.readFileSync(filePath, "utf8");
@@ -167,18 +176,13 @@ class PopulateBuffer {
 
     async populateBufferForRepo() {
         const diffs = <any>{};
-
-        const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
-        const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-        const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-
         console.log(`Watching Repo: ${this.repoPath}`);
         for (const itemPath of this.itemPaths) {
             let diff = "";
             let previousContent = "";
             let isRename = false;
-            const shadowFilePath = path.join(shadowRepoBranchPath, itemPath.rel_path);
-            const originalFilePath = path.join(originalsRepoBranchPath, itemPath.rel_path);
+            const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
+            const originalFilePath = path.join(this.originalsRepoBranchPath, itemPath.rel_path);
             const shadowExists = fs.existsSync(shadowFilePath);
             // If rel_path is in configFiles, shadowExists & not is binary, we can compute diff
             if (itemPath.rel_path in this.configFiles && !itemPath.is_binary) {
@@ -198,9 +202,9 @@ class PopulateBuffer {
             }
             // If rel_path is not in configFiles and shadow does not exists, can be a rename OR deleted file
             if (!(itemPath.rel_path in this.configFiles) && !shadowExists && !itemPath.is_binary) {
-                const renameResult = this.checkForRename(shadowRepoBranchPath, itemPath.file_path);
+                const renameResult = this.checkForRename(itemPath.file_path);
                 if (renameResult.isRename) {
-                    const oldRelPath = renameResult.shadowFilePath.split(path.join(shadowRepoBranchPath, path.sep))[1];
+                    const oldRelPath = renameResult.shadowFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
                     const oldAbsPath = path.join(this.repoBranchPath, oldRelPath);
                     const newAbsPath = path.join(this.repoBranchPath, itemPath.rel_path);
                     isRename = oldRelPath !== itemPath.rel_path;
@@ -223,10 +227,10 @@ class PopulateBuffer {
             // For new file, copy it in .originals. If already exists there, skip it
             if (isNewFile) {
                 diff = "";
-                this.initUtilsObj.copyFilesTo([itemPath.file_path], originalsRepoBranchPath);
+                this.initUtilsObj.copyFilesTo([itemPath.file_path], this.originalsRepoBranchPath);
             }
             // Sync file in shadow repo with latest content
-            this.initUtilsObj.copyFilesTo( [itemPath.file_path], shadowRepoBranchPath);
+            this.initUtilsObj.copyFilesTo( [itemPath.file_path], this.shadowRepoBranchPath);
 
             // Add diff only if it is non-empty or it is new file in which case diff will probably be empty initially
             if (diff || isNewFile) {
@@ -264,17 +268,11 @@ class PopulateBuffer {
          - present in .shadow repo
         */
         const diffs = <any>{};
-
-        const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
-        const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-        const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
-
         const activeRelPaths = this.itemPaths.map(itemPath => itemPath.rel_path);
-
         Object.keys(this.configFiles).forEach(relPath => {
             // Cache path of file
-            const cacheFilePath = path.join(cacheRepoBranchPath, relPath);
-            const shadowFilePath = path.join(shadowRepoBranchPath, relPath);
+            const cacheFilePath = path.join(this.deletedRepoBranchPath, relPath);
+            const shadowFilePath = path.join(this.shadowRepoBranchPath, relPath);
             // See if should discard this file
             if (!this.initUtilsObj.isSyncAble(relPath) ||
                 activeRelPaths.includes(relPath) ||
@@ -288,7 +286,7 @@ class PopulateBuffer {
                 'is_deleted': true,
                 'diff': null,  // Computing later while handling buffer
             };
-            const cacheRepoPath = pathUtilsObj.getDeletedRepoPath();
+            const cacheRepoPath = this.pathUtils.getDeletedRepoPath();
             // Pick from .shadow and add file in .deleted repo to avoid duplicate diffs
             this.initUtilsObj.copyFilesTo( [shadowFilePath], cacheRepoPath, true);
         });

@@ -5,11 +5,11 @@ import vscode from "vscode";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
 
-import {readYML} from "../../../../src/utils/common";
-import {pathUtils} from "../../../../src/utils/path_utils";
-import {eventHandler} from "../../../../src/events/event_handler";
-import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../../src/constants";
-import {getConfigFilePath, randomBaseRepoPath, randomRepoPath, waitFor} from "../../../helpers/helpers";
+import {readYML} from "../../../src/utils/common";
+import {pathUtils} from "../../../src/utils/path_utils";
+import {eventHandler} from "../../../src/events/event_handler";
+import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../src/constants";
+import {getConfigFilePath, randomBaseRepoPath, randomRepoPath, waitFor} from "../../helpers/helpers";
 
 describe("handleRenameFile",  () => {
     /*

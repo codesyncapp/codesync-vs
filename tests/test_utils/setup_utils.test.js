@@ -3,9 +3,9 @@ import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
 
-import {getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
-import {createSystemDirectories, setupCodeSync, showConnectRepoView, showLogIn} from "../../../src/utils/setup_utils";
-import {getRepoInSyncMsg, NOTIFICATION} from "../../../src/constants";
+import {getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath} from "../helpers/helpers";
+import {createSystemDirectories, setupCodeSync, showConnectRepoView, showLogIn} from "../../src/utils/setup_utils";
+import {getRepoInSyncMsg, NOTIFICATION} from "../../src/constants";
 
 
 describe("createSystemDirectories",  () => {

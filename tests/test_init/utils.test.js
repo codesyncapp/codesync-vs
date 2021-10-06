@@ -4,7 +4,7 @@ import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from 'untildify';
 import getBranchName from 'current-git-branch';
-import {initUtils} from "../../../src/init/utils";
+import {initUtils} from "../../src/init/utils";
 
 import {
     ANOTHER_TEST_EMAIL,
@@ -16,12 +16,12 @@ import {
     USER_PLAN,
     randomBaseRepoPath,
     randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, getSeqTokenFilePath
-} from "../../helpers/helpers";
-import {DEFAULT_BRANCH, NOTIFICATION, SYNCIGNORE} from "../../../src/constants";
-import {readYML} from "../../../src/utils/common";
+} from "../helpers/helpers";
+import {DEFAULT_BRANCH, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
+import {readYML} from "../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {isBinaryFileSync} from "isbinaryfile";
-import {pathUtils} from "../../../src/utils/path_utils";
+import {pathUtils} from "../../src/utils/path_utils";
 
 
 describe("isValidRepoSize",  () => {

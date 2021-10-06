@@ -12,7 +12,7 @@ import {
     handleNewFileUpload,
     isValidDiff,
     similarity
-} from "../../../src/codesyncd/utils";
+} from "../../src/codesyncd/utils";
 import {
     DIFF_DATA,
     DUMMY_FILE_CONTENT, getConfigFilePath, getSeqTokenFilePath, getUserFilePath,
@@ -20,10 +20,10 @@ import {
     PRE_SIGNED_URL,
     randomBaseRepoPath,
     randomRepoPath
-} from "../../helpers/helpers";
-import {DEFAULT_BRANCH} from "../../../src/constants";
-import {readYML} from "../../../src/utils/common";
-import {pathUtils} from "../../../src/utils/path_utils";
+} from "../helpers/helpers";
+import {DEFAULT_BRANCH} from "../../src/constants";
+import {readYML} from "../../src/utils/common";
+import {pathUtils} from "../../src/utils/path_utils";
 
 
 describe("isValidDiff",  () => {

@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
-import { readYML } from "../../../../src/utils/common";
-import { randomRepoPath } from "../../../helpers/helpers";
+import { readYML } from "../../../src/utils/common";
+import { randomRepoPath } from "../../helpers/helpers";
 
 const repoPath = randomRepoPath();
 const filePath = path.join(repoPath, "test.yml");

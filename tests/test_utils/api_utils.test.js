@@ -2,8 +2,8 @@ import fs from "fs";
 import yaml from "js-yaml";
 import untildify from "untildify";
 import fetchMock from "jest-fetch-mock";
-import {checkServerDown, createUserWithApi, getUserForToken} from "../../../src/utils/api_utils";
-import {getSeqTokenFilePath, getUserFilePath, INVALID_TOKEN_JSON, randomBaseRepoPath} from "../../helpers/helpers";
+import {checkServerDown, createUserWithApi, getUserForToken} from "../../src/utils/api_utils";
+import {getSeqTokenFilePath, getUserFilePath, INVALID_TOKEN_JSON, randomBaseRepoPath} from "../helpers/helpers";
 
 
 describe('checkServerDown', () => {

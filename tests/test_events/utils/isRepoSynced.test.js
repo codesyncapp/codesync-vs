@@ -1,8 +1,8 @@
 import fs from "fs";
 import yaml from "js-yaml";
 import untildify from "untildify";
-import {isRepoSynced} from "../../../../src/events/utils";
-import {getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../../../helpers/helpers";
+import {isRepoSynced} from "../../../src/events/utils";
+import {getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
 
 
 describe("repoIsNotSynced", () => {

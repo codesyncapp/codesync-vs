@@ -1,5 +1,5 @@
 import fetchMock from "jest-fetch-mock";
-import { updateRepo} from "../../../src/utils/sync_repo_utils";
+import { updateRepo} from "../../src/utils/sync_repo_utils";
 
 
 describe('updateRepo', () => {

@@ -1,6 +1,6 @@
 import vscode from "vscode";
-import {updateStatusBarItem} from "../../../../src/utils/common";
-import {COMMAND, STATUS_BAR_MSGS} from "../../../../src/constants";
+import {updateStatusBarItem} from "../../../src/utils/common";
+import {COMMAND, STATUS_BAR_MSGS} from "../../../src/constants";
 
 const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 
