@@ -34,6 +34,13 @@ export class eventHandler {
 
 	handleChangeEvent = (changeEvent: vscode.TextDocumentChangeEvent) => {
 		if (this.repoIsNotSynced) return;
+		// If you only care about changes to the active editor's text,
+		//  just check to see if changeEvent.document matches the active editor's document.
+		const editor = vscode.window.activeTextEditor;
+		if (!editor || editor.document !== changeEvent.document) {
+			console.log("Skipping InActive Editor's document");
+			return;
+		}
 		const filePath = pathUtils.normalizePath(changeEvent.document.fileName);
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
 		// Skip .git and .syncignore files
