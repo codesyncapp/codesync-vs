@@ -196,6 +196,7 @@ describe("copyFilesTo",  () => {
     untildify.mockReturnValue(baseRepoPath);
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
     const shadowRepo = pathUtilsObj.getShadowRepoPath();
+    const deletedRepo = pathUtilsObj.getDeletedRepoPath();
 
     beforeEach(() => {
         fs.mkdirSync(repoPath, {recursive: true});
@@ -214,6 +215,18 @@ describe("copyFilesTo",  () => {
         const initUtilsObj = new initUtils(repoPath);
         initUtilsObj.copyFilesTo([filePath], shadowRepo);
         expect(fs.existsSync(path.join(shadowRepo, "file.js"))).toBe(true);
+    });
+
+    test("Copy from .shadow to .deleted repo",  () => {
+        // Copy to shadow
+        const initUtilsObj = new initUtils(repoPath);
+        initUtilsObj.copyFilesTo([filePath], shadowRepo);
+        const shadowFilePath = path.join(shadowRepo, "file.js");
+        const deletedFilePath = path.join(deletedRepo, "file.js");
+        expect(fs.existsSync(shadowFilePath)).toBe(true);
+        // Copy to .originals
+        initUtilsObj.copyFilesTo([shadowFilePath], deletedRepo, true);
+        expect(fs.existsSync(deletedFilePath)).toBe(true);
     });
 
     test("Copy non-existing file",  () => {

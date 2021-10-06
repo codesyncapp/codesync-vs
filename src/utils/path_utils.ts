@@ -12,7 +12,7 @@ export class pathUtils {
 
     constructor(repoPath: string, branch: string) {
         this.repoPath = repoPath;
-        this.formattedRepoPath = this.formatRepoPath();
+        this.formattedRepoPath = pathUtils.formatRepoPath(repoPath);
         this.branch = branch;
         this.settings = generateSettings();
     }
@@ -33,8 +33,8 @@ export class pathUtils {
         return itemPath;
     };
 
-    formatRepoPath = () => {
-        return this.repoPath.replace(":", "");
+    static formatRepoPath = (repoPath: string) => {
+        return repoPath.replace(":", "");
     };
 
     getOriginalsRepoPath = () => {

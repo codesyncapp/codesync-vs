@@ -23,9 +23,9 @@ export class initUtils {
 	settings: any;
 
 	constructor(repoPath: string, viaDaemon= false) {
-		this.settings = generateSettings();
 		this.repoPath = repoPath;
 		this.viaDaemon = viaDaemon;
+		this.settings = generateSettings();
 	}
 
 	isValidRepoSize (syncSize: number, userPlan: IUserPlan)  {
@@ -113,9 +113,10 @@ export class initUtils {
 		return limitReached ? [] : itemPaths;
 	}
 
-	copyFilesTo (filePaths: string[], destination: string) {
+	copyFilesTo(filePaths: string[], destination: string, useFormattedRepoPath = false) {
 		filePaths.forEach((filePath) => {
-			const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
+			const repoPath = useFormattedRepoPath ? pathUtils.formatRepoPath(this.repoPath): this.repoPath;
+			const relPath = filePath.split(path.join(repoPath, path.sep))[1];
 			const destinationPath = path.join(destination, relPath);
 			const directories = path.dirname(destinationPath);
 			if (!fs.existsSync(directories)) {
