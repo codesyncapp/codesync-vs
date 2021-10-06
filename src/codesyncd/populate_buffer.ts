@@ -2,17 +2,9 @@ import fs from "fs";
 import path from "path";
 import walk from "walk";
 import dateFormat from "dateformat";
-import getBranchName from "current-git-branch";
 import ignore from "ignore";
 import {isBinaryFileSync} from "isbinaryfile";
 
-import { getSkipRepos, getSyncIgnoreItems, readYML } from "../utils/common";
-import {
-    DATETIME_FORMAT,
-    DEFAULT_BRANCH,
-    FILE_SIZE_AS_COPY,
-    SEQUENCE_MATCHER_RATIO
-} from "../constants";
 import {putLogEvent} from "../logger";
 import {initUtils} from "../init/utils";
 import {IFileToUpload, IUserPlan} from "../interface";
@@ -22,6 +14,17 @@ import {diff_match_patch} from "diff-match-patch";
 import {manageDiff} from "../events/diff_utils";
 import {generateSettings} from "../settings";
 import {pathUtils} from "../utils/path_utils";
+import {
+    getBranch,
+    getSkipRepos,
+    getSyncIgnoreItems,
+    readYML
+} from "../utils/common";
+import {
+    DATETIME_FORMAT,
+    FILE_SIZE_AS_COPY,
+    SEQUENCE_MATCHER_RATIO
+} from "../constants";
 
 
 export const populateBuffer = async () => {
@@ -322,7 +325,7 @@ export const detectBranchChange = async () => {
             putLogEvent(`Access token not found for repo: ${repoPath}, ${userEmail}`, userEmail);
             continue;
         }
-        const branch = getBranchName({altPath: repoPath}) || DEFAULT_BRANCH;
+        const branch = getBranch(repoPath);
         const pathUtilsObj = new pathUtils(repoPath, branch);
 
         const shadowRepo = pathUtilsObj.getShadowRepoPath();

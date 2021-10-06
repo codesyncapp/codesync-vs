@@ -1,10 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import vscode from 'vscode';
-import getBranchName from 'current-git-branch';
 
 import {
-	DEFAULT_BRANCH,
 	GITIGNORE,
 	NOTIFICATION,
 	SYNC_IGNORE_FILE_DATA,
@@ -13,11 +11,11 @@ import {
 import { initUtils } from './utils';
 import { IUser, IUserPlan } from '../interface';
 import { generateSettings } from "../settings";
+import { pathUtils } from "../utils/path_utils";
+import { askPublicPrivate } from '../utils/notifications';
 import { askAndTriggerSignUp } from '../utils/auth_utils';
 import { checkServerDown, getUserForToken } from "../utils/api_utils";
-import { isRepoActive, readFile, readYML } from "../utils/common";
-import { askPublicPrivate } from '../utils/notifications';
-import { pathUtils } from "../utils/path_utils";
+import { getBranch, isRepoActive, readFile, readYML } from "../utils/common";
 
 export class initHandler {
 	repoPath: string;
@@ -54,7 +52,7 @@ export class initHandler {
 		}
 
 		const settings = generateSettings();
-		const branch = getBranchName({ altPath: this.repoPath }) || DEFAULT_BRANCH;
+		const branch = getBranch(this.repoPath);
 		const configJSON = readYML(settings.CONFIG_PATH);
 		const isRepoSynced = isRepoActive(configJSON, this.repoPath);
 

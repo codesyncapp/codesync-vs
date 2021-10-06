@@ -45,27 +45,30 @@ export async function activate(context: vscode.ExtensionContext) {
 		console.log(`Configured repo: ${repoPath}`);
 	}
 
-	const handler = new eventHandler();
-
 	const watcher = vscode.workspace.createFileSystemWatcher("**/*"); //glob search string
 
 	watcher.onDidCreate((e) => {
+		const handler = new eventHandler();
 		handler.handlePastedFile(e.fsPath);
 	});
 
 	vscode.workspace.onDidChangeTextDocument(changeEvent => {
+		const handler = new eventHandler();
 		handler.handleChangeEvent(changeEvent);
 	});
 
 	vscode.workspace.onDidCreateFiles(changeEvent => {
+		const handler = new eventHandler();
 		handler.handleFilesCreated(changeEvent);
 	});
 
 	vscode.workspace.onDidDeleteFiles(changeEvent => {
+		const handler = new eventHandler();
 		handler.handleFilesDeleted(changeEvent);
 	});
 
 	vscode.workspace.onDidRenameFiles(changeEvent => {
+		const handler = new eventHandler();
 		handler.handleRenameEvent(changeEvent);
 	});
 

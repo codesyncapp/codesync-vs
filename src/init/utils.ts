@@ -5,20 +5,17 @@ import yaml from 'js-yaml';
 import vscode from 'vscode';
 import ignore from 'ignore';
 import parallel from "run-parallel";
-import getBranchName from 'current-git-branch';
 import { isBinaryFileSync } from 'isbinaryfile';
-import {
-	DEFAULT_BRANCH,
-	NOTIFICATION
-} from '../constants';
-import { IFileToUpload, IUserPlan } from '../interface';
-import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems } from '../utils/common';
-import { checkServerDown } from '../utils/api_utils';
+
 import { putLogEvent } from '../logger';
-import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
-import { trackRepoHandler } from '../handlers/commands_handler';
+import { NOTIFICATION } from '../constants';
 import { generateSettings } from "../settings";
 import { pathUtils } from '../utils/path_utils';
+import { checkServerDown } from '../utils/api_utils';
+import { IFileToUpload, IUserPlan } from '../interface';
+import { trackRepoHandler } from '../handlers/commands_handler';
+import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
+import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems, getBranch } from '../utils/common';
 
 export class initUtils {
 	repoPath: string;
@@ -54,7 +51,7 @@ export class initUtils {
 			return false;
 		}
 		const configRepo = config.repos[this.repoPath];
-		const branch = getBranchName({ altPath: this.repoPath }) || DEFAULT_BRANCH;
+		const branch = getBranch(this.repoPath);
 		// If branch is not synced, daemon will take care of that
 		if (!(branch in configRepo.branches)) { return true; }
 		const configFiles = configRepo.branches[branch];

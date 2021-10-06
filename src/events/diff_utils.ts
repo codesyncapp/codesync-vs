@@ -10,6 +10,7 @@ import {
 } from "../constants";
 import {generateSettings} from "../settings";
 import {pathUtils} from "../utils/path_utils";
+import {getBranch} from "../utils/common";
 
 
 export function manageDiff(repoPath: string, branch: string, fileRelPath: string, diff: string,
@@ -70,8 +71,8 @@ export const handleDirectoryRenameDiffs = async (repoPath: string, branch: strin
 	});
 };
 
-export const handleDirectoryDeleteDiffs = async (
-	repoPath: string, branch: string, dirRelPath: string) => {
+export const handleDirectoryDeleteDiffs = async (repoPath: string, dirRelPath: string) => {
+	const branch = getBranch(repoPath);
 	const pathUtilsObj = new pathUtils(repoPath, branch);
 	const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
 	const shadowDirPath = path.join(shadowRepoBranchPath, dirRelPath);

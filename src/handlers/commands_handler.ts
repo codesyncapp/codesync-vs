@@ -2,14 +2,12 @@ import fs from "fs";
 import path from "path";
 import vscode from 'vscode';
 import yaml from "js-yaml";
-import getBranchName from 'current-git-branch';
 
 import {
-	DEFAULT_BRANCH,
 	getRepoInSyncMsg,
 	NOTIFICATION
 } from '../constants';
-import { isRepoActive, readYML } from '../utils/common';
+import { getBranch, isRepoActive, readYML } from '../utils/common';
 import { isRepoSynced } from '../events/utils';
 import { initUtils } from '../init/utils';
 import { redirectToBrowser } from "../utils/auth_utils";
@@ -94,7 +92,7 @@ export const trackFileHandler = () => {
 	const settings = generateSettings();
 	const config = readYML(settings.CONFIG_PATH);
 	const configRepo = config['repos'][repoPath];
-	const branch = getBranchName({altPath: repoPath}) || DEFAULT_BRANCH;
+	const branch = getBranch(repoPath);
 	const configFiles = configRepo.branches[branch];
 	const relPath = filePath.split(path.join(repoPath, path.sep))[1];
 	if (!(relPath in configFiles )) { return; }
