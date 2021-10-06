@@ -89,7 +89,7 @@ export const setupCodeSync = async (repoPath: string) => {
 
 	if (showConnectRepoView(repoPath)) {
 		// Show notification to user to Sync the repo
-		showConnectRepo(repoPath, "", "");
+		showConnectRepo(repoPath);
 		return port;
 	}
 
