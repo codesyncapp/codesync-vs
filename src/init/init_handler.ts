@@ -117,6 +117,6 @@ export class initHandler {
 		const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
 		initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
 		// Upload repo/branch
-		await initUtilsObj.uploadRepo(branch, this.accessToken, itemPaths, isPublic, user.email);
+		await initUtilsObj.uploadRepo(branch, this.accessToken, itemPaths, user.email, isPublic);
 	};
 }

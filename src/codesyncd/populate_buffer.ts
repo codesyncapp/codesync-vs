@@ -17,7 +17,7 @@ import {pathUtils} from "../utils/path_utils";
 import {
     getBranch,
     getSkipRepos,
-    getSyncIgnoreItems,
+    getSyncIgnoreItems, isEmpty,
     readYML
 } from "../utils/common";
 import {
@@ -298,25 +298,18 @@ export const detectBranchChange = async () => {
     /*
     * See if repo is in config.yml and is active
     * Check if associated user has an access token
-    *
-    * */
-    // Read config.json
+    */
     const settings = generateSettings();
-
     const configJSON = readYML(settings.CONFIG_PATH);
     const users = readYML(settings.USER_PATH) || {};
     const readyRepos = <any>{};
     for (const repoPath of Object.keys(configJSON.repos)) {
-        if (configJSON.repos[repoPath].is_disconnected) {
-            continue;
-        }
+
+        if (configJSON.repos[repoPath].is_disconnected) continue;
+
         const configRepo = configJSON.repos[repoPath];
-        if (!configRepo.email) {
-            continue;
-        }
-        if (!(configRepo.email in users)) {
-            continue;
-        }
+        if (!(configRepo.email in users)) continue;
+
         const accessToken = users[configRepo.email].access_token;
         const userEmail = configRepo.email;
         if (!accessToken) {
@@ -332,28 +325,32 @@ export const detectBranchChange = async () => {
             // TODO: Handle out of sync repo
             continue;
         }
+
         const initUtilsObj = new initUtils(repoPath, true);
 
-        const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-        const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
-        if (!(branch in configRepo.branches)) {
-            if (originalsRepoExists) {
-                // init has been called, now see if we can upload the repo/branch
+        if (branch in configRepo.branches) {
+            const configFiles = configRepo['branches'][branch];
+            if (isEmpty(configFiles)) continue;
+            // If all files IDs are None in config.yml, we need to sync the branch
+            const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
+            if (shouldSyncBranch) {
                 const itemPaths = initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
-                await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, false, configRepo.email);
-            } else {
-                const handler = new initHandler(repoPath, accessToken, true);
-                await handler.syncRepo();
+                await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
             }
+            readyRepos[repoPath] = branch;
             continue;
         }
+        // Need to sync the branch
+        const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+        const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
 
-        const configFiles = configRepo['branches'][branch];
-        // If all files IDs are None in config.yml, we need to sync the branch
-        const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
-        if (shouldSyncBranch) {
+        if (originalsRepoExists) {
+            // init has been called, now see if we can upload the repo/branch
             const itemPaths = initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
-            await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, false, configRepo.email);
+            await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
+        } else {
+            const handler = new initHandler(repoPath, accessToken, true);
+            await handler.syncRepo();
         }
         readyRepos[repoPath] = branch;
     }

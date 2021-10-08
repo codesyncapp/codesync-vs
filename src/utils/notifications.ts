@@ -65,6 +65,7 @@ export const showChooseAccount = async (repoPath: string) => {
 	const user = validUsers[0];
 	const handler = new initHandler(repoPath, user.access_token);
 	await handler.syncRepo();
+	return handler;
 	// TODO: Option to choose different account
 	// const emails = validUsers.map(account => account.email);
 	// const options = [...emails, NOTIFICATION.USE_DIFFERENT_ACCOUNT];

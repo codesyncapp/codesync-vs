@@ -226,7 +226,7 @@ export class initUtils {
 	}
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
-					isPublic=false, userEmail?: string) {
+					userEmail: string, isPublic=false) {
 		const repoName = path.basename(this.repoPath);
 		const configJSON = readYML(this.settings.CONFIG_PATH);
 		const repoInConfig = isRepoActive(configJSON, this.repoPath);
@@ -243,7 +243,10 @@ export class initUtils {
 		});
 
 		if (!repoInConfig) {
-			configJSON.repos[this.repoPath] = {branches: {}};
+			configJSON.repos[this.repoPath] = {
+				branches: {},
+				email: userEmail
+			};
 			configJSON.repos[this.repoPath].branches[branch] = branchFiles;
 			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
 		} else if (!(branch in configJSON.repos[this.repoPath].branches)) {

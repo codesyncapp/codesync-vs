@@ -128,7 +128,8 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 			const configRepo = configJSON.repos[diffData.repo_path];
 
 			if (!(diffData.branch in configRepo.branches)) {
-				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`, configRepo.email);
+				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`,
+					configRepo.email);
 			}
 
 			// Group diffs by repo_path

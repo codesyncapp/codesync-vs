@@ -396,7 +396,7 @@ describe("uploadRepo",  () => {
         fetchMock.mockResponseOnce(JSON.stringify({status: false}));
 
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
-            false, TEST_EMAIL);
+            TEST_EMAIL, false);
 
         // Verify file Ids have been added in config
         const config = readYML(configPath);
@@ -422,7 +422,7 @@ describe("uploadRepo",  () => {
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
-            false, TEST_EMAIL);
+            TEST_EMAIL, false);
 
         // Verify file Ids have been added in config
         const config = readYML(configPath);
@@ -452,7 +452,8 @@ describe("uploadRepo",  () => {
             .mockResponseOnce(JSON.stringify({status: true}))
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
-        await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths, false, TEST_EMAIL);
+        await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
+            TEST_EMAIL, false);
 
         // Verify file Ids have been added in config
         const config = readYML(configPath);
@@ -487,7 +488,7 @@ describe("uploadRepo",  () => {
             .mockResponseOnce(null);
 
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
-            false, TEST_EMAIL);
+            TEST_EMAIL, false);
 
         // Verify file Ids have been added in config
         const config = readYML(configPath);
