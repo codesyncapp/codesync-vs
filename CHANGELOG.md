@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.29.17 Unreleased] - 2021-10-
 ### Added
 - Added unit tests for detectBranchChange
+- Refactored populateBuffer with event based approach
+- Added tests for populateBuffer
 
 ## [2.29.16] - 2021-10-07
 ### Changed

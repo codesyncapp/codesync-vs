@@ -21,7 +21,6 @@ import {
 } from "../utils/common";
 import {
     DATETIME_FORMAT,
-    FILE_SIZE_AS_COPY,
     SEQUENCE_MATCHER_RATIO
 } from "../constants";
 import {eventHandler} from "../events/event_handler";
@@ -119,9 +118,7 @@ class PopulateBuffer {
     }
 
     async populateBufferForRepo() {
-        const diffs = <any>{};
         console.log(`Watching Repo: ${this.repoPath}`);
-        console.log(this.itemPaths);
         for (const itemPath of this.itemPaths) {
             let isRename = false;
             const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
@@ -163,7 +160,6 @@ class PopulateBuffer {
             // If not handled in changesHandler and renameHandler, it must be new file
             handler.handleNewFile(itemPath.file_path);
         }
-        return diffs;
     }
 
     checkForRename(filePath: string) {
@@ -231,7 +227,6 @@ class PopulateBuffer {
          - not present in .deleted repo
          - present in .shadow repo
         */
-        const diffs = <any>{};
         const activeRelPaths = this.itemPaths.map(itemPath => itemPath.rel_path);
         Object.keys(this.configFiles).forEach(relPath => {
             // Cache path of file
@@ -249,7 +244,6 @@ class PopulateBuffer {
             const handler = new eventHandler(this.repoPath);
             handler.handleDelete(filePath);
         });
-        return diffs;
     }
 }
 
