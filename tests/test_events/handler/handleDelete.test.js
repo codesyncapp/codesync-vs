@@ -11,7 +11,7 @@ import {eventHandler} from "../../../src/events/event_handler";
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../src/constants";
 import {getConfigFilePath, randomBaseRepoPath, randomRepoPath, waitFor} from "../../helpers/helpers";
 
-describe("handleFilesDeleted",  () => {
+describe("handleDeletedEvent",  () => {
     /*
      {
         source: 'vs-code',
@@ -81,7 +81,7 @@ describe("handleFilesDeleted",  () => {
             }]
         };
         const handler = new eventHandler();
-        handler.handleFilesDeleted(event);
+        handler.handleDeleteEvent(event);
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -99,7 +99,7 @@ describe("handleFilesDeleted",  () => {
             }]
         };
         const handler = new eventHandler();
-        handler.handleFilesDeleted(event);
+        handler.handleDeleteEvent(event);
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -118,7 +118,7 @@ describe("handleFilesDeleted",  () => {
             }]
         };
         const handler = new eventHandler();
-        handler.handleFilesDeleted(event);
+        handler.handleDeleteEvent(event);
         // Verify that file is copied to .delete directory
         expect(fs.existsSync(cacheFilePath)).toBe(true);
         // Verify correct diff file has been generated
@@ -150,7 +150,7 @@ describe("handleFilesDeleted",  () => {
             }]
         };
         const handler = new eventHandler();
-        handler.handleFilesDeleted(event);
+        handler.handleDeleteEvent(event);
         // Verify that file is not copied to .delete directory
         expect(fs.existsSync(cacheFilePath)).toBe(false);
         // Verify correct diff file has been generated
@@ -173,7 +173,7 @@ describe("handleFilesDeleted",  () => {
             }]
         };
         const handler = new eventHandler();
-        handler.handleFilesDeleted(event);
+        handler.handleDeleteEvent(event);
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -192,7 +192,7 @@ describe("handleFilesDeleted",  () => {
             }]
         };
         const handler = new eventHandler();
-        handler.handleFilesDeleted(event);
+        handler.handleDeleteEvent(event);
         await waitFor(1);
         // Verify that file is copied to .delete directory
         expect(fs.existsSync(cacheDirectoryPath)).toBe(true);
@@ -214,3 +214,81 @@ describe("handleFilesDeleted",  () => {
         expect(diffData.diff).toEqual("");
     });
 });
+
+describe("handleDirectoryDeleteDiffs", () => {
+    /*
+     {
+        source: 'vs-code',
+        created_at: '2021-08-26 18:59:51.954',
+        diff: '{"old_abs_path":"tests/tests_data/test_repo_sNIVUqukDv/old.js","new_abs_path":"tests/tests_data/test_repo_sNIVUqukDv/new.js","old_rel_path":"old.js","new_rel_path":"new.js"}',
+        repo_path: 'tests/tests_data/test_repo_sNIVUqukDv',
+        branch: 'default',
+        file_relative_path: 'new.js',
+        is_deleted: true
+      }
+    * */
+
+    const repoPath = randomRepoPath();
+    const baseRepoPath = randomBaseRepoPath();
+
+    untildify.mockReturnValue(baseRepoPath);
+
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const diffsRepo = pathUtilsObj.getDiffsRepo();
+    const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+    const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
+
+    const shadowDirectoryPath = path.join(shadowRepoBranchPath, "directory");
+    const shadowFilePath = path.join(shadowDirectoryPath, "file.js");
+    const relFilePath = path.join("directory", "file.js");
+    const cacheFilePath = path.join(cacheRepoBranchPath, relFilePath);
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
+        fs.mkdirSync(repoPath, { recursive: true });
+        fs.mkdirSync(diffsRepo, { recursive: true });
+        fs.mkdirSync(shadowDirectoryPath, { recursive: true });
+        fs.writeFileSync(shadowFilePath, "use babel;");
+    });
+
+    afterEach(() => {
+        fs.rmSync(repoPath, { recursive: true, force: true });
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
+    });
+
+    test("NOT in .deleted",  async () => {
+        const handler = new eventHandler(repoPath);
+        handler.handleDirectoryDeleteDiffs("directory");
+        await waitFor(1);
+        // Verify file has been renamed in the shadow repo
+        expect(fs.existsSync(cacheFilePath)).toBe(true);
+        // Verify correct diff file has been generated
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(1);
+        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
+        const diffData = readYML(diffFilePath);
+        expect(diffData.source).toEqual(DIFF_SOURCE);
+        expect(diffData.is_deleted).toBe(true);
+        expect(diffData.is_rename).toBeFalsy();
+        expect(diffData.is_new_file).toBeFalsy();
+        expect(diffData.created_at).toBeTruthy();
+        expect(diffData.repo_path).toEqual(repoPath);
+        expect(diffData.branch).toEqual(DEFAULT_BRANCH);
+        expect(diffData.file_relative_path).toEqual(relFilePath);
+        expect(diffData.diff).toEqual("");
+    });
+
+    test("with file already in .deleted",  async () => {
+        fs.mkdirSync(path.join(cacheRepoBranchPath, "directory"), { recursive: true });
+        fs.writeFileSync(cacheFilePath, "use babel;");
+        const handler = new eventHandler(repoPath);
+        handler.handleDirectoryDeleteDiffs("directory");
+        await waitFor(1);
+        // Verify correct diff file has been generated
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+    });
+
+});
+

@@ -1,29 +1,39 @@
 import fs from 'fs';
 import path from 'path';
+import walk from "walk";
+import yaml from "js-yaml";
 import vscode from 'vscode';
-import { diff_match_patch } from 'diff-match-patch';
+import dateFormat from "dateformat";
+
+import { IDiff } from "../interface";
+import { initUtils } from "../init/utils";
+import { getBranch } from "../utils/common";
+import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
+import { diff_match_patch } from 'diff-match-patch';
+import { DATETIME_FORMAT, DIFF_SOURCE } from "../constants";
 import { isRepoSynced, shouldIgnoreFile } from './utils';
-import {
-	handleDirectoryDeleteDiffs,
-	handleDirectoryRenameDiffs,
-	manageDiff
-} from './diff_utils';
-import {getBranch} from "../utils/common";
 
 
 export class eventHandler {
 	repoPath: string;
 	branch: string;
-	settings: any;
 	repoIsNotSynced: boolean;
 	pathUtils: any;
 	shadowRepoBranchPath: string;
 	deletedRepoBranchPath: string;
 	originalsRepoBranchPath: string
 
-	constructor() {
-		this.repoPath = pathUtils.getRootPath();
+	// Diff props
+	isNewFile = false;
+	isRename = false;
+	isDelete = false;
+	createdAt = '';
+	settings = generateSettings();
+
+	constructor(repoPath="", createdAt="") {
+		this.createdAt = createdAt;
+		this.repoPath = repoPath || pathUtils.getRootPath();
 		this.repoIsNotSynced = !isRepoSynced(this.repoPath);
 		this.branch = getBranch(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
@@ -31,6 +41,32 @@ export class eventHandler {
 		this.deletedRepoBranchPath = this.pathUtils.getDeletedRepoBranchPath();
 		this.originalsRepoBranchPath = this.pathUtils.getOriginalsRepoBranchPath();
 	}
+
+	addDiff = (relPath: string, diffs: any) => {
+		// Skip empty diffs
+		if (!diffs && !this.isNewFile && !this.isDelete) {
+			console.log(`addDiff: Skipping empty diffs`);
+			return;
+		}
+		if (!this.createdAt) {
+			this.createdAt = dateFormat(new Date(), DATETIME_FORMAT);
+		}
+		// Add new diff in the buffer
+		const newDiff = <IDiff>{};
+		newDiff.source = DIFF_SOURCE;
+		newDiff.repo_path = this.repoPath;
+		newDiff.branch = this.branch;
+		newDiff.file_relative_path = relPath;
+		newDiff.diff = diffs;
+		newDiff.is_new_file = this.isNewFile;
+		newDiff.is_rename = this.isRename;
+		newDiff.is_deleted = this.isDelete;
+		newDiff.created_at = this.createdAt;
+		// Append new diff in the buffer
+		const diffFileName = `${new Date().getTime()}.yml`;
+		const diffFilePath = path.join(this.settings.DIFFS_REPO, diffFileName);
+		fs.writeFileSync(diffFilePath, yaml.safeDump(newDiff));
+	};
 
 	handleChangeEvent = (changeEvent: vscode.TextDocumentChangeEvent) => {
 		if (this.repoIsNotSynced) return;
@@ -42,40 +78,42 @@ export class eventHandler {
 			return;
 		}
 		const filePath = pathUtils.normalizePath(changeEvent.document.fileName);
+		if (!changeEvent.contentChanges.length) return;
+		const currentText = changeEvent.document.getText();
+		this.handleChanges(filePath, currentText);
+	}
+
+	handleChanges = (filePath: string, currentText: string, viaDaemon=false) => {
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
 		// Skip .git and .syncignore files
 		if (shouldIgnoreFile(this.repoPath, relPath)) return;
-		if (!changeEvent.contentChanges.length) return;
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
 		if (!fs.existsSync(shadowPath)) {
-			// Creating shadow file if shadow does not exist somehow
-			const destShadowBasePath = path.dirname(shadowPath);
-			// Add file in shadow repo
-			fs.mkdirSync(destShadowBasePath, {recursive: true});
-			// File destination will be created or overwritten by default.
-			fs.copyFileSync(filePath, shadowPath);
+			const initUtilsObj = new initUtils(this.repoPath);
+			initUtilsObj.copyFilesTo([filePath], this.shadowRepoBranchPath);
 			return;
 		}
-		const text = changeEvent.document.getText();
 		// Read shadow file
 		const shadowText = fs.readFileSync(shadowPath, "utf8");
 		// If shadow text is same as current content, no need to compute diffs
-		if (shadowText === text) {
-			console.log(`Skipping: Shadow is same as text`);
+		if (shadowText === currentText) {
+			if (!viaDaemon) {
+				console.log(`Skipping handleChanges: Shadow is same as text`);
+			}
 			return;
 		}
 		// Update shadow file
-		fs.writeFileSync(shadowPath, text);
+		fs.writeFileSync(shadowPath, currentText);
 		// Compute diffs
 		const dmp = new diff_match_patch();
-		const patches = dmp.patch_make(shadowText, text);
+		const patches = dmp.patch_make(shadowText, currentText);
 		//  Create text representation of patches objects
 		const diffs = dmp.patch_toText(patches);
 		// Add new diff in the buffer
-		manageDiff(this.repoPath, this.branch, relPath, diffs);
-	}
+		this.addDiff(relPath, diffs);
+	};
 
-	handleFilesCreated = (event: vscode.FileCreateEvent) => {
+	handleCreateEvent = (event: vscode.FileCreateEvent) => {
 		/*
         changeEvent looks like
             Object
@@ -109,26 +147,21 @@ export class eventHandler {
 
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
 		if (shouldIgnoreFile(this.repoPath, relPath)) { return; }
+
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
 		const originalsPath = path.join(this.originalsRepoBranchPath, relPath);
 		if (fs.existsSync(shadowPath) || fs.existsSync(originalsPath)) { return; }
 
 		console.log(`FileCreated: ${filePath}`);
-		const destShadowBasePath = path.dirname(shadowPath);
-		const destOriginalsBasePath = path.dirname(originalsPath);
-		// Add file in shadow repo
-		fs.mkdirSync(destShadowBasePath, { recursive: true });
-		// File destination will be created or overwritten by default.
-		fs.copyFileSync(filePath, shadowPath);
-		// Add file in originals repo
-		fs.mkdirSync(destOriginalsBasePath, { recursive: true });
-		// File destination will be created or overwritten by default.
-		fs.copyFileSync(filePath, originalsPath);
+		const initUtilsObj = new initUtils(this.repoPath);
+		initUtilsObj.copyFilesTo([filePath], this.shadowRepoBranchPath);
+		initUtilsObj.copyFilesTo([filePath], this.originalsRepoBranchPath);
 		// Add new diff in the buffer
-		manageDiff(this.repoPath, this.branch, relPath, "", true);
+		this.isNewFile = true;
+		this.addDiff(relPath, "");
 	};
 
-	handleFilesDeleted = (event: vscode.FileDeleteEvent) => {
+	handleDeleteEvent = (event: vscode.FileDeleteEvent) => {
 		/*
         changeEvent looks like
             Object
@@ -142,40 +175,66 @@ export class eventHandler {
         */
 		if (this.repoIsNotSynced) return;
 		event.files.forEach((item) => {
-			const itemPath = pathUtils.normalizePath(item.fsPath);
-			const relPath = itemPath.split(path.join(this.repoPath, path.sep))[1];
-
-			// Skip .git/ and syncignore files
-			if (shouldIgnoreFile(this.repoPath, relPath)) { return; }
-
-			// Shadow path
-			const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
-			if (!fs.existsSync(shadowPath)) { return; }
-
-			const lstat = fs.lstatSync(shadowPath);
-
-			if (lstat.isDirectory()) {
-				console.log(`DirectoryDeleted: ${itemPath}`);
-				handleDirectoryDeleteDiffs(this.repoPath, relPath);
-			}
-			if (!lstat.isFile()) { return; }
-
-			console.log(`FileDeleted: ${itemPath}`);
-			// Cache path
-			const cacheFilePath = path.join(this.deletedRepoBranchPath, relPath);
-			const cacheDirectories = path.dirname(cacheFilePath);
-
-			if (fs.existsSync(cacheFilePath)) { return; }
-			// Add file in .deleted repo
-			if (!fs.existsSync(cacheDirectories)) {
-				// Create directories
-				fs.mkdirSync(cacheDirectories, { recursive: true });
-			}
-			// File destination will be created or overwritten by default.
-			fs.copyFileSync(shadowPath, cacheFilePath);
-			manageDiff(this.repoPath, this.branch, relPath, "", false, false, true);
+			this.handleDelete(item.fsPath);
 		});
 	}
+
+	handleDelete = (filePath: string) => {
+		const itemPath = pathUtils.normalizePath(filePath);
+		const relPath = itemPath.split(path.join(this.repoPath, path.sep))[1];
+
+		// Skip .git/ and syncignore files
+		if (shouldIgnoreFile(this.repoPath, relPath)) { return; }
+
+		// Shadow path
+		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
+		if (!fs.existsSync(shadowPath)) { return; }
+
+		const lstat = fs.lstatSync(shadowPath);
+
+		if (lstat.isDirectory()) {
+			console.log(`DirectoryDeleted: ${itemPath}`);
+			this.handleDirectoryDeleteDiffs(relPath);
+		}
+		if (!lstat.isFile()) { return; }
+
+		// Cache file path
+		const cacheFilePath = path.join(this.deletedRepoBranchPath, relPath);
+		if (fs.existsSync(cacheFilePath)) { return; }
+
+		console.log(`FileDeleted: ${itemPath}`);
+		const initUtilsObj = new initUtils(this.repoPath);
+		initUtilsObj.copyFilesTo([shadowPath], this.pathUtils.getDeletedRepoPath(), true);
+		// Add new diff in the buffer
+		this.isDelete = true;
+		this.addDiff(relPath, "");
+	};
+
+	handleDirectoryDeleteDiffs = (dirRelPath: string) => {
+		const shadowDirPath = path.join(this.shadowRepoBranchPath, dirRelPath);
+		const pathUtilsObj = this.pathUtils;
+		const repoPath = this.repoPath;
+		const branch = this.branch;
+		this.isDelete = true;
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const that = this;
+		// No need to skip repos here as it is for specific repo
+		const walker = walk.walk(shadowDirPath);
+		walker.on("file", function (root, fileStats, next) {
+			const filePath = path.join(root, fileStats.name);
+			const relPath = filePath.split(path.join(pathUtilsObj.formattedRepoPath, branch, path.sep))[1];
+			const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
+			const cacheFilePath = path.join(cacheRepoBranchPath, relPath);
+			if (fs.existsSync(cacheFilePath)) {
+				return next();
+			}
+			// Create directories
+			const initUtilsObj = new initUtils(repoPath);
+			initUtilsObj.copyFilesTo([filePath], pathUtilsObj.getDeletedRepoPath());
+			that.addDiff(relPath, "");
+			next();
+		});
+	};
 
 	handleRenameEvent = (event: vscode.FileRenameEvent) => {
 		/*
@@ -198,34 +257,62 @@ export class eventHandler {
         */
 		if (this.repoIsNotSynced) return;
 		event.files.forEach(_event => {
-			const oldAbsPath = pathUtils.normalizePath(_event.oldUri.fsPath);
-			const newAbsPath = pathUtils.normalizePath(_event.newUri.fsPath);
-			const oldRelPath = oldAbsPath.split(path.join(this.repoPath, path.sep))[1];
-			const newRelPath = newAbsPath.split(path.join(this.repoPath, path.sep))[1];
-
-			if (shouldIgnoreFile(this.repoPath, newRelPath)) { return; }
-			const oldShadowPath = path.join(this.shadowRepoBranchPath, oldRelPath);
-			const newShadowPath = path.join(this.shadowRepoBranchPath, newRelPath);
-			// rename file in shadow repo
-			fs.renameSync(oldShadowPath, newShadowPath);
-
-			const isDirectory = fs.lstatSync(newAbsPath).isDirectory();
-			if (isDirectory) {
-				console.log(`DirectoryRenamed: ${oldAbsPath} -> ${newAbsPath}`);
-				const diff = JSON.stringify({ old_path: oldAbsPath, new_path: newAbsPath });
-				handleDirectoryRenameDiffs(this.repoPath, this.branch, diff);
-				return;
-			}
-
-			console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
-			// Create diff
-			const diff = JSON.stringify({
-				old_abs_path: oldAbsPath,
-				new_abs_path: newAbsPath,
-				old_rel_path: oldRelPath,
-				new_rel_path: newRelPath
-			});
-			manageDiff(this.repoPath, this.branch, newRelPath, diff, false, true);
+			this.handleRename(_event.oldUri.fsPath, _event.newUri.fsPath);
 		});
 	}
+
+	handleRename = (oldPath: string, newPath: string) => {
+		const oldAbsPath = pathUtils.normalizePath(oldPath);
+		const newAbsPath = pathUtils.normalizePath(newPath);
+		const oldRelPath = oldAbsPath.split(path.join(this.repoPath, path.sep))[1];
+		const newRelPath = newAbsPath.split(path.join(this.repoPath, path.sep))[1];
+
+		if (shouldIgnoreFile(this.repoPath, newRelPath)) { return; }
+		const oldShadowPath = path.join(this.shadowRepoBranchPath, oldRelPath);
+		const newShadowPath = path.join(this.shadowRepoBranchPath, newRelPath);
+		// rename file in shadow repo
+		fs.renameSync(oldShadowPath, newShadowPath);
+
+		const isDirectory = fs.lstatSync(newAbsPath).isDirectory();
+		if (isDirectory) {
+			console.log(`DirectoryRenamed: ${oldAbsPath} -> ${newAbsPath}`);
+			this.handleDirectoryRenameDiffs(oldAbsPath, newAbsPath);
+			return;
+		}
+
+		console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
+		// Create diff
+		const diff = JSON.stringify({
+			old_abs_path: oldAbsPath,
+			new_abs_path: newAbsPath,
+			old_rel_path: oldRelPath,
+			new_rel_path: newRelPath
+		});
+		// Add new diff in the buffer
+		this.isRename = true;
+		this.addDiff(newRelPath, diff);
+	}
+
+	handleDirectoryRenameDiffs = (oldPath: string, newPath: string) => {
+		// No need to skip repos here as it is for specific repo
+		this.isRename = true;
+		const repoPath = this.repoPath;
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const that = this;
+		const walker = walk.walk(newPath);
+		walker.on("file", function (root, fileStats, next) {
+			const newFilePath = path.join(root, fileStats.name);
+			const oldFilePath = newFilePath.replace(newPath, oldPath);
+			const oldRelPath = oldFilePath.split(path.join(repoPath, path.sep))[1];
+			const newRelPath = newFilePath.split(path.join(repoPath, path.sep))[1];
+			const diff = JSON.stringify({
+				'old_rel_path': oldRelPath,
+				'new_rel_path': newRelPath,
+				'old_abs_path': oldFilePath,
+				'new_abs_path': newFilePath
+			});
+			that.addDiff(newRelPath, diff);
+			next();
+		});
+	};
 }

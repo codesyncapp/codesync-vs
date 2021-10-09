@@ -205,7 +205,7 @@ describe("handleRenameFile",  () => {
         expect(JSON.parse(diffData.diff).new_rel_path).toEqual("new.js");
     });
 
-    test("for Directory",  async() => {
+    test("for Directory",  async () => {
         const config = {'repos': {}};
         config.repos[repoPath] = {'branches': {}};
         fs.writeFileSync(configPath, yaml.safeDump(config));

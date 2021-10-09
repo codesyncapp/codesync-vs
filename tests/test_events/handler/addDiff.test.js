@@ -3,14 +3,14 @@ import path from "path";
 import untildify from "untildify";
 import {DATETIME_FORMAT, DEFAULT_BRANCH} from "../../../src/constants";
 import {randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
-import {manageDiff} from "../../../src/events/diff_utils";
 import dateFormat from "dateformat";
 import {readYML} from "../../../src/utils/common";
 import {DIFF_SOURCE} from "../../../src/constants";
 import {pathUtils} from "../../../src/utils/path_utils";
+import {eventHandler} from "../../../src/events/event_handler";
 
 
-describe("manageDiff", () => {
+describe("addDiff", () => {
 
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
@@ -35,8 +35,8 @@ describe("manageDiff", () => {
     });
 
     test("should be skipped",() => {
-        manageDiff(repoPath, DEFAULT_BRANCH, newFilePath, "", false, false,
-            false, "");
+        const handler = new eventHandler(repoPath);
+        handler.addDiff(newFilePath, "");
         // Verify no diff file should be generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -44,8 +44,8 @@ describe("manageDiff", () => {
 
     test("with createdAt",() => {
         const createdAt = dateFormat(new Date(), DATETIME_FORMAT);
-        manageDiff(repoPath, DEFAULT_BRANCH, newFilePath, "diff", false,
-            false, false, createdAt);
+        const handler = new eventHandler(repoPath, createdAt);
+        handler.addDiff(newFilePath, "diff");
         // Verify no diff file should be generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(1);
@@ -54,5 +54,4 @@ describe("manageDiff", () => {
         expect(diffData.source).toEqual(DIFF_SOURCE);
         expect(diffData.created_at).toEqual(createdAt);
     });
-
 });

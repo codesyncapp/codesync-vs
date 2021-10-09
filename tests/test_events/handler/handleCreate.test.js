@@ -74,7 +74,7 @@ describe("handleNewFile",  () => {
                 scheme: "file"
             }]
         };
-        handler.handleFilesCreated(event);
+        handler.handleCreateEvent(event);
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -93,7 +93,7 @@ describe("handleNewFile",  () => {
             }]
         };
         const handler = new eventHandler();
-        handler.handleFilesCreated(event);
+        handler.handleCreateEvent(event);
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -112,7 +112,7 @@ describe("handleNewFile",  () => {
                 scheme: "file"
             }]
         };
-        handler.handleFilesCreated(event);
+        handler.handleCreateEvent(event);
         // Verify file has been created in the .shadow repo and .originals repos
         expect(fs.existsSync(shadowFilePath)).toBe(true);
         expect(fs.existsSync(originalsFilePath)).toBe(true);

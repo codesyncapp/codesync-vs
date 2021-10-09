@@ -82,12 +82,20 @@ describe("handleChangeEvent",  () => {
         const config = {'repos': {}};
         config.repos[repoPath] = {'branches': {}};
         fs.writeFileSync(configPath, yaml.safeDump(config));
-        const handler = new eventHandler();
-        const event = {
-            document: {
-                fileName: path.join(repoPath, ".idea")
+        const document = {
+            fileName: path.join(repoPath, ".idea"),
+            getText: function () {
+                return "";
             }
         };
+        const handler = new eventHandler();
+        const event = {
+            document,
+            contentChanges: [" Change "]
+        };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+            document
+        });
         handler.handleChangeEvent(event);
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -98,13 +106,17 @@ describe("handleChangeEvent",  () => {
         const config = {'repos': {}};
         config.repos[repoPath] = {'branches': {}};
         fs.writeFileSync(configPath, yaml.safeDump(config));
+        const document = {
+            fileName: path.join(repoPath, "file.js"),
+        };
         const handler = new eventHandler();
         const event = {
-            document: {
-                fileName: path.join(repoPath, "file.js"),
-            },
+            document,
             contentChanges: []
         };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+            document
+        });
         handler.handleChangeEvent(event);
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -186,16 +198,20 @@ describe("handleChangeEvent",  () => {
         const config = {'repos': {}};
         config.repos[repoPath] = {'branches': {}};
         fs.writeFileSync(configPath, yaml.safeDump(config));
+        const document = {
+            fileName: filePath,
+                getText: function () {
+                return DUMMY_FILE_CONTENT;
+            }
+        };
         const handler = new eventHandler();
         const event = {
-            document: {
-                fileName: filePath,
-                getText: function () {
-                    return DUMMY_FILE_CONTENT;
-                }
-            },
+            document,
             contentChanges: [" Change "]
         };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+            document
+        });
         handler.handleChangeEvent(event);
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
