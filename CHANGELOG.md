@@ -4,12 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.29.17 Unreleased] - 2021-10-
+## [2.29.17] - 2021-10-13
 ### Added
 - Added unit tests for detectBranchChange
 - Refactored populateBuffer with event based approach
 - Added tests for populateBuffer
-- Simplified diff structure for rename event
+- Simplified diff structure for rename event 
+- Improve online/offline handling of rename
 
 ## [2.29.16] - 2021-10-07
 ### Changed
