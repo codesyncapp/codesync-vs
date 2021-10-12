@@ -1,14 +1,22 @@
 import fs from "fs";
 import path from "path";
+import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
 
-import {readYML} from "../../../src/utils/common";
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
-import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../src/constants";
-import {Config, getConfigFilePath, randomBaseRepoPath, randomRepoPath, waitFor} from "../../helpers/helpers";
+import {DEFAULT_BRANCH} from "../../../src/constants";
+import {
+    assertRenameEvent,
+    Config, FILE_ID,
+    getConfigFilePath,
+    randomBaseRepoPath,
+    randomRepoPath,
+    TEST_EMAIL,
+    waitFor
+} from "../../helpers/helpers";
 
 describe("handleRenameFile",  () => {
     /*
@@ -32,19 +40,21 @@ describe("handleRenameFile",  () => {
     const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
     const diffsRepo = pathUtilsObj.getDiffsRepo();
 
+    const oldRelPath = "file_1.js";
     // For file rename
-    const oldFilePath = path.join(repoPath, "old.js");
+    const oldFilePath = path.join(repoPath, oldRelPath);
     const newFilePath = path.join(repoPath, "new.js");
-    const oldShadowFilePath = path.join(shadowRepoBranchPath, "old.js");
+    const oldShadowFilePath = path.join(shadowRepoBranchPath, oldRelPath);
     const renamedShadowFilePath = path.join(shadowRepoBranchPath, "new.js");
 
     // For directory rename
     const oldDirectoryPath = path.join(repoPath, "old");
+    const oldShadowDirectoryPath = path.join(shadowRepoBranchPath, "old");
+    const oldShadowDirectoryFilePath = path.join(oldShadowDirectoryPath, "file.js");
+
     const newDirectoryPath = path.join(repoPath, "new");
     const newDirectoryFilePath = path.join(newDirectoryPath, "file.js");
-    const oldShadowDirectoryPath = path.join(shadowRepoBranchPath, "old");
     const renamedShadowDirectoryPath = path.join(shadowRepoBranchPath, "new");
-    const oldShadowDirectoryFilePath = path.join(oldShadowDirectoryPath, "file.js");
     const renamedShadowDirectoryFilePath = path.join(renamedShadowDirectoryPath, "file.js");
 
     beforeEach(() => {
@@ -120,43 +130,6 @@ describe("handleRenameFile",  () => {
         expect(diffFiles).toHaveLength(0);
     });
 
-    test("Event: Repo synced",  () => {
-        // Write data to new file
-        fs.writeFileSync(newFilePath, "use babel;");
-        const handler = new eventHandler();
-        const event = {
-            files: [{
-                oldUri: {
-                    fsPath: oldFilePath,
-                    path: oldFilePath,
-                    scheme: "file"
-                },
-                newUri: {
-                    fsPath: newFilePath,
-                    path: newFilePath,
-                    scheme: "file"
-                }
-            }]
-        };
-        handler.handleRenameEvent(event);
-        // Verify file has been renamed in the shadow repo
-        expect(fs.existsSync(renamedShadowFilePath)).toBe(true);
-        // Verify correct diff file has been generated
-        let diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(1);
-        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
-        const diffData = readYML(diffFilePath);
-        expect(diffData.source).toEqual(DIFF_SOURCE);
-        expect(diffData.is_rename).toBe(true);
-        expect(diffData.is_new_file).toBeFalsy();
-        expect(diffData.is_deleted).toBeFalsy();
-        expect(diffData.repo_path).toEqual(repoPath);
-        expect(diffData.branch).toEqual(DEFAULT_BRANCH);
-        expect(diffData.file_relative_path).toEqual("new.js");
-        expect(JSON.parse(diffData.diff).old_rel_path).toEqual("old.js");
-        expect(JSON.parse(diffData.diff).new_rel_path).toEqual("new.js");
-    });
-
     test("for File",  () => {
         fs.writeFileSync(newFilePath, "use babel;");
 
@@ -176,25 +149,22 @@ describe("handleRenameFile",  () => {
         };
         const handler = new eventHandler();
         handler.handleRenameEvent(event);
-        // Verify file has been renamed in the shadow repo
-        expect(fs.existsSync(renamedShadowFilePath)).toBe(true);
-        // Verify correct diff file has been generated
-        let diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(1);
-        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
-        const diffData = readYML(diffFilePath);
-        expect(diffData.source).toEqual(DIFF_SOURCE);
-        expect(diffData.is_rename).toBe(true);
-        expect(diffData.is_new_file).toBeFalsy();
-        expect(diffData.is_deleted).toBeFalsy();
-        expect(diffData.repo_path).toEqual(repoPath);
-        expect(diffData.branch).toEqual(DEFAULT_BRANCH);
-        expect(diffData.file_relative_path).toEqual("new.js");
-        expect(JSON.parse(diffData.diff).old_rel_path).toEqual("old.js");
-        expect(JSON.parse(diffData.diff).new_rel_path).toEqual("new.js");
+        expect(assertRenameEvent(repoPath, configPath, oldRelPath, "new.js")).toBe(true);
     });
 
     test("for Directory",  async () => {
+        const oldRelPath = path.join("old", "file.js");
+        const newRelPath = path.join("new", "file.js");
+
+        const config = {repos: {}};
+        config.repos[repoPath] = {
+            branches: {},
+            email: TEST_EMAIL
+        };
+        config.repos[repoPath].branches[DEFAULT_BRANCH] = {};
+        config.repos[repoPath].branches[DEFAULT_BRANCH][oldRelPath] = FILE_ID;
+        fs.writeFileSync(configPath, yaml.safeDump(config));
+
         const event = {
             files: [{
                 oldUri: {
@@ -207,22 +177,7 @@ describe("handleRenameFile",  () => {
         };
         const handler = new eventHandler();
         handler.handleRenameEvent(event);
-        expect(fs.existsSync(renamedShadowDirectoryPath)).toBe(true);
-        expect(fs.existsSync(renamedShadowDirectoryFilePath)).toBe(true);
         await waitFor(1);
-        // Verify correct diff file has been generated
-        let diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(1);
-        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
-        const diffData = readYML(diffFilePath);
-        expect(diffData.source).toEqual(DIFF_SOURCE);
-        expect(diffData.is_rename).toBe(true);
-        expect(diffData.is_new_file).toBeFalsy();
-        expect(diffData.is_deleted).toBeFalsy();
-        expect(diffData.repo_path).toEqual(repoPath);
-        expect(diffData.branch).toEqual(DEFAULT_BRANCH);
-        expect(diffData.file_relative_path).toEqual(path.join("new", "file.js"));
-        expect(JSON.parse(diffData.diff).old_rel_path).toEqual(path.join("old", "file.js"));
-        expect(JSON.parse(diffData.diff).new_rel_path).toEqual(path.join("new", "file.js"));
+        expect(assertRenameEvent(repoPath, configPath, oldRelPath, newRelPath)).toBe(true);
     });
 });

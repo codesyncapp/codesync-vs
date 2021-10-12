@@ -7,7 +7,7 @@ import dateFormat from "dateformat";
 
 import { IDiff } from "../interface";
 import { initUtils } from "../init/utils";
-import {getBranch, readYML} from "../utils/common";
+import { getBranch, readYML } from "../utils/common";
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
@@ -72,12 +72,14 @@ export class eventHandler {
 
 	addPathToConfig = (relPath: string, oldRelPath = "") => {
 		const configJSON = readYML(this.settings.CONFIG_PATH);
+		const configFiles = configJSON.repos[this.repoPath].branches[this.branch];
 		if (this.isNewFile) {
-			configJSON.repos[this.repoPath].branches[this.branch][relPath] = null;
+			configFiles[relPath] = null;
 		}
 		if (this.isRename) {
-			configJSON.repos[this.repoPath].branches[this.branch][relPath] = null;
-			delete configJSON.repos[this.repoPath].branches[this.branch][oldRelPath];
+			// Use old file ID for the renamed file
+			configFiles[relPath] = configFiles[oldRelPath];
+			delete configFiles[oldRelPath];
 		}
 		// write file id to config.yml
 		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));

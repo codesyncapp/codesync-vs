@@ -78,21 +78,6 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 	};
 };
 
-export const handleFilesRename = (configJSON: any, repoPath: string, branch: string,
-	relPath: string, oldFileId: number, oldRelPath: string) => {
-	const settings = generateSettings();
-	const pathUtilsObj = new pathUtils(repoPath, branch);
-	const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-	const oldShadowPath = path.join(shadowRepoBranchPath, oldRelPath);
-	const newShadowPath = path.join(shadowRepoBranchPath, relPath);
-	if (fs.existsSync(oldShadowPath)) {
-		fs.renameSync(oldShadowPath, newShadowPath);
-	}
-	configJSON.repos[repoPath].branches[branch][relPath] = oldFileId;
-	// write file id to config.yml
-	fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
-};
-
 export const cleanUpDeleteDiff = (repoPath: string, branch: string, relPath: string, configJSON: any) => {
 	const settings = generateSettings();
 	const pathUtilsObj = new pathUtils(repoPath, branch);

@@ -9,7 +9,6 @@ import {checkServerDown} from "../utils/api_utils";
 import {
     cleanUpDeleteDiff,
     getDIffForDeletedFile,
-    handleFilesRename,
     handleNewFileUpload,
     isValidDiff
 } from './utils';
@@ -221,18 +220,6 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 									const oldRelPath = JSON.parse(diffData.diff).old_rel_path;
 									// If old_rel_path uploaded in the same iteration, wait for next iteration
 									if (newFiles.includes(oldRelPath)) { continue; }
-									// Remove old file ID from config
-									const oldFileId = configFiles[oldRelPath];
-									delete configFiles[oldRelPath];
-
-									if  (!oldFileId) {
-										putLogEvent(`old_file: ${oldRelPath} was not 
-										synced for rename of ${path.join(repoDiff.path, relPath)}`, configRepo.email);
-										fs.unlinkSync(fileToDiff.file_path);
-										continue;
-									}
-									handleFilesRename(configJSON, diffData.repo_path, diffData.branch,
-										relPath, oldFileId, oldRelPath);
 								}
 
 								if (!isBinary && !isDeleted && !diffData.diff) {
@@ -292,13 +279,13 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 
 								// Diff data to be sent to server
 								const diffToSend = {
+									'path': relPath,
 									'file_id': fileId,
 									'diff': diffData.diff,
 									'is_deleted': isDeleted,
 									'is_rename': diffData.is_rename,
 									'is_binary': isBinary,
 									'created_at': diffData.created_at,
-									'path': relPath,
 									'diff_file_path': fileToDiff.file_path
 								};
 								connection.send(JSON.stringify({'diffs': [diffToSend]}));
