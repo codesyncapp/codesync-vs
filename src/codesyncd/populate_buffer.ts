@@ -123,21 +123,21 @@ class PopulateBuffer {
             let isRename = false;
             const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
             const shadowExists = fs.existsSync(shadowFilePath);
-            const fileId = this.configFiles[itemPath.rel_path];
+            const fileInConfig = itemPath.rel_path in this.configFiles;
             const createdAt = dateFormat(new Date(itemPath.modified_at), DATETIME_FORMAT);
 
             const handler = new eventHandler(this.repoPath, createdAt);
 
             // For binary file, can only handle create event
             if (itemPath.is_binary) {
-                if (!fileId) {
+                if (!fileInConfig) {
                     // Upload new binary file
                     handler.handleNewFile(itemPath.file_path);
                 }
                 continue;
             }
             // It is a change event
-            if (fileId) {
+            if (fileInConfig) {
                 // Read latest content of the file
                 const currentContent = fs.readFileSync(itemPath.file_path, "utf8");
                 handler.handleChanges(itemPath.file_path, currentContent, true);

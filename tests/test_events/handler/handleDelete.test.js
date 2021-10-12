@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
@@ -9,7 +8,13 @@ import {readYML} from "../../../src/utils/common";
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../src/constants";
-import {getConfigFilePath, randomBaseRepoPath, randomRepoPath, waitFor} from "../../helpers/helpers";
+import {
+    Config,
+    getConfigFilePath,
+    randomBaseRepoPath,
+    randomRepoPath,
+    waitFor
+} from "../../helpers/helpers";
 
 describe("handleDeletedEvent",  () => {
     /*
@@ -53,6 +58,10 @@ describe("handleDeletedEvent",  () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
         // Create directories
+        fs.mkdirSync(baseRepoPath, { recursive: true });
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
 
@@ -73,6 +82,8 @@ describe("handleDeletedEvent",  () => {
     });
 
     test("Repo is not synced",  () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.removeRepo();
         const event = {
             files: [{
                 fsPath: filePath,
@@ -90,9 +101,6 @@ describe("handleDeletedEvent",  () => {
     });
 
     test("Event: Synced repo, Ignorable file", () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
         const event = {
             files: [{
                 fsPath: path.join(repoPath, "node_modules", "express", "index.js")
@@ -106,10 +114,6 @@ describe("handleDeletedEvent",  () => {
     });
 
     test("Repo synced, shadow exists",  () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
-
         const event = {
             files: [{
                 fsPath: filePath,
@@ -138,10 +142,6 @@ describe("handleDeletedEvent",  () => {
 
     test("Repo synced, shadow does NOT exists",  () => {
         fs.rmSync(shadowFilePath);
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
-
         const event = {
             files: [{
                 fsPath: filePath,
@@ -161,9 +161,6 @@ describe("handleDeletedEvent",  () => {
     test("Repo synced, .delete file exists",  () => {
         fs.mkdirSync(cacheRepoBranchPath, { recursive: true });
         fs.writeFileSync(cacheFilePath, "use babel;");
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
 
         const event = {
             files: [{
@@ -180,10 +177,6 @@ describe("handleDeletedEvent",  () => {
     });
 
     test("Repo synced, Directory delete event",  async () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
-
         const event = {
             files: [{
                 fsPath: directoryPath,

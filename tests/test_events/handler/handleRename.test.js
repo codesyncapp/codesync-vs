@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
@@ -9,7 +8,7 @@ import {readYML} from "../../../src/utils/common";
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../src/constants";
-import {getConfigFilePath, randomBaseRepoPath, randomRepoPath, waitFor} from "../../helpers/helpers";
+import {Config, getConfigFilePath, randomBaseRepoPath, randomRepoPath, waitFor} from "../../helpers/helpers";
 
 describe("handleRenameFile",  () => {
     /*
@@ -55,6 +54,9 @@ describe("handleRenameFile",  () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
         // Create directories
+        fs.mkdirSync(baseRepoPath, { recursive: true });
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
 
@@ -75,6 +77,8 @@ describe("handleRenameFile",  () => {
     });
 
     test("Event: Repo is not synced",  () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.removeRepo();
         const handler = new eventHandler();
         const event = {
             files: [{
@@ -99,9 +103,6 @@ describe("handleRenameFile",  () => {
     });
 
     test("Event: Synced repo, Ignorable file", () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
         const event = {
             files: [{
                 oldUri: {
@@ -121,12 +122,8 @@ describe("handleRenameFile",  () => {
     });
 
     test("Event: Repo synced",  () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
         // Write data to new file
         fs.writeFileSync(newFilePath, "use babel;");
-
         const handler = new eventHandler();
         const event = {
             files: [{
@@ -164,9 +161,6 @@ describe("handleRenameFile",  () => {
     });
 
     test("for File",  () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
         fs.writeFileSync(newFilePath, "use babel;");
 
         const event = {
@@ -206,9 +200,6 @@ describe("handleRenameFile",  () => {
     });
 
     test("for Directory",  async () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
         const event = {
             files: [{
                 oldUri: {

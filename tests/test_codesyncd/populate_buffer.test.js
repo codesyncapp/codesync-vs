@@ -56,7 +56,7 @@ describe("populateBuffer", () => {
         fs.mkdirSync(repoPath, {recursive: true});
     });
 
-    const addRepo = () => {
+    const addRepo = (deleteFile1=false) => {
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const configData = {repos: {}};
@@ -66,6 +66,9 @@ describe("populateBuffer", () => {
         };
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = TEST_REPO_RESPONSE.file_path_and_id;
         configData.repos[repoPath].branches[DEFAULT_BRANCH]["ignore.js"] = 12345;
+        if (deleteFile1) {
+            delete configData.repos[repoPath].branches[DEFAULT_BRANCH][fileRelPath];
+        }
         fs.writeFileSync(configPath, yaml.safeDump(configData));
         // Update sequence_token.yml
         const users = {};
@@ -80,7 +83,33 @@ describe("populateBuffer", () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
     };
 
-    const assertNewFileEvent = (newRelPath) => {
+    const assertChangeEvent = (oldText, updatedText, fileRelPath, shadowFilePath,
+                               diffsCount = 1) => {
+        // Read shadow file
+        const shadowText = fs.readFileSync(shadowFilePath, "utf8");
+        expect(shadowText).toStrictEqual(updatedText);
+        // Verify correct diff file has been generated
+        const diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(diffsCount);
+        const diffFilePath = path.join(diffsRepo, diffFiles[diffsCount-1]);
+        const diffData = readYML(diffFilePath);
+        expect(diffData.source).toEqual(DIFF_SOURCE);
+        expect(diffData.is_new_file).toBeFalsy();
+        expect(diffData.is_rename).toBeFalsy();
+        expect(diffData.is_deleted).toBeFalsy();
+        expect(diffData.repo_path).toEqual(repoPath);
+        expect(diffData.branch).toEqual(DEFAULT_BRANCH);
+        expect(diffData.file_relative_path).toEqual(fileRelPath);
+        // Verify diff is correct
+        const dmp = new diff_match_patch();
+        const patches = dmp.patch_make(oldText, updatedText);
+        //  Create text representation of patches objects
+        const diffs = dmp.patch_toText(patches);
+        expect(diffData.diff).toStrictEqual(diffs);
+        return true;
+    };
+
+    const assertNewFileEvent = (newRelPath, diffsCount = 1) => {
         const originalsFilePath = path.join(originalsRepoBranchPath, newRelPath);
         const shadowFilePath = path.join(shadowRepoBranchPath, newRelPath);
         // Verify file has been created in the .shadow repo and .originals repos
@@ -88,8 +117,8 @@ describe("populateBuffer", () => {
         expect(fs.existsSync(originalsFilePath)).toBe(true);
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(1);
-        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
+        expect(diffFiles).toHaveLength(diffsCount);
+        const diffFilePath = path.join(diffsRepo, diffFiles[diffsCount-1]);
         const diffData = readYML(diffFilePath);
         expect(diffData.source).toEqual(DIFF_SOURCE);
         expect(diffData.is_new_file).toBe(true);
@@ -102,14 +131,14 @@ describe("populateBuffer", () => {
         return true;
     };
 
-    const assertRenameEvent = (newRelPath, renamedPath) => {
+    const assertRenameEvent = (newRelPath, renamedPath, diffsCount = 1) => {
         const renamedShadowFilePath = path.join(shadowRepoBranchPath, newRelPath);
         // Verify file has been renamed in the shadow repo
         expect(fs.existsSync(renamedShadowFilePath)).toBe(true);
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(1);
-        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
+        expect(diffFiles).toHaveLength(diffsCount);
+        const diffFilePath = path.join(diffsRepo, diffFiles[diffsCount-1]);
         const diffData = readYML(diffFilePath);
         expect(diffData.source).toEqual(DIFF_SOURCE);
         expect(diffData.is_rename).toBe(true);
@@ -136,7 +165,6 @@ describe("populateBuffer", () => {
         let diffFiles = fs.readdirSync(diffsRepo);
         // Verify correct diff file has been generated
         expect(diffFiles).toHaveLength(0);
-        // const diffFilePath = path.join(diffsRepo, diffFiles[0]);
     });
 
     test("Repo synced, no change in data", async () => {
@@ -166,27 +194,7 @@ describe("populateBuffer", () => {
         const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
         fs.writeFileSync(filePath, updatedText);
         await populateBuffer();
-        // Read shadow file
-        const shadowText = fs.readFileSync(shadowFilePath, "utf8");
-        expect(shadowText).toStrictEqual(updatedText);
-        // Verify correct diff file has been generated
-        const diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(1);
-        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
-        const diffData = readYML(diffFilePath);
-        expect(diffData.source).toEqual(DIFF_SOURCE);
-        expect(diffData.is_new_file).toBeFalsy();
-        expect(diffData.is_rename).toBeFalsy();
-        expect(diffData.is_deleted).toBeFalsy();
-        expect(diffData.repo_path).toEqual(repoPath);
-        expect(diffData.branch).toEqual(DEFAULT_BRANCH);
-        expect(diffData.file_relative_path).toEqual(fileRelPath);
-        // Verify diff is correct
-        const dmp = new diff_match_patch();
-        const patches = dmp.patch_make(DUMMY_FILE_CONTENT, updatedText);
-        //  Create text representation of patches objects
-        const diffs = dmp.patch_toText(patches);
-        expect(diffData.diff).toStrictEqual(diffs);
+        expect(assertChangeEvent(DUMMY_FILE_CONTENT, updatedText, fileRelPath, shadowFilePath)).toBe(true);
     });
 
     test("New File", async () => {
@@ -253,5 +261,32 @@ describe("populateBuffer", () => {
         expect(diffData.branch).toEqual(DEFAULT_BRANCH);
         expect(diffData.file_relative_path).toEqual(fileRelPath);
         expect(diffData.diff).toStrictEqual("");
+    });
+
+    test("New File -> Edit -> Rename -> Edit", async () => {
+        addRepo(true);
+        // New File
+        fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
+        await populateBuffer();
+        expect(assertNewFileEvent(fileRelPath)).toBe(true);
+        // Edit
+        let updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
+        fs.writeFileSync(filePath, updatedText);
+        await populateBuffer();
+        expect(assertChangeEvent(DUMMY_FILE_CONTENT, updatedText,
+            fileRelPath, shadowFilePath, 2)).toBe(true);
+        // Rename
+        const newRelPath = "renamed-file.js";
+        const renamedPath = path.join(repoPath, newRelPath);
+        const renamedShadowPath = path.join(shadowRepoBranchPath, newRelPath);
+        fs.renameSync(filePath, renamedPath);
+        await populateBuffer();
+        expect(assertRenameEvent(newRelPath, renamedPath, 3)).toBe(true);
+        // Edit
+        const anotherUpdatedText = `${updatedText}\nAnother update to text`;
+        fs.writeFileSync(renamedPath, anotherUpdatedText);
+        await populateBuffer();
+        expect(assertChangeEvent(updatedText, anotherUpdatedText,
+            newRelPath, renamedShadowPath, 4)).toBe(true);
     });
 });

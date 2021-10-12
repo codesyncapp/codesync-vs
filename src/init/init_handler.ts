@@ -50,7 +50,6 @@ export class initHandler {
 			}
 			user = json.response;
 		}
-
 		const settings = generateSettings();
 		const branch = getBranch(this.repoPath);
 		const configJSON = readYML(settings.CONFIG_PATH);

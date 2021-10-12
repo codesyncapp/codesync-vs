@@ -38,7 +38,8 @@ export const updateStatusBarItem = (statusBarItem: vscode.StatusBarItem, text: s
 };
 
 export const isRepoActive = (config: any, repoPath: string) => {
-	return repoPath in config.repos && !config.repos[repoPath].is_disconnected;
+	return repoPath in config.repos && !config.repos[repoPath].is_disconnected &&
+		!isEmpty(config.repos[repoPath].branches) && Boolean(config.repos[repoPath].email);
 };
 
 export const getSyncIgnoreItems = (repoPath: string) => {

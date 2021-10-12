@@ -18,7 +18,7 @@ import {
 	DIFF_FILES_PER_ITERATION,
 	STATUS_BAR_MSGS,
 	WEBSOCKET_ENDPOINT,
-	DAY
+	DAY, CONNECTION_ERROR_MESSAGE, LOG_AFTER_X_TIMES
 } from "../constants";
 import {recallDaemon} from "./codesyncd";
 import {generateSettings} from "../settings";
@@ -26,6 +26,7 @@ import {initUtils} from "../init/utils";
 import {pathUtils} from "../utils/path_utils";
 
 const WAITING_FILES = <any>{};
+let errorCount = 0;
 
 export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 	/*
@@ -99,9 +100,17 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 
 		const isServerDown = await checkServerDown();
 		if (isServerDown) {
+			if (errorCount == 0 || errorCount > LOG_AFTER_X_TIMES) {
+				putLogEvent(CONNECTION_ERROR_MESSAGE);
+			}
+			if (errorCount > LOG_AFTER_X_TIMES) {
+				errorCount = 0;
+			}
+			errorCount += 1;
 			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.SERVER_DOWN);
 			return recallDaemon(statusBarItem);
 		}
+		errorCount = 0;
 
 		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
 

@@ -151,3 +151,4 @@ export class staticFiles {
 
 export const DAY = 24 * 60 * 60;
 export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .syncignore. It follows same format as .gitignore.";
+export const LOG_AFTER_X_TIMES = 500;

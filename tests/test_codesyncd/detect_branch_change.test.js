@@ -226,10 +226,15 @@ describe("detectBranchChange", () => {
             email: TEST_EMAIL
         };
         fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        const user = {
+            "email": "dummy@email.cpm",
+            "plan": {},
+            "repo_count": 0
+        };
 
         fetchMock
             .mockResponseOnce(JSON.stringify({status: true}))
-            .mockResponseOnce(JSON.stringify(userData))
+            .mockResponseOnce(JSON.stringify(user))
             .mockResponseOnce(JSON.stringify({status: true}))
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 

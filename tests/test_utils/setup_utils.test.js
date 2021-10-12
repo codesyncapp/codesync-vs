@@ -3,7 +3,7 @@ import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
 
-import {getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath} from "../helpers/helpers";
+import {Config, getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath} from "../helpers/helpers";
 import {createSystemDirectories, setupCodeSync, showConnectRepoView, showLogIn} from "../../src/utils/setup_utils";
 import {getRepoInSyncMsg, NOTIFICATION} from "../../src/constants";
 
@@ -104,7 +104,8 @@ describe("setupCodeSync",  () => {
 
     test('with synced repo',  async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         const port = await setupCodeSync(repoPath);
         // should return port number
         expect(port).toBeFalsy();

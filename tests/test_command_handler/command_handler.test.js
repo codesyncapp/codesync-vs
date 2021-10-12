@@ -15,6 +15,7 @@ import {
     unSyncHandler
 } from "../../src/handlers/commands_handler";
 import {
+    Config,
     getConfigFilePath,
     getUserFilePath,
     randomBaseRepoPath,
@@ -79,8 +80,8 @@ describe("SyncHandler",  () => {
     });
 
     test("repo In Config", async () => {
-        configData.repos[repoPath] = {branches: {}};
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         await SyncHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -180,12 +181,8 @@ describe("postSelectionUnsync",  () => {
     });
 
     test("Unsyncing error from server",  async () => {
-        configData.repos[repoPath] = {
-            id: 12345,
-            email: TEST_EMAIL,
-            branches: {}
-        };
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({error: "NOT SO FAST"}));
 
         await postSelectionUnsync(repoPath, NOTIFICATION.YES);
@@ -197,12 +194,8 @@ describe("postSelectionUnsync",  () => {
     });
 
     test("Synced successfully",  async () => {
-        configData.repos[repoPath] = {
-            id: 12345,
-            email: TEST_EMAIL,
-            branches: {}
-        };
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({}));
 
         await postSelectionUnsync(repoPath, NOTIFICATION.YES);

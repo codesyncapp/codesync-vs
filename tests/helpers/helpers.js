@@ -1,5 +1,7 @@
 import path from "path";
-import {DIFF_SOURCE} from "../../src/constants";
+import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../src/constants";
+import fs from "fs";
+import yaml from "js-yaml";
 
 export function getRandomString(length) {
     var randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -100,3 +102,26 @@ export const DIFF_DATA = {
     diff: null,
     source: DIFF_SOURCE
 };
+
+export class Config {
+
+    constructor(repoPath, configPath) {
+        this.repoPath = repoPath;
+        this.configPath = configPath;
+    }
+
+    addRepo = () => {
+        const config = {repos: {}};
+        config.repos[this.repoPath] = {
+            branches: {},
+            email: TEST_EMAIL
+        };
+        config.repos[this.repoPath].branches[DEFAULT_BRANCH] = {};
+        fs.writeFileSync(this.configPath, yaml.safeDump(config));
+    }
+
+    removeRepo = () => {
+        const config = {repos: {}};
+        fs.writeFileSync(this.configPath, yaml.safeDump(config));
+    }
+}

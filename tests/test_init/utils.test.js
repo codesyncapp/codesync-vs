@@ -15,7 +15,7 @@ import {
     TEST_USER,
     USER_PLAN,
     randomBaseRepoPath,
-    randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, getSeqTokenFilePath
+    randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, getSeqTokenFilePath, Config
 } from "../helpers/helpers";
 import {DEFAULT_BRANCH, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
@@ -370,7 +370,10 @@ describe("uploadRepo",  () => {
         fetch.resetMocks();
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
-        fs.mkdirSync(baseRepoPath, {recursive: true});
+        // Create directories
+        fs.mkdirSync(baseRepoPath, { recursive: true });
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.safeDump(configData));
         fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
@@ -384,9 +387,6 @@ describe("uploadRepo",  () => {
     });
 
     test("Server Down",  async () => {
-        // Add repo in config
-        configData.repos[repoPath] = {branches: {}};
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
         const itemPaths = initUtilsObj.getSyncablePaths(USER_PLAN);
@@ -408,9 +408,6 @@ describe("uploadRepo",  () => {
     });
 
     test("repo In Config",  async () => {
-        // Add repo in config
-        configData.repos[repoPath] = {branches: {}};
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
         const itemPaths = initUtilsObj.getSyncablePaths(USER_PLAN);
@@ -441,8 +438,8 @@ describe("uploadRepo",  () => {
     });
 
     test("repo Not In Config",  async () => {
-        const configData = {repos: {}};
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.removeRepo();
         const initUtilsObj = new initUtils(repoPath);
         const itemPaths = initUtilsObj.getSyncablePaths(USER_PLAN);
         // 1 is .syncignore, other is file.js

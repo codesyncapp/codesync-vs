@@ -8,7 +8,7 @@ import parallel from "run-parallel";
 import { isBinaryFileSync } from 'isbinaryfile';
 
 import { putLogEvent } from '../logger';
-import { NOTIFICATION } from '../constants';
+import {CONNECTION_ERROR_MESSAGE, NOTIFICATION} from '../constants';
 import { generateSettings } from "../settings";
 import { pathUtils } from '../utils/path_utils';
 import { checkServerDown } from '../utils/api_utils';
@@ -254,8 +254,11 @@ export class initUtils {
 			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
 		}
 
-		const isServerDown = await checkServerDown(userEmail);
-		if (isServerDown) return;
+		const isServerDown = await checkServerDown();
+		if (isServerDown) {
+			if (!this.viaDaemon) putLogEvent(CONNECTION_ERROR_MESSAGE);
+			return;
+		}
 
 		console.log(`Uploading new branch: ${branch} for repo: ${this.repoPath}`);
 

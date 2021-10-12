@@ -7,7 +7,7 @@ import dateFormat from "dateformat";
 
 import { IDiff } from "../interface";
 import { initUtils } from "../init/utils";
-import { getBranch } from "../utils/common";
+import {getBranch, readYML} from "../utils/common";
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
@@ -67,6 +67,19 @@ export class eventHandler {
 		const diffFilePath = path.join(this.settings.DIFFS_REPO, diffFileName);
 		fs.writeFileSync(diffFilePath, yaml.safeDump(newDiff));
 	};
+
+	addPathToConfig = (relPath: string, oldRelPath = "") => {
+		const configJSON = readYML(this.settings.CONFIG_PATH);
+		if (this.isNewFile) {
+			configJSON.repos[this.repoPath].branches[this.branch][relPath] = null;
+		}
+		if (this.isRename) {
+			configJSON.repos[this.repoPath].branches[this.branch][relPath] = null;
+			delete configJSON.repos[this.repoPath].branches[this.branch][oldRelPath];
+		}
+		// write file id to config.yml
+		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
+	}
 
 	handleChangeEvent = (changeEvent: vscode.TextDocumentChangeEvent) => {
 		if (this.repoIsNotSynced) return;
@@ -158,6 +171,8 @@ export class eventHandler {
 		initUtilsObj.copyFilesTo([filePath], this.originalsRepoBranchPath);
 		// Add new diff in the buffer
 		this.isNewFile = true;
+		// Add null fileId in config
+		this.addPathToConfig(relPath);
 		this.addDiff(relPath, "");
 	};
 
@@ -288,8 +303,10 @@ export class eventHandler {
 			old_rel_path: oldRelPath,
 			new_rel_path: newRelPath
 		});
+
 		// Add new diff in the buffer
 		this.isRename = true;
+		this.addPathToConfig(newRelPath, oldRelPath);
 		this.addDiff(newRelPath, diff);
 	}
 
@@ -311,6 +328,13 @@ export class eventHandler {
 				'old_abs_path': oldFilePath,
 				'new_abs_path': newFilePath
 			});
+			// Add null fileId in config
+			const configJSON = readYML(that.settings.CONFIG_PATH);
+			delete configJSON.repos[that.repoPath].branches[that.branch][oldRelPath];
+			configJSON.repos[that.repoPath].branches[that.branch][newRelPath] = null;
+			// write file id to config.yml
+			fs.writeFileSync(that.settings.CONFIG_PATH, yaml.safeDump(configJSON));
+
 			that.addDiff(newRelPath, diff);
 			next();
 		});

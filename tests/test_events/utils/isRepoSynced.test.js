@@ -2,10 +2,10 @@ import fs from "fs";
 import yaml from "js-yaml";
 import untildify from "untildify";
 import {isRepoSynced} from "../../../src/events/utils";
-import {getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
+import {Config, getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
 
 
-describe("repoIsNotSynced", () => {
+describe("isRepoSynced", () => {
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
 
@@ -35,9 +35,8 @@ describe("repoIsNotSynced", () => {
     });
 
     test("with repo in config.yml", () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         expect(isRepoSynced(repoPath)).toBe(true);
     });
 
