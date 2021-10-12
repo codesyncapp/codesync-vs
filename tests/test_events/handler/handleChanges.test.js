@@ -6,6 +6,8 @@ import getBranchName from "current-git-branch";
 
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../src/constants";
 import {
+    assertChangeEvent,
+    Config,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
     getSyncIgnoreFilePath,
@@ -14,7 +16,6 @@ import {
 } from "../../helpers/helpers";
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
-import yaml from "js-yaml";
 import {readYML} from "../../../src/utils/common";
 import {diff_match_patch} from "diff-match-patch";
 
@@ -54,6 +55,9 @@ describe("handleChangeEvent",  () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
         // Create directories
+        fs.mkdirSync(baseRepoPath, { recursive: true });
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
         fs.mkdirSync(originalsRepoBranchPath, { recursive: true });
@@ -69,6 +73,8 @@ describe("handleChangeEvent",  () => {
     });
 
     test("Repo not synced", () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.removeRepo();
         const handler = new eventHandler();
         const event = {};
         handler.handleChangeEvent(event);
@@ -79,15 +85,20 @@ describe("handleChangeEvent",  () => {
     });
 
     test("Synced repo, Ignorable file", () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
-        const handler = new eventHandler();
-        const event = {
-            document: {
-                fileName: path.join(repoPath, ".idea")
+        const document = {
+            fileName: path.join(repoPath, ".idea"),
+            getText: function () {
+                return "";
             }
         };
+        const handler = new eventHandler();
+        const event = {
+            document,
+            contentChanges: [" Change "]
+        };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+            document
+        });
         handler.handleChangeEvent(event);
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -95,16 +106,17 @@ describe("handleChangeEvent",  () => {
     });
 
     test("Synced repo, no content changes", () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
+        const document = {
+            fileName: path.join(repoPath, "file.js"),
+        };
         const handler = new eventHandler();
         const event = {
-            document: {
-                fileName: path.join(repoPath, "file.js"),
-            },
+            document,
             contentChanges: []
         };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+            document
+        });
         handler.handleChangeEvent(event);
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -112,10 +124,6 @@ describe("handleChangeEvent",  () => {
     });
 
     test("Synced repo, shadow file does not exist", () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
-
         const document = {
             fileName: filePath,
             getText: function () {
@@ -131,15 +139,11 @@ describe("handleChangeEvent",  () => {
             document
         });
         handler.handleChangeEvent(event);
-        expect(fs.existsSync(shadowFilePath)).toBe(true);
-        let diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(0);
+        expect(assertChangeEvent(repoPath, diffsRepo, "", DUMMY_FILE_CONTENT,
+            fileRelPath, shadowFilePath)).toBe(true);
     });
 
     test("Synced repo, file in .syncignore", () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
         const handler = new eventHandler();
         const event = {
             document: {
@@ -157,9 +161,6 @@ describe("handleChangeEvent",  () => {
     });
 
     test("Synced repo, Inactive Editor's document", () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
         const handler = new eventHandler();
         jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
             document: {
@@ -183,19 +184,20 @@ describe("handleChangeEvent",  () => {
 
     test("Synced repo, Shadow has same content", () => {
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
+        const document = {
+            fileName: filePath,
+                getText: function () {
+                return DUMMY_FILE_CONTENT;
+            }
+        };
         const handler = new eventHandler();
         const event = {
-            document: {
-                fileName: filePath,
-                getText: function () {
-                    return DUMMY_FILE_CONTENT;
-                }
-            },
+            document,
             contentChanges: [" Change "]
         };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+            document
+        });
         handler.handleChangeEvent(event);
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -204,9 +206,6 @@ describe("handleChangeEvent",  () => {
     test("Synced repo, Should add diff and update shadow file", () => {
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
         const document = {
             fileName: filePath,
             getText: function () {
@@ -222,27 +221,8 @@ describe("handleChangeEvent",  () => {
             document
         });
         handler.handleChangeEvent(event);
-        // Read shadow file
-        const shadowText = fs.readFileSync(shadowFilePath, "utf8");
-        expect(shadowText).toStrictEqual(updatedText);
-        const diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(1);
-        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
-        const diffData = readYML(diffFilePath);
-        expect(diffData.source).toEqual(DIFF_SOURCE);
-        expect(diffData.is_new_file).toBeFalsy();
-        expect(diffData.is_rename).toBeFalsy();
-        expect(diffData.is_deleted).toBeFalsy();
-        expect(diffData.repo_path).toEqual(repoPath);
-        expect(diffData.branch).toEqual(DEFAULT_BRANCH);
-        expect(diffData.file_relative_path).toEqual(fileRelPath);
 
-        // Verify diff is correct
-        const dmp = new diff_match_patch();
-        const patches = dmp.patch_make(DUMMY_FILE_CONTENT, updatedText);
-        //  Create text representation of patches objects
-        const diffs = dmp.patch_toText(patches);
-        expect(diffData.diff).toStrictEqual(diffs);
-
+        expect(assertChangeEvent(repoPath, diffsRepo, DUMMY_FILE_CONTENT, updatedText,
+            fileRelPath, shadowFilePath)).toBe(true);
     });
 });

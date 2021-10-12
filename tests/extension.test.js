@@ -13,7 +13,7 @@ import {
     unSyncHandler
 } from "../src/handlers/commands_handler";
 import {createSystemDirectories} from "../src/utils/setup_utils";
-import {getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath} from "./helpers/helpers";
+import {Config, getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath} from "./helpers/helpers";
 import {logout} from "../src/utils/auth_utils";
 
 
@@ -139,7 +139,8 @@ describe("Extension",() => {
 
     test("With user, repo is in sync", async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);

@@ -59,12 +59,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	vscode.workspace.onDidCreateFiles(changeEvent => {
 		const handler = new eventHandler();
-		handler.handleFilesCreated(changeEvent);
+		handler.handleCreateEvent(changeEvent);
 	});
 
 	vscode.workspace.onDidDeleteFiles(changeEvent => {
 		const handler = new eventHandler();
-		handler.handleFilesDeleted(changeEvent);
+		handler.handleDeleteEvent(changeEvent);
 	});
 
 	vscode.workspace.onDidRenameFiles(changeEvent => {

@@ -8,6 +8,7 @@ import {DEFAULT_BRANCH, GITIGNORE, NOTIFICATION} from "../../src/constants";
 import fetchMock from "jest-fetch-mock";
 import {initHandler} from "../../src/init/init_handler";
 import {
+    Config,
     DUMMY_FILE_CONTENT,
     getConfigFilePath, getSeqTokenFilePath, getUserFilePath,
     INVALID_TOKEN_JSON,
@@ -77,9 +78,8 @@ describe("initHandler",  () => {
                 .mockResponseOnce(JSON.stringify({ status: true }))
                 .mockResponseOnce(JSON.stringify(user));
             // Add repo in config
-            const _configData = JSON.parse(JSON.stringify(configData));
-            _configData.repos[repoPath] = {branches: {}};
-            fs.writeFileSync(configPath, yaml.safeDump(_configData));
+            const configUtil = new Config(repoPath, configPath);
+            configUtil.addRepo();
             await handler.syncRepo();
             // Verify error msg
             expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
@@ -155,7 +155,6 @@ describe("initHandler",  () => {
     });
 
     describe("Syncing Branch",  () => {
-
         untildify.mockReturnValue(baseRepoPath);
         const handler = new initHandler(repoPath, "ACCESS_TOKEN", true);
         const fileName = "file.js";

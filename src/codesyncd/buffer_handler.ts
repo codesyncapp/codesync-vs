@@ -9,7 +9,6 @@ import {checkServerDown} from "../utils/api_utils";
 import {
     cleanUpDeleteDiff,
     getDIffForDeletedFile,
-    handleFilesRename,
     handleNewFileUpload,
     isValidDiff
 } from './utils';
@@ -18,7 +17,7 @@ import {
 	DIFF_FILES_PER_ITERATION,
 	STATUS_BAR_MSGS,
 	WEBSOCKET_ENDPOINT,
-	DAY
+	DAY, CONNECTION_ERROR_MESSAGE, LOG_AFTER_X_TIMES
 } from "../constants";
 import {recallDaemon} from "./codesyncd";
 import {generateSettings} from "../settings";
@@ -26,6 +25,7 @@ import {initUtils} from "../init/utils";
 import {pathUtils} from "../utils/path_utils";
 
 const WAITING_FILES = <any>{};
+let errorCount = 0;
 
 export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 	/*
@@ -99,9 +99,17 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 
 		const isServerDown = await checkServerDown();
 		if (isServerDown) {
+			if (errorCount == 0 || errorCount > LOG_AFTER_X_TIMES) {
+				putLogEvent(CONNECTION_ERROR_MESSAGE);
+			}
+			if (errorCount > LOG_AFTER_X_TIMES) {
+				errorCount = 0;
+			}
+			errorCount += 1;
 			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.SERVER_DOWN);
 			return recallDaemon(statusBarItem);
 		}
+		errorCount = 0;
 
 		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
 
@@ -128,7 +136,8 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 			const configRepo = configJSON.repos[diffData.repo_path];
 
 			if (!(diffData.branch in configRepo.branches)) {
-				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`, configRepo.email);
+				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`,
+					configRepo.email);
 			}
 
 			// Group diffs by repo_path
@@ -211,18 +220,6 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 									const oldRelPath = JSON.parse(diffData.diff).old_rel_path;
 									// If old_rel_path uploaded in the same iteration, wait for next iteration
 									if (newFiles.includes(oldRelPath)) { continue; }
-									// Remove old file ID from config
-									const oldFileId = configFiles[oldRelPath];
-									delete configFiles[oldRelPath];
-
-									if  (!oldFileId) {
-										putLogEvent(`old_file: ${oldRelPath} was not 
-										synced for rename of ${path.join(repoDiff.path, relPath)}`, configRepo.email);
-										fs.unlinkSync(fileToDiff.file_path);
-										continue;
-									}
-									handleFilesRename(configJSON, diffData.repo_path, diffData.branch,
-										relPath, oldFileId, oldRelPath);
 								}
 
 								if (!isBinary && !isDeleted && !diffData.diff) {
@@ -282,13 +279,13 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 
 								// Diff data to be sent to server
 								const diffToSend = {
+									'path': relPath,
 									'file_id': fileId,
 									'diff': diffData.diff,
 									'is_deleted': isDeleted,
 									'is_rename': diffData.is_rename,
 									'is_binary': isBinary,
 									'created_at': diffData.created_at,
-									'path': relPath,
 									'diff_file_path': fileToDiff.file_path
 								};
 								connection.send(JSON.stringify({'diffs': [diffToSend]}));

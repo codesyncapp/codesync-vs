@@ -181,57 +181,6 @@ describe("handleNewFileUpload",  () => {
 
 });
 
-
-describe("handleFilesRename",  () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const repoPath = randomRepoPath();
-    const fileRelPath = "file.js";
-    const renamedFileRelPath = "file_renamed.js";
-    const configPath = getConfigFilePath(baseRepoPath);
-    const configData = {repos: {}};
-    configData.repos[repoPath] = {branches: {}};
-    configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
-
-    untildify.mockReturnValue(baseRepoPath);
-
-    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-    const shadowBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-        untildify.mockReturnValue(baseRepoPath);
-        fs.mkdirSync(baseRepoPath, {recursive: true});
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
-    });
-
-    afterEach(() => {
-        fs.rmSync(repoPath, { recursive: true, force: true });
-        fs.rmSync(baseRepoPath, { recursive: true, force: true });
-    });
-
-    test("Old file is in .shadow",  () => {
-        fs.mkdirSync(shadowBranchPath, {recursive: true});
-        fs.writeFileSync(path.join(shadowBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
-        handleFilesRename(configData, repoPath, DEFAULT_BRANCH, renamedFileRelPath, 1234,
-            fileRelPath);
-        expect(fs.existsSync(path.join(shadowBranchPath, renamedFileRelPath))).toBe(true);
-        const config = readYML(configPath);
-        expect(config.repos[repoPath].branches[DEFAULT_BRANCH][renamedFileRelPath]).toStrictEqual(1234);
-    });
-
-    // TODO: If old file is not in .shadow, should we create new file in .shadow?
-    test("Old file NOT in .shadow",  () => {
-        const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-        const shadowBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-        handleFilesRename(configData, repoPath, DEFAULT_BRANCH, renamedFileRelPath, 1234,
-            fileRelPath);
-        expect(fs.existsSync(path.join(shadowBranchPath, renamedFileRelPath))).toBe(false);
-        const config = readYML(configPath);
-        expect(config.repos[repoPath].branches[DEFAULT_BRANCH][renamedFileRelPath]).toStrictEqual(1234);
-    });
-
-});
-
 describe("cleanUpDeleteDiff",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();

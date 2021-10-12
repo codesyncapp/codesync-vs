@@ -6,10 +6,15 @@ import getBranchName from "current-git-branch";
 
 import {readYML} from "../../../src/utils/common";
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../src/constants";
-import {getConfigFilePath, getSyncIgnoreFilePath, randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
+import {
+    Config,
+    getConfigFilePath,
+    getSyncIgnoreFilePath,
+    randomBaseRepoPath,
+    randomRepoPath
+} from "../../helpers/helpers";
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
-import yaml from "js-yaml";
 
 
 describe("handleNewFile",  () => {
@@ -51,6 +56,7 @@ describe("handleNewFile",  () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
         // Create directories
+        fs.mkdirSync(baseRepoPath, { recursive: true });
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
         fs.mkdirSync(originalsRepoBranchPath, { recursive: true });
@@ -58,6 +64,9 @@ describe("handleNewFile",  () => {
         fs.writeFileSync(newFilePath, "use babel;");
         fs.writeFileSync(ignorableFilePath, "use babel;");
         fs.writeFileSync(syncIgnorePath, syncIgnoreData);
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+
     });
 
     afterEach(() => {
@@ -66,6 +75,8 @@ describe("handleNewFile",  () => {
     });
 
     test("Event: Repo not synced", () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.removeRepo();
         const handler = new eventHandler();
         const event = {
             files: [{
@@ -74,7 +85,7 @@ describe("handleNewFile",  () => {
                 scheme: "file"
             }]
         };
-        handler.handleFilesCreated(event);
+        handler.handleCreateEvent(event);
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
@@ -84,26 +95,19 @@ describe("handleNewFile",  () => {
     });
 
     test("Event: Synced repo, Ignorable file", () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
         const event = {
             files: [{
                 fsPath: path.join(repoPath, "node_modules", "express", "index.js")
             }]
         };
         const handler = new eventHandler();
-        handler.handleFilesCreated(event);
+        handler.handleCreateEvent(event);
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
     });
 
     test("Event: Synced repo, Valid File", () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
-
         const handler = new eventHandler();
         const event = {
             files: [{
@@ -112,7 +116,7 @@ describe("handleNewFile",  () => {
                 scheme: "file"
             }]
         };
-        handler.handleFilesCreated(event);
+        handler.handleCreateEvent(event);
         // Verify file has been created in the .shadow repo and .originals repos
         expect(fs.existsSync(shadowFilePath)).toBe(true);
         expect(fs.existsSync(originalsFilePath)).toBe(true);
@@ -132,6 +136,8 @@ describe("handleNewFile",  () => {
     });
 
     test("Event: handlePastedFile, Repo not synced", () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.removeRepo();
         const handler = new eventHandler();
         handler.handlePastedFile(newFilePath);
         // Verify file has been created in the .shadow repo and .originals repos
@@ -143,9 +149,6 @@ describe("handleNewFile",  () => {
     });
 
     test("Event: handlePastedFile, Synced Repo", () => {
-        const config = {'repos': {}};
-        config.repos[repoPath] = {'branches': {}};
-        fs.writeFileSync(configPath, yaml.safeDump(config));
         const handler = new eventHandler();
         handler.handlePastedFile(newFilePath);
         // Verify file has been created in the .shadow repo and .originals repos

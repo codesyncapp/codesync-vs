@@ -5,7 +5,7 @@ import untildify from "untildify";
 
 import {getPublicPrivateMsg, NOTIFICATION} from "../../src/constants";
 import {getUserFilePath, randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../helpers/helpers";
-import {askPublicPrivate, askToUpdateSyncIgnore, showChooseAccount} from "../../src/utils/notifications";
+import {askPublicPrivate, showChooseAccount} from "../../src/utils/notifications";
 
 
 describe("showChooseAccount",  () => {
@@ -35,9 +35,10 @@ describe("showChooseAccount",  () => {
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.NO_VALID_ACCOUNT);
     });
 
-    test("with valid user",  () => {
-        showChooseAccount(repoPath);
+    test("with valid user",  async () => {
+        const handler = await showChooseAccount(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
+        expect(handler.accessToken).toStrictEqual(userData[TEST_EMAIL].access_token);
         // TODO: In case we activate choose account option
         // expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         // expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.CHOOSE_ACCOUNT);

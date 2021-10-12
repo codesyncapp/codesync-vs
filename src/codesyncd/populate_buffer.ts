@@ -10,21 +10,20 @@ import {initUtils} from "../init/utils";
 import {IFileToUpload, IUserPlan} from "../interface";
 import {initHandler} from "../init/init_handler";
 import {similarity} from "./utils";
-import {diff_match_patch} from "diff-match-patch";
-import {manageDiff} from "../events/diff_utils";
 import {generateSettings} from "../settings";
 import {pathUtils} from "../utils/path_utils";
 import {
     getBranch,
     getSkipRepos,
     getSyncIgnoreItems,
+    isEmpty,
     readYML
 } from "../utils/common";
 import {
     DATETIME_FORMAT,
-    FILE_SIZE_AS_COPY,
     SEQUENCE_MATCHER_RATIO
 } from "../constants";
+import {eventHandler} from "../events/event_handler";
 
 
 export const populateBuffer = async () => {
@@ -32,18 +31,17 @@ export const populateBuffer = async () => {
     await populateBufferForMissedEvents(readyRepos);
 };
 
-const populateBufferForMissedEvents = async (readyRepos: any) => {
+export const populateBufferForMissedEvents = async (readyRepos: any) => {
     for (const repoPath of Object.keys(readyRepos)) {
         const branch = readyRepos[repoPath];
         const obj = new PopulateBuffer(repoPath, branch);
-        let dataDiffs = <any>{};
         if (!obj.modifiedInPast) {
             // Go for content diffs if repo was modified after lastSyncedAt
-            dataDiffs = await obj.populateBufferForRepo();
+            await obj.populateBufferForRepo();
         }
-        const deletedFilesDiffs = obj.getDiffForDeletedFiles();
-        const diffs = Object.assign({}, dataDiffs, deletedFilesDiffs);
-        obj.addDiffsInBuffer(diffs);
+        obj.generateDiffForDeletedFiles();
+        // Update lastSyncedAt in global
+        (global as any).lastSyncedAt[repoPath] = obj.repoModifiedAt;
     }
 };
 
@@ -118,6 +116,51 @@ class PopulateBuffer {
         return lastSyncedAt && lastSyncedAt >= this.repoModifiedAt;
     }
 
+    async populateBufferForRepo() {
+        console.log(`Watching Repo: ${this.repoPath}`);
+        for (const itemPath of this.itemPaths) {
+            let isRename = false;
+            const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
+            const shadowExists = fs.existsSync(shadowFilePath);
+            const fileInConfig = itemPath.rel_path in this.configFiles;
+            const createdAt = dateFormat(new Date(itemPath.modified_at), DATETIME_FORMAT);
+
+            const handler = new eventHandler(this.repoPath, createdAt, true);
+
+            // For binary file, can only handle create event
+            if (itemPath.is_binary) {
+                if (!fileInConfig) {
+                    // Upload new binary file
+                    handler.handleNewFile(itemPath.file_path);
+                }
+                continue;
+            }
+            // It is a change event
+            if (fileInConfig) {
+                // Read latest content of the file
+                const currentContent = fs.readFileSync(itemPath.file_path, "utf8");
+                handler.handleChanges(itemPath.file_path, currentContent);
+                continue;
+            }
+            // If rel_path is not in configFiles and shadow does not exists, can be a rename OR deleted file
+            if (!shadowExists) {
+                const renameResult = this.checkForRename(itemPath.file_path);
+                if (renameResult.isRename) {
+                    const oldRelPath = renameResult.shadowFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
+                    isRename = oldRelPath !== itemPath.rel_path;
+                    if (isRename) {
+                        const oldFilePath = path.join(this.repoPath, oldRelPath);
+                        handler.handleRename(oldFilePath, itemPath.file_path);
+                        this.renamedFiles.push(oldRelPath);
+                        continue;
+                    }
+                }
+            }
+            // If not handled in changesHandler and renameHandler, it must be new file
+            handler.handleNewFile(itemPath.file_path);
+        }
+    }
+
     checkForRename(filePath: string) {
         // Check for rename only for non-empty files
         const repoPath = this.repoPath;
@@ -174,91 +217,7 @@ class PopulateBuffer {
         };
     }
 
-    async populateBufferForRepo() {
-        const diffs = <any>{};
-        console.log(`Watching Repo: ${this.repoPath}`);
-        for (const itemPath of this.itemPaths) {
-            let diff = "";
-            let previousContent = "";
-            let isRename = false;
-            const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
-            const originalFilePath = path.join(this.originalsRepoBranchPath, itemPath.rel_path);
-            const shadowExists = fs.existsSync(shadowFilePath);
-            // If rel_path is in configFiles, shadowExists & not is binary, we can compute diff
-            if (itemPath.rel_path in this.configFiles && !itemPath.is_binary) {
-                // It is new file, either it will be a copy or brand new file
-                if (shadowExists) {
-                    previousContent = fs.readFileSync(shadowFilePath, "utf8");
-                } else if (itemPath.size > FILE_SIZE_AS_COPY) {
-                    // Read original file
-                    previousContent = fs.readFileSync(itemPath.file_path, "utf8");
-                }
-                // Read latest content of the file
-                const latestContent = fs.readFileSync(itemPath.file_path, "utf8");
-                const dmp = new diff_match_patch();
-                const patches = dmp.patch_make(previousContent, latestContent);
-                // Create text representation of patches objects
-                diff = dmp.patch_toText(patches);
-            }
-            // If rel_path is not in configFiles and shadow does not exists, can be a rename OR deleted file
-            if (!(itemPath.rel_path in this.configFiles) && !shadowExists && !itemPath.is_binary) {
-                const renameResult = this.checkForRename(itemPath.file_path);
-                if (renameResult.isRename) {
-                    const oldRelPath = renameResult.shadowFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
-                    const oldAbsPath = path.join(this.repoBranchPath, oldRelPath);
-                    const newAbsPath = path.join(this.repoBranchPath, itemPath.rel_path);
-                    isRename = oldRelPath !== itemPath.rel_path;
-                    if (isRename) {
-                        // Remove old file from shadow repo
-                        fs.unlinkSync(renameResult.shadowFilePath);
-                        // Add diff for rename with old_path and new_path
-                        diff = JSON.stringify({
-                            old_abs_path: oldAbsPath,
-                            new_abs_path: newAbsPath,
-                            old_rel_path: oldRelPath,
-                            new_rel_path: itemPath.rel_path
-                        });
-                        this.renamedFiles.push(oldRelPath);
-                    }
-                }
-            }
-            const isNewFile = !(itemPath.rel_path in this.configFiles) && !isRename &&
-                !fs.existsSync(originalFilePath) && !fs.existsSync(shadowFilePath);
-            // For new file, copy it in .originals. If already exists there, skip it
-            if (isNewFile) {
-                diff = "";
-                this.initUtilsObj.copyFilesTo([itemPath.file_path], this.originalsRepoBranchPath);
-            }
-            // Sync file in shadow repo with latest content
-            this.initUtilsObj.copyFilesTo( [itemPath.file_path], this.shadowRepoBranchPath);
-
-            // Add diff only if it is non-empty or it is new file in which case diff will probably be empty initially
-            if (diff || isNewFile) {
-                diffs[itemPath.rel_path] = {
-                    'diff': diff,
-                    'is_rename': isRename,
-                    'is_new_file': isNewFile,
-                    'is_binary': itemPath.is_binary,
-                    'created_at': dateFormat(new Date(itemPath.modified_at), DATETIME_FORMAT)
-                };
-            }
-        }
-        return diffs;
-    }
-
-    addDiffsInBuffer(diffs: any) {
-        // Update lastSyncedAt in global
-        (global as any).lastSyncedAt[this.repoPath] = this.repoModifiedAt;
-        // Add diffs in buffer
-        Object.keys(diffs).forEach(relPath => {
-            const diffData = diffs[relPath];
-            console.log(`Populating buffer for ${relPath}`);
-            manageDiff(this.repoPath, this.branch, relPath, diffData.diff, diffData.is_new_file,
-                diffData.is_rename, diffData.is_deleted, diffData.created_at);
-        });
-    }
-
-    getDiffForDeletedFiles() {
+    generateDiffForDeletedFiles() {
         /*
          Pick files that are present in config.yml but
          - is sync able file
@@ -267,7 +226,6 @@ class PopulateBuffer {
          - not present in .deleted repo
          - present in .shadow repo
         */
-        const diffs = <any>{};
         const activeRelPaths = this.itemPaths.map(itemPath => itemPath.rel_path);
         Object.keys(this.configFiles).forEach(relPath => {
             // Cache path of file
@@ -281,16 +239,10 @@ class PopulateBuffer {
                 !fs.existsSync(shadowFilePath)) {
                 return;
             }
-
-            diffs[relPath] = {
-                'is_deleted': true,
-                'diff': null,  // Computing later while handling buffer
-            };
-            const cacheRepoPath = this.pathUtils.getDeletedRepoPath();
-            // Pick from .shadow and add file in .deleted repo to avoid duplicate diffs
-            this.initUtilsObj.copyFilesTo( [shadowFilePath], cacheRepoPath, true);
+            const filePath = path.join(this.repoPath, relPath);
+            const handler = new eventHandler(this.repoPath);
+            handler.handleDelete(filePath);
         });
-        return diffs;
     }
 }
 
@@ -298,25 +250,18 @@ export const detectBranchChange = async () => {
     /*
     * See if repo is in config.yml and is active
     * Check if associated user has an access token
-    *
-    * */
-    // Read config.json
+    */
     const settings = generateSettings();
-
     const configJSON = readYML(settings.CONFIG_PATH);
     const users = readYML(settings.USER_PATH) || {};
     const readyRepos = <any>{};
     for (const repoPath of Object.keys(configJSON.repos)) {
-        if (configJSON.repos[repoPath].is_disconnected) {
-            continue;
-        }
+
+        if (configJSON.repos[repoPath].is_disconnected) continue;
+
         const configRepo = configJSON.repos[repoPath];
-        if (!configRepo.email) {
-            continue;
-        }
-        if (!(configRepo.email in users)) {
-            continue;
-        }
+        if (!(configRepo.email in users)) continue;
+
         const accessToken = users[configRepo.email].access_token;
         const userEmail = configRepo.email;
         if (!accessToken) {
@@ -332,28 +277,32 @@ export const detectBranchChange = async () => {
             // TODO: Handle out of sync repo
             continue;
         }
+
         const initUtilsObj = new initUtils(repoPath, true);
 
-        const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-        const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
-        if (!(branch in configRepo.branches)) {
-            if (originalsRepoExists) {
-                // init has been called, now see if we can upload the repo/branch
+        if (branch in configRepo.branches) {
+            const configFiles = configRepo['branches'][branch];
+            if (isEmpty(configFiles)) continue;
+            // If all files IDs are None in config.yml, we need to sync the branch
+            const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
+            if (shouldSyncBranch) {
                 const itemPaths = initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
-                await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, false, configRepo.email);
-            } else {
-                const handler = new initHandler(repoPath, accessToken, true);
-                await handler.syncRepo();
+                await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
             }
+            readyRepos[repoPath] = branch;
             continue;
         }
+        // Need to sync the branch
+        const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+        const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
 
-        const configFiles = configRepo['branches'][branch];
-        // If all files IDs are None in config.yml, we need to sync the branch
-        const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
-        if (shouldSyncBranch) {
+        if (originalsRepoExists) {
+            // init has been called, now see if we can upload the repo/branch
             const itemPaths = initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
-            await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, false, configRepo.email);
+            await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
+        } else {
+            const handler = new initHandler(repoPath, accessToken, true);
+            await handler.syncRepo();
         }
         readyRepos[repoPath] = branch;
     }

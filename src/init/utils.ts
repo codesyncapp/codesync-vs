@@ -8,7 +8,7 @@ import parallel from "run-parallel";
 import { isBinaryFileSync } from 'isbinaryfile';
 
 import { putLogEvent } from '../logger';
-import { NOTIFICATION } from '../constants';
+import {CONNECTION_ERROR_MESSAGE, NOTIFICATION} from '../constants';
 import { generateSettings } from "../settings";
 import { pathUtils } from '../utils/path_utils';
 import { checkServerDown } from '../utils/api_utils';
@@ -47,22 +47,14 @@ export class initUtils {
 
 	successfullySynced () {
 		const config = readYML(this.settings.CONFIG_PATH);
-		if (!(this.repoPath in config.repos)) {
-			return false;
-		}
+		if (!(this.repoPath in config.repos)) return false;
 		const configRepo = config.repos[this.repoPath];
 		const branch = getBranch(this.repoPath);
 		// If branch is not synced, daemon will take care of that
 		if (!(branch in configRepo.branches)) { return true; }
 		const configFiles = configRepo.branches[branch];
-		const invalidFiles = [];
-		Object.keys(configFiles).forEach((relPath) => {
-			if (configFiles[relPath] === null) {
-				invalidFiles.push(relPath);
-			}
-		});
-		const hasValidFiles = invalidFiles.length === 0;
-		return hasValidFiles;
+		const invalidFiles = Object.keys(configFiles).filter(relPath => configFiles[relPath] === null);
+		return !(invalidFiles.length && invalidFiles.length === Object.keys(configFiles).length);
 	}
 
 	isSyncAble(relPath: string) {
@@ -226,7 +218,7 @@ export class initUtils {
 	}
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
-					isPublic=false, userEmail?: string) {
+					userEmail: string, isPublic=false) {
 		const repoName = path.basename(this.repoPath);
 		const configJSON = readYML(this.settings.CONFIG_PATH);
 		const repoInConfig = isRepoActive(configJSON, this.repoPath);
@@ -243,7 +235,10 @@ export class initUtils {
 		});
 
 		if (!repoInConfig) {
-			configJSON.repos[this.repoPath] = {branches: {}};
+			configJSON.repos[this.repoPath] = {
+				branches: {},
+				email: userEmail
+			};
 			configJSON.repos[this.repoPath].branches[branch] = branchFiles;
 			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
 		} else if (!(branch in configJSON.repos[this.repoPath].branches)) {
@@ -251,8 +246,11 @@ export class initUtils {
 			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
 		}
 
-		const isServerDown = await checkServerDown(userEmail);
-		if (isServerDown) return;
+		const isServerDown = await checkServerDown();
+		if (isServerDown) {
+			if (!this.viaDaemon) putLogEvent(CONNECTION_ERROR_MESSAGE);
+			return;
+		}
 
 		console.log(`Uploading new branch: ${branch} for repo: ${this.repoPath}`);
 

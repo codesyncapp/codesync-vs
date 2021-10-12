@@ -1,19 +1,17 @@
 import fetch from "node-fetch";
 
-import { API_HEALTHCHECK, API_USERS, CONNECTION_ERROR_MESSAGE } from "../constants";
-import { putLogEvent } from "../logger";
+import { API_HEALTHCHECK, API_USERS } from "../constants";
 import { IAuth0User } from "../interface";
 import jwt_decode from "jwt-decode";
 
 
-export const checkServerDown = async (userEmail?: string) => {
+export const checkServerDown = async () => {
 	let isDown = false;
 	const response = await fetch(API_HEALTHCHECK)
 	.then(res => res.json())
     .then(json => json)
 	.catch(err => {
 		isDown = true;
-		putLogEvent(CONNECTION_ERROR_MESSAGE, userEmail);
 	});
 	return isDown || !response.status;
 };

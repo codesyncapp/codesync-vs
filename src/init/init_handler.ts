@@ -50,7 +50,6 @@ export class initHandler {
 			}
 			user = json.response;
 		}
-
 		const settings = generateSettings();
 		const branch = getBranch(this.repoPath);
 		const configJSON = readYML(settings.CONFIG_PATH);
@@ -117,6 +116,6 @@ export class initHandler {
 		const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
 		initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
 		// Upload repo/branch
-		await initUtilsObj.uploadRepo(branch, this.accessToken, itemPaths, isPublic, user.email);
+		await initUtilsObj.uploadRepo(branch, this.accessToken, itemPaths, user.email, isPublic);
 	};
 }
