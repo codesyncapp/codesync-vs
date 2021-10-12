@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored populateBuffer with event based approach
 - Added tests for populateBuffer
 - Simplified diff structure for rename event 
-- Improve online/offline handling of rename
+- Improved online/offline handling of rename
 
 ## [2.29.16] - 2021-10-07
 ### Changed
