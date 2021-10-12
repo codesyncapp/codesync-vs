@@ -78,7 +78,7 @@ export class eventHandler {
 		}
 		if (this.isRename) {
 			// Use old file ID for the renamed file
-			configFiles[relPath] = configFiles[oldRelPath];
+			configFiles[relPath] = configFiles[oldRelPath] || null;
 			delete configFiles[oldRelPath];
 		}
 		// write file id to config.yml
@@ -287,10 +287,6 @@ export class eventHandler {
 		const oldRelPath = oldAbsPath.split(path.join(this.repoPath, path.sep))[1];
 		const newRelPath = newAbsPath.split(path.join(this.repoPath, path.sep))[1];
 		if (shouldIgnoreFile(this.repoPath, newRelPath)) { return; }
-		const oldShadowPath = path.join(this.shadowRepoBranchPath, oldRelPath);
-		const newShadowPath = path.join(this.shadowRepoBranchPath, newRelPath);
-		// rename file in shadow repo
-		fs.renameSync(oldShadowPath, newShadowPath);
 
 		const isDirectory = fs.lstatSync(newAbsPath).isDirectory();
 		if (isDirectory) {
@@ -300,12 +296,18 @@ export class eventHandler {
 		}
 		console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
 
+		const oldShadowPath = path.join(this.shadowRepoBranchPath, oldRelPath);
+		const newShadowPath = path.join(this.shadowRepoBranchPath, newRelPath);
+		if (fs.existsSync(oldShadowPath)) {
+			const initUtilsObj = new initUtils(this.repoPath);
+			initUtilsObj.copyForRename(oldShadowPath, newShadowPath);
+			fs.unlinkSync(oldShadowPath);
+		}
 		// Create diff
 		const diff = JSON.stringify({
 			old_rel_path: oldRelPath,
 			new_rel_path: newRelPath
 		});
-
 		// Add new diff in the buffer
 		this.isRename = true;
 		this.addPathToConfig(newRelPath, oldRelPath);
@@ -328,6 +330,14 @@ export class eventHandler {
 				'old_rel_path': oldRelPath,
 				'new_rel_path': newRelPath
 			});
+			// // Rename shadow file
+			const oldShadowPath = path.join(that.shadowRepoBranchPath, oldRelPath);
+			const newShadowPath = path.join(that.shadowRepoBranchPath, newRelPath);
+			if (fs.existsSync(oldShadowPath)) {
+				const initUtilsObj = new initUtils(repoPath);
+				initUtilsObj.copyForRename(oldShadowPath, newShadowPath);
+				fs.unlinkSync(oldShadowPath);
+			}
 			that.addPathToConfig(newRelPath, oldRelPath);
 			that.addDiff(newRelPath, diff);
 			next();

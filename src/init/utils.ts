@@ -124,6 +124,19 @@ export class initUtils {
 		});
 	}
 
+    copyForRename(from: string, to: string) {
+        const directories = path.dirname(to);
+        if (!fs.existsSync(directories)) {
+            fs.mkdirSync(directories, {recursive: true});
+        }
+        // File destination will be created or overwritten by default.
+        try {
+            fs.copyFileSync(from, to);
+        } catch (error) {
+            console.log("Unable to copy", from, to);
+            console.log(error);
+        }
+    }
 	saveIamUser (user: any) {
 		// save iam credentials if not saved already
 		const iamUser = {

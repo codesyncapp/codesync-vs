@@ -165,8 +165,10 @@ export const assertRenameEvent = (repoPath, configPath, oldRelPath, newRelPath,
     const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
     const diffsRepo = pathUtilsObj.getDiffsRepo();
 
+    const oldShadowFilePath = path.join(shadowRepoBranchPath, oldRelPath);
     const renamedShadowFilePath = path.join(shadowRepoBranchPath, newRelPath);
     // Verify file has been renamed in the shadow repo
+    expect(fs.existsSync(oldShadowFilePath)).toBe(false);
     expect(fs.existsSync(renamedShadowFilePath)).toBe(true);
     // Verify correct diff file has been generated
     let diffFiles = fs.readdirSync(diffsRepo);

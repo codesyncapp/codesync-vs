@@ -10,7 +10,7 @@ import {eventHandler} from "../../../src/events/event_handler";
 import {DEFAULT_BRANCH} from "../../../src/constants";
 import {
     assertRenameEvent,
-    Config, FILE_ID,
+    Config, DUMMY_FILE_CONTENT, FILE_ID,
     getConfigFilePath,
     randomBaseRepoPath,
     randomRepoPath,
@@ -40,22 +40,21 @@ describe("handleRenameFile",  () => {
     const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
     const diffsRepo = pathUtilsObj.getDiffsRepo();
 
-    const oldRelPath = "file_1.js";
+    const fileRelPath = "file_1.js";
     // For file rename
-    const oldFilePath = path.join(repoPath, oldRelPath);
+    const oldFilePath = path.join(repoPath, fileRelPath);
     const newFilePath = path.join(repoPath, "new.js");
-    const oldShadowFilePath = path.join(shadowRepoBranchPath, oldRelPath);
+    const oldShadowFilePath = path.join(shadowRepoBranchPath, fileRelPath);
     const renamedShadowFilePath = path.join(shadowRepoBranchPath, "new.js");
 
     // For directory rename
     const oldDirectoryPath = path.join(repoPath, "old");
     const oldShadowDirectoryPath = path.join(shadowRepoBranchPath, "old");
-    const oldShadowDirectoryFilePath = path.join(oldShadowDirectoryPath, "file.js");
+    const oldShadowDirectoryFilePath = path.join(oldShadowDirectoryPath, fileRelPath);
 
     const newDirectoryPath = path.join(repoPath, "new");
-    const newDirectoryFilePath = path.join(newDirectoryPath, "file.js");
+    const newDirectoryFilePath = path.join(newDirectoryPath, fileRelPath);
     const renamedShadowDirectoryPath = path.join(shadowRepoBranchPath, "new");
-    const renamedShadowDirectoryFilePath = path.join(renamedShadowDirectoryPath, "file.js");
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -71,10 +70,6 @@ describe("handleRenameFile",  () => {
 
         fs.mkdirSync(shadowRepoBranchPath, { recursive: true });
         fs.writeFileSync(oldShadowFilePath, "use babel;");
-
-        // For directory rename, repo will have new directory but shadow will have old repo
-        fs.mkdirSync(newDirectoryPath, { recursive: true });
-        fs.writeFileSync(newDirectoryFilePath, "use babel;");
 
         fs.mkdirSync(oldShadowDirectoryPath, { recursive: true });
         fs.writeFileSync(oldShadowDirectoryFilePath, "use babel;");
@@ -132,7 +127,6 @@ describe("handleRenameFile",  () => {
 
     test("for File",  () => {
         fs.writeFileSync(newFilePath, "use babel;");
-
         const event = {
             files: [{
                 oldUri: {
@@ -149,13 +143,51 @@ describe("handleRenameFile",  () => {
         };
         const handler = new eventHandler();
         handler.handleRenameEvent(event);
-        expect(assertRenameEvent(repoPath, configPath, oldRelPath, "new.js")).toBe(true);
+        expect(assertRenameEvent(repoPath, configPath, fileRelPath, "new.js")).toBe(true);
+    });
+
+    test("For file renamed to nested directory",  () => {
+        // Write data to new file
+        const _newRelPath = path.join("new", "file.js");
+        const renamedFilePath = path.join(repoPath, _newRelPath);
+        fs.mkdirSync(path.dirname(renamedFilePath), { recursive: true });
+        fs.writeFileSync(renamedFilePath, "use babel;");
+        const handler = new eventHandler();
+        handler.handleRename(oldFilePath, renamedFilePath);
+        expect(assertRenameEvent(repoPath, configPath, fileRelPath, _newRelPath)).toBe(true);
     });
 
     test("for Directory",  async () => {
-        const oldRelPath = path.join("old", "file.js");
-        const newRelPath = path.join("new", "file.js");
+        // For directory rename, repo will have new directory but shadow will have old repo
+        fs.mkdirSync(newDirectoryPath, { recursive: true });
+        fs.writeFileSync(newDirectoryFilePath, "use babel;");
+        const directoryOldRelPath = path.join("old", fileRelPath);
+        const directoryNewRelPath = path.join("new", fileRelPath);
+        const renamedFilePath = path.join(repoPath, directoryNewRelPath);
+        const config = {repos: {}};
+        config.repos[repoPath] = {
+            branches: {},
+            email: TEST_EMAIL
+        };
+        config.repos[repoPath].branches[DEFAULT_BRANCH] = {};
+        config.repos[repoPath].branches[DEFAULT_BRANCH][directoryOldRelPath] = FILE_ID;
+        fs.writeFileSync(configPath, yaml.safeDump(config));
 
+        // Write data to new file
+        fs.writeFileSync(renamedFilePath, "use babel;");
+
+        const handler = new eventHandler();
+        handler.handleRename(oldDirectoryPath, newDirectoryPath);
+        await waitFor(1);
+        expect(assertRenameEvent(repoPath, configPath, directoryOldRelPath, directoryNewRelPath)).toBe(true);
+    });
+
+    test("for Directory, renamed to nested directory",  async () => {
+        // old/file_1.js -> new/nested/file_1.js
+        const oldRelPath = path.join("old", fileRelPath);
+        const newDirectoryPath = path.join(repoPath, "new", "nested");
+        const newRelPath = path.join("new", "nested", fileRelPath);
+        const renamedFilePath = path.join(newDirectoryPath, fileRelPath);
         const config = {repos: {}};
         config.repos[repoPath] = {
             branches: {},
@@ -165,18 +197,11 @@ describe("handleRenameFile",  () => {
         config.repos[repoPath].branches[DEFAULT_BRANCH][oldRelPath] = FILE_ID;
         fs.writeFileSync(configPath, yaml.safeDump(config));
 
-        const event = {
-            files: [{
-                oldUri: {
-                    fsPath: oldDirectoryPath
-                },
-                newUri: {
-                    fsPath: newDirectoryPath
-                }
-            }]
-        };
+        // Write data to new file
+        fs.mkdirSync(path.dirname(renamedFilePath), { recursive: true });
+        fs.writeFileSync(renamedFilePath, DUMMY_FILE_CONTENT);
         const handler = new eventHandler();
-        handler.handleRenameEvent(event);
+        handler.handleRename(oldDirectoryPath, newDirectoryPath);
         await waitFor(1);
         expect(assertRenameEvent(repoPath, configPath, oldRelPath, newRelPath)).toBe(true);
     });
