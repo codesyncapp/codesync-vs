@@ -35,7 +35,7 @@ export const PLANS_URL = `${WEB_APP_URL}/plans`;
 // Diff utils
 export const DIFF_FILES_PER_ITERATION = 50;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
-export const REQUIRED_FILE_RENAME_DIFF_KEYS = ['old_abs_path', 'new_abs_path', 'old_rel_path', 'new_rel_path'];
+export const REQUIRED_FILE_RENAME_DIFF_KEYS = ['old_rel_path', 'new_rel_path'];
 export const REQUIRED_DIR_RENAME_DIFF_KEYS = ['old_path', 'new_path'];
 export const DIFF_SIZE_LIMIT = 16 * 1000 * 1000;
 export const SEQUENCE_MATCHER_RATIO = 0.8;

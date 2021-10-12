@@ -18,6 +18,7 @@ import { isRepoSynced, shouldIgnoreFile } from './utils';
 export class eventHandler {
 	repoPath: string;
 	branch: string;
+	viaDaemon: boolean;
 	repoIsNotSynced: boolean;
 	pathUtils: any;
 	shadowRepoBranchPath: string;
@@ -31,8 +32,9 @@ export class eventHandler {
 	createdAt = '';
 	settings = generateSettings();
 
-	constructor(repoPath="", createdAt="") {
+	constructor(repoPath="", createdAt="", viaDaemon=false) {
 		this.createdAt = createdAt;
+		this.viaDaemon = viaDaemon;
 		this.repoPath = repoPath || pathUtils.getRootPath();
 		this.repoIsNotSynced = !isRepoSynced(this.repoPath);
 		this.branch = getBranch(this.repoPath);
@@ -96,21 +98,22 @@ export class eventHandler {
 		this.handleChanges(filePath, currentText);
 	}
 
-	handleChanges = (filePath: string, currentText: string, viaDaemon=false) => {
+	handleChanges = (filePath: string, currentText: string) => {
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
 		// Skip .git and .syncignore files
 		if (shouldIgnoreFile(this.repoPath, relPath)) return;
+		let shadowText = "";
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
 		if (!fs.existsSync(shadowPath)) {
 			const initUtilsObj = new initUtils(this.repoPath);
 			initUtilsObj.copyFilesTo([filePath], this.shadowRepoBranchPath);
-			return;
+		} else {
+			// Read shadow file
+			shadowText = fs.readFileSync(shadowPath, "utf8");
 		}
-		// Read shadow file
-		const shadowText = fs.readFileSync(shadowPath, "utf8");
 		// If shadow text is same as current content, no need to compute diffs
 		if (shadowText === currentText) {
-			if (!viaDaemon) {
+			if (!this.viaDaemon) {
 				console.log(`Skipping handleChanges: Shadow is same as text`);
 			}
 			return;
@@ -281,7 +284,6 @@ export class eventHandler {
 		const newAbsPath = pathUtils.normalizePath(newPath);
 		const oldRelPath = oldAbsPath.split(path.join(this.repoPath, path.sep))[1];
 		const newRelPath = newAbsPath.split(path.join(this.repoPath, path.sep))[1];
-
 		if (shouldIgnoreFile(this.repoPath, newRelPath)) { return; }
 		const oldShadowPath = path.join(this.shadowRepoBranchPath, oldRelPath);
 		const newShadowPath = path.join(this.shadowRepoBranchPath, newRelPath);
@@ -294,12 +296,10 @@ export class eventHandler {
 			this.handleDirectoryRenameDiffs(oldAbsPath, newAbsPath);
 			return;
 		}
-
 		console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
+
 		// Create diff
 		const diff = JSON.stringify({
-			old_abs_path: oldAbsPath,
-			new_abs_path: newAbsPath,
 			old_rel_path: oldRelPath,
 			new_rel_path: newRelPath
 		});
@@ -324,17 +324,9 @@ export class eventHandler {
 			const newRelPath = newFilePath.split(path.join(repoPath, path.sep))[1];
 			const diff = JSON.stringify({
 				'old_rel_path': oldRelPath,
-				'new_rel_path': newRelPath,
-				'old_abs_path': oldFilePath,
-				'new_abs_path': newFilePath
+				'new_rel_path': newRelPath
 			});
-			// Add null fileId in config
-			const configJSON = readYML(that.settings.CONFIG_PATH);
-			delete configJSON.repos[that.repoPath].branches[that.branch][oldRelPath];
-			configJSON.repos[that.repoPath].branches[that.branch][newRelPath] = null;
-			// write file id to config.yml
-			fs.writeFileSync(that.settings.CONFIG_PATH, yaml.safeDump(configJSON));
-
+			that.addPathToConfig(newRelPath, oldRelPath);
 			that.addDiff(newRelPath, diff);
 			next();
 		});

@@ -42,7 +42,6 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
         obj.generateDiffForDeletedFiles();
         // Update lastSyncedAt in global
         (global as any).lastSyncedAt[repoPath] = obj.repoModifiedAt;
-
     }
 };
 
@@ -126,7 +125,7 @@ class PopulateBuffer {
             const fileInConfig = itemPath.rel_path in this.configFiles;
             const createdAt = dateFormat(new Date(itemPath.modified_at), DATETIME_FORMAT);
 
-            const handler = new eventHandler(this.repoPath, createdAt);
+            const handler = new eventHandler(this.repoPath, createdAt, true);
 
             // For binary file, can only handle create event
             if (itemPath.is_binary) {
@@ -140,7 +139,7 @@ class PopulateBuffer {
             if (fileInConfig) {
                 // Read latest content of the file
                 const currentContent = fs.readFileSync(itemPath.file_path, "utf8");
-                handler.handleChanges(itemPath.file_path, currentContent, true);
+                handler.handleChanges(itemPath.file_path, currentContent);
                 continue;
             }
             // If rel_path is not in configFiles and shadow does not exists, can be a rename OR deleted file

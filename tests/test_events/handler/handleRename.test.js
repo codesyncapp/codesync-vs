@@ -15,7 +15,7 @@ describe("handleRenameFile",  () => {
      {
         source: 'vs-code',
         created_at: '2021-08-26 18:59:51.954',
-        diff: '{"old_abs_path":"tests/tests_data/test_repo_sNIVUqukDv/old.js","new_abs_path":"tests/tests_data/test_repo_sNIVUqukDv/new.js","old_rel_path":"old.js","new_rel_path":"new.js"}',
+        diff: '{"old_rel_path":"old.js","new_rel_path":"new.js"}',
         repo_path: 'tests/tests_data/test_repo_sNIVUqukDv',
         branch: 'default',
         file_relative_path: 'new.js',
@@ -41,7 +41,6 @@ describe("handleRenameFile",  () => {
     // For directory rename
     const oldDirectoryPath = path.join(repoPath, "old");
     const newDirectoryPath = path.join(repoPath, "new");
-    const oldDirectoryFilePath = path.join(oldDirectoryPath, "file.js");
     const newDirectoryFilePath = path.join(newDirectoryPath, "file.js");
     const oldShadowDirectoryPath = path.join(shadowRepoBranchPath, "old");
     const renamedShadowDirectoryPath = path.join(shadowRepoBranchPath, "new");
@@ -154,8 +153,6 @@ describe("handleRenameFile",  () => {
         expect(diffData.repo_path).toEqual(repoPath);
         expect(diffData.branch).toEqual(DEFAULT_BRANCH);
         expect(diffData.file_relative_path).toEqual("new.js");
-        expect(JSON.parse(diffData.diff).old_abs_path).toEqual(oldFilePath);
-        expect(JSON.parse(diffData.diff).new_abs_path).toEqual(newFilePath);
         expect(JSON.parse(diffData.diff).old_rel_path).toEqual("old.js");
         expect(JSON.parse(diffData.diff).new_rel_path).toEqual("new.js");
     });
@@ -193,8 +190,6 @@ describe("handleRenameFile",  () => {
         expect(diffData.repo_path).toEqual(repoPath);
         expect(diffData.branch).toEqual(DEFAULT_BRANCH);
         expect(diffData.file_relative_path).toEqual("new.js");
-        expect(JSON.parse(diffData.diff).old_abs_path).toEqual(oldFilePath);
-        expect(JSON.parse(diffData.diff).new_abs_path).toEqual(newFilePath);
         expect(JSON.parse(diffData.diff).old_rel_path).toEqual("old.js");
         expect(JSON.parse(diffData.diff).new_rel_path).toEqual("new.js");
     });
@@ -227,8 +222,6 @@ describe("handleRenameFile",  () => {
         expect(diffData.repo_path).toEqual(repoPath);
         expect(diffData.branch).toEqual(DEFAULT_BRANCH);
         expect(diffData.file_relative_path).toEqual(path.join("new", "file.js"));
-        expect(JSON.parse(diffData.diff).old_abs_path).toEqual(oldDirectoryFilePath);
-        expect(JSON.parse(diffData.diff).new_abs_path).toEqual(newDirectoryFilePath);
         expect(JSON.parse(diffData.diff).old_rel_path).toEqual(path.join("old", "file.js"));
         expect(JSON.parse(diffData.diff).new_rel_path).toEqual(path.join("new", "file.js"));
     });

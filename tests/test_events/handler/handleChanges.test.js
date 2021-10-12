@@ -6,6 +6,7 @@ import getBranchName from "current-git-branch";
 
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../src/constants";
 import {
+    assertChangeEvent,
     Config,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
@@ -138,9 +139,8 @@ describe("handleChangeEvent",  () => {
             document
         });
         handler.handleChangeEvent(event);
-        expect(fs.existsSync(shadowFilePath)).toBe(true);
-        let diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(0);
+        expect(assertChangeEvent(repoPath, diffsRepo, "", DUMMY_FILE_CONTENT,
+            fileRelPath, shadowFilePath)).toBe(true);
     });
 
     test("Synced repo, file in .syncignore", () => {
@@ -221,27 +221,8 @@ describe("handleChangeEvent",  () => {
             document
         });
         handler.handleChangeEvent(event);
-        // Read shadow file
-        const shadowText = fs.readFileSync(shadowFilePath, "utf8");
-        expect(shadowText).toStrictEqual(updatedText);
-        const diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(1);
-        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
-        const diffData = readYML(diffFilePath);
-        expect(diffData.source).toEqual(DIFF_SOURCE);
-        expect(diffData.is_new_file).toBeFalsy();
-        expect(diffData.is_rename).toBeFalsy();
-        expect(diffData.is_deleted).toBeFalsy();
-        expect(diffData.repo_path).toEqual(repoPath);
-        expect(diffData.branch).toEqual(DEFAULT_BRANCH);
-        expect(diffData.file_relative_path).toEqual(fileRelPath);
 
-        // Verify diff is correct
-        const dmp = new diff_match_patch();
-        const patches = dmp.patch_make(DUMMY_FILE_CONTENT, updatedText);
-        //  Create text representation of patches objects
-        const diffs = dmp.patch_toText(patches);
-        expect(diffData.diff).toStrictEqual(diffs);
-
+        expect(assertChangeEvent(repoPath, diffsRepo, DUMMY_FILE_CONTENT, updatedText,
+            fileRelPath, shadowFilePath)).toBe(true);
     });
 });

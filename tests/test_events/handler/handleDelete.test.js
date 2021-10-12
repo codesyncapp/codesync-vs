@@ -213,7 +213,7 @@ describe("handleDirectoryDeleteDiffs", () => {
      {
         source: 'vs-code',
         created_at: '2021-08-26 18:59:51.954',
-        diff: '{"old_abs_path":"tests/tests_data/test_repo_sNIVUqukDv/old.js","new_abs_path":"tests/tests_data/test_repo_sNIVUqukDv/new.js","old_rel_path":"old.js","new_rel_path":"new.js"}',
+        diff: '',
         repo_path: 'tests/tests_data/test_repo_sNIVUqukDv',
         branch: 'default',
         file_relative_path: 'new.js',

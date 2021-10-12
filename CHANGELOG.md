@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added unit tests for detectBranchChange
 - Refactored populateBuffer with event based approach
 - Added tests for populateBuffer
+- Simplified diff structure for rename event
 
 ## [2.29.16] - 2021-10-07
 ### Changed
