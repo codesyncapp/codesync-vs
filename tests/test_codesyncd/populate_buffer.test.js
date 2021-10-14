@@ -21,7 +21,8 @@ import {
     randomRepoPath,
     TEST_EMAIL,
     TEST_REPO_RESPONSE,
-    TEST_USER
+    TEST_USER,
+    waitFor
 } from "../helpers/helpers";
 
 
@@ -215,11 +216,13 @@ describe("populateBuffer", () => {
         // New File
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         await populateBuffer();
+        await waitFor(0.1);
         expect(assertNewFileEvent(fileRelPath)).toBe(true);
         // Edit
         let updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
         fs.writeFileSync(filePath, updatedText);
         await populateBuffer();
+        await waitFor(0.1);
         expect(assertChangeEvent(repoPath, diffsRepo, DUMMY_FILE_CONTENT, updatedText,
             fileRelPath, shadowFilePath, 2)).toBe(true);
         // Rename
@@ -228,6 +231,7 @@ describe("populateBuffer", () => {
         const renamedShadowPath = path.join(shadowRepoBranchPath, newRelPath);
         fs.renameSync(filePath, renamedPath);
         await populateBuffer();
+        await waitFor(0.1);
         expect(assertRenameEvent(repoPath, configPath, fileRelPath, newRelPath, 3, false)).toBe(true);
         const configJSON = readYML(configPath);
         expect(configJSON.repos[repoPath].branches[DEFAULT_BRANCH][newRelPath]).toStrictEqual(null);
@@ -235,6 +239,7 @@ describe("populateBuffer", () => {
         const anotherUpdatedText = `${updatedText}\nAnother update to text`;
         fs.writeFileSync(renamedPath, anotherUpdatedText);
         await populateBuffer();
+        await waitFor(0.1);
         expect(assertChangeEvent(repoPath, diffsRepo, updatedText, anotherUpdatedText,
             newRelPath, renamedShadowPath, 4)).toBe(true);
     });

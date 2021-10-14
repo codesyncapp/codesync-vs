@@ -250,7 +250,7 @@ export class eventHandler {
 			}
 			// Create directories
 			const initUtilsObj = new initUtils(repoPath);
-			initUtilsObj.copyFilesTo([filePath], pathUtilsObj.getDeletedRepoPath());
+			initUtilsObj.copyFilesTo([filePath], pathUtilsObj.getDeletedRepoPath(), true);
 			that.addDiff(relPath, "");
 			next();
 		});
