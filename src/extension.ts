@@ -3,7 +3,7 @@
 import vscode from 'vscode';
 
 import { eventHandler } from "./events/event_handler";
-import { handleBuffer } from "./codesyncd/buffer_handler";
+import { bufferHandler } from "./codesyncd/buffer_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
 import { COMMAND, STATUS_BAR_MSGS } from './constants';
 import { updateStatusBarItem } from "./utils/common";
@@ -79,6 +79,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Do not run daemon in case of tests
 	if ((global as any).IS_CODESYNC_DEV) return;
 
-	await handleBuffer(statusBarItem);
+	const handler = new bufferHandler(statusBarItem);
+	handler.process();
 }
 

@@ -17,7 +17,10 @@ import {
 	DIFF_FILES_PER_ITERATION,
 	STATUS_BAR_MSGS,
 	WEBSOCKET_ENDPOINT,
-	DAY, CONNECTION_ERROR_MESSAGE, LOG_AFTER_X_TIMES
+	DAY,
+	CONNECTION_ERROR_MESSAGE,
+	LOG_AFTER_X_TIMES,
+	COMMAND
 } from "../constants";
 import {recallDaemon} from "./codesyncd";
 import {generateSettings} from "../settings";
@@ -27,7 +30,289 @@ import {pathUtils} from "../utils/path_utils";
 const WAITING_FILES = <any>{};
 let errorCount = 0;
 
-export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
+export class bufferHandler {
+
+	statusBarItem: vscode.StatusBarItem
+	settings: any;
+	users: any;
+	configJSON: any;
+
+	constructor(statusBarItem: vscode.StatusBarItem) {
+		this.statusBarItem = statusBarItem;
+		this.settings = generateSettings();
+		this.users = readYML(this.settings.USER_PATH) || {};
+		this.configJSON = readYML(this.settings.CONFIG_PATH);
+	}
+
+	updateStatusBarItem = (text: string) => {
+		if (text === STATUS_BAR_MSGS.AUTHENTICATION_FAILED) {
+			this.statusBarItem.command = COMMAND.triggerSignUp;
+		} else if (text === STATUS_BAR_MSGS.CONNECT_REPO) {
+			this.statusBarItem.command = COMMAND.triggerSync;
+		} else {
+			this.statusBarItem.command = undefined;
+		}
+		this.statusBarItem.text = text;
+		this.statusBarItem.show();
+	};
+
+	getDiffFiles = () => {
+		let diffFiles = fs.readdirSync(this.settings.DIFFS_REPO);
+		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
+		// Filter valid diff files
+		diffFiles = diffFiles.filter((diffFile) => {
+			const filePath = path.join(this.settings.DIFFS_REPO, diffFile);
+			// Pick only yml files
+			if (!diffFile.endsWith('.yml')) {
+				fs.unlinkSync(filePath);
+				return false;
+			}
+			const diffData = readYML(filePath);
+			if (!diffData || !isValidDiff(diffData)) {
+				putLogEvent(`Skipping invalid diff file: ${diffFile}`, "", 0, diffData);
+				fs.unlinkSync(filePath);
+				return false;
+			}
+			if (!(diffData.repo_path in this.configJSON.repos)) {
+				putLogEvent(`Repo ${diffData.repo_path} is not in config.yml`);
+				fs.unlinkSync(filePath);
+				return false;
+			}
+			if (this.configJSON.repos[diffData.repo_path].is_disconnected) {
+				putLogEvent(`Repo ${diffData.repo_path} is disconnected`);
+				fs.unlinkSync(filePath);
+				return false;
+			}
+			const configRepo = this.configJSON.repos[diffData.repo_path];
+
+			if (!(diffData.branch in configRepo.branches)) {
+				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`,
+					configRepo.email);
+				return false;
+			}
+
+			return true;
+		});
+		
+		return diffFiles;
+	}
+
+	groupRepoDiffs = (diffFiles: string[]) => {
+		const repoDiffs: IRepoDiffs[] = [];
+		for (const diffFile of diffFiles) {
+			const filePath = path.join(this.settings.DIFFS_REPO, diffFile);
+			const diffData = readYML(filePath);
+			// Group diffs by repo_path
+			const fileToDiff = <IFileToDiff>{};
+			fileToDiff.file_path = filePath;
+			fileToDiff.diff = diffData;
+			const index = repoDiffs.findIndex((repoDiff) => repoDiff.path === diffData.repo_path);
+			if (index > -1) {
+				repoDiffs[index].file_to_diff.push(fileToDiff);
+			} else {
+				const newRepoDiff = <IRepoDiffs>{};
+				newRepoDiff.path = diffData.repo_path;
+				newRepoDiff.file_to_diff = [fileToDiff];
+				repoDiffs.push(newRepoDiff);
+			}
+		}
+		return repoDiffs;
+	};
+
+	async process() {
+		// If there is no config file
+		if (!fs.existsSync(this.settings.CONFIG_PATH)) {
+			this.updateStatusBarItem(STATUS_BAR_MSGS.CONNECT_REPO);
+			return recallDaemon(this.statusBarItem);
+		}
+		const repoPath = pathUtils.getRootPath();
+		let statusBarMsg = STATUS_BAR_MSGS.DEFAULT;
+		if (repoPath) {
+			if (!isRepoActive(this.configJSON, repoPath)) {
+				statusBarMsg =  STATUS_BAR_MSGS.CONNECT_REPO;
+			}
+		} else {
+			statusBarMsg = STATUS_BAR_MSGS.NO_REPO_OPEN;
+		}
+
+		this.updateStatusBarItem(statusBarMsg);
+
+		const diffFiles = this.getDiffFiles();
+
+		if (!diffFiles.length) return recallDaemon(this.statusBarItem);
+
+		const isServerDown = await checkServerDown();
+		if (isServerDown) {
+			if (errorCount == 0 || errorCount > LOG_AFTER_X_TIMES) {
+				putLogEvent(CONNECTION_ERROR_MESSAGE);
+			}
+			if (errorCount > LOG_AFTER_X_TIMES) {
+				errorCount = 0;
+			}
+			errorCount += 1;
+			this.updateStatusBarItem(STATUS_BAR_MSGS.SERVER_DOWN);
+			return recallDaemon(this.statusBarItem);
+		}
+
+		errorCount = 0;
+
+		const repoDiffs = this.groupRepoDiffs(diffFiles);
+		const users = this.users;
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const that = this;
+
+		// Iterate repoDiffs and send to server
+		repoDiffs.forEach((repoDiff) => {
+			// Making a new socket connection per repo
+			const WebSocketClient = new client();
+			WebSocketClient.connect(WEBSOCKET_ENDPOINT);
+
+			WebSocketClient.on('connectFailed', function(error) {
+				putLogEvent('Socket Connect Error: ' + error.toString());
+			});
+
+			WebSocketClient.on('connect', function(connection) {
+				connection.on('error', function(error) {
+					putLogEvent("Socket Connection Error: " + error.toString());
+				});
+				connection.on('close', function() {
+					putLogEvent('echo-protocol Connection Closed');
+				});
+
+				const newFiles: string[] = [];
+				const configRepo = that.configJSON.repos[repoDiff.path];
+				const accessToken = users[configRepo.email].access_token;
+				// authenticate via websocket
+				connection.send(accessToken);
+				connection.on('message', async function(message) {
+					if (message.type === 'utf8') {
+						const resp = JSON.parse(message.utf8Data || "{}");
+						if (resp.type === 'auth') {
+							if (resp.status !== 200) {
+								putLogEvent(STATUS_BAR_MSGS.ERROR_SENDING_DIFF);
+								that.updateStatusBarItem(STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
+								return;
+							}
+
+							that.updateStatusBarItem(STATUS_BAR_MSGS.SYNCING);
+
+							for (const fileToDiff of repoDiff.file_to_diff) {
+								const diffData = fileToDiff.diff;
+								const configFiles = configRepo['branches'][diffData.branch];
+								const relPath = diffData.file_relative_path;
+								const isBinary = diffData.is_binary;
+								const isDeleted = diffData.is_deleted;
+
+								if (diffData.is_new_file) {
+									if (!newFiles.includes(relPath)) {
+										newFiles.push(relPath);
+									}
+									const json = await handleNewFileUpload(accessToken, diffData.repo_path,
+										diffData.branch, diffData.created_at, relPath, configRepo.id,
+										that.configJSON);
+									if (json.uploaded) {
+										that.configJSON = json.config;
+									}
+									if (fs.existsSync(fileToDiff.file_path)) {
+										fs.unlinkSync(fileToDiff.file_path);
+									}
+									continue;
+								}
+
+								// Skip the changes diffs if relevant file was uploaded in the same iteration, wait for next iteration
+								if (newFiles.includes(relPath)) { continue; }
+
+								if (diffData.is_rename) {
+									const oldRelPath = JSON.parse(diffData.diff).old_rel_path;
+									// If old_rel_path uploaded in the same iteration, wait for next iteration
+									if (newFiles.includes(oldRelPath)) { continue; }
+								}
+
+								if (!isBinary && !isDeleted && !diffData.diff) {
+									putLogEvent(`Empty diff found in file: ${fileToDiff.file_path}`, configRepo.email);
+									fs.unlinkSync(fileToDiff.file_path);
+									continue;
+								}
+
+								const fileId = configFiles[relPath];
+
+								if (!fileId && !isDeleted && !diffData.is_rename) {
+									if (relPath in WAITING_FILES) {
+										const now = (new Date()).getTime() / 1000;
+										if ((now - WAITING_FILES[relPath]) > DAY) {
+											putLogEvent(`File ID not found for: ${relPath}`, configRepo.email);
+											delete WAITING_FILES[relPath];
+											fs.unlinkSync(fileToDiff.file_path);
+										}
+									} else {
+										WAITING_FILES[relPath] = (new Date()).getTime() / 1000;
+										console.log(`Uploading the file ${relPath} first`);
+										const pathUtilsObj = new pathUtils(diffData.repo_path, diffData.branch);
+										const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+										const originalsFilePath = path.join(originalsRepoBranchPath, relPath);
+										if (!fs.existsSync(originalsFilePath)) {
+											const initUtilsObj = new initUtils(diffData.repo_path, true);
+											const filePath = path.join(diffData.repo_path, relPath);
+											initUtilsObj.copyFilesTo([filePath], originalsRepoBranchPath);
+										}
+										if (newFiles.indexOf(relPath) > -1) {
+											newFiles.push(relPath);
+										}
+										const json = await handleNewFileUpload(accessToken, diffData.repo_path,
+											diffData.branch, diffData.created_at, relPath, configRepo.id,
+											that.configJSON);
+										if (json.uploaded) {
+											that.configJSON = json.config;
+											if (fs.existsSync(originalsFilePath)) {
+												fs.unlinkSync(originalsFilePath);
+											}
+										}
+									}
+									continue;
+								}
+
+								if (!fileId && isDeleted) {
+									// It can be a directory delete
+									putLogEvent(`is_deleted non-synced file found: ${path.join(diffData.repo_path, relPath)}`,
+										configRepo.email);
+									cleanUpDeleteDiff(diffData.repo_path, diffData.branch, relPath,
+										that.configJSON);
+									fs.unlinkSync(fileToDiff.file_path);
+									continue;
+								}
+
+								if (isDeleted) {
+									diffData.diff = getDIffForDeletedFile(diffData.repo_path, diffData.branch,
+										relPath, that.configJSON);
+								}
+
+								// Diff data to be sent to server
+								const diffToSend = {
+									'path': relPath,
+									'file_id': fileId,
+									'diff': diffData.diff,
+									'is_deleted': isDeleted,
+									'is_rename': diffData.is_rename,
+									'is_binary': isBinary,
+									'created_at': diffData.created_at,
+									'diff_file_path': fileToDiff.file_path
+								};
+								connection.send(JSON.stringify({'diffs': [diffToSend]}));
+							}
+						}
+						if (resp.type === 'sync') {
+							if (resp.status === 200 && fs.existsSync(resp.diff_file_path)) {
+								fs.unlinkSync(resp.diff_file_path);
+							}
+						}
+					}
+				});
+			});
+		});
+	}
+}
+
+const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 	/*
 	 * Each file in .diffs directory contains following data
 
@@ -56,29 +341,22 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 				- Skip the diff-file if it is for non-syncable file
 			- If diff is for changes for existing file
 				- Push changes to server
-				- Remove the diff file if data is successfully uploaded
 			- If diff is for new file
 				- Upload file to server & then on s3
 				- Updated config.yml with new file ID
-				- Remove the diff file if data is successfully uploaded
 			- If diff is for rename file
-				- rename file in shadow repo
-				- rename file in config.yml
 				- Push rename-diff to server
-				- Remove the diff file if data is successfully uploaded
 			- If diff is for directory rename
 				- Repeat file rename for every nested item
 			- If diff is for is_deleted
 				- Get the diff with shadow file
 				- Remove the shadow file
-				- Remove the diff file if data is successfully uploaded
+			- Remove the diff file if data is successfully uploaded
 	*/
 	try {
 		const settings = generateSettings();
-
-		// Read config.json
-		let configJSON = readYML(settings.CONFIG_PATH);
-		if (!configJSON) {
+		// If there is no config file
+		if (!fs.existsSync(settings.CONFIG_PATH)) {
 			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.CONNECT_REPO);
 			return recallDaemon(statusBarItem);
 		}
@@ -87,15 +365,51 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.NO_REPO_OPEN);
 			return recallDaemon(statusBarItem);
 		}
+		// Read config.json
+		let configJSON = readYML(settings.CONFIG_PATH);
+		if (Object.keys(configJSON.repos).length === 0) {
+			updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.CONNECT_REPO);
+			return recallDaemon(statusBarItem);
+		}
 		// Update status bar msg
 		const msg =  isRepoActive(configJSON, repoPath) ? STATUS_BAR_MSGS.DEFAULT : STATUS_BAR_MSGS.CONNECT_REPO;
 		updateStatusBarItem(statusBarItem, msg);
+
 		let diffFiles = fs.readdirSync(settings.DIFFS_REPO);
-		// Pick only yml files
-		diffFiles = diffFiles.filter(file => file.endsWith('.yml'));
-		if (!diffFiles.length) {
-			return recallDaemon(statusBarItem);
-		}
+		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
+		// Filter valid diff files
+		diffFiles = diffFiles.filter((diffFile) => {
+			const filePath = path.join(settings.DIFFS_REPO, diffFile);
+			// Pick only yml files
+			if (!diffFile.endsWith('.yml')) {
+				fs.unlinkSync(filePath);
+				return false;
+			}
+			const diffData = readYML(filePath);
+			if (!diffData || !isValidDiff(diffData)) {
+				putLogEvent(`Skipping invalid diff file: ${diffData}, file: ${diffFile}`);
+				fs.unlinkSync(filePath);
+				return false;
+			}
+			if (!(diffData.repo_path in configJSON.repos)) {
+				putLogEvent(`Repo ${diffData.repo_path} is in buffer.yml but not in config.yml`);
+				return false;
+			}
+			if (configJSON.repos[diffData.repo_path].is_disconnected) {
+				putLogEvent(`Repo ${diffData.repo_path} is disconnected`);
+				return false;
+			}
+			const configRepo = configJSON.repos[diffData.repo_path];
+
+			if (!(diffData.branch in configRepo.branches)) {
+				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`,
+					configRepo.email);
+				return false;
+			}
+			return true;
+		});
+
+		if (!diffFiles.length) return recallDaemon(statusBarItem);
 
 		const isServerDown = await checkServerDown();
 		if (isServerDown) {
@@ -111,35 +425,12 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 		}
 		errorCount = 0;
 
-		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
-
 		const users = readYML(settings.USER_PATH) || {};
 
 		const repoDiffs: IRepoDiffs[] = [];
 		for (const diffFile of diffFiles) {
 			const filePath = path.join(settings.DIFFS_REPO, diffFile);
 			const diffData = readYML(filePath);
-			if (!diffData) { continue; }
-			if (!isValidDiff(diffData)) {
-				putLogEvent(`Skipping invalid diff file: ${diffData}, file: ${diffFile}`);
-				fs.unlinkSync(filePath);
-				continue;
-			}
-			if (!(diffData.repo_path in configJSON.repos)) {
-				putLogEvent(`Repo ${diffData.repo_path} is in buffer.yml but not in config.yml`);
-				continue;
-			}
-			if (configJSON.repos[diffData.repo_path].is_disconnected) {
-				putLogEvent(`Repo ${diffData.repo_path} is disconnected`);
-				continue;
-			}
-			const configRepo = configJSON.repos[diffData.repo_path];
-
-			if (!(diffData.branch in configRepo.branches)) {
-				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`,
-					configRepo.email);
-			}
-
 			// Group diffs by repo_path
 			const fileToDiff = <IFileToDiff>{};
 			fileToDiff.file_path = filePath;

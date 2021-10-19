@@ -44,7 +44,7 @@ export class eventHandler {
 		this.originalsRepoBranchPath = this.pathUtils.getOriginalsRepoBranchPath();
 	}
 
-	addDiff = (relPath: string, diffs: any) => {
+	addDiff = (relPath: string, diffs="") => {
 		// Skip empty diffs
 		if (!diffs && !this.isNewFile && !this.isDelete) {
 			console.log(`addDiff: Skipping empty diffs`);
