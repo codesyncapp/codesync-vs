@@ -3,7 +3,7 @@
   "displayName": "CodeSync",
   "description": "Stream all code changes to the cloud, in real-time. Never lose code again - no commits needed.",
   "icon": "images/icon.png",
-  "version": "2.29.20",
+  "version": "2.29.21",
   "publisher": "codesync",
   "engines": {
     "vscode": "^1.32.0",
