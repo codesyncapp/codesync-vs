@@ -35,7 +35,7 @@
       },
       {
         "command": "codesync.unsync",
-        "title": "Disconnet Repo",
+        "title": "Disconnect Repo",
         "category": "CodeSync"
       },
       {
@@ -102,7 +102,7 @@
       },
       {
         "view": "codesync-signed-up-and-synced",
-        "contents": "Repo is in sync with CodeSync.\n[Track it](command:codesync.trackRepo)\n[Unsync](command:codesync.unsync)"
+        "contents": "Repo is in sync with CodeSync.\n[View on web](command:codesync.trackRepo)\n[Unsync](command:codesync.unsync)"
       },
       {
         "view": "codesync-is-loading",

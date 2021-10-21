@@ -3,15 +3,14 @@ import path from 'path';
 import walk from "walk";
 import yaml from "js-yaml";
 import vscode from 'vscode';
-import dateFormat from "dateformat";
 
 import { IDiff } from "../interface";
 import { initUtils } from "../init/utils";
-import { getBranch, readYML } from "../utils/common";
+import { formatDatetime, getBranch, readYML } from "../utils/common";
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
-import { DATETIME_FORMAT, DIFF_SOURCE } from "../constants";
+import { DIFF_SOURCE } from "../constants";
 import { isRepoSynced, shouldIgnoreFile } from './utils';
 
 
@@ -47,11 +46,11 @@ export class eventHandler {
 	addDiff = (relPath: string, diffs: any) => {
 		// Skip empty diffs
 		if (!diffs && !this.isNewFile && !this.isDelete) {
-			console.log(`addDiff: Skipping empty diffs`);
+			this.log(`addDiff: Skipping empty diffs`);
 			return;
 		}
 		if (!this.createdAt) {
-			this.createdAt = dateFormat(new Date(), DATETIME_FORMAT);
+			this.createdAt = formatDatetime();
 		}
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
@@ -91,7 +90,7 @@ export class eventHandler {
 		//  just check to see if changeEvent.document matches the active editor's document.
 		const editor = vscode.window.activeTextEditor;
 		if (!editor || editor.document !== changeEvent.document) {
-			console.log("Skipping InActive Editor's document");
+			this.log("Skipping InActive Editor's document");
 			return;
 		}
 		const filePath = pathUtils.normalizePath(changeEvent.document.fileName);
@@ -110,16 +109,19 @@ export class eventHandler {
 			const initUtilsObj = new initUtils(this.repoPath);
 			initUtilsObj.copyFilesTo([filePath], this.shadowRepoBranchPath);
 		} else {
+			const lstatShadow = fs.lstatSync(shadowPath);
+			const lstatFile =  fs.lstatSync(filePath);
+			// If populating buffer via daemon, check if shadow was modified after the file was written to disk
+			const shadowEditedLater = lstatShadow.mtimeMs > lstatFile.mtimeMs;
+			if (shadowEditedLater) {
+				this.createdAt = formatDatetime(lstatShadow.mtimeMs);
+				if (this.viaDaemon) return;
+			}
 			// Read shadow file
 			shadowText = fs.readFileSync(shadowPath, "utf8");
 		}
 		// If shadow text is same as current content, no need to compute diffs
-		if (shadowText === currentText) {
-			if (!this.viaDaemon) {
-				console.log(`Skipping handleChanges: Shadow is same as text`);
-			}
-			return;
-		}
+		if (shadowText === currentText) return;
 		// Update shadow file
 		fs.writeFileSync(shadowPath, currentText);
 		// Compute diffs
@@ -170,7 +172,7 @@ export class eventHandler {
 		const originalsPath = path.join(this.originalsRepoBranchPath, relPath);
 		if (fs.existsSync(shadowPath) || fs.existsSync(originalsPath)) { return; }
 
-		console.log(`FileCreated: ${filePath}`);
+		this.log(`FileCreated: ${filePath}`);
 		const initUtilsObj = new initUtils(this.repoPath);
 		initUtilsObj.copyFilesTo([filePath], this.shadowRepoBranchPath);
 		initUtilsObj.copyFilesTo([filePath], this.originalsRepoBranchPath);
@@ -213,7 +215,7 @@ export class eventHandler {
 		const lstat = fs.lstatSync(shadowPath);
 
 		if (lstat.isDirectory()) {
-			console.log(`DirectoryDeleted: ${itemPath}`);
+			this.log(`DirectoryDeleted: ${itemPath}`);
 			this.handleDirectoryDeleteDiffs(relPath);
 		}
 		if (!lstat.isFile()) { return; }
@@ -222,7 +224,7 @@ export class eventHandler {
 		const cacheFilePath = path.join(this.deletedRepoBranchPath, relPath);
 		if (fs.existsSync(cacheFilePath)) { return; }
 
-		console.log(`FileDeleted: ${itemPath}`);
+		this.log(`FileDeleted: ${itemPath}`);
 		const initUtilsObj = new initUtils(this.repoPath);
 		initUtilsObj.copyFilesTo([shadowPath], this.pathUtils.getDeletedRepoPath(), true);
 		// Add new diff in the buffer
@@ -290,11 +292,11 @@ export class eventHandler {
 
 		const isDirectory = fs.lstatSync(newAbsPath).isDirectory();
 		if (isDirectory) {
-			console.log(`DirectoryRenamed: ${oldAbsPath} -> ${newAbsPath}`);
+			this.log(`DirectoryRenamed: ${oldAbsPath} -> ${newAbsPath}`);
 			this.handleDirectoryRenameDiffs(oldAbsPath, newAbsPath);
 			return;
 		}
-		console.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
+		this.log(`FileRenamed: ${oldAbsPath} -> ${newAbsPath}`);
 
 		const oldShadowPath = path.join(this.shadowRepoBranchPath, oldRelPath);
 		const newShadowPath = path.join(this.shadowRepoBranchPath, newRelPath);
@@ -343,4 +345,8 @@ export class eventHandler {
 			next();
 		});
 	};
+
+	log(msg: string) {
+		console.log(msg);
+	}
 }

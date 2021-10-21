@@ -79,7 +79,7 @@ export const NOTIFICATION = {
 	CANCEL: "Cancel",
 	OK: "OK!",
 	CONTINUE: "Continue",
-	TRACK_IT: "Track it",
+	TRACK_IT: "View on web",
 	UNSYNC_REPO: "Unsync",
 	WELCOME_MSG: "Welcome to CodeSync!",
 	LOGIN_SUCCESS: "Success! Now, switch back to Visual Studio Code to connect your repo.",

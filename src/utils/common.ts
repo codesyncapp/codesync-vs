@@ -2,15 +2,17 @@ import fs from 'fs';
 import path from "path";
 import vscode from 'vscode';
 import yaml from 'js-yaml';
+import dateFormat from "dateformat";
+import getBranchName from "current-git-branch";
 
 import {
 	COMMAND,
+	DATETIME_FORMAT,
 	DEFAULT_BRANCH,
 	IGNORABLE_DIRECTORIES,
 	STATUS_BAR_MSGS,
 	SYNCIGNORE
 } from "../constants";
-import getBranchName from "current-git-branch";
 
 
 export const readFile = (filePath: string) => {
@@ -73,4 +75,11 @@ export const isEmpty = (obj: any) => {
 
 export const getBranch = (repoPath: string) => {
 	return getBranchName({ altPath: repoPath }) || DEFAULT_BRANCH;
+};
+
+export const formatDatetime = (datetime?: number) => {
+	if (datetime) {
+		return dateFormat(new Date(datetime), DATETIME_FORMAT);
+	}
+	return dateFormat(new Date(), DATETIME_FORMAT);
 };
