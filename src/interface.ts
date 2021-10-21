@@ -13,7 +13,7 @@ export interface IDiff {
 }
 
 export interface IRepoDiffs {
-	path: string;
+	repoPath: string;
 	file_to_diff: IFileToDiff[];
 }
 

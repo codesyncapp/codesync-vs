@@ -53,15 +53,15 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 	*/
 	const settings = generateSettings();
 	const pathUtilsObj = new pathUtils(repoPath, branch);
-	const originalsPath = path.join(pathUtilsObj.getOriginalsRepoBranchPath(), relPath);
-	if (!fs.existsSync(originalsPath)) {
+	const originalsFilePath = path.join(pathUtilsObj.getOriginalsRepoBranchPath(), relPath);
+	if (!fs.existsSync(originalsFilePath)) {
 		return {
 			uploaded: false,
 			config: configJSON
 		};
 	}
 
-	const response = await uploadFileToServer(accessToken, repoId, branch, originalsPath, relPath, createdAt);
+	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, createdAt);
 	if (response.error) {
 		putLogEvent(`Error uploading to server: ${response.error}`);
 		return {
@@ -72,6 +72,12 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 	configJSON.repos[repoPath].branches[branch][relPath] = response.fileId;
 	// write file id to config.yml
 	fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
+
+	// Delete file from .originals
+	if (fs.existsSync(originalsFilePath)) {
+		fs.unlinkSync(originalsFilePath);
+	}
+
 	return {
 		uploaded: true,
 		config: configJSON

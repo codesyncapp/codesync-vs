@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from "path";
 import vscode from 'vscode';
 import yaml from 'js-yaml';
+import getBranchName from "current-git-branch";
 
 import {
 	COMMAND,
@@ -10,7 +11,6 @@ import {
 	STATUS_BAR_MSGS,
 	SYNCIGNORE
 } from "../constants";
-import getBranchName from "current-git-branch";
 
 
 export const readFile = (filePath: string) => {

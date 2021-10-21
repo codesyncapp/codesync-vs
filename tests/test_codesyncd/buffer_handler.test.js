@@ -109,7 +109,7 @@ describe("handleBuffer", () => {
     test("No config.yml", async () => {
         fs.rmSync(configPath);
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(statusBarItem.show).toHaveBeenCalledTimes(1);
         expect(statusBarItem.command).toStrictEqual(COMMAND.triggerSync);
         expect(statusBarItem.text).toStrictEqual(STATUS_BAR_MSGS.CONNECT_REPO);
@@ -118,7 +118,7 @@ describe("handleBuffer", () => {
     test("No repo opened", async () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(undefined);
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(statusBarItem.show).toHaveBeenCalledTimes(1);
         expect(statusBarItem.command).toStrictEqual(undefined);
         expect(statusBarItem.text).toStrictEqual(STATUS_BAR_MSGS.NO_REPO_OPEN);
@@ -127,7 +127,7 @@ describe("handleBuffer", () => {
     test("Repo opened but not synced", async () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(statusBarItem.show).toHaveBeenCalledTimes(1);
         expect(statusBarItem.command).toStrictEqual(COMMAND.triggerSync);
         expect(statusBarItem.text).toStrictEqual(STATUS_BAR_MSGS.CONNECT_REPO);
@@ -137,7 +137,7 @@ describe("handleBuffer", () => {
         addRepo();
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(assertDiffsCount()).toBe(true);
     });
 
@@ -146,7 +146,7 @@ describe("handleBuffer", () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: false}));
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(assertDiffsCount()).toBe(true);
     });
 
@@ -156,7 +156,7 @@ describe("handleBuffer", () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(null);
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(statusBarItem.show).toHaveBeenCalledTimes(2);
         expect(statusBarItem.command).toStrictEqual(undefined);
         expect(statusBarItem.text).toStrictEqual(STATUS_BAR_MSGS.SERVER_DOWN);
@@ -171,7 +171,7 @@ describe("handleBuffer", () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(assertDiffsCount(1)).toBe(true);
     });
 
@@ -184,7 +184,7 @@ describe("handleBuffer", () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(assertDiffsCount()).toBe(true);
     });
 
@@ -197,7 +197,7 @@ describe("handleBuffer", () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(assertDiffsCount()).toBe(true);
     });
 
@@ -206,7 +206,7 @@ describe("handleBuffer", () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
     });
 
@@ -216,7 +216,7 @@ describe("handleBuffer", () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
     });
 
@@ -227,7 +227,7 @@ describe("handleBuffer", () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
-        await handler.process();
+        await handler.run();
         expect(assertDiffsCount(1)).toBe(true);
     });
 });

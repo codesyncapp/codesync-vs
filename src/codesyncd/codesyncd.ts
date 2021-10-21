@@ -12,6 +12,6 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem) => {
         populateBuffer();
         // Buffer Handler
         const handler = new bufferHandler(statusBarItem);
-        handler.process();
+        handler.run();
     }, RESTART_DAEMON_AFTER);
 };
