@@ -2,8 +2,9 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
 import {
-	Auth0URLs,
 	getRepoInSyncMsg,
+	MAX_PORT,
+	MIN_PORT,
 	NOTIFICATION
 } from "../constants";
 import { isRepoSynced } from '../events/utils';
@@ -49,16 +50,27 @@ export const createSystemDirectories = () => {
 	return settings;
 };
 
+const generateRandom = (min = 0, max = 100)  => {
+	// find diff
+	const difference = max - min;
+	// generate random number
+	let rand = Math.random();
+	// multiply with difference
+	rand = Math.floor( rand * difference);
+	// add with min value
+	rand = rand + min;
+	return rand;
+};
 
 export const setupCodeSync = async (repoPath: string) => {
 	const settings = createSystemDirectories();
 	const userFilePath = settings.USER_PATH;
 	let port = 0;
-	for (const _port of Auth0URLs.PORTS) {
-		const isAvailable = await isPortAvailable(_port);
+	while (!port) {
+		const randomPort = generateRandom(MIN_PORT, MAX_PORT);
+		const isAvailable = await isPortAvailable(randomPort);
 		if (isAvailable) {
-			port = _port;
-			break;
+			port = randomPort;
 		}
 	}
 
