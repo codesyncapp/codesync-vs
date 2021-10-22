@@ -18,7 +18,10 @@ import {
 	DIFF_FILES_PER_ITERATION,
 	STATUS_BAR_MSGS,
 	WEBSOCKET_ENDPOINT,
-	DAY, CONNECTION_ERROR_MESSAGE, LOG_AFTER_X_TIMES, DIFF_SOURCE
+	DAY,
+	CONNECTION_ERROR_MESSAGE,
+	LOG_AFTER_X_TIMES,
+	DIFF_SOURCE
 } from "../constants";
 import {recallDaemon} from "./codesyncd";
 import {generateSettings} from "../settings";

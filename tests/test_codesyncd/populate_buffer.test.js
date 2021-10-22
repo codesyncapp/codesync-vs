@@ -13,6 +13,7 @@ import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../src/constants";
 import {
     assertChangeEvent,
     assertNewFileEvent,
+    assertFileDeleteEvent,
     assertRenameEvent,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
@@ -172,22 +173,7 @@ describe("populateBuffer", () => {
         addRepo();
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         await populateBuffer();
-        const cacheFilePath = path.join(cacheRepoBranchPath, fileRelPath);
-        // Verify that file is copied to .delete directory
-        expect(fs.existsSync(cacheFilePath)).toBe(true);
-        // Verify correct diff file has been generated
-        let diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(1);
-        const diffFilePath = path.join(diffsRepo, diffFiles[0]);
-        const diffData = readYML(diffFilePath);
-        expect(diffData.source).toEqual(DIFF_SOURCE);
-        expect(diffData.is_rename).toBeFalsy();
-        expect(diffData.is_new_file).toBeFalsy();
-        expect(diffData.is_deleted).toBe(true);
-        expect(diffData.repo_path).toEqual(repoPath);
-        expect(diffData.branch).toEqual(DEFAULT_BRANCH);
-        expect(diffData.file_relative_path).toEqual(fileRelPath);
-        expect(diffData.diff).toStrictEqual("");
+        expect(assertFileDeleteEvent(repoPath, fileRelPath)).toBe(true);
     });
 
     test("New File -> Edit -> Rename -> Edit", async () => {

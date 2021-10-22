@@ -15,7 +15,7 @@ import {
     randomRepoPath,
     waitFor
 } from "../../helpers/helpers";
-import {populateBuffer} from "../../../out/codesyncd/populate_buffer";
+import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
 
 describe("handleDeletedEvent",  () => {
     /*
@@ -52,7 +52,6 @@ describe("handleDeletedEvent",  () => {
     const relFilePath = path.join("directory", fileRelPath);
     const shadowDirectoryPath = path.join(shadowRepoBranchPath, "directory");
     const shadowDirectoryFilePath = path.join(shadowDirectoryPath, fileRelPath);
-    const cacheDirectoryPath = path.join(cacheRepoBranchPath, "directory");
 
     beforeEach(() => {
         jest.clearAllMocks();
