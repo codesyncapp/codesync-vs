@@ -47,10 +47,9 @@ export const CLIENT_LOGS_GROUP_NAME = 'client-logs';
 // Error msgs
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
 
+// Auth0
 export const MIN_PORT = 49152;
 export const MAX_PORT = 65535;
-
-// Auth0
 export const Auth0URLs = {
 	AUTHORIZE: `${CODESYNC_HOST}/authorize`,
     LOGOUT: `${CODESYNC_HOST}/auth-logout`,

@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from "os";
 import path from 'path';
 import walk from 'walk';
 import yaml from 'js-yaml';
@@ -8,13 +9,13 @@ import parallel from "run-parallel";
 import { isBinaryFileSync } from 'isbinaryfile';
 
 import { putLogEvent } from '../logger';
-import {CONNECTION_ERROR_MESSAGE, NOTIFICATION} from '../constants';
 import { generateSettings } from "../settings";
 import { pathUtils } from '../utils/path_utils';
 import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload, IUserPlan } from '../interface';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
+import { CONNECTION_ERROR_MESSAGE, DIFF_SOURCE, NOTIFICATION } from '../constants';
 import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems, getBranch } from '../utils/common';
 
 export class initUtils {
@@ -271,7 +272,9 @@ export class initUtils {
 			name: repoName,
 			is_public: isPublic,
 			branch,
-			files_data: JSON.stringify(filesData)
+			files_data: JSON.stringify(filesData),
+			source: DIFF_SOURCE,
+			platform: os.platform()
 		};
 
 		const json = await uploadRepoToServer(token, data);

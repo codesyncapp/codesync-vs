@@ -17,6 +17,8 @@ import {
     TEST_EMAIL,
     waitFor
 } from "../../helpers/helpers";
+import {createDeflateRaw} from "zlib";
+import {populateBuffer} from "../../../out/codesyncd/populate_buffer";
 
 describe("handleRenameFile",  () => {
     /*
@@ -154,6 +156,18 @@ describe("handleRenameFile",  () => {
         fs.writeFileSync(renamedFilePath, "use babel;");
         const handler = new eventHandler();
         handler.handleRename(oldFilePath, renamedFilePath);
+        expect(assertRenameEvent(repoPath, configPath, fileRelPath, _newRelPath)).toBe(true);
+    });
+
+    test("With Daemon: For file renamed to nested directory",  async () => {
+        // Write data to new file
+        const _newRelPath = path.join("new", "file.js");
+        const renamedFilePath = path.join(repoPath, _newRelPath);
+        fs.mkdirSync(path.dirname(renamedFilePath), { recursive: true });
+        fs.writeFileSync(renamedFilePath, "use babel;");
+        const handler = new eventHandler();
+        handler.handleRename(oldFilePath, renamedFilePath);
+        await populateBuffer();
         expect(assertRenameEvent(repoPath, configPath, fileRelPath, _newRelPath)).toBe(true);
     });
 

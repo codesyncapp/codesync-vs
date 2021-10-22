@@ -12,6 +12,7 @@ import {createSystemDirectories} from "../../src/utils/setup_utils";
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../src/constants";
 import {
     assertChangeEvent,
+    assertNewFileEvent,
     assertRenameEvent,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
@@ -85,28 +86,6 @@ describe("populateBuffer", () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
     };
 
-    const assertNewFileEvent = (newRelPath, diffsCount = 1) => {
-        const originalsFilePath = path.join(originalsRepoBranchPath, newRelPath);
-        const shadowFilePath = path.join(shadowRepoBranchPath, newRelPath);
-        // Verify file has been created in the .shadow repo and .originals repos
-        expect(fs.existsSync(shadowFilePath)).toBe(true);
-        expect(fs.existsSync(originalsFilePath)).toBe(true);
-        // Verify correct diff file has been generated
-        let diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(diffsCount);
-        const diffFilePath = path.join(diffsRepo, diffFiles[diffsCount-1]);
-        const diffData = readYML(diffFilePath);
-        expect(diffData.source).toEqual(DIFF_SOURCE);
-        expect(diffData.is_new_file).toBe(true);
-        expect(diffData.is_rename).toBeFalsy();
-        expect(diffData.is_deleted).toBeFalsy();
-        expect(diffData.repo_path).toEqual(repoPath);
-        expect(diffData.branch).toEqual(DEFAULT_BRANCH);
-        expect(diffData.file_relative_path).toEqual(newRelPath);
-        expect(diffData.diff).toEqual("");
-        return true;
-    };
-
     afterEach(() => {
         fs.rmSync(repoPath, {recursive: true, force: true});
         fs.rmSync(baseRepoPath, {recursive: true, force: true});
@@ -149,7 +128,7 @@ describe("populateBuffer", () => {
         addRepo();
         fs.writeFileSync(newFilePath, DUMMY_FILE_CONTENT);
         await populateBuffer();
-        expect(assertNewFileEvent("new.js")).toBe(true);
+        expect(assertNewFileEvent(repoPath, "new.js")).toBe(true);
     });
 
     test("New Binary File", async () => {
@@ -165,7 +144,7 @@ describe("populateBuffer", () => {
         var buf = Buffer.from(data, 'base64');
         fs.writeFileSync(newFilePath, buf);
         await populateBuffer();
-        expect(assertNewFileEvent(newRelPath)).toBe(true);
+        expect(assertNewFileEvent(repoPath, newRelPath)).toBe(true);
     });
 
     test("Rename event", async () => {
@@ -186,7 +165,7 @@ describe("populateBuffer", () => {
         const renamedPath = path.join(repoPath, newRelPath);
         fs.renameSync(filePath, renamedPath);
         await populateBuffer();
-        expect(assertNewFileEvent(newRelPath)).toBe(true);
+        expect(assertNewFileEvent(repoPath, newRelPath)).toBe(true);
     });
 
     test("Delete event", async () => {
@@ -217,7 +196,7 @@ describe("populateBuffer", () => {
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         await populateBuffer();
         await waitFor(0.1);
-        expect(assertNewFileEvent(fileRelPath)).toBe(true);
+        expect(assertNewFileEvent(repoPath, fileRelPath)).toBe(true);
         // Edit
         let updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
         fs.writeFileSync(filePath, updatedText);

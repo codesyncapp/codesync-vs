@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from "os";
 import path from 'path';
 import vscode from "vscode";
 import {client} from "websocket";
@@ -17,7 +18,7 @@ import {
 	DIFF_FILES_PER_ITERATION,
 	STATUS_BAR_MSGS,
 	WEBSOCKET_ENDPOINT,
-	DAY, CONNECTION_ERROR_MESSAGE, LOG_AFTER_X_TIMES
+	DAY, CONNECTION_ERROR_MESSAGE, LOG_AFTER_X_TIMES, DIFF_SOURCE
 } from "../constants";
 import {recallDaemon} from "./codesyncd";
 import {generateSettings} from "../settings";
@@ -286,7 +287,9 @@ export const handleBuffer = async (statusBarItem: vscode.StatusBarItem) => {
 									'is_rename': diffData.is_rename,
 									'is_binary': isBinary,
 									'created_at': diffData.created_at,
-									'diff_file_path': fileToDiff.file_path
+									'diff_file_path': fileToDiff.file_path,
+									'source': DIFF_SOURCE,
+									'platform': os.platform()
 								};
 								connection.send(JSON.stringify({'diffs': [diffToSend]}));
 							}

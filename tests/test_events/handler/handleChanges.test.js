@@ -1,23 +1,24 @@
 import fs from "fs";
 import path from "path";
 import vscode from "vscode";
+import yaml from "js-yaml";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
 
-import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../../src/constants";
+import {DEFAULT_BRANCH} from "../../../src/constants";
 import {
     assertChangeEvent,
     Config,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
     getSyncIgnoreFilePath,
+    getUserFilePath,
     randomBaseRepoPath,
-    randomRepoPath
+    randomRepoPath, TEST_EMAIL
 } from "../../helpers/helpers";
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
-import {readYML} from "../../../src/utils/common";
-import {diff_match_patch} from "diff-match-patch";
+import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
 
 
 describe("handleChangeEvent",  () => {
@@ -42,12 +43,13 @@ describe("handleChangeEvent",  () => {
     const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
     const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 
-    const fileRelPath = "file.js";
+    const fileRelPath = "file_1.js";
     const filePath = path.join(repoPath, fileRelPath);
     const syncIgnorePath = getSyncIgnoreFilePath(repoPath);
     const shadowFilePath = path.join(shadowRepoBranchPath, fileRelPath);
     const syncIgnoreData = ".git\n\n\n.skip_repo_1\nignore.js";
     const ignorableFilePath = path.join(repoPath, "ignore.js");
+    const ignorableShadowFilePath = path.join(shadowRepoBranchPath, "ignore.js");
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -65,6 +67,12 @@ describe("handleChangeEvent",  () => {
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         fs.writeFileSync(ignorableFilePath, "use babel;");
         fs.writeFileSync(syncIgnorePath, syncIgnoreData);
+        const userFilePath = getUserFilePath(baseRepoPath);
+        const userData = {};
+        userData[TEST_EMAIL] = {access_token: "ABC"};
+        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        const shadowSyncIgnore = path.join(shadowRepoBranchPath, ".syncignore");
+        fs.writeFileSync(shadowSyncIgnore, syncIgnoreData);
     });
 
     afterEach(() => {
@@ -72,40 +80,22 @@ describe("handleChangeEvent",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("Repo not synced", () => {
+    test("Repo not synced", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.removeRepo();
         const handler = new eventHandler();
         const event = {};
         handler.handleChangeEvent(event);
+        await populateBuffer();
+
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
         expect(fs.existsSync(shadowFilePath)).toBe(false);
     });
 
-    test("Synced repo, Ignorable file", () => {
-        const document = {
-            fileName: path.join(repoPath, ".idea"),
-            getText: function () {
-                return "";
-            }
-        };
-        const handler = new eventHandler();
-        const event = {
-            document,
-            contentChanges: [" Change "]
-        };
-        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
-            document
-        });
-        handler.handleChangeEvent(event);
-        let diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(0);
-        expect(fs.existsSync(shadowFilePath)).toBe(false);
-    });
-
-    test("Synced repo, no content changes", () => {
+    test("Synced repo, no content changes", async () => {
+        fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         const document = {
             fileName: path.join(repoPath, "file.js"),
         };
@@ -118,12 +108,13 @@ describe("handleChangeEvent",  () => {
             document
         });
         handler.handleChangeEvent(event);
+        await populateBuffer();
+
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
-        expect(fs.existsSync(shadowFilePath)).toBe(false);
     });
 
-    test("Synced repo, shadow file does not exist", () => {
+    test("Synced repo, shadow file does not exist", async () => {
         const document = {
             fileName: filePath,
             getText: function () {
@@ -139,28 +130,40 @@ describe("handleChangeEvent",  () => {
             document
         });
         handler.handleChangeEvent(event);
+        await populateBuffer();
+
         expect(assertChangeEvent(repoPath, diffsRepo, "", DUMMY_FILE_CONTENT,
             fileRelPath, shadowFilePath)).toBe(true);
     });
 
-    test("Synced repo, file in .syncignore", () => {
-        const handler = new eventHandler();
+    test("Synced repo, file in .syncignore", async () => {
+        fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
+
+        const document = {
+            fileName: ignorableFilePath,
+            getText: function () {
+                return DUMMY_FILE_CONTENT;
+            }
+        };
         const event = {
-            document: {
-                fileName: ignorableFilePath,
-                getText: function () {
-                    return DUMMY_FILE_CONTENT;
-                }
-            },
+            document,
             contentChanges: [" Change "]
         };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+            document
+        });
+        const handler = new eventHandler();
         handler.handleChangeEvent(event);
-        expect(fs.existsSync(shadowFilePath)).toBe(false);
+        await populateBuffer();
+
+        expect(fs.existsSync(ignorableShadowFilePath)).toBe(false);
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
     });
 
-    test("Synced repo, Inactive Editor's document", () => {
+    test("Synced repo, Inactive Editor's document", async () => {
+        fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
+
         const handler = new eventHandler();
         jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
             document: {
@@ -177,12 +180,13 @@ describe("handleChangeEvent",  () => {
             contentChanges: [" Change "]
         };
         handler.handleChangeEvent(event);
-        expect(fs.existsSync(shadowFilePath)).toBe(false);
+        await populateBuffer();
+
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
     });
 
-    test("Synced repo, Shadow has same content", () => {
+    test("Synced repo, Shadow has same content", async () => {
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         const document = {
             fileName: filePath,
@@ -199,11 +203,13 @@ describe("handleChangeEvent",  () => {
             document
         });
         handler.handleChangeEvent(event);
+        await populateBuffer();
+
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
     });
 
-    test("Synced repo, Should add diff and update shadow file", () => {
+    test("Synced repo, Should add diff and update shadow file", async () => {
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
         const document = {
@@ -221,6 +227,30 @@ describe("handleChangeEvent",  () => {
             document
         });
         handler.handleChangeEvent(event);
+
+        expect(assertChangeEvent(repoPath, diffsRepo, DUMMY_FILE_CONTENT, updatedText,
+            fileRelPath, shadowFilePath)).toBe(true);
+    });
+
+    test("With Daemon, Should add diff and update shadow file", async () => {
+        fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
+        const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
+        const document = {
+            fileName: filePath,
+            getText: function () {
+                return updatedText;
+            }
+        };
+        const handler = new eventHandler();
+        const event = {
+            document,
+            contentChanges: [" Change "]
+        };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+            document
+        });
+        handler.handleChangeEvent(event);
+        await populateBuffer(true);
 
         expect(assertChangeEvent(repoPath, diffsRepo, DUMMY_FILE_CONTENT, updatedText,
             fileRelPath, shadowFilePath)).toBe(true);
