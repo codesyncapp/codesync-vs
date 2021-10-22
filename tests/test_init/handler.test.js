@@ -10,10 +10,16 @@ import {initHandler} from "../../src/init/init_handler";
 import {
     Config,
     DUMMY_FILE_CONTENT,
-    getConfigFilePath, getSeqTokenFilePath, getUserFilePath,
+    getConfigFilePath,
+    getSeqTokenFilePath,
+    getUserFilePath,
     INVALID_TOKEN_JSON,
     randomBaseRepoPath,
-    randomRepoPath, TEST_EMAIL, TEST_REPO_RESPONSE, TEST_USER
+    randomRepoPath,
+    TEST_EMAIL,
+    TEST_REPO_RESPONSE,
+    TEST_USER,
+    waitFor
 } from "../helpers/helpers";
 import {SYNC_IGNORE_FILE_DATA} from "../../src/constants";
 import {pathUtils} from "../../src/utils/path_utils";
@@ -157,7 +163,7 @@ describe("initHandler",  () => {
     describe("Syncing Branch",  () => {
         untildify.mockReturnValue(baseRepoPath);
         const handler = new initHandler(repoPath, "ACCESS_TOKEN", true);
-        const fileName = "file.js";
+        const fileName = "file_1.js";
         const filePath = path.join(repoPath, fileName);
         const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         const shadowFilePath = path.join(pathUtilsObj.getShadowRepoBranchPath(), fileName);
@@ -213,6 +219,7 @@ describe("initHandler",  () => {
             expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
             // Verify file added in .shadow but removed from .originals
             expect(fs.existsSync(shadowFilePath)).toBe(true);
+            await waitFor(2);
             expect(fs.existsSync(originalsFilePath)).toBe(false);
 
         });

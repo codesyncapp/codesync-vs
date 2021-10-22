@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from "os";
 import path from 'path';
 import vscode from "vscode";
 import {client} from "websocket";
@@ -20,7 +21,8 @@ import {
 	DAY,
 	CONNECTION_ERROR_MESSAGE,
 	LOG_AFTER_X_TIMES,
-	COMMAND
+	COMMAND,
+	DIFF_SOURCE
 } from "../constants";
 import {recallDaemon} from "./codesyncd";
 import {generateSettings} from "../settings";
@@ -197,6 +199,7 @@ export class bufferHandler {
 		}
 
 		recallDaemon(this.statusBarItem);
+
 	}
 }
 

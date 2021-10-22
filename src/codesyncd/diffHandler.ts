@@ -1,4 +1,5 @@
 import fs from "fs";
+import os from "os";
 
 import {IDiff} from "../interface";
 import {cleanUpDeleteDiff, getDIffForDeletedFile, handleNewFileUpload} from "./utils";
@@ -8,6 +9,7 @@ import {putLogEvent} from "../logger";
 import path from "path";
 import {pathUtils} from "../utils/path_utils";
 import {initUtils} from "../init/utils";
+import {DIFF_SOURCE} from "../constants";
 
 export class diffHandler {
     fileRelPath: string;
@@ -94,7 +96,9 @@ export class diffHandler {
             'is_rename': this.diffData.is_rename,
             'is_binary': this.diffData.is_binary,
             'created_at': this.createdAt,
-            'diff_file_path': this.diffFilePath
+            'diff_file_path': this.diffFilePath,
+            'source': DIFF_SOURCE,
+            'platform': os.platform()
         };
     }
 

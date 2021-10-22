@@ -10,13 +10,16 @@ import {eventHandler} from "../../../src/events/event_handler";
 import {DEFAULT_BRANCH} from "../../../src/constants";
 import {
     assertRenameEvent,
-    Config, DUMMY_FILE_CONTENT, FILE_ID,
+    Config,
+    DUMMY_FILE_CONTENT,
+    FILE_ID,
     getConfigFilePath,
     randomBaseRepoPath,
     randomRepoPath,
     TEST_EMAIL,
     waitFor
 } from "../../helpers/helpers";
+import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
 
 describe("handleRenameFile",  () => {
     /*
@@ -41,11 +44,12 @@ describe("handleRenameFile",  () => {
     const diffsRepo = pathUtilsObj.getDiffsRepo();
 
     const fileRelPath = "file_1.js";
+    const newRelPath = "new.js";
     // For file rename
     const oldFilePath = path.join(repoPath, fileRelPath);
-    const newFilePath = path.join(repoPath, "new.js");
+    const newFilePath = path.join(repoPath, newRelPath);
     const oldShadowFilePath = path.join(shadowRepoBranchPath, fileRelPath);
-    const renamedShadowFilePath = path.join(shadowRepoBranchPath, "new.js");
+    const renamedShadowFilePath = path.join(shadowRepoBranchPath, newRelPath);
 
     // For directory rename
     const oldDirectoryPath = path.join(repoPath, "old");
@@ -54,7 +58,6 @@ describe("handleRenameFile",  () => {
 
     const newDirectoryPath = path.join(repoPath, "new");
     const newDirectoryFilePath = path.join(newDirectoryPath, fileRelPath);
-    const renamedShadowDirectoryPath = path.join(shadowRepoBranchPath, "new");
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -143,7 +146,7 @@ describe("handleRenameFile",  () => {
         };
         const handler = new eventHandler();
         handler.handleRenameEvent(event);
-        expect(assertRenameEvent(repoPath, configPath, fileRelPath, "new.js")).toBe(true);
+        expect(assertRenameEvent(repoPath, configPath, fileRelPath, newRelPath)).toBe(true);
     });
 
     test("For file renamed to nested directory",  () => {
@@ -154,6 +157,18 @@ describe("handleRenameFile",  () => {
         fs.writeFileSync(renamedFilePath, "use babel;");
         const handler = new eventHandler();
         handler.handleRename(oldFilePath, renamedFilePath);
+        expect(assertRenameEvent(repoPath, configPath, fileRelPath, _newRelPath)).toBe(true);
+    });
+
+    test("With Daemon: For file renamed to nested directory",  async () => {
+        // Write data to new file
+        const _newRelPath = path.join("new", "file.js");
+        const renamedFilePath = path.join(repoPath, _newRelPath);
+        fs.mkdirSync(path.dirname(renamedFilePath), { recursive: true });
+        fs.writeFileSync(renamedFilePath, "use babel;");
+        const handler = new eventHandler();
+        handler.handleRename(oldFilePath, renamedFilePath);
+        await populateBuffer();
         expect(assertRenameEvent(repoPath, configPath, fileRelPath, _newRelPath)).toBe(true);
     });
 

@@ -91,10 +91,12 @@ export const TEST_REPO_RESPONSE = {
     'file_path_and_id': {
         "file_1.js": FILE_ID,
         "directory/file_2.js": 2,
+        ".syncignore": 3,
     },
     'urls': {
         "file_1.js": PRE_SIGNED_URL,
         "directory/file_2.js": PRE_SIGNED_URL,
+        ".syncignore": PRE_SIGNED_URL
     },
     'user': TEST_USER
 };
@@ -188,5 +190,61 @@ export const assertRenameEvent = (repoPath, configPath, oldRelPath, newRelPath,
         const configJSON = readYML(configPath);
         expect(configJSON.repos[repoPath].branches[DEFAULT_BRANCH][newRelPath]).toStrictEqual(FILE_ID);
     }
+    return true;
+};
+
+export const assertNewFileEvent = (repoPath, newRelPath, diffsCount = 1) => {
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+    const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+    const diffsRepo = pathUtilsObj.getDiffsRepo();
+
+    const originalsFilePath = path.join(originalsRepoBranchPath, newRelPath);
+    const shadowFilePath = path.join(shadowRepoBranchPath, newRelPath);
+    // Verify file has been created in the .shadow repo and .originals repos
+    expect(fs.existsSync(shadowFilePath)).toBe(true);
+    expect(fs.existsSync(originalsFilePath)).toBe(true);
+    // Verify correct diff file has been generated
+    let diffFiles = fs.readdirSync(diffsRepo);
+    expect(diffFiles).toHaveLength(diffsCount);
+    const diffFilePath = path.join(diffsRepo, diffFiles[diffsCount-1]);
+    const diffData = readYML(diffFilePath);
+    expect(diffData.source).toEqual(DIFF_SOURCE);
+    expect(diffData.is_new_file).toBe(true);
+    expect(diffData.is_rename).toBeFalsy();
+    expect(diffData.is_deleted).toBeFalsy();
+    expect(diffData.repo_path).toEqual(repoPath);
+    expect(diffData.branch).toEqual(DEFAULT_BRANCH);
+    expect(diffData.file_relative_path).toEqual(newRelPath);
+    expect(diffData.diff).toEqual("");
+    return true;
+};
+
+export const assertFileDeleteEvent = (repoPath, fileRelPath, isDirectory=false) => {
+    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+    const diffsRepo = pathUtilsObj.getDiffsRepo();
+    const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
+    // Verify file/Directory has been renamed in the shadow repo
+    if (isDirectory) {
+        const cacheDirectoryPath = path.join(cacheRepoBranchPath, "directory");
+        expect(fs.existsSync(cacheDirectoryPath)).toBe(true);
+    } else {
+        const cacheFilePath = path.join(cacheRepoBranchPath, fileRelPath);
+        expect(fs.existsSync(cacheFilePath)).toBe(true);
+    }
+    // Verify correct diff file has been generated
+    let diffFiles = fs.readdirSync(diffsRepo);
+    expect(diffFiles).toHaveLength(1);
+    const diffFilePath = path.join(diffsRepo, diffFiles[0]);
+    const diffData = readYML(diffFilePath);
+    expect(diffData.source).toEqual(DIFF_SOURCE);
+    expect(diffData.is_deleted).toBe(true);
+    expect(diffData.is_rename).toBeFalsy();
+    expect(diffData.is_new_file).toBeFalsy();
+    expect(diffData.created_at).toBeTruthy();
+    expect(diffData.repo_path).toEqual(repoPath);
+    expect(diffData.branch).toEqual(DEFAULT_BRANCH);
+    expect(diffData.file_relative_path).toEqual(fileRelPath);
+    expect(diffData.diff).toEqual("");
     return true;
 };

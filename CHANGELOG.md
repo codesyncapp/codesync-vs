@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.29.22] - 2021-10-22
+### Updated
+- Using random ports for Auth Server
+- Updated events-tests to run in parallel with Daemon
+- Sending IDE and Platform info to server for repo details and diffs.
+
 ## [2.29.21] - 2021-10-21
 ### Fixed
 - Build corrected

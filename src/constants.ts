@@ -48,24 +48,12 @@ export const CLIENT_LOGS_GROUP_NAME = 'client-logs';
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
 
 // Auth0
+export const MIN_PORT = 49152;
+export const MAX_PORT = 65535;
 export const Auth0URLs = {
 	AUTHORIZE: `${CODESYNC_HOST}/authorize`,
     LOGOUT: `${CODESYNC_HOST}/auth-logout`,
-	LOGIN_CALLBACK_PATH: "/login-callback",
-
-	// Pre defined ports
-	PORTS: [
-		49160,
-		49165,
-		49170,
-		49175,
-		49180,
-		50100,
-		50105,
-		50110,
-		50115,
-		50120
-	]
+	LOGIN_CALLBACK_PATH: "/login-callback"
 };
 
 // Notification Messages
