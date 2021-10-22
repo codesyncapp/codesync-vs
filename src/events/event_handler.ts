@@ -112,8 +112,8 @@ export class eventHandler {
 			const lstatShadow = fs.lstatSync(shadowPath);
 			const lstatFile =  fs.lstatSync(filePath);
 			// If populating buffer via daemon, check if shadow was modified after the file was written to disk
-			const shadowEditedLater = lstatShadow.mtimeMs > lstatFile.mtimeMs;
-			if (shadowEditedLater) {
+			const shadowHasBeenUpdated = lstatShadow.mtimeMs >= lstatFile.mtimeMs;
+			if (shadowHasBeenUpdated) {
 				this.createdAt = formatDatetime(lstatShadow.mtimeMs);
 				if (this.viaDaemon) return;
 			}

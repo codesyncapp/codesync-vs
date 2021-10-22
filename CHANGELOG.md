@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Using random ports for Auth Server
 - Updated events-tests to run in parallel with Daemon
 - Sending IDE and Platform info to server for repo details and diffs.
+- Using shadow mtime >= file mtime daemon for manipulating real time diffs
 
 ## [2.29.21] - 2021-10-21
 ### Fixed
