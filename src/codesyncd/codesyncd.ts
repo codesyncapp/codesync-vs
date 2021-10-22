@@ -9,7 +9,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem) => {
     if ((global as any).IS_CODESYNC_DEV) return;
     // Recall daemon after X seconds
     setTimeout(() => {
-        populateBuffer();
+        populateBuffer(true);
         // Buffer Handler
         const handler = new bufferHandler(statusBarItem);
         handler.run();

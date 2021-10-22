@@ -7,7 +7,7 @@ import { bufferHandler } from "./codesyncd/buffer_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
 import { COMMAND, STATUS_BAR_MSGS } from './constants';
 
-import { detectBranchChange } from "./codesyncd/populate_buffer";
+import { populateBuffer } from "./codesyncd/populate_buffer";
 import { logout } from './utils/auth_utils';
 import { pathUtils } from "./utils/path_utils";
 
@@ -18,6 +18,7 @@ import {
 	trackRepoHandler,
 	trackFileHandler
 } from './handlers/commands_handler';
+import {updateStatusBarItem} from "./utils/common";
 
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -71,13 +72,13 @@ export async function activate(context: vscode.ExtensionContext) {
 		handler.handleRenameEvent(changeEvent);
 	});
 
-	await detectBranchChange();
+	await populateBuffer();
 
-	const handler = new bufferHandler(statusBarItem);
-	handler.updateStatusBarItem(STATUS_BAR_MSGS.GETTING_READY);
+	updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.GETTING_READY);
 
 	// Do not run daemon in case of tests
 	if ((global as any).IS_CODESYNC_DEV) return;
+	const handler = new bufferHandler(statusBarItem);
 	handler.run();
 }
 

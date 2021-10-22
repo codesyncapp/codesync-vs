@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import walk from "walk";
-import dateFormat from "dateformat";
 import ignore from "ignore";
 import {isBinaryFileSync} from "isbinaryfile";
 
@@ -13,28 +12,26 @@ import {similarity} from "./utils";
 import {generateSettings} from "../settings";
 import {pathUtils} from "../utils/path_utils";
 import {
+    formatDatetime,
     getBranch,
     getSkipRepos,
     getSyncIgnoreItems,
     isEmpty,
     readYML
 } from "../utils/common";
-import {
-    DATETIME_FORMAT,
-    SEQUENCE_MATCHER_RATIO
-} from "../constants";
+import { SEQUENCE_MATCHER_RATIO } from "../constants";
 import {eventHandler} from "../events/event_handler";
 
 
-export const populateBuffer = async () => {
+export const populateBuffer = async (viaDaemon=false) => {
     const readyRepos = await detectBranchChange();
-    await populateBufferForMissedEvents(readyRepos);
+    await populateBufferForMissedEvents(readyRepos, viaDaemon);
 };
 
-export const populateBufferForMissedEvents = async (readyRepos: any) => {
+export const populateBufferForMissedEvents = async (readyRepos: any, viaDaemon=false) => {
     for (const repoPath of Object.keys(readyRepos)) {
         const branch = readyRepos[repoPath];
-        const obj = new PopulateBuffer(repoPath, branch);
+        const obj = new PopulateBuffer(repoPath, branch, viaDaemon);
         if (!obj.modifiedInPast) {
             // Go for content diffs if repo was modified after lastSyncedAt
             await obj.populateBufferForRepo();
@@ -70,6 +67,7 @@ class PopulateBuffer {
 
     repoPath: string;
     branch: string;
+    viaDaemon: boolean;
     repoBranchPath: string;
     repoModifiedAt: number;
     modifiedInPast: boolean;
@@ -84,9 +82,10 @@ class PopulateBuffer {
     deletedRepoBranchPath: string;
     originalsRepoBranchPath: string;
 
-    constructor(repoPath: string, branch: string) {
+    constructor(repoPath: string, branch: string, viaDaemon=false) {
         this.repoPath = repoPath;
         this.branch = branch;
+        this.viaDaemon = viaDaemon;
         this.repoModifiedAt = -1;
         this.settings = generateSettings();
         this.repoBranchPath = path.join(this.repoPath, this.branch);
@@ -123,9 +122,9 @@ class PopulateBuffer {
             const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
             const shadowExists = fs.existsSync(shadowFilePath);
             const fileInConfig = itemPath.rel_path in this.configFiles;
-            const createdAt = dateFormat(new Date(itemPath.modified_at), DATETIME_FORMAT);
+            const createdAt = formatDatetime(itemPath.modified_at);
 
-            const handler = new eventHandler(this.repoPath, createdAt, true);
+            const handler = new eventHandler(this.repoPath, createdAt, this.viaDaemon);
 
             // For binary file, can only handle create event
             if (itemPath.is_binary) {
