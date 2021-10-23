@@ -1,12 +1,12 @@
 import fs from "fs";
 import os from "os";
+import path from "path";
 
 import {IDiff, IDiffToSend} from "../../interface";
 import {cleanUpDeleteDiff, getDIffForDeletedFile, handleNewFileUpload} from "../utils";
 import {generateSettings} from "../../settings";
 import {readYML} from "../../utils/common";
 import {putLogEvent} from "../../logger";
-import path from "path";
 import {pathUtils} from "../../utils/path_utils";
 import {initUtils} from "../../init/utils";
 import {DIFF_SOURCE} from "../../constants";

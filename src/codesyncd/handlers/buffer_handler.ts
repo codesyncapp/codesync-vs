@@ -153,7 +153,6 @@ export class bufferHandler {
 	}
 
 	handleRepoDiffs = (repoDiffs: IRepoDiffs[]) => {
-		const statusBarItem = this.statusBarItem;
 		// Iterate repoDiffs and send to server
 		repoDiffs.forEach((repoDiff) => {
 			// Making a new socket connection per repo

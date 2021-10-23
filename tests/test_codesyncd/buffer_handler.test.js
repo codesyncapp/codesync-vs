@@ -26,8 +26,8 @@ import {bufferHandler} from "../../src/codesyncd/handlers/buffer_handler";
 import {eventHandler} from "../../src/events/event_handler";
 import {WebSocketClient} from "../../src/codesyncd/websocket/websocket_client";
 import {WebSocketEvents} from "../../src/codesyncd/websocket/websocket_events";
-import {readYML} from "../../out/utils/common";
-import {DIFF_SOURCE} from "../../out/constants";
+import {readYML} from "../../src/utils/common";
+import {DIFF_SOURCE} from "../../src/constants";
 import {recallDaemon} from "../../src/codesyncd/codesyncd";
 
 
@@ -45,7 +45,6 @@ describe("handleBuffer", () => {
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
     const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
     const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-    const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
     const diffsRepo = pathUtilsObj.getDiffsRepo();
 
     const fileRelPath = "file_1.js";
@@ -71,6 +70,7 @@ describe("handleBuffer", () => {
         fs.mkdirSync(baseRepoPath, {recursive: true});
         createSystemDirectories();
         fs.mkdirSync(repoPath, {recursive: true});
+        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
     });
 
     afterEach(() => {
@@ -164,7 +164,6 @@ describe("handleBuffer", () => {
 
     test("Server is down, no diff", async () => {
         addRepo();
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponse(JSON.stringify({status: false}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
@@ -174,7 +173,6 @@ describe("handleBuffer", () => {
     test("Server is down, 1 valid diff", async () => {
         addRepo();
         addNewFileDiff();
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponse(null);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
@@ -189,7 +187,6 @@ describe("handleBuffer", () => {
     });
 
     test("Repo opened but not synced", async () => {
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
@@ -197,7 +194,6 @@ describe("handleBuffer", () => {
 
     test("Repo opened and synced", async () => {
         addRepo();
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount()).toBe(true);
@@ -206,7 +202,6 @@ describe("handleBuffer", () => {
     test("Server is up, 1 valid diff", async () => {
         addRepo();
         addChangesDiff();
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
@@ -214,7 +209,6 @@ describe("handleBuffer", () => {
     });
 
     test("Server is up, 2 valid diffs", async () => {
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         addRepo();
         addChangesDiff();
@@ -233,7 +227,6 @@ describe("handleBuffer", () => {
         const diffFileName = `${new Date().getTime()}.txt`;
         const diffFilePath = path.join(diffsRepo, diffFileName);
         fs.writeFileSync(diffFilePath, DUMMY_FILE_CONTENT);
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
@@ -246,7 +239,6 @@ describe("handleBuffer", () => {
         const diffFileName = `${new Date().getTime()}.yml`;
         const diffFilePath = path.join(diffsRepo, diffFileName);
         fs.writeFileSync(diffFilePath, yaml.safeDump({user: 12345}));
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
@@ -255,7 +247,6 @@ describe("handleBuffer", () => {
 
     test("Invalid repo path in diff file", async () => {
         addChangesDiff();
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
@@ -265,7 +256,6 @@ describe("handleBuffer", () => {
     test("Diff file for disconnected repo", async () => {
         addRepo(true);
         addChangesDiff();
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
@@ -276,7 +266,6 @@ describe("handleBuffer", () => {
         // Diff file should not be removed. Wait for the branch to get synced first
         addRepo();
         addChangesDiff("RANDOM_BRANCH");
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
@@ -405,7 +394,7 @@ describe("handleBuffer", () => {
         expect(fs.existsSync(diffFilePath)).toBe(true);
     });
 
-    test("WebSocketEvents: onMessage, New File Diff", async () => {
+    test("WebSocketEvents: onMessage, NewFile Diff", async () => {
         addRepo();
         const diffFilePath = addNewFileDiff();
         const handler = new bufferHandler(statusBarItem);
@@ -630,7 +619,6 @@ describe("handleBuffer", () => {
     });
 
     test("codesyncd.ts", async () => {
-        global.IS_CODESYNC_DEV = true;
         recallDaemon(statusBarItem);
         expect(global.IS_CODESYNC_DEV).toBe(true);
     });
