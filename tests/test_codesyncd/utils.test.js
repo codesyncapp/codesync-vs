@@ -7,15 +7,18 @@ import untildify from "untildify";
 import { isBinaryFileSync } from 'isbinaryfile';
 
 import {
-    cleanUpDeleteDiff, getDIffForDeletedFile,
-    handleFilesRename,
+    cleanUpDeleteDiff,
+    getDIffForDeletedFile,
     handleNewFileUpload,
     isValidDiff,
     similarity
 } from "../../src/codesyncd/utils";
 import {
     DIFF_DATA,
-    DUMMY_FILE_CONTENT, getConfigFilePath, getSeqTokenFilePath, getUserFilePath,
+    DUMMY_FILE_CONTENT,
+    getConfigFilePath,
+    getSeqTokenFilePath,
+    getUserFilePath,
     INVALID_TOKEN_JSON,
     PRE_SIGNED_URL,
     randomBaseRepoPath,

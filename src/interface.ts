@@ -1,6 +1,3 @@
-import {DIFF_SOURCE} from "./constants";
-import os from "os";
-
 export interface IDiff {
 	repo_path: string;
 	branch: string;
@@ -59,9 +56,9 @@ export interface IDiffToSend {
 	'file_id': number;
 	'path': string;
 	'diff': string;
-	'is_deleted': boolean;
-	'is_rename': boolean;
-	'is_binary': boolean;
+	'is_deleted': boolean|undefined;
+	'is_rename': boolean|undefined;
+	'is_binary': boolean|undefined;
 	'created_at': string;
 	'diff_file_path': string;
 	'source': string;

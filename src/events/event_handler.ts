@@ -67,6 +67,7 @@ export class eventHandler {
 		const diffFileName = `${new Date().getTime()}.yml`;
 		const diffFilePath = path.join(this.settings.DIFFS_REPO, diffFileName);
 		fs.writeFileSync(diffFilePath, yaml.safeDump(newDiff));
+		return diffFilePath;
 	};
 
 	addPathToConfig = (relPath: string, oldRelPath = "") => {

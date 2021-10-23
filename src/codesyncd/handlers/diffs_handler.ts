@@ -15,7 +15,7 @@ export class DiffsHandler {
 
     diffsList: IFileToDiff[];
     accessToken: string;
-    webSocketconnection: any;
+    webSocketConnection: any;
 
     configJSON: any;
     configRepo: any;
@@ -26,7 +26,7 @@ export class DiffsHandler {
         this.accessToken = accessToken;
         this.configJSON = readYML(settings.CONFIG_PATH);
         this.configRepo = this.configJSON.repos[repoPath];
-        this.webSocketconnection = connection;
+        this.webSocketConnection = connection;
     }
 
     async run() {
@@ -36,7 +36,6 @@ export class DiffsHandler {
             const diffFilePath = fileToDiff.file_path;
             const configFiles = this.configRepo.branches[diffData.branch];
             const relPath = diffData.file_relative_path;
-            const isBinary = diffData.is_binary;
             const isDeleted = diffData.is_deleted;
 
             const diffHandler = new DiffHandler(relPath, diffData, diffFilePath, this.accessToken);
@@ -62,19 +61,14 @@ export class DiffsHandler {
                 }
             }
 
-            if (!isBinary && !isDeleted && !diffData.diff) {
-                diffHandler.handleEmptyDiff();
-                continue;
-            }
-
             const fileId = configFiles[relPath];
 
-            if (isDeleted && !fileId) {
-                diffHandler.handleNonSyncedDeletedFile();
-                continue;
-            }
-
-            if (!fileId && !isDeleted && !diffData.is_rename) {
+            if (!fileId) {
+                if (isDeleted) {
+                    diffHandler.handleNonSyncedDeletedFile();
+                    continue;
+                }
+                if (diffData.is_rename) continue;
                 if (relPath in WAITING_FILES) {
                     const now = (new Date()).getTime() / 1000;
                     if ((now - WAITING_FILES[relPath]) > DAY) {
@@ -87,19 +81,19 @@ export class DiffsHandler {
                     if (this.newFiles.indexOf(relPath) > -1) {
                         this.newFiles.push(relPath);
                     }
-                    this.configJSON = diffHandler.forceUploadFile();
+                    this.configJSON = await diffHandler.forceUploadFile();
                 }
                 continue;
             }
 
-            if (isDeleted && fileId) {
+            if (isDeleted) {
                 diffHandler.handleDeletedFile();
             }
 
             // Diff data to be sent to server
             const diffToSend = diffHandler.createDiffToSend(fileId);
             // Send Diff to server
-            diffHandler.sendDiffToServer(this.webSocketconnection, diffToSend);
+            diffHandler.sendDiffToServer(this.webSocketConnection, diffToSend);
         }
     }
 }
