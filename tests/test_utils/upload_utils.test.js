@@ -3,7 +3,7 @@ import path from "path";
 import fetchMock from "jest-fetch-mock";
 import {INVALID_TOKEN_JSON, PRE_SIGNED_URL, randomRepoPath, TEST_REPO_RESPONSE} from "../helpers/helpers";
 import {uploadFile, uploadFileTos3, uploadFileToServer, uploadRepoToServer} from "../../src/utils/upload_utils";
-import {DEFAULT_BRANCH} from "../../src/constants";
+import {API_FILES, API_INIT, DEFAULT_BRANCH} from "../../src/constants";
 
 
 describe('uploadRepoToServer', () => {
@@ -11,11 +11,24 @@ describe('uploadRepoToServer', () => {
         fetch.resetMocks();
     });
 
+    const assertAPICall = (token="ACCESS_TOKEN") => {
+        // Assert API call
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_INIT);
+        const options = fetch.mock.calls[0][1];
+        expect(options.method).toStrictEqual('POST');
+        expect(options.headers).toStrictEqual({
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${token}`
+        });
+        return true;
+    };
+
     test('Invalid token', async () => {
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
         const res = await uploadRepoToServer("INVALID_TOKEN", {});
         expect(res.error).toBe(INVALID_TOKEN_JSON.error);
         expect(res.response).toStrictEqual({});
+        expect(assertAPICall("INVALID_TOKEN")).toBe(true);
     });
 
     test('Valid response', async () => {
@@ -23,6 +36,7 @@ describe('uploadRepoToServer', () => {
         const res = await uploadRepoToServer("ACCESS_TOKEN", {});
         expect(res.error).toBe("");
         expect(res.response).toStrictEqual(TEST_REPO_RESPONSE);
+        expect(assertAPICall()).toBe(true);
     });
 
     test('null response', async () => {
@@ -30,6 +44,7 @@ describe('uploadRepoToServer', () => {
         const res = await uploadRepoToServer("ACCESS_TOKEN", {});
         expect(res.error).toBeTruthy();
         expect(res.response).toStrictEqual({});
+        expect(assertAPICall()).toBe(true);
     });
 });
 
@@ -38,11 +53,24 @@ describe('uploadFile', () => {
         fetch.resetMocks();
     });
 
+    const assertAPICall = (token="ACCESS_TOKEN") => {
+        // Assert API call
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_FILES);
+        const options = fetch.mock.calls[0][1];
+        expect(options.method).toStrictEqual('POST');
+        expect(options.headers).toStrictEqual({
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${token}`
+        });
+        return true;
+    };
+
     test('Invalid token', async () => {
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
         const res = await uploadFile("INVALID_TOKEN", {});
         expect(res.error).toBe(INVALID_TOKEN_JSON.error);
         expect(res.response).toStrictEqual({});
+        expect(assertAPICall("INVALID_TOKEN")).toBe(true);
     });
 
     test('Valid response', async () => {
@@ -52,6 +80,7 @@ describe('uploadFile', () => {
         expect(res.error).toBe("");
         expect(res.response.id).toBe(response.id);
         expect(res.response.url).toBe(response.url);
+        expect(assertAPICall()).toBe(true);
     });
 
     test('null response', async () => {
@@ -59,6 +88,7 @@ describe('uploadFile', () => {
         const res = await uploadFile("ACCESS_TOKEN", {});
         expect(res.error).toBeTruthy();
         expect(res.response).toStrictEqual({});
+        expect(assertAPICall()).toBe(true);
     });
 });
 
@@ -108,20 +138,34 @@ describe('uploadFileToServer', () => {
         fs.rmSync(repoPath, { recursive: true, force: true });
     });
 
+    const assertAPICall = (token="ACCESS_TOKEN") => {
+        // Assert API call
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_FILES);
+        const options = fetch.mock.calls[0][1];
+        expect(options.method).toStrictEqual('POST');
+        expect(options.headers).toStrictEqual({
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${token}`
+        });
+        return true;
+    };
+
     test('Auth Error', async () => {
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
-        const res = await uploadFileToServer("accessToken", 12345, DEFAULT_BRANCH, filePath,
+        const res = await uploadFileToServer("ACCESS_TOKEN", 12345, DEFAULT_BRANCH, filePath,
             "file.txt", "");
         expect(res.error).toStrictEqual(INVALID_TOKEN_JSON.error);
+        expect(assertAPICall()).toBe(true);
     });
 
     test('Empty file: fileInfo.size = 0', async () => {
         const response = {id: 1234, url: PRE_SIGNED_URL};
         fetchMock.mockResponseOnce(JSON.stringify(response));
-        const res = await uploadFileToServer("accessToken", 6789, DEFAULT_BRANCH, filePath,
+        const res = await uploadFileToServer("ACCESS_TOKEN", 6789, DEFAULT_BRANCH, filePath,
             "file.txt", "");
         expect(res.fileId).toStrictEqual(response.id);
         expect(res.error).toStrictEqual(null);
+        expect(assertAPICall()).toBe(true);
     });
 
     test('Valid file', async () => {
@@ -129,10 +173,11 @@ describe('uploadFileToServer', () => {
         fs.writeFileSync(filePath, "Dummy Content Is In The File");
         const response = {id: 1234, url: PRE_SIGNED_URL};
         fetchMock.mockResponseOnce(JSON.stringify(response));
-        const res = await uploadFileToServer("accessToken", 6789, DEFAULT_BRANCH, filePath,
+        const res = await uploadFileToServer("ACCESS_TOKEN", 6789, DEFAULT_BRANCH, filePath,
             "file.txt", "");
         expect(res.fileId).toStrictEqual(response.id);
         expect(res.error).toStrictEqual(null);
+        expect(assertAPICall()).toBe(true);
     });
 
     test('InValid response', async () => {
@@ -140,10 +185,11 @@ describe('uploadFileToServer', () => {
         fs.writeFileSync(filePath, "Dummy Content Is In The File");
         const response = {id: 1234, url: {url: "url", fields: {}}};
         fetchMock.mockResponseOnce(JSON.stringify(response));
-        const res = await uploadFileToServer("accessToken", 6789, DEFAULT_BRANCH, filePath,
+        const res = await uploadFileToServer("ACCESS_TOKEN", 6789, DEFAULT_BRANCH, filePath,
             "file.txt", "");
         expect(res.fileId).toStrictEqual(response.id);
         expect(res.error).toBeTruthy();
+        expect(assertAPICall()).toBe(true);
     });
 
 });

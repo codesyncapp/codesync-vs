@@ -47,7 +47,7 @@ export const createUserWithApi = async (accessToken: string, idToken: string) =>
 	const response = await fetch(API_USERS, {
 			method: 'POST',
 			headers: {
-				'content-type': 'application/json',
+				'Content-Type': 'application/json',
 				'Authorization': `Basic ${accessToken}`
 			},
 			body: JSON.stringify(user)

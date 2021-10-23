@@ -1,4 +1,5 @@
 import fs from "fs";
+import os from "os";
 import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
@@ -17,11 +18,12 @@ import {
     randomBaseRepoPath,
     randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, getSeqTokenFilePath, Config
 } from "../helpers/helpers";
-import {DEFAULT_BRANCH, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
+import {DEFAULT_BRANCH, DIFF_SOURCE, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {isBinaryFileSync} from "isbinaryfile";
 import {pathUtils} from "../../src/utils/path_utils";
+import {API_INIT} from "../../src/constants";
 
 
 describe("isValidRepoSize",  () => {
@@ -468,6 +470,24 @@ describe("uploadRepo",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_SYNCED);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
+        // Assert API call
+        expect(fetch.mock.calls[1][0]).toStrictEqual(API_INIT);
+        const options = fetch.mock.calls[1][1];
+        expect(options.method).toStrictEqual('POST');
+        expect(options.headers).toStrictEqual({
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ACCESS_TOKEN`
+        });
+        const body = JSON.parse(fetch.mock.calls[1][1].body);
+        expect(body.name).toStrictEqual(path.basename(repoPath));
+        expect(body.is_public).toBe(false);
+        expect(body.branch).toStrictEqual(DEFAULT_BRANCH);
+        expect(body.source).toStrictEqual(DIFF_SOURCE);
+        expect(body.platform).toStrictEqual(os.platform());
+        const files_data = JSON.parse(body.files_data);
+        [".syncignore", "file.js"].forEach(key => {
+            expect(files_data[key]).toBeTruthy();
+        });
     });
 
     test("Error in uploadRepoToServer",  async () => {

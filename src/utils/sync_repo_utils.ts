@@ -5,7 +5,7 @@ import { API_ENDPOINT } from "../constants";
 export const updateRepo = async (accessToken: string, repoId: number, data: any) => {
 	let error = "";
 	let response = await fetch(`${API_ENDPOINT}/repos/${repoId}`, {
-		method: 'patch',
+		method: 'PATCH',
 		body: JSON.stringify(data),
 		headers: {
 			'Content-Type': 'application/json',
