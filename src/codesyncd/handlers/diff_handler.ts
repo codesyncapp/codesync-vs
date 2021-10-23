@@ -1,17 +1,17 @@
 import fs from "fs";
 import os from "os";
 
-import {IDiff} from "../interface";
-import {cleanUpDeleteDiff, getDIffForDeletedFile, handleNewFileUpload} from "./utils";
-import {generateSettings} from "../settings";
-import {readYML} from "../utils/common";
-import {putLogEvent} from "../logger";
+import {IDiff, IDiffToSend} from "../../interface";
+import {cleanUpDeleteDiff, getDIffForDeletedFile, handleNewFileUpload} from "../utils";
+import {generateSettings} from "../../settings";
+import {readYML} from "../../utils/common";
+import {putLogEvent} from "../../logger";
 import path from "path";
-import {pathUtils} from "../utils/path_utils";
-import {initUtils} from "../init/utils";
-import {DIFF_SOURCE} from "../constants";
+import {pathUtils} from "../../utils/path_utils";
+import {initUtils} from "../../init/utils";
+import {DIFF_SOURCE} from "../../constants";
 
-export class diffHandler {
+export class DiffHandler {
     fileRelPath: string;
     diffData: IDiff;
     diffFilePath: string;
@@ -102,8 +102,13 @@ export class diffHandler {
         };
     }
 
+    sendDiffToServer(webSocketConnection: any, diffToSend: IDiffToSend) {
+        // Send diff to server
+        webSocketConnection.send(JSON.stringify({'diffs': [diffToSend]}));
+    }
+
     cleanDiffFile() {
-        diffHandler.removeDiffFile(this.diffFilePath);
+        DiffHandler.removeDiffFile(this.diffFilePath);
     }
 
     static removeDiffFile(diffFilePath: string) {

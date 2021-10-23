@@ -1,34 +1,32 @@
 import fs from 'fs';
 import path from 'path';
 import vscode from "vscode";
-import {client} from "websocket";
 
-import {putLogEvent} from '../logger';
-import {isRepoActive, readYML, updateStatusBarItem} from '../utils/common';
-import {checkServerDown} from "../utils/api_utils";
-import {isValidDiff} from './utils';
-import {IFileToDiff, IRepoDiffs} from '../interface';
+import {isValidDiff} from '../utils';
+import {putLogEvent} from '../../logger';
+import {checkServerDown} from "../../utils/api_utils";
+import {IFileToDiff, IRepoDiffs} from '../../interface';
 import {
 	CONNECTION_ERROR_MESSAGE,
 	DIFF_FILES_PER_ITERATION,
 	LOG_AFTER_X_TIMES,
-	STATUS_BAR_MSGS,
-	WEBSOCKET_ENDPOINT
-} from "../constants";
-import {recallDaemon} from "./codesyncd";
-import {generateSettings} from "../settings";
-import {pathUtils} from "../utils/path_utils";
-import {socketEvents} from "./socket_events";
+	STATUS_BAR_MSGS
+} from "../../constants";
+import {recallDaemon} from "../codesyncd";
+import {generateSettings} from "../../settings";
+import {pathUtils} from "../../utils/path_utils";
+import {WebSocketClient} from "../websocket/websocket_client";
+import {isRepoActive, readYML, updateStatusBarItem} from '../../utils/common';
 
 let errorCount = 0;
 
 export class bufferHandler {
 	/*
-	 * Each file in .diffs directory contains following data
+	 * Each file in .diffs directory contains data something like
 
         repo_path: /Users/basit/projects/codesync/codesync
         branch: plugins
-        file: codesync/init.py
+        path: codesync/init.py
         diff: |
          @@ -14070,8 +14070,10 @@
              pass%0A
@@ -37,9 +35,9 @@ export class bufferHandler {
 
 	Steps:
 		- Get list of diffs (only .yml files)
-		- If there are diffs founds
 		- Check if server is up
 			- Do not continue if server is down
+		- If there are diffs founds
 		- Validate structure of JSON in diff file
 			- Skip invalid diff files
 		- Group diffs by repo path to send multiple in 1 iteration
@@ -113,7 +111,6 @@ export class bufferHandler {
 					configRepo.email);
 				return false;
 			}
-
 			return true;
 		});
 
@@ -157,33 +154,11 @@ export class bufferHandler {
 
 	handleRepoDiffs = (repoDiffs: IRepoDiffs[]) => {
 		const statusBarItem = this.statusBarItem;
-
 		// Iterate repoDiffs and send to server
 		repoDiffs.forEach((repoDiff) => {
 			// Making a new socket connection per repo
-			const WebSocketClient = new client();
-			WebSocketClient.connect(WEBSOCKET_ENDPOINT);
-
-			WebSocketClient.on('connectFailed', function(error) {
-				putLogEvent('Socket Connect Error: ' + error.toString());
-			});
-
-			WebSocketClient.on('connect', function(connection) {
-				connection.on('error', function(error) {
-					putLogEvent("Socket Connection Error: " + error.toString());
-				});
-
-				connection.on('close', function() {
-					putLogEvent('echo-protocol Connection Closed');
-				});
-
-				const eventManager = new socketEvents(connection, statusBarItem, repoDiff);
-				eventManager.onConnect();
-
-				connection.on('message',function(message) {
-					eventManager.onMessage(message);
-				});
-			});
+			const webSocketClient = new WebSocketClient(this.statusBarItem, repoDiff);
+			webSocketClient.registerEvents();
 		});
 	}
 
@@ -194,14 +169,7 @@ export class bufferHandler {
 			return recallDaemon(this.statusBarItem);
 		}
 
-		const statusBarMsg = this.getStatusBarMsg();
-		this.updateStatusBarItem(statusBarMsg);
-
 		try {
-			const diffFiles = this.getDiffFiles();
-
-			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
-
 			const isServerDown = await checkServerDown();
 			if (isServerDown) {
 				if (errorCount == 0 || errorCount > LOG_AFTER_X_TIMES) {
@@ -217,16 +185,22 @@ export class bufferHandler {
 
 			errorCount = 0;
 
+			const statusBarMsg = this.getStatusBarMsg();
+			this.updateStatusBarItem(statusBarMsg);
+
+			const diffFiles = this.getDiffFiles();
+
+			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
+
 			const repoDiffs = this.groupRepoDiffs(diffFiles);
 
 			// Handle repo diffs
 			this.handleRepoDiffs(repoDiffs);
 
 		} catch (e) {
-			putLogEvent(`"Daemon failed": ${e}`);
+			putLogEvent(`Daemon failed: ${e}`);
 		}
 
 		recallDaemon(this.statusBarItem);
-
 	}
 }

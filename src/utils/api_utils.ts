@@ -1,8 +1,9 @@
 import fetch from "node-fetch";
 
+import jwt_decode from "jwt-decode";
+
 import { API_HEALTHCHECK, API_USERS } from "../constants";
 import { IAuth0User } from "../interface";
-import jwt_decode from "jwt-decode";
 
 
 export const checkServerDown = async () => {

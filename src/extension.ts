@@ -3,7 +3,7 @@
 import vscode from 'vscode';
 
 import { eventHandler } from "./events/event_handler";
-import { bufferHandler } from "./codesyncd/buffer_handler";
+import { bufferHandler } from "./codesyncd/handlers/buffer_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
 import { COMMAND, STATUS_BAR_MSGS } from './constants';
 

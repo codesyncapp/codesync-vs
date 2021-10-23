@@ -1,31 +1,32 @@
 import fs from "fs";
 
-import {IFileToDiff} from "../interface";
-import {putLogEvent} from "../logger";
-import {DAY} from "../constants";
-import {readYML} from "../utils/common";
-import {generateSettings} from "../settings";
-import {diffHandler} from "./diffHandler";
+import {IFileToDiff} from "../../interface";
+import {putLogEvent} from "../../logger";
+import {DAY} from "../../constants";
+import {readYML} from "../../utils/common";
+import {generateSettings} from "../../settings";
+import {DiffHandler} from "./diff_handler";
 
 const WAITING_FILES = <any>{};
 
-export class diffsHandler {
+export class DiffsHandler {
+
+    newFiles: string[] = [];
 
     diffsList: IFileToDiff[];
-    newFiles: string[] = [];
     accessToken: string;
-    connection: any;
+    webSocketconnection: any;
 
     configJSON: any;
     configRepo: any;
 
     constructor(diffsList: IFileToDiff[], accessToken: string, repoPath: string, connection: any) {
         this.diffsList = diffsList;
-        this.connection = connection;
         const settings = generateSettings();
         this.accessToken = accessToken;
         this.configJSON = readYML(settings.CONFIG_PATH);
         this.configRepo = this.configJSON.repos[repoPath];
+        this.webSocketconnection = connection;
     }
 
     async run() {
@@ -38,13 +39,13 @@ export class diffsHandler {
             const isBinary = diffData.is_binary;
             const isDeleted = diffData.is_deleted;
 
-            const diffHandlerObj = new diffHandler(relPath, diffData, diffFilePath, this.accessToken);
+            const diffHandler = new DiffHandler(relPath, diffData, diffFilePath, this.accessToken);
 
             if (diffData.is_new_file) {
                 if (!this.newFiles.includes(relPath)) {
                     this.newFiles.push(relPath);
                 }
-                this.configJSON = await diffHandlerObj.handleNewFile();
+                this.configJSON = await diffHandler.handleNewFile();
                 continue;
             }
 
@@ -62,14 +63,14 @@ export class diffsHandler {
             }
 
             if (!isBinary && !isDeleted && !diffData.diff) {
-                diffHandlerObj.handleEmptyDiff();
+                diffHandler.handleEmptyDiff();
                 continue;
             }
 
             const fileId = configFiles[relPath];
 
             if (isDeleted && !fileId) {
-                diffHandlerObj.handleNonSyncedDeletedFile();
+                diffHandler.handleNonSyncedDeletedFile();
                 continue;
             }
 
@@ -86,19 +87,19 @@ export class diffsHandler {
                     if (this.newFiles.indexOf(relPath) > -1) {
                         this.newFiles.push(relPath);
                     }
-                    this.configJSON = diffHandlerObj.forceUploadFile();
+                    this.configJSON = diffHandler.forceUploadFile();
                 }
                 continue;
             }
 
             if (isDeleted && fileId) {
-                diffHandlerObj.handleDeletedFile();
+                diffHandler.handleDeletedFile();
             }
 
             // Diff data to be sent to server
-            const diffToSend = diffHandlerObj.createDiffToSend(fileId);
-            // Send diff to server
-            this.connection.send(JSON.stringify({'diffs': [diffToSend]}));
+            const diffToSend = diffHandler.createDiffToSend(fileId);
+            // Send Diff to server
+            diffHandler.sendDiffToServer(this.webSocketconnection, diffToSend);
         }
     }
 }

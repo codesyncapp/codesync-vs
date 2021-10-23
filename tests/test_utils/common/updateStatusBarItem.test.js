@@ -2,7 +2,7 @@ import vscode from "vscode";
 import untildify from "untildify";
 import {updateStatusBarItem} from "../../../src/utils/common";
 import {COMMAND, STATUS_BAR_MSGS} from "../../../src/constants";
-import {bufferHandler} from "../../../src/codesyncd/buffer_handler";
+import {bufferHandler} from "../../../src/codesyncd/handlers/buffer_handler";
 import {randomBaseRepoPath} from "../../helpers/helpers";
 
 

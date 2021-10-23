@@ -18,7 +18,7 @@ import {
     randomRepoPath,
     TEST_EMAIL, TEST_REPO_RESPONSE, TEST_USER
 } from "../helpers/helpers";
-import {bufferHandler} from "../../src/codesyncd/buffer_handler";
+import {bufferHandler} from "../../src/codesyncd/handlers/buffer_handler";
 import {eventHandler} from "../../src/events/event_handler";
 
 
@@ -48,6 +48,7 @@ describe("handleBuffer", () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
+        fetchMock.mockResponse(JSON.stringify({status: true}));
         global.IS_CODESYNC_DEV = true;
         jest.spyOn(global.console, 'log');
         untildify.mockReturnValue(baseRepoPath);
@@ -63,7 +64,7 @@ describe("handleBuffer", () => {
 
     const addRepo = (isDisconnected=false) => {
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
-        getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
+        getBranchName.mockReturnValue(DEFAULT_BRANCH);
         const configData = {repos: {}};
         configData.repos[repoPath] = {
             branches: {},
@@ -89,7 +90,7 @@ describe("handleBuffer", () => {
     };
 
     const addDiff = (branch=DEFAULT_BRANCH) => {
-        getBranchName.mockReturnValueOnce(branch);
+        getBranchName.mockReturnValue(branch);
         const handler = new eventHandler(repoPath);
         handler.isNewFile = true;
         handler.addDiff(fileRelPath);
@@ -110,27 +111,40 @@ describe("handleBuffer", () => {
         fs.rmSync(configPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(statusBarItem.show).toHaveBeenCalledTimes(1);
-        expect(statusBarItem.command).toStrictEqual(COMMAND.triggerSync);
-        expect(statusBarItem.text).toStrictEqual(STATUS_BAR_MSGS.CONNECT_REPO);
+        expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
+    });
+
+    test("Server is down, no diff", async () => {
+        addRepo();
+        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        fetchMock.mockResponse(JSON.stringify({status: false}));
+        const handler = new bufferHandler(statusBarItem);
+        await handler.run();
+        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.SERVER_DOWN)).toBe(true);
+    });
+
+    test("Server is down, 1 valid diff", async () => {
+        addRepo();
+        addDiff();
+        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        fetchMock.mockResponse(null);
+        const handler = new bufferHandler(statusBarItem);
+        await handler.run();
+        expect(assertDiffsCount(1, undefined, STATUS_BAR_MSGS.SERVER_DOWN)).toBe(true);
     });
 
     test("No repo opened", async () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(undefined);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(statusBarItem.show).toHaveBeenCalledTimes(1);
-        expect(statusBarItem.command).toStrictEqual(undefined);
-        expect(statusBarItem.text).toStrictEqual(STATUS_BAR_MSGS.NO_REPO_OPEN);
+        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.NO_REPO_OPEN)).toBe(true);
     });
 
     test("Repo opened but not synced", async () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(statusBarItem.show).toHaveBeenCalledTimes(1);
-        expect(statusBarItem.command).toStrictEqual(COMMAND.triggerSync);
-        expect(statusBarItem.text).toStrictEqual(STATUS_BAR_MSGS.CONNECT_REPO);
+        expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
     });
 
     test("Repo opened and synced", async () => {
@@ -141,30 +155,6 @@ describe("handleBuffer", () => {
         expect(assertDiffsCount()).toBe(true);
     });
 
-    test("Server is down, no diff", async () => {
-        addRepo();
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
-        fetchMock.mockResponseOnce(JSON.stringify({status: false}));
-        const handler = new bufferHandler(statusBarItem);
-        await handler.run();
-        expect(assertDiffsCount()).toBe(true);
-    });
-
-    test("Server is down, 1 valid diff", async () => {
-        addRepo();
-        addDiff();
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
-        fetchMock.mockResponseOnce(null);
-        const handler = new bufferHandler(statusBarItem);
-        await handler.run();
-        expect(statusBarItem.show).toHaveBeenCalledTimes(2);
-        expect(statusBarItem.command).toStrictEqual(undefined);
-        expect(statusBarItem.text).toStrictEqual(STATUS_BAR_MSGS.SERVER_DOWN);
-        // Verify correct diff file has been generated
-        let diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(1);
-    });
-
     test("Server is up, 1 valid diff", async () => {
         addRepo();
         addDiff();
@@ -173,6 +163,17 @@ describe("handleBuffer", () => {
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount(1)).toBe(true);
+    });
+
+    test("Server is up, 2 valid diffs", async () => {
+        addRepo();
+        addDiff();
+        addDiff();
+        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        fetchMock.mockResponseOnce(JSON.stringify({status: true}));
+        const handler = new bufferHandler(statusBarItem);
+        await handler.run();
+        expect(assertDiffsCount(2)).toBe(true);
     });
 
     test("Invalid diff file extension", async () => {

@@ -1,3 +1,6 @@
+import {DIFF_SOURCE} from "./constants";
+import os from "os";
+
 export interface IDiff {
 	repo_path: string;
 	branch: string;
@@ -35,7 +38,6 @@ export interface IFileToUpload {
 	modified_at: number
 }
 
-
 export interface IUser {
 	email: string,
 	plan: IUserPlan,
@@ -46,4 +48,22 @@ export interface IUserPlan {
 	SIZE: number,
 	FILE_COUNT: number,
 	REPO_COUNT: number
+}
+
+export interface IWebSocketMessage {
+	type: string;
+	utf8Data: string;
+}
+
+export interface IDiffToSend {
+	'file_id': number;
+	'path': string;
+	'diff': string;
+	'is_deleted': boolean;
+	'is_rename': boolean;
+	'is_binary': boolean;
+	'created_at': string;
+	'diff_file_path': string;
+	'source': string;
+	'platform': string
 }

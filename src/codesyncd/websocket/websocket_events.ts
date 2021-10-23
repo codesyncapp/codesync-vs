@@ -1,15 +1,20 @@
 import vscode from "vscode";
 
-import {putLogEvent} from "../logger";
-import {STATUS_BAR_MSGS} from "../constants";
-import {readYML, updateStatusBarItem} from "../utils/common";
-import {generateSettings} from "../settings";
-import {IRepoDiffs} from "../interface";
-import {diffsHandler} from "./diffs_handler";
-import {diffHandler} from "./diffHandler";
+import {putLogEvent} from "../../logger";
+import {STATUS_BAR_MSGS} from "../../constants";
+import {readYML, updateStatusBarItem} from "../../utils/common";
+import {generateSettings} from "../../settings";
+import {IRepoDiffs, IWebSocketMessage} from "../../interface";
+import {DiffsHandler} from "../handlers/diffs_handler";
+import {DiffHandler} from "../handlers/diff_handler";
 
 
-export class socketEvents {
+const EVENT_TYPES = {
+    AUTH: 'auth',
+    SYNC: 'sync'
+};
+
+export class WebSocketEvents {
     connection: any;
     statusBarItem: any;
     repoDiff: any;
@@ -29,7 +34,7 @@ export class socketEvents {
         this.accessToken = users[this.configRepo.email].access_token;
     }
 
-    onConnect() {
+    authenticate() {
         // authenticate via websocket
         this.connection.send(this.accessToken);
     }
@@ -43,25 +48,26 @@ export class socketEvents {
     async onValidAuth() {
         // Update status bar msg
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.SYNCING);
-        const diffsHandlerObj = new diffsHandler(this.repoDiff.file_to_diff,
+        const diffsHandler = new DiffsHandler(this.repoDiff.file_to_diff,
             this.accessToken, this.repoDiff.repoPath, this.connection);
-        await diffsHandlerObj.run();
+        await diffsHandler.run();
     }
 
     onSyncSuccess(diffFilePath: string) {
-        diffHandler.removeDiffFile(diffFilePath);
+        DiffHandler.removeDiffFile(diffFilePath);
     }
 
-    async onMessage(message: any) {
+    async onMessage(message: IWebSocketMessage) {
         if (message.type !== 'utf8') return;
         const resp = JSON.parse(message.utf8Data || "{}");
-        if (resp.type === 'auth') {
+        if (!resp.type) return;
+        if (resp.type === EVENT_TYPES.AUTH) {
             if (resp.status !== 200) {
                 return this.onInvalidAuth();
             }
             await this.onValidAuth();
         }
-        if (resp.type === 'sync') {
+        if (resp.type === EVENT_TYPES.SYNC) {
             if (resp.status === 200) {
                 this.onSyncSuccess(resp.diff_file_path);
             }
