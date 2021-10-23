@@ -1,4 +1,5 @@
 import fs from "fs";
+import os from "os";
 import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
@@ -22,8 +23,7 @@ import {readYML} from "../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {isBinaryFileSync} from "isbinaryfile";
 import {pathUtils} from "../../src/utils/path_utils";
-import {API_INIT} from "../../out/constants";
-import os from "os";
+import {API_INIT} from "../../src/constants";
 
 
 describe("isValidRepoSize",  () => {
@@ -473,7 +473,7 @@ describe("uploadRepo",  () => {
         // Assert API call
         expect(fetch.mock.calls[1][0]).toStrictEqual(API_INIT);
         const options = fetch.mock.calls[1][1];
-        expect(options.method).toStrictEqual('post');
+        expect(options.method).toStrictEqual('POST');
         expect(options.headers).toStrictEqual({
             'Content-Type': 'application/json',
             'Authorization': `Basic ACCESS_TOKEN`

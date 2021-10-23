@@ -28,7 +28,7 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 	*/
 	let error = '';
 	let response = await fetch(API_INIT, {
-			method: 'post',
+			method: 'POST',
 			body: JSON.stringify(data),
 			headers: {
 				'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ export const uploadFile = async (token: string, data: any) => {
 	*/
 	let error = "";
 	let response = await fetch(API_FILES, {
-			method: 'post',
+			method: 'POST',
 			body: JSON.stringify(data),
 			headers: {
 				'Content-Type': 'application/json',
