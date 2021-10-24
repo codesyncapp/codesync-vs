@@ -35,9 +35,9 @@ export class bufferHandler {
 
 	Steps:
 		- Get list of diffs (only .yml files)
+		- If there are diffs founds
 		- Check if server is up
 			- Do not continue if server is down
-		- If there are diffs founds
 		- Validate structure of JSON in diff file
 			- Skip invalid diff files
 		- Group diffs by repo path to send multiple in 1 iteration
@@ -169,6 +169,10 @@ export class bufferHandler {
 		}
 
 		try {
+			const diffFiles = this.getDiffFiles();
+
+			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
+
 			const isServerDown = await checkServerDown();
 			if (isServerDown) {
 				if (errorCount == 0 || errorCount > LOG_AFTER_X_TIMES) {
@@ -186,10 +190,6 @@ export class bufferHandler {
 
 			const statusBarMsg = this.getStatusBarMsg();
 			this.updateStatusBarItem(statusBarMsg);
-
-			const diffFiles = this.getDiffFiles();
-
-			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
 
 			const repoDiffs = this.groupRepoDiffs(diffFiles);
 

@@ -63,7 +63,6 @@ describe("handleBuffer", () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
-        fetchMock.mockResponse(JSON.stringify({status: true}));
         global.IS_CODESYNC_DEV = true;
         jest.spyOn(global.console, 'log');
         untildify.mockReturnValue(baseRepoPath);
@@ -179,7 +178,7 @@ describe("handleBuffer", () => {
         expect(assertDiffsCount(1, undefined, STATUS_BAR_MSGS.SERVER_DOWN)).toBe(true);
     });
 
-    test("No repo opened", async () => {
+    test("No repo opened, no diff", async () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(undefined);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
@@ -200,9 +199,9 @@ describe("handleBuffer", () => {
     });
 
     test("Server is up, 1 valid diff", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         addRepo();
         addChangesDiff();
-        fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount(1)).toBe(true);
@@ -227,7 +226,6 @@ describe("handleBuffer", () => {
         const diffFileName = `${new Date().getTime()}.txt`;
         const diffFilePath = path.join(diffsRepo, diffFileName);
         fs.writeFileSync(diffFilePath, DUMMY_FILE_CONTENT);
-        fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount()).toBe(true);
@@ -239,7 +237,6 @@ describe("handleBuffer", () => {
         const diffFileName = `${new Date().getTime()}.yml`;
         const diffFilePath = path.join(diffsRepo, diffFileName);
         fs.writeFileSync(diffFilePath, yaml.safeDump({user: 12345}));
-        fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount()).toBe(true);
@@ -247,7 +244,6 @@ describe("handleBuffer", () => {
 
     test("Invalid repo path in diff file", async () => {
         addChangesDiff();
-        fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
@@ -256,7 +252,6 @@ describe("handleBuffer", () => {
     test("Diff file for disconnected repo", async () => {
         addRepo(true);
         addChangesDiff();
-        fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
