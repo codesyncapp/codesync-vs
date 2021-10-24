@@ -74,6 +74,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Do not run daemon in case of tests
 	if ((global as any).IS_CODESYNC_DEV) return;
-	recallDaemon(statusBarItem);
+	recallDaemon(statusBarItem, false);
 }
 
