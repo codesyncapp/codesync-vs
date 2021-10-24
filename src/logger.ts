@@ -12,8 +12,12 @@ import { generateSettings } from "./settings";
 
 let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 
-export function putLogEvent(error: string, userEmail?: string, retryCount?: number) {
-	console.log(error);
+export function putLogEvent(error: string, userEmail?: string, retryCount?: number, additionalMsg=null) {
+	if (additionalMsg) {
+		console.log(error, additionalMsg);
+	} else {
+		console.log(error);
+	}
 	const settings = generateSettings();
 	if (!fs.existsSync(settings.USER_PATH)) { return; }
 	const users = readYML(settings.USER_PATH);

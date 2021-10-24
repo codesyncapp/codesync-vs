@@ -13,7 +13,7 @@ export interface IDiff {
 }
 
 export interface IRepoDiffs {
-	path: string;
+	repoPath: string;
 	file_to_diff: IFileToDiff[];
 }
 
@@ -35,7 +35,6 @@ export interface IFileToUpload {
 	modified_at: number
 }
 
-
 export interface IUser {
 	email: string,
 	plan: IUserPlan,
@@ -46,4 +45,22 @@ export interface IUserPlan {
 	SIZE: number,
 	FILE_COUNT: number,
 	REPO_COUNT: number
+}
+
+export interface IWebSocketMessage {
+	type: string;
+	utf8Data: string;
+}
+
+export interface IDiffToSend {
+	'file_id': number;
+	'path': string;
+	'diff': string;
+	'is_deleted': boolean|undefined;
+	'is_rename': boolean|undefined;
+	'is_binary': boolean|undefined;
+	'created_at': string;
+	'diff_file_path': string;
+	'source': string;
+	'platform': string
 }

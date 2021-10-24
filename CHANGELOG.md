@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2021-10-24
+### Updated
+- Refactored bufferHandler to diffsHandler, diffHandler, webSocketClient and webSocketEvents classes
+- Added unit tests for above added classes
+
 ## [2.29.22] - 2021-10-22
 ### Updated
 - Using random ports for Auth Server

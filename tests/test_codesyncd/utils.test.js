@@ -7,15 +7,18 @@ import untildify from "untildify";
 import { isBinaryFileSync } from 'isbinaryfile';
 
 import {
-    cleanUpDeleteDiff, getDIffForDeletedFile,
-    handleFilesRename,
+    cleanUpDeleteDiff,
+    getDIffForDeletedFile,
     handleNewFileUpload,
     isValidDiff,
     similarity
 } from "../../src/codesyncd/utils";
 import {
     DIFF_DATA,
-    DUMMY_FILE_CONTENT, getConfigFilePath, getSeqTokenFilePath, getUserFilePath,
+    DUMMY_FILE_CONTENT,
+    getConfigFilePath,
+    getSeqTokenFilePath,
+    getUserFilePath,
     INVALID_TOKEN_JSON,
     PRE_SIGNED_URL,
     randomBaseRepoPath,
@@ -168,7 +171,8 @@ describe("handleNewFileUpload",  () => {
         const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         fs.mkdirSync(originalsRepoBranchPath, {recursive: true});
-        fs.writeFileSync(path.join(originalsRepoBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
+        const originalsFilePath = path.join(originalsRepoBranchPath, fileRelPath);
+        fs.writeFileSync(originalsFilePath, DUMMY_FILE_CONTENT);
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         const diffData = Object.assign({}, DIFF_DATA);
         diffData.repo_path = repoPath;
@@ -177,6 +181,8 @@ describe("handleNewFileUpload",  () => {
             fileRelPath, 1234, configData);
         expect(result.uploaded).toBe(true);
         expect(fileRelPath in result.config.repos[repoPath].branches[DEFAULT_BRANCH]).toBe(true);
+        // File should be deleted from .originals
+        expect(fs.existsSync(originalsFilePath)).toBe(false);
     });
 
 });

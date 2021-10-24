@@ -9,7 +9,7 @@ import {pathUtils} from "../../src/utils/path_utils";
 import {readYML} from "../../src/utils/common";
 import {populateBuffer} from "../../src/codesyncd/populate_buffer";
 import {createSystemDirectories} from "../../src/utils/setup_utils";
-import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../src/constants";
+import {DEFAULT_BRANCH} from "../../src/constants";
 import {
     assertChangeEvent,
     assertNewFileEvent,
@@ -60,6 +60,11 @@ describe("populateBuffer", () => {
         fs.mkdirSync(repoPath, {recursive: true});
     });
 
+    afterEach(() => {
+        fs.rmSync(repoPath, {recursive: true, force: true});
+        fs.rmSync(baseRepoPath, {recursive: true, force: true});
+    });
+
     const addRepo = (deleteFile1=false) => {
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
@@ -86,11 +91,6 @@ describe("populateBuffer", () => {
         };
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
     };
-
-    afterEach(() => {
-        fs.rmSync(repoPath, {recursive: true, force: true});
-        fs.rmSync(baseRepoPath, {recursive: true, force: true});
-    });
 
     test("No repo synced", async () => {
         await populateBuffer();
