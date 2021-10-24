@@ -169,6 +169,9 @@ export class bufferHandler {
 		}
 
 		try {
+			const statusBarMsg = this.getStatusBarMsg();
+			this.updateStatusBarItem(statusBarMsg);
+
 			const diffFiles = this.getDiffFiles();
 
 			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
@@ -187,9 +190,6 @@ export class bufferHandler {
 			}
 
 			errorCount = 0;
-
-			const statusBarMsg = this.getStatusBarMsg();
-			this.updateStatusBarItem(statusBarMsg);
 
 			const repoDiffs = this.groupRepoDiffs(diffFiles);
 

@@ -142,15 +142,13 @@ describe("handleBuffer", () => {
     };
 
     const assertDiffsCount = (diffsCount = 0, command = undefined,
-                              text = STATUS_BAR_MSGS.DEFAULT, assertStatusBar = false) => {
+                              text = STATUS_BAR_MSGS.DEFAULT, times=1) => {
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(diffsCount);
-        if (assertStatusBar) {
-            expect(statusBarItem.show).toHaveBeenCalledTimes(1);
-            expect(statusBarItem.command).toStrictEqual(command);
-            expect(statusBarItem.text).toStrictEqual(text);
-        }
+        expect(statusBarItem.show).toHaveBeenCalledTimes(times);
+        expect(statusBarItem.command).toStrictEqual(command);
+        expect(statusBarItem.text).toStrictEqual(text);
         return true;
     };
 
@@ -166,7 +164,7 @@ describe("handleBuffer", () => {
         fetchMock.mockResponse(JSON.stringify({status: false}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.SERVER_DOWN)).toBe(true);
+        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.DEFAULT)).toBe(true);
     });
 
     test("Server is down, 1 valid diff", async () => {
@@ -175,7 +173,7 @@ describe("handleBuffer", () => {
         fetchMock.mockResponse(null);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(1, undefined, STATUS_BAR_MSGS.SERVER_DOWN)).toBe(true);
+        expect(assertDiffsCount(1, undefined, STATUS_BAR_MSGS.SERVER_DOWN, 2)).toBe(true);
     });
 
     test("No repo opened, no diff", async () => {
