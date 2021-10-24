@@ -212,7 +212,7 @@ describe("handleBuffer", () => {
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         addRepo();
         addChangesDiff();
-        await waitFor(0.0001);
+        await waitFor(1);
         addChangesDiff();
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(2);
@@ -429,7 +429,7 @@ describe("handleBuffer", () => {
         // Should upload file only in 1 iteration
         addRepo();
         const diffFilePathForNewFile = addNewFileDiff();
-        await waitFor(0.0001);
+        await waitFor(1);
         const diffFilePathForChanges = addChangesDiff(DEFAULT_BRANCH, newRelPath);
         let handler = new bufferHandler(statusBarItem);
         let diffFiles = handler.getDiffFiles();
