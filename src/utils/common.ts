@@ -13,6 +13,7 @@ import {
 	STATUS_BAR_MSGS,
 	SYNCIGNORE
 } from "../constants";
+import { IUserProfile } from "../interface";
 
 
 export const readFile = (filePath: string) => {
@@ -82,4 +83,9 @@ export const formatDatetime = (datetime?: number) => {
 		return dateFormat(new Date(datetime), DATETIME_FORMAT);
 	}
 	return dateFormat(new Date(), DATETIME_FORMAT);
+};
+
+export const isUserActive = (user: IUserProfile) => {
+	const isActive = 'is_active' in user ? user.is_active : true;
+	return isActive && "access_token" in user && user.access_token !== "";
 };

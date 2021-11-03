@@ -144,7 +144,7 @@ export class bufferHandler {
 		let statusBarMsg = STATUS_BAR_MSGS.DEFAULT;
 		if (repoPath) {
 			if (!isRepoActive(this.configJSON, repoPath)) {
-				statusBarMsg =  STATUS_BAR_MSGS.CONNECT_REPO;
+				statusBarMsg = STATUS_BAR_MSGS.CONNECT_REPO;
 			}
 		} else {
 			statusBarMsg = STATUS_BAR_MSGS.NO_REPO_OPEN;

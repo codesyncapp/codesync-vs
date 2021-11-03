@@ -8,6 +8,7 @@ import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
 import {DEFAULT_BRANCH} from "../../../src/constants";
 import {
+    addUser,
     assertFileDeleteEvent,
     Config,
     getConfigFilePath,
@@ -16,6 +17,7 @@ import {
     waitFor
 } from "../../helpers/helpers";
 import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
+import yaml from "js-yaml";
 
 describe("handleDeletedEvent",  () => {
     /*
@@ -62,7 +64,8 @@ describe("handleDeletedEvent",  () => {
         fs.mkdirSync(baseRepoPath, { recursive: true });
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-
+        // Add user
+        addUser(baseRepoPath);
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
 

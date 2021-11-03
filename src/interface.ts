@@ -42,9 +42,16 @@ export interface IUser {
 }
 
 export interface IUserPlan {
-	SIZE: number,
-	FILE_COUNT: number,
-	REPO_COUNT: number
+	SIZE: number;
+	FILE_COUNT: number;
+	REPO_COUNT: number;
+}
+
+export interface IUserProfile {
+	access_token: string;
+	access_key: string;
+	secret_key: string;
+	is_active: string;
 }
 
 export interface IWebSocketMessage {

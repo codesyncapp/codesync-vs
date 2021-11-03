@@ -48,8 +48,12 @@ export const createUser = async (accessToken: string, idToken: string, repoPath:
     const users = readYML(settings.USER_PATH) || {};
     if (user.email in users) {
         users[user.email].access_token = accessToken;
+        users[user.email].is_active = true;
     } else {
-        users[user.email] = {access_token: accessToken};
+        users[user.email] = {
+            access_token: accessToken,
+            is_active: true
+        };
     }
     fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
 
@@ -70,7 +74,19 @@ export const logout = () => {
     });
     const logoutUrl = `${Auth0URLs.LOGOUT}?${params}`;
     vscode.env.openExternal(vscode.Uri.parse(logoutUrl));
+    markUsersInactive();
     return logoutUrl;
+};
+
+const markUsersInactive = () => {
+    vscode.commands.executeCommand('setContext', 'showLogIn', true);
+    // Mark all users as is_active=false in user.yml
+    const settings = generateSettings();
+    const users = readYML(settings.USER_PATH);
+    Object.keys(users).forEach((email) => {
+        users[email].is_active = false;
+    });
+    fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
 };
 
 export const askAndTriggerSignUp = () => {

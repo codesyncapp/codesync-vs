@@ -10,7 +10,7 @@ import {
 import { isRepoSynced } from '../events/utils';
 import { isPortAvailable } from './auth_utils';
 import { showConnectRepo, showSignUpButtons } from './notifications';
-import { readYML } from './common';
+import {isUserActive, readYML} from './common';
 import { initUtils } from '../init/utils';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { generateSettings } from "../settings";
@@ -89,7 +89,7 @@ export const setupCodeSync = async (repoPath: string) => {
 	const validUsers: string[] = [];
 	Object.keys(users).forEach(email => {
 		const user = users[email];
-		if (user.access_token) {
+		if (isUserActive(user)) {
 			validUsers.push(email);
 		}
 	});
@@ -130,7 +130,7 @@ export const showLogIn = () => {
 	const validUsers: string[] = [];
 	Object.keys(users).forEach(email => {
 		const user = users[email];
-		if (user.access_token) {
+		if (isUserActive(user)) {
 			validUsers.push(email);
 		}
 	});

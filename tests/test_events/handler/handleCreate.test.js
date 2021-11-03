@@ -6,6 +6,7 @@ import getBranchName from "current-git-branch";
 
 import {DEFAULT_BRANCH} from "../../../src/constants";
 import {
+    addUser,
     assertNewFileEvent,
     Config,
     getConfigFilePath,
@@ -66,9 +67,13 @@ describe("handleNewFile",  () => {
         fs.writeFileSync(newFilePath, "use babel;");
         fs.writeFileSync(ignorableFilePath, "use babel;");
         fs.writeFileSync(syncIgnorePath, syncIgnoreData);
+        // Create .syncignore shadow
+        const shadowSyncIgnore = path.join(shadowRepoBranchPath, ".syncignore");
+        fs.writeFileSync(shadowSyncIgnore, syncIgnoreData);
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-
+        // Add user
+        addUser(baseRepoPath);
     });
 
     afterEach(() => {

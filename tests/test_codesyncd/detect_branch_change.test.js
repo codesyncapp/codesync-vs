@@ -121,7 +121,6 @@ describe("detectBranchChange", () => {
         fs.writeFileSync(configPath, yaml.safeDump(_configData));
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
-        expect(console.log).toHaveBeenCalledTimes(1);
     });
 
     test("Actual repo exists, Shadow repo does not exist", async () => {

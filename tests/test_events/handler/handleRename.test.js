@@ -9,6 +9,7 @@ import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
 import {DEFAULT_BRANCH} from "../../../src/constants";
 import {
+    addUser,
     assertRenameEvent,
     Config,
     DUMMY_FILE_CONTENT,
@@ -68,6 +69,8 @@ describe("handleRenameFile",  () => {
         fs.mkdirSync(baseRepoPath, { recursive: true });
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
+        // Add user
+        addUser(baseRepoPath);
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
 

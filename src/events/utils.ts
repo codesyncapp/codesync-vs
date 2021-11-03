@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from "path";
 import ignore from 'ignore';
 import { IGNORABLE_DIRECTORIES } from "../constants";
-import { isRepoActive, readYML } from '../utils/common';
+import {isRepoActive, isUserActive, readYML} from '../utils/common';
 import { generateSettings } from "../settings";
 
 export function shouldIgnoreFile(repoPath: string, relPath: string) {
@@ -22,17 +22,24 @@ export function shouldIgnoreFile(repoPath: string, relPath: string) {
 
 export const isRepoSynced = (repoPath: string) => {
 	if (!repoPath) return false;
-	// TODO: Show some alert to user
-	// If config.yml does not exists, return
 	const settings = generateSettings();
 	const configPath = settings.CONFIG_PATH;
-	const configExists = fs.existsSync(configPath);
-	if (!configExists) return false;
-	// Return if user hasn't synced the repo
+	// If config.yml does not exists, return
+	if (!fs.existsSync(configPath)) return false;
 	try {
 		const config = readYML(configPath);
-		return isRepoActive(config, repoPath);
+		if (!isRepoActive(config, repoPath)) return false;
+		return isAccountActive(config.repos[repoPath].email);
 	} catch (e) {
 		return false;
 	}
+};
+
+export const isAccountActive = (email: string) => {
+	const settings = generateSettings();
+	if (!fs.existsSync(settings.USER_PATH)) return false;
+	// Return if user hasn't synced the repo
+	const users = readYML(settings.USER_PATH) || {};
+	const user = users[email];
+	return isUserActive(user);
 };
