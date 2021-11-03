@@ -161,6 +161,24 @@ describe("handleDeletedEvent",  () => {
         expect(diffFiles).toHaveLength(0);
     });
 
+    test("Repo synced, user is inActive",  () => {
+        addUser(baseRepoPath, false);
+        const event = {
+            files: [{
+                fsPath: filePath,
+                path: filePath,
+                scheme: "file"
+            }]
+        };
+        const handler = new eventHandler();
+        handler.handleDeleteEvent(event);
+        // Verify that file is not copied to .delete directory
+        expect(fs.existsSync(cacheFilePath)).toBe(false);
+        // Verify correct diff file has been generated
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+    });
+
     test("Repo synced, .delete file exists",  () => {
         fs.mkdirSync(cacheRepoBranchPath, { recursive: true });
         fs.writeFileSync(cacheFilePath, "use babel;");

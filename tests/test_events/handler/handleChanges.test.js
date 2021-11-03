@@ -1,20 +1,19 @@
 import fs from "fs";
 import path from "path";
 import vscode from "vscode";
-import yaml from "js-yaml";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
 
 import {DEFAULT_BRANCH} from "../../../src/constants";
 import {
+    addUser,
     assertChangeEvent,
     Config,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
     getSyncIgnoreFilePath,
-    getUserFilePath,
     randomBaseRepoPath,
-    randomRepoPath, TEST_EMAIL
+    randomRepoPath
 } from "../../helpers/helpers";
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
@@ -60,6 +59,7 @@ describe("handleChangeEvent",  () => {
         fs.mkdirSync(baseRepoPath, { recursive: true });
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
+        addUser(baseRepoPath);
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
         fs.mkdirSync(originalsRepoBranchPath, { recursive: true });
@@ -67,10 +67,6 @@ describe("handleChangeEvent",  () => {
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         fs.writeFileSync(ignorableFilePath, "use babel;");
         fs.writeFileSync(syncIgnorePath, syncIgnoreData);
-        const userFilePath = getUserFilePath(baseRepoPath);
-        const userData = {};
-        userData[TEST_EMAIL] = {access_token: "ABC"};
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         const shadowSyncIgnore = path.join(shadowRepoBranchPath, ".syncignore");
         fs.writeFileSync(shadowSyncIgnore, syncIgnoreData);
     });
@@ -104,7 +100,7 @@ describe("handleChangeEvent",  () => {
             document,
             contentChanges: []
         };
-        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document
         });
         handler.handleChangeEvent(event);
@@ -126,7 +122,7 @@ describe("handleChangeEvent",  () => {
             document,
             contentChanges: [" Change "]
         };
-        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document
         });
         handler.handleChangeEvent(event);
@@ -149,7 +145,7 @@ describe("handleChangeEvent",  () => {
             document,
             contentChanges: [" Change "]
         };
-        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document
         });
         const handler = new eventHandler();
@@ -165,7 +161,7 @@ describe("handleChangeEvent",  () => {
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
 
         const handler = new eventHandler();
-        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document: {
                 filePath: filePath
             }
@@ -199,7 +195,7 @@ describe("handleChangeEvent",  () => {
             document,
             contentChanges: [" Change "]
         };
-        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document
         });
         handler.handleChangeEvent(event);
@@ -209,7 +205,7 @@ describe("handleChangeEvent",  () => {
         expect(diffFiles).toHaveLength(0);
     });
 
-    test("Synced repo, Should add diff and update shadow file", async () => {
+    test("Synced repo, Should add diff and update shadow file", () => {
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
         const document = {
@@ -223,7 +219,7 @@ describe("handleChangeEvent",  () => {
             document,
             contentChanges: [" Change "]
         };
-        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document
         });
         handler.handleChangeEvent(event);
@@ -232,9 +228,10 @@ describe("handleChangeEvent",  () => {
             fileRelPath, shadowFilePath)).toBe(true);
     });
 
-    test("With Daemon, Should add diff and update shadow file", async () => {
+    test("Synced repo, InActive user, should not add diff", () => {
+        addUser(baseRepoPath, false);
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
-        const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
+        const updatedText = `Updated ${DUMMY_FILE_CONTENT}`;
         const document = {
             fileName: filePath,
             getText: function () {
@@ -246,7 +243,30 @@ describe("handleChangeEvent",  () => {
             document,
             contentChanges: [" Change "]
         };
-        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
+            document
+        });
+        handler.handleChangeEvent(event);
+        const diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+    });
+
+    test("With Daemon, Should add diff and update shadow file", async () => {
+        addUser(baseRepoPath);
+        fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
+        const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
+        const document = {
+            fileName: filePath,
+            getText: () => {
+                return updatedText;
+            }
+        };
+        const handler = new eventHandler();
+        const event = {
+            document,
+            contentChanges: [" Change "]
+        };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document
         });
         handler.handleChangeEvent(event);

@@ -257,6 +257,13 @@ describe("bufferHandler", () => {
         expect(assertDiffsCount(0, COMMAND.triggerSignUp, STATUS_BAR_MSGS.AUTHENTICATION_FAILED)).toBe(true);
     });
 
+    test("No active user", async () => {
+        addUser(baseRepoPath, false);
+        const handler = new bufferHandler(statusBarItem);
+        await handler.run();
+        expect(assertDiffsCount(0, COMMAND.triggerSignUp, STATUS_BAR_MSGS.AUTHENTICATION_FAILED)).toBe(true);
+    });
+
     test("Diff file for disconnected repo", async () => {
         addRepo(true);
         addChangesDiff();

@@ -5,7 +5,14 @@ import untildify from "untildify";
 import fetchMock from "jest-fetch-mock";
 
 import {getPublicPrivateMsg, NOTIFICATION} from "../../src/constants";
-import {getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../helpers/helpers";
+import {
+    addUser,
+    getConfigFilePath,
+    getUserFilePath,
+    randomBaseRepoPath,
+    randomRepoPath,
+    TEST_EMAIL
+} from "../helpers/helpers";
 import {askPublicPrivate, showChooseAccount} from "../../src/utils/notifications";
 
 
@@ -34,6 +41,13 @@ describe("showChooseAccount",  () => {
 
     test("with no user",  () => {
         fs.writeFileSync(userFilePath, yaml.safeDump({}));
+        showChooseAccount(repoPath);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.NO_VALID_ACCOUNT);
+    });
+
+    test("with no active user",  () => {
+        addUser(baseRepoPath, false);
         showChooseAccount(repoPath);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.NO_VALID_ACCOUNT);

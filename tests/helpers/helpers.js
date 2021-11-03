@@ -250,7 +250,7 @@ export const assertFileDeleteEvent = (repoPath, fileRelPath, isDirectory=false) 
 };
 
 
-export const addUser = (baseRepoPath) => {
+export const addUser = (baseRepoPath, isActive=true) => {
     // Add user
     const userFilePath = getUserFilePath(baseRepoPath);
     const userFileData = {};
@@ -258,6 +258,7 @@ export const addUser = (baseRepoPath) => {
         access_key: TEST_USER.iam_access_key,
         secret_key: TEST_USER.iam_secret_key,
         access_token: "ACCESS_TOKEN",
+        is_active: isActive
     };
     fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
     return userFilePath;

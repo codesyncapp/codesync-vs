@@ -97,7 +97,8 @@ describe("Extension",() => {
         expect(vscode.workspace.onDidRenameFiles).toHaveBeenCalledTimes(1);
     });
 
-    test("Fresh Setup, no user, repo not synced", async () => {
+    test("Fresh Setup, no active user, repo not synced", async () => {
+        addUser(baseRepoPath, false);
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);

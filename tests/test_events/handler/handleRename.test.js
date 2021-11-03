@@ -126,8 +126,8 @@ describe("handleRenameFile",  () => {
 
         const handler = new eventHandler();
         handler.handleRenameEvent(event);
-        // Verify correct diff file has been generated
-        let diffFiles = fs.readdirSync(diffsRepo);
+        // Verify no diff file has been generated
+        const diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
     });
 
@@ -150,6 +150,30 @@ describe("handleRenameFile",  () => {
         const handler = new eventHandler();
         handler.handleRenameEvent(event);
         expect(assertRenameEvent(repoPath, configPath, fileRelPath, newRelPath)).toBe(true);
+    });
+
+    test("for File, user is inActive",  () => {
+        addUser(baseRepoPath, false);
+        fs.writeFileSync(newFilePath, "use babel;");
+        const event = {
+            files: [{
+                oldUri: {
+                    fsPath: oldFilePath,
+                    path: oldFilePath,
+                    scheme: "file"
+                },
+                newUri: {
+                    fsPath: newFilePath,
+                    path: newFilePath,
+                    scheme: "file"
+                }
+            }]
+        };
+        const handler = new eventHandler();
+        handler.handleRenameEvent(event);
+        // Verify no diff file has been generated
+        const diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
     });
 
     test("For file renamed to nested directory",  () => {
