@@ -14,6 +14,7 @@ import {
 	SYNCIGNORE
 } from "../constants";
 import { IUserProfile } from "../interface";
+import {generateSettings} from "../settings";
 
 
 export const readFile = (filePath: string) => {
@@ -88,4 +89,17 @@ export const formatDatetime = (datetime?: number) => {
 export const isUserActive = (user: IUserProfile) => {
 	const isActive = 'is_active' in user ? user.is_active : true;
 	return isActive && "access_token" in user && user.access_token !== "";
+};
+
+export const getActiveUsers = () => {
+	const settings = generateSettings();
+	const users = readYML(settings.USER_PATH) || {};
+	const validUsers: any[] = [];
+	Object.keys(users).forEach(email => {
+		const user = users[email];
+		if (isUserActive(user)) {
+			validUsers.push({ email, access_token: user.access_token });
+		}
+	});
+	return validUsers;
 };

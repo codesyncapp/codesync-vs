@@ -10,7 +10,7 @@ import {
 import { isRepoSynced } from '../events/utils';
 import { isPortAvailable } from './auth_utils';
 import { showConnectRepo, showSignUpButtons } from './notifications';
-import { isUserActive, readYML } from './common';
+import { getActiveUsers } from './common';
 import { initUtils } from '../init/utils';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { generateSettings } from "../settings";
@@ -84,16 +84,8 @@ export const setupCodeSync = async (repoPath: string) => {
 		return port;
 	}
 
-	// Check if access token is present against users
-	const users = readYML(userFilePath) || {};
-	const validUsers: string[] = [];
-	Object.keys(users).forEach(email => {
-		const user = users[email];
-		if (isUserActive(user)) {
-			validUsers.push(email);
-		}
-	});
-
+	// Check if there is valid user present
+	const validUsers = getActiveUsers();
 	if (validUsers.length === 0) {
 		showSignUpButtons();
 		return port;
@@ -120,21 +112,11 @@ export const setupCodeSync = async (repoPath: string) => {
 
 export const showLogIn = () => {
 	const settings = generateSettings();
-
 	if (!fs.existsSync(settings.USER_PATH)) {
 		return true;
 	}
-
 	// Check if access token is present against users
-	const users = readYML(settings.USER_PATH) || {};
-	const validUsers: string[] = [];
-	Object.keys(users).forEach(email => {
-		const user = users[email];
-		if (isUserActive(user)) {
-			validUsers.push(email);
-		}
-	});
-
+	const validUsers = getActiveUsers();
 	return validUsers.length === 0;
 };
 

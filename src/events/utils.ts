@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from "path";
 import ignore from 'ignore';
 import { IGNORABLE_DIRECTORIES } from "../constants";
-import {isRepoActive, isUserActive, readYML} from '../utils/common';
+import { isRepoActive, isUserActive, readYML } from '../utils/common';
 import { generateSettings } from "../settings";
 
 export function shouldIgnoreFile(repoPath: string, relPath: string) {
