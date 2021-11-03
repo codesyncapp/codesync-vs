@@ -3,8 +3,8 @@ import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
-import getBranchName from "current-git-branch";
 import fetchMock from "jest-fetch-mock";
+import getBranchName from "current-git-branch";
 
 import {
     postSelectionUnsync,
@@ -50,6 +50,7 @@ describe("SyncHandler",  () => {
     userData[TEST_EMAIL] = {access_token: "ABC"};
 
     beforeEach(() => {
+        fetch.resetMocks();
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
@@ -70,6 +71,16 @@ describe("SyncHandler",  () => {
 
     test("repo Not In Config",async () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        const user = {
+            "email": TEST_EMAIL,
+            "plan": {
+                REPO_COUNT: 5
+            },
+            "repo_count": 4
+        };
+        fetchMock
+            .mockResponseOnce(JSON.stringify({ status: true }))
+            .mockResponseOnce(JSON.stringify(user));
         await SyncHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
         // TODO: In case we activate choose account option

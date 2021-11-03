@@ -30,7 +30,6 @@ export const SyncHandler = async () => {
 	}
 	// Show notification that repo is in sync
 	vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
-
 };
 
 export const unSyncHandler = async () => {

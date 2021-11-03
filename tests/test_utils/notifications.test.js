@@ -1,26 +1,30 @@
 import fs from "fs";
-import vscode from "vscode";
 import yaml from "js-yaml";
+import vscode from "vscode";
 import untildify from "untildify";
+import fetchMock from "jest-fetch-mock";
 
 import {getPublicPrivateMsg, NOTIFICATION} from "../../src/constants";
-import {getUserFilePath, randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../helpers/helpers";
+import {getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../helpers/helpers";
 import {askPublicPrivate, showChooseAccount} from "../../src/utils/notifications";
 
 
 describe("showChooseAccount",  () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
+    const configPath = getConfigFilePath(baseRepoPath);
     const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {};
     userData[TEST_EMAIL] = {access_token: "ABC"};
 
     beforeEach(() => {
+        fetch.resetMocks();
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(configPath, yaml.safeDump({repos: {}}));
     });
 
     afterEach(() => {
@@ -36,8 +40,19 @@ describe("showChooseAccount",  () => {
     });
 
     test("with valid user",  async () => {
+        const user = {
+            "email": TEST_EMAIL,
+            "plan": {
+                REPO_COUNT: 5
+            },
+            "repo_count": 4
+        };
+        fetchMock
+            .mockResponseOnce(JSON.stringify({ status: true }))
+            .mockResponseOnce(JSON.stringify(user));
         const handler = await showChooseAccount(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(handler.accessToken).toStrictEqual(userData[TEST_EMAIL].access_token);
         // TODO: In case we activate choose account option
         // expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
