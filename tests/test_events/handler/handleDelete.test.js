@@ -17,7 +17,6 @@ import {
     waitFor
 } from "../../helpers/helpers";
 import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
-import yaml from "js-yaml";
 
 describe("handleDeletedEvent",  () => {
     /*

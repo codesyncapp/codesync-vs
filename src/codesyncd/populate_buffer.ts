@@ -4,7 +4,6 @@ import walk from "walk";
 import ignore from "ignore";
 import {isBinaryFileSync} from "isbinaryfile";
 
-import {putLogEvent} from "../logger";
 import {initUtils} from "../init/utils";
 import {IFileToUpload, IUserPlan} from "../interface";
 import {initHandler} from "../init/init_handler";
@@ -16,7 +15,8 @@ import {
     getBranch,
     getSkipRepos,
     getSyncIgnoreItems,
-    isEmpty, isUserActive,
+    isEmpty,
+    isUserActive,
     readYML
 } from "../utils/common";
 import { SEQUENCE_MATCHER_RATIO } from "../constants";

@@ -10,7 +10,7 @@ import {
 import { isRepoSynced } from '../events/utils';
 import { isPortAvailable } from './auth_utils';
 import { showConnectRepo, showSignUpButtons } from './notifications';
-import {isUserActive, readYML} from './common';
+import { isUserActive, readYML } from './common';
 import { initUtils } from '../init/utils';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { generateSettings } from "../settings";
