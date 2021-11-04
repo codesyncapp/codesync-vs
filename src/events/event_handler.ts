@@ -147,18 +147,17 @@ export class eventHandler {
                         scheme:"file"
 
         */
-		if (this.repoIsNotSynced) return;
 		event.files.forEach((file) => {
 			this.handleNewFile(file.fsPath);
 		});
 	}
 
 	handlePastedFile = (filePath: string) => {
-		if (this.repoIsNotSynced) return;
 		this.handleNewFile(filePath);
 	}
 
 	handleNewFile = (_filePath: string) => {
+		if (this.repoIsNotSynced) return;
 		const filePath = pathUtils.normalizePath(_filePath);
 		// Do not continue if file does not exist
 		if (!fs.existsSync(filePath)) return;
@@ -196,13 +195,13 @@ export class eventHandler {
                         path:"/Users/basit/projects/codesync/codesync/4.py"
                         scheme:"file"
         */
-		if (this.repoIsNotSynced) return;
 		event.files.forEach((item) => {
 			this.handleDelete(item.fsPath);
 		});
 	}
 
 	handleDelete = (filePath: string) => {
+		if (this.repoIsNotSynced) return;
 		const itemPath = pathUtils.normalizePath(filePath);
 		const relPath = itemPath.split(path.join(this.repoPath, path.sep))[1];
 

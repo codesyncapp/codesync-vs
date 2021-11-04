@@ -3,7 +3,14 @@ import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
 
-import {Config, getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath} from "../helpers/helpers";
+import {
+    addUser,
+    Config,
+    getConfigFilePath,
+    getUserFilePath,
+    randomBaseRepoPath,
+    randomRepoPath
+} from "../helpers/helpers";
 import {createSystemDirectories, setupCodeSync, showConnectRepoView, showLogIn} from "../../src/utils/setup_utils";
 import {getRepoInSyncMsg, NOTIFICATION} from "../../src/constants";
 
@@ -69,7 +76,6 @@ describe("setupCodeSync",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.JOIN);
-        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.IGNORE);
     });
 
     test('with empty user.yml', async () => {
@@ -80,7 +86,17 @@ describe("setupCodeSync",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.JOIN);
-        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.IGNORE);
+        fs.rmSync(userFilePath);
+    });
+
+    test('with no active user', async () => {
+        addUser(baseRepoPath, false);
+        const port = await setupCodeSync(undefined);
+        // should return port number
+        expect(port).toBeTruthy();
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
+        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.JOIN);
         fs.rmSync(userFilePath);
     });
 
@@ -98,7 +114,6 @@ describe("setupCodeSync",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.CONNECT_REPO);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.CONNECT);
-        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.IGNORE);
         fs.rmSync(userFilePath);
     });
 
@@ -106,6 +121,7 @@ describe("setupCodeSync",  () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
+        addUser(baseRepoPath);
         const port = await setupCodeSync(repoPath);
         // should return port number
         expect(port).toBeFalsy();
@@ -146,6 +162,13 @@ describe("showLogin",  () => {
 
     test('with empty user.yml',  async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump({}));
+        const shouldShowLogin = showLogIn();
+        expect(shouldShowLogin).toBe(true);
+        fs.rmSync(userFilePath);
+    });
+
+    test('with no active user',  async () => {
+        addUser(baseRepoPath, false);
         const shouldShowLogin = showLogIn();
         expect(shouldShowLogin).toBe(true);
         fs.rmSync(userFilePath);

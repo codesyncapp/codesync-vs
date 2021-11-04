@@ -11,6 +11,7 @@ import {readYML} from "../../src/utils/common";
 import {detectBranchChange} from "../../src/codesyncd/populate_buffer";
 
 import {
+    addUser,
     getConfigFilePath,
     getSeqTokenFilePath,
     getUserFilePath,
@@ -108,10 +109,8 @@ describe("detectBranchChange", () => {
         expect(readyRepos).toStrictEqual({});
     });
 
-    test("No access token in user.yml", async () => {
-        const _users = {};
-        _users[TEST_EMAIL] = {iam_access_key: "ABC"};
-        fs.writeFileSync(userFilePath, yaml.safeDump(_users));
+    test("No valid user", async () => {
+        addUser(baseRepoPath, false);
         jest.spyOn(global.console, 'log');
         const _configData = {repos: {}};
         _configData.repos[repoPath] = {
@@ -121,7 +120,6 @@ describe("detectBranchChange", () => {
         fs.writeFileSync(configPath, yaml.safeDump(_configData));
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
-        expect(console.log).toHaveBeenCalledTimes(1);
     });
 
     test("Actual repo exists, Shadow repo does not exist", async () => {

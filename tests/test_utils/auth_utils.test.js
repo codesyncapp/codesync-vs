@@ -6,17 +6,20 @@ import fetchMock from "jest-fetch-mock";
 import {
     askAndTriggerSignUp,
     createRedirectUri,
-    createUser, isPortAvailable,
+    createUser,
+    isPortAvailable,
     logout,
     redirectToBrowser
 } from "../../src/utils/auth_utils";
 import { Auth0URLs, NOTIFICATION } from "../../src/constants";
 import {
+    addUser,
     getUserFilePath,
     INVALID_TOKEN_JSON,
     randomBaseRepoPath,
     randomRepoPath,
-    TEST_EMAIL
+    TEST_EMAIL,
+    waitFor
 } from "../helpers/helpers";
 import { readYML } from "../../src/utils/common";
 import { initExpressServer } from "../../src/server/server";
@@ -74,9 +77,32 @@ describe("redirectToBrowser",  () => {
 
 
 describe("logout",  () => {
-    test("Verify Logout URL",  () => {
+    let userFilePath = '';
+    const baseRepoPath = randomBaseRepoPath();
+
+    beforeEach(() => {
+        untildify.mockReturnValue(baseRepoPath);
+        fs.mkdirSync(baseRepoPath, {recursive: true});
+        userFilePath = addUser(baseRepoPath);
+    });
+
+    afterEach(() => {
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
+    });
+
+    test("Verify Logout URL",  async () => {
         const logoutUrl = logout();
         expect(logoutUrl.startsWith(Auth0URLs.LOGOUT)).toBe(true);
+        // Verify user has been marked as inActive in user.yml
+        const users = readYML(userFilePath);
+        expect(users[TEST_EMAIL].is_active).toBe(false);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(1);
+        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toBe(true);
+        await waitFor(1);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.LOGGED_OUT_SUCCESSFULLY);
     });
 });
 

@@ -16,7 +16,7 @@ import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
 import {pathUtils} from "../../utils/path_utils";
 import {WebSocketClient} from "../websocket/websocket_client";
-import {isRepoActive, readYML, updateStatusBarItem} from '../../utils/common';
+import {getActiveUsers, isRepoActive, readYML, updateStatusBarItem} from '../../utils/common';
 
 let errorCount = 0;
 
@@ -141,15 +141,14 @@ export class bufferHandler {
 
 	getStatusBarMsg = () => {
 		const repoPath = pathUtils.getRootPath();
-		let statusBarMsg = STATUS_BAR_MSGS.DEFAULT;
-		if (repoPath) {
-			if (!isRepoActive(this.configJSON, repoPath)) {
-				statusBarMsg =  STATUS_BAR_MSGS.CONNECT_REPO;
-			}
-		} else {
-			statusBarMsg = STATUS_BAR_MSGS.NO_REPO_OPEN;
-		}
-		return statusBarMsg;
+		const activeUsers = getActiveUsers();
+		// No Valid account found
+		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
+		// No repo is opened
+		if (!repoPath) return STATUS_BAR_MSGS.NO_REPO_OPEN;
+		// Repo is not synced
+		if (!isRepoActive(this.configJSON, repoPath)) return STATUS_BAR_MSGS.CONNECT_REPO;
+		return STATUS_BAR_MSGS.DEFAULT;
 	}
 
 	handleRepoDiffs = (repoDiffs: IRepoDiffs[]) => {

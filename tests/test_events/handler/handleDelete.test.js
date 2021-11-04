@@ -8,6 +8,7 @@ import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
 import {DEFAULT_BRANCH} from "../../../src/constants";
 import {
+    addUser,
     assertFileDeleteEvent,
     Config,
     getConfigFilePath,
@@ -62,7 +63,8 @@ describe("handleDeletedEvent",  () => {
         fs.mkdirSync(baseRepoPath, { recursive: true });
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-
+        // Add user
+        addUser(baseRepoPath);
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
 
@@ -143,6 +145,24 @@ describe("handleDeletedEvent",  () => {
 
     test("Repo synced, shadow does NOT exists",  () => {
         fs.rmSync(shadowFilePath);
+        const event = {
+            files: [{
+                fsPath: filePath,
+                path: filePath,
+                scheme: "file"
+            }]
+        };
+        const handler = new eventHandler();
+        handler.handleDeleteEvent(event);
+        // Verify that file is not copied to .delete directory
+        expect(fs.existsSync(cacheFilePath)).toBe(false);
+        // Verify correct diff file has been generated
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+    });
+
+    test("Repo synced, user is inActive",  () => {
+        addUser(baseRepoPath, false);
         const event = {
             files: [{
                 fsPath: filePath,

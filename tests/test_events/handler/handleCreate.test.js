@@ -6,6 +6,7 @@ import getBranchName from "current-git-branch";
 
 import {DEFAULT_BRANCH} from "../../../src/constants";
 import {
+    addUser,
     assertNewFileEvent,
     Config,
     getConfigFilePath,
@@ -66,9 +67,13 @@ describe("handleNewFile",  () => {
         fs.writeFileSync(newFilePath, "use babel;");
         fs.writeFileSync(ignorableFilePath, "use babel;");
         fs.writeFileSync(syncIgnorePath, syncIgnoreData);
+        // Create .syncignore shadow
+        const shadowSyncIgnore = path.join(shadowRepoBranchPath, ".syncignore");
+        fs.writeFileSync(shadowSyncIgnore, syncIgnoreData);
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-
+        // Add user
+        addUser(baseRepoPath);
     });
 
     afterEach(() => {
@@ -131,8 +136,8 @@ describe("handleNewFile",  () => {
         // Verify file has been created in the .shadow repo and .originals repos
         expect(fs.existsSync(shadowFilePath)).toBe(false);
         expect(fs.existsSync(originalsFilePath)).toBe(false);
-        // Verify correct diff file has been generated
-        let diffFiles = fs.readdirSync(diffsRepo);
+        // Verify no diff file has been generated
+        const diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
     });
 
@@ -146,6 +151,18 @@ describe("handleNewFile",  () => {
         const handler = new eventHandler();
         handler.handleNewFile(newFilePath);
         expect(assertNewFileEvent(repoPath, newRelPath)).toBe(true);
+    });
+
+    test("Valid File, InActive user",  async () => {
+        addUser(baseRepoPath, false);
+        const handler = new eventHandler();
+        handler.handleNewFile(newFilePath);
+        // Verify file has been created in the .shadow repo and .originals repos
+        expect(fs.existsSync(shadowFilePath)).toBe(false);
+        expect(fs.existsSync(originalsFilePath)).toBe(false);
+        // Verify no diff file has been generated
+        const diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
     });
 
     test("With Daemon: Valid File",  async () => {
@@ -187,7 +204,6 @@ describe("handleNewFile",  () => {
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(0);
     });
-
 
     test("with new directory",  async () => {
         fs.mkdirSync(newDirectoryPath, { recursive: true });

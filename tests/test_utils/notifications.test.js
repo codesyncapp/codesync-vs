@@ -1,26 +1,33 @@
 import fs from "fs";
-import vscode from "vscode";
 import yaml from "js-yaml";
+import vscode from "vscode";
 import untildify from "untildify";
+import fetchMock from "jest-fetch-mock";
 
 import {getPublicPrivateMsg, NOTIFICATION} from "../../src/constants";
-import {getUserFilePath, randomBaseRepoPath, randomRepoPath, TEST_EMAIL} from "../helpers/helpers";
+import {
+    addUser,
+    getConfigFilePath,
+    getUserFilePath,
+    randomBaseRepoPath,
+    randomRepoPath,
+    TEST_EMAIL
+} from "../helpers/helpers";
 import {askPublicPrivate, showChooseAccount} from "../../src/utils/notifications";
 
 
 describe("showChooseAccount",  () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
-    const userFilePath = getUserFilePath(baseRepoPath);
-    const userData = {};
-    userData[TEST_EMAIL] = {access_token: "ABC"};
+    const configPath = getConfigFilePath(baseRepoPath);
 
     beforeEach(() => {
+        fetch.resetMocks();
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(configPath, yaml.safeDump({repos: {}}));
     });
 
     afterEach(() => {
@@ -29,16 +36,34 @@ describe("showChooseAccount",  () => {
     });
 
     test("with no user",  () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump({}));
+        showChooseAccount(repoPath);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.NO_VALID_ACCOUNT);
+    });
+
+    test("with no active user",  () => {
+        addUser(baseRepoPath, false);
         showChooseAccount(repoPath);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.NO_VALID_ACCOUNT);
     });
 
     test("with valid user",  async () => {
+        addUser(baseRepoPath);
+        const user = {
+            "email": TEST_EMAIL,
+            "plan": {
+                REPO_COUNT: 5
+            },
+            "repo_count": 4
+        };
+        fetchMock
+            .mockResponseOnce(JSON.stringify({ status: true }))
+            .mockResponseOnce(JSON.stringify(user));
         const handler = await showChooseAccount(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
-        expect(handler.accessToken).toStrictEqual(userData[TEST_EMAIL].access_token);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
+        expect(handler.accessToken).toStrictEqual("ACCESS_TOKEN");
         // TODO: In case we activate choose account option
         // expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         // expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.CHOOSE_ACCOUNT);

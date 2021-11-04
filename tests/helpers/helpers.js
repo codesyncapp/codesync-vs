@@ -248,3 +248,18 @@ export const assertFileDeleteEvent = (repoPath, fileRelPath, isDirectory=false) 
     expect(diffData.diff).toEqual("");
     return true;
 };
+
+
+export const addUser = (baseRepoPath, isActive=true) => {
+    // Add user
+    const userFilePath = getUserFilePath(baseRepoPath);
+    const userFileData = {};
+    userFileData[TEST_USER.email] = {
+        access_key: TEST_USER.iam_access_key,
+        secret_key: TEST_USER.iam_secret_key,
+        access_token: "ACCESS_TOKEN",
+        is_active: isActive
+    };
+    fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
+    return userFilePath;
+};

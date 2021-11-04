@@ -1,9 +1,9 @@
 import vscode from 'vscode';
-import {getPublicPrivateMsg, NOTIFICATION} from '../constants';
 import { initHandler } from '../init/init_handler';
-import { readYML } from './common';
-import { logout, redirectToBrowser } from './auth_utils';
-import {generateSettings} from "../settings";
+import { getActiveUsers } from './common';
+import { redirectToBrowser } from './auth_utils';
+import { getPublicPrivateMsg, NOTIFICATION } from '../constants';
+
 
 export const showSignUpButtons = () => {
 	vscode.window.showInformationMessage(
@@ -27,8 +27,7 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 	}
 	const msg = email ? NOTIFICATION.CONNECT_AFTER_JOIN : NOTIFICATION.CONNECT_REPO;
 	vscode.window.showInformationMessage(msg, ...[
-		NOTIFICATION.CONNECT,
-		NOTIFICATION.IGNORE
+		NOTIFICATION.CONNECT
 	]).then(async selection => {
 		if (selection === NOTIFICATION.CONNECT) {
 
@@ -46,21 +45,11 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 
 export const showChooseAccount = async (repoPath: string) => {
 	// Check if access token is present against users
-	const settings = generateSettings();
-	const users = readYML(settings.USER_PATH);
-	const validUsers: any[] = [];
-	Object.keys(users).forEach(email => {
-		const user = users[email];
-		if (user.access_token) {
-			validUsers.push({ email, access_token: user.access_token });
-		}
-	});
-
+	const validUsers =  getActiveUsers();
 	if (validUsers.length === 0) {
 		vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
 		return;
 	}
-
 	// By Default choosing first account
 	const user = validUsers[0];
 	const handler = new initHandler(repoPath, user.access_token);

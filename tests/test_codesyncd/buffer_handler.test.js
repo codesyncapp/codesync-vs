@@ -11,6 +11,7 @@ import {pathUtils} from "../../src/utils/path_utils";
 import {createSystemDirectories} from "../../src/utils/setup_utils";
 import {COMMAND, DEFAULT_BRANCH, STATUS_BAR_MSGS} from "../../src/constants";
 import {
+    addUser,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
     getSeqTokenFilePath,
@@ -31,7 +32,7 @@ import {DIFF_SOURCE} from "../../src/constants";
 import {recallDaemon} from "../../src/codesyncd/codesyncd";
 
 
-describe("handleBuffer", () => {
+describe("bufferHandler", () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
@@ -177,6 +178,7 @@ describe("handleBuffer", () => {
     });
 
     test("No repo opened, no diff", async () => {
+        addUser(baseRepoPath);
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(undefined);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
@@ -184,6 +186,7 @@ describe("handleBuffer", () => {
     });
 
     test("Repo opened but not synced", async () => {
+        addUser(baseRepoPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
@@ -242,9 +245,23 @@ describe("handleBuffer", () => {
 
     test("Invalid repo path in diff file", async () => {
         addChangesDiff();
+        addUser(baseRepoPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
+    });
+
+    test("No valid user", async () => {
+        const handler = new bufferHandler(statusBarItem);
+        await handler.run();
+        expect(assertDiffsCount(0, COMMAND.triggerSignUp, STATUS_BAR_MSGS.AUTHENTICATION_FAILED)).toBe(true);
+    });
+
+    test("No active user", async () => {
+        addUser(baseRepoPath, false);
+        const handler = new bufferHandler(statusBarItem);
+        await handler.run();
+        expect(assertDiffsCount(0, COMMAND.triggerSignUp, STATUS_BAR_MSGS.AUTHENTICATION_FAILED)).toBe(true);
     });
 
     test("Diff file for disconnected repo", async () => {

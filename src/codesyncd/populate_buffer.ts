@@ -4,7 +4,6 @@ import walk from "walk";
 import ignore from "ignore";
 import {isBinaryFileSync} from "isbinaryfile";
 
-import {putLogEvent} from "../logger";
 import {initUtils} from "../init/utils";
 import {IFileToUpload, IUserPlan} from "../interface";
 import {initHandler} from "../init/init_handler";
@@ -17,6 +16,7 @@ import {
     getSkipRepos,
     getSyncIgnoreItems,
     isEmpty,
+    isUserActive,
     readYML
 } from "../utils/common";
 import { SEQUENCE_MATCHER_RATIO } from "../constants";
@@ -125,7 +125,6 @@ class PopulateBuffer {
             const createdAt = formatDatetime(itemPath.modified_at);
 
             const handler = new eventHandler(this.repoPath, createdAt, this.viaDaemon);
-
             // For binary file, can only handle create event
             if (itemPath.is_binary) {
                 if (!fileInConfig) {
@@ -261,12 +260,10 @@ export const detectBranchChange = async () => {
         const configRepo = configJSON.repos[repoPath];
         if (!(configRepo.email in users)) continue;
 
-        const accessToken = users[configRepo.email].access_token;
-        const userEmail = configRepo.email;
-        if (!accessToken) {
-            putLogEvent(`Access token not found for repo: ${repoPath}, ${userEmail}`, userEmail);
-            continue;
-        }
+        const user = users[configRepo.email];
+        if (!isUserActive(user)) continue;
+
+        const accessToken = user.access_token;
         const branch = getBranch(repoPath);
         const pathUtilsObj = new pathUtils(repoPath, branch);
 

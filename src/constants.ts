@@ -92,6 +92,7 @@ export const NOTIFICATION = {
 	REPO_UNSYNCED: "Repo disconnected successfully",
 	REPO_UNSYNC_FAILED: "Could not unsync the repo",
 	REPO_UNSYNC_CONFIRMATION: "Are you sure to continue? You won't be able to revert this!",
+	LOGGED_OUT_SUCCESSFULLY: "Successfully logged out!"
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {
@@ -109,7 +110,7 @@ export const STATUS_BAR_MSGS = {
 	ERROR_SENDING_DIFF: 'Error sending diff => Authentication failed',
 	DEFAULT: 'CodeSync => Watching changes',
 	SYNCING: 'CodeSync => Syncing changes',
-	AUTHENTICATION_FAILED: 'CodeSync => Authentication failed. Click to Login!',
+	AUTHENTICATION_FAILED: 'CodeSync => Click to authenticate!',
 	SERVER_DOWN: 'CodeSync => Offline',
 	GETTING_READY: 'CodeSync => Getting ready',
 	NO_REPO_OPEN: 'CodeSync => No project is open',

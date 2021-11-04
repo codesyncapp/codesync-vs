@@ -13,7 +13,14 @@ import {
     unSyncHandler
 } from "../src/handlers/commands_handler";
 import {createSystemDirectories} from "../src/utils/setup_utils";
-import {Config, getConfigFilePath, getUserFilePath, randomBaseRepoPath, randomRepoPath} from "./helpers/helpers";
+import {
+    addUser,
+    Config,
+    getConfigFilePath,
+    getUserFilePath,
+    randomBaseRepoPath,
+    randomRepoPath
+} from "./helpers/helpers";
 import {logout} from "../src/utils/auth_utils";
 
 
@@ -90,7 +97,8 @@ describe("Extension",() => {
         expect(vscode.workspace.onDidRenameFiles).toHaveBeenCalledTimes(1);
     });
 
-    test("Fresh Setup, no user, repo not synced", async () => {
+    test("Fresh Setup, no active user, repo not synced", async () => {
+        addUser(baseRepoPath, false);
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
@@ -138,9 +146,9 @@ describe("Extension",() => {
     });
 
     test("With user, repo is in sync", async () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
+        addUser(baseRepoPath);
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);

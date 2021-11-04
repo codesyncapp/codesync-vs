@@ -23,8 +23,8 @@ import {
     randomRepoPath,
     TEST_EMAIL,
     TEST_REPO_RESPONSE,
-    TEST_USER,
-    waitFor
+    waitFor,
+    addUser
 } from "../helpers/helpers";
 
 
@@ -41,8 +41,6 @@ describe("populateBuffer", () => {
 
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
     const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-    const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-    const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
     const diffsRepo = pathUtilsObj.getDiffsRepo();
 
     const fileRelPath = "file_1.js";
@@ -65,7 +63,7 @@ describe("populateBuffer", () => {
         fs.rmSync(baseRepoPath, {recursive: true, force: true});
     });
 
-    const addRepo = (deleteFile1=false) => {
+    const addRepo = (deleteFile1=false, isActive=true) => {
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const configData = {repos: {}};
@@ -83,13 +81,7 @@ describe("populateBuffer", () => {
         const users = {};
         users[TEST_EMAIL] = "";
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
-        const userData = {};
-        userData[TEST_EMAIL] = {
-            access_token: "ABC",
-            access_key: TEST_USER.iam_access_key,
-            secret_key: TEST_USER.iam_secret_key
-        };
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        addUser(baseRepoPath, isActive);
     };
 
     test("No repo synced", async () => {
@@ -109,12 +101,23 @@ describe("populateBuffer", () => {
         expect(diffFiles).toHaveLength(0);
     });
 
+    test("Repo synced, change occurred but user is inActive", async () => {
+        addRepo(false, false);
+        fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
+        await populateBuffer();
+        // Verify correct diff file has been generated
+        let diffFiles = fs.readdirSync(diffsRepo);
+        // Verify correct diff file has been generated
+        expect(diffFiles).toHaveLength(0);
+    });
+
     test("Changes occurred, shadow file does not exist", async () => {
         addRepo();
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         await populateBuffer();
         // Verify correct diff file has been generated
-        expect(assertChangeEvent(repoPath, diffsRepo, "", DUMMY_FILE_CONTENT, fileRelPath, shadowFilePath)).toBe(true);    });
+        expect(assertChangeEvent(repoPath, diffsRepo, "", DUMMY_FILE_CONTENT, fileRelPath, shadowFilePath)).toBe(true);
+    });
 
     test("Changes occurred, shadow file exists", async () => {
         addRepo();
