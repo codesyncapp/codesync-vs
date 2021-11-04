@@ -14,7 +14,7 @@ import {
 	SYNCIGNORE
 } from "../constants";
 import { IUserProfile } from "../interface";
-import {generateSettings} from "../settings";
+import { generateSettings } from "../settings";
 
 
 export const readFile = (filePath: string) => {

@@ -92,7 +92,7 @@ export const NOTIFICATION = {
 	REPO_UNSYNCED: "Repo disconnected successfully",
 	REPO_UNSYNC_FAILED: "Could not unsync the repo",
 	REPO_UNSYNC_CONFIRMATION: "Are you sure to continue? You won't be able to revert this!",
-	LOGGED_OUT_SUCCESSFULLY: "Successfully Logged out!"
+	LOGGED_OUT_SUCCESSFULLY: "Successfully logged out!"
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {
