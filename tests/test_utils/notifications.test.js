@@ -20,9 +20,6 @@ describe("showChooseAccount",  () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
-    const userFilePath = getUserFilePath(baseRepoPath);
-    const userData = {};
-    userData[TEST_EMAIL] = {access_token: "ABC"};
 
     beforeEach(() => {
         fetch.resetMocks();
@@ -30,7 +27,6 @@ describe("showChooseAccount",  () => {
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         fs.writeFileSync(configPath, yaml.safeDump({repos: {}}));
     });
 
@@ -40,7 +36,6 @@ describe("showChooseAccount",  () => {
     });
 
     test("with no user",  () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump({}));
         showChooseAccount(repoPath);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.NO_VALID_ACCOUNT);
@@ -54,6 +49,7 @@ describe("showChooseAccount",  () => {
     });
 
     test("with valid user",  async () => {
+        addUser(baseRepoPath);
         const user = {
             "email": TEST_EMAIL,
             "plan": {
@@ -67,7 +63,7 @@ describe("showChooseAccount",  () => {
         const handler = await showChooseAccount(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
-        expect(handler.accessToken).toStrictEqual(userData[TEST_EMAIL].access_token);
+        expect(handler.accessToken).toStrictEqual("ACCESS_TOKEN");
         // TODO: In case we activate choose account option
         // expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         // expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.CHOOSE_ACCOUNT);

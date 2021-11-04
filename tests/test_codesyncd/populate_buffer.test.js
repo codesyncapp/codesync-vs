@@ -23,8 +23,8 @@ import {
     randomRepoPath,
     TEST_EMAIL,
     TEST_REPO_RESPONSE,
-    TEST_USER,
-    waitFor, addUser
+    waitFor,
+    addUser
 } from "../helpers/helpers";
 
 

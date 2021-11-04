@@ -131,7 +131,7 @@ describe("handleRenameFile",  () => {
         expect(diffFiles).toHaveLength(0);
     });
 
-    test("for File",  () => {
+    test("For File",  () => {
         fs.writeFileSync(newFilePath, "use babel;");
         const event = {
             files: [{
@@ -152,7 +152,29 @@ describe("handleRenameFile",  () => {
         expect(assertRenameEvent(repoPath, configPath, fileRelPath, newRelPath)).toBe(true);
     });
 
-    test("for File, user is inActive",  () => {
+    test("With Daemon: For File",  async () => {
+        fs.writeFileSync(newFilePath, "use babel;");
+        const event = {
+            files: [{
+                oldUri: {
+                    fsPath: oldFilePath,
+                    path: oldFilePath,
+                    scheme: "file"
+                },
+                newUri: {
+                    fsPath: newFilePath,
+                    path: newFilePath,
+                    scheme: "file"
+                }
+            }]
+        };
+        const handler = new eventHandler();
+        handler.handleRenameEvent(event);
+        await populateBuffer();
+        expect(assertRenameEvent(repoPath, configPath, fileRelPath, newRelPath)).toBe(true);
+    });
+
+    test("For File, user is inActive",  () => {
         addUser(baseRepoPath, false);
         fs.writeFileSync(newFilePath, "use babel;");
         const event = {

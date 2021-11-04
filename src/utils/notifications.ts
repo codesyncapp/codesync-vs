@@ -1,9 +1,9 @@
 import vscode from 'vscode';
-import {getPublicPrivateMsg, NOTIFICATION} from '../constants';
 import { initHandler } from '../init/init_handler';
-import {getActiveUsers, readYML} from './common';
-import { logout, redirectToBrowser } from './auth_utils';
-import {generateSettings} from "../settings";
+import { getActiveUsers } from './common';
+import { redirectToBrowser } from './auth_utils';
+import { getPublicPrivateMsg, NOTIFICATION } from '../constants';
+
 
 export const showSignUpButtons = () => {
 	vscode.window.showInformationMessage(
@@ -27,8 +27,7 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 	}
 	const msg = email ? NOTIFICATION.CONNECT_AFTER_JOIN : NOTIFICATION.CONNECT_REPO;
 	vscode.window.showInformationMessage(msg, ...[
-		NOTIFICATION.CONNECT,
-		NOTIFICATION.IGNORE
+		NOTIFICATION.CONNECT
 	]).then(async selection => {
 		if (selection === NOTIFICATION.CONNECT) {
 

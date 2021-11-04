@@ -69,7 +69,7 @@ describe("SyncHandler",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("repo Not In Config",async () => {
+    test("repo Not In Config", async () => {
         jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         const user = {
             "email": TEST_EMAIL,

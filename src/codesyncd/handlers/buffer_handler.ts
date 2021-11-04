@@ -16,7 +16,7 @@ import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
 import {pathUtils} from "../../utils/path_utils";
 import {WebSocketClient} from "../websocket/websocket_client";
-import {getActiveUsers, isRepoActive, isUserActive, readYML, updateStatusBarItem} from '../../utils/common';
+import {getActiveUsers, isRepoActive, readYML, updateStatusBarItem} from '../../utils/common';
 
 let errorCount = 0;
 

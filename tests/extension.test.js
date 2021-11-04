@@ -146,7 +146,6 @@ describe("Extension",() => {
     });
 
     test("With user, repo is in sync", async () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
