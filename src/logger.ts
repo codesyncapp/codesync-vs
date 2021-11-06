@@ -99,10 +99,10 @@ export function putLogEvent(error: string, userEmail?: string, additionalMsg="",
 				if (retryCount) {
 					if (retryCount < 10) {
 						retryCount += 1;
-						putLogEvent(error, email, "", retryCount);
+						putLogEvent(error, email, additionalMsg, retryCount);
 					}
 				} else {
-					putLogEvent(error, email, "", 1);
+					putLogEvent(error, email, additionalMsg, 1);
 				}
 			} else {
 				console.log(err, err.stack);
