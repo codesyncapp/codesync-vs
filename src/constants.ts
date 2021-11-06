@@ -10,7 +10,7 @@ import {
 export const SYNCIGNORE = ".syncignore";
 export const GITIGNORE = ".gitignore";
 
-export const DIFF_SOURCE = 'vs-code';
+export const DIFF_SOURCE = 'vscode';
 export const DEFAULT_BRANCH = 'default';
 
 // TODO: Use standard .gitignore

@@ -280,7 +280,7 @@ export class initUtils {
 		const json = await uploadRepoToServer(token, data);
 		if (json.error) {
 			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
-			putLogEvent(`${error}. Reason: ${json.error}`);
+			putLogEvent(error, userEmail, json.error);
 			if (!this.viaDaemon) {
 				vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			}

@@ -90,7 +90,7 @@ export class bufferHandler {
 			}
 			const diffData = readYML(filePath);
 			if (!diffData || !isValidDiff(diffData)) {
-				putLogEvent(`Skipping invalid diff file: ${diffFile}`, "", 0, diffData);
+				putLogEvent(`Skipping invalid diff file: ${diffFile}`, "", diffData);
 				fs.unlinkSync(filePath);
 				return false;
 			}

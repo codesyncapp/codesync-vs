@@ -12,7 +12,7 @@ import { generateSettings } from "./settings";
 
 let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 
-export function putLogEvent(error: string, userEmail?: string, retryCount?: number, additionalMsg=null) {
+export function putLogEvent(error: string, userEmail?: string, additionalMsg="", retryCount=0) {
 	if (additionalMsg) {
 		console.log(error, additionalMsg);
 	} else {
@@ -99,10 +99,10 @@ export function putLogEvent(error: string, userEmail?: string, retryCount?: numb
 				if (retryCount) {
 					if (retryCount < 10) {
 						retryCount += 1;
-						putLogEvent(error, email, retryCount);
+						putLogEvent(error, email, "", retryCount);
 					}
 				} else {
-					putLogEvent(error, email, 1);
+					putLogEvent(error, email, "", 1);
 				}
 			} else {
 				console.log(err, err.stack);
