@@ -22,10 +22,6 @@ export interface IFileToDiff {
 	diff: IDiff;
 }
 
-export interface IAuth0User {
-	email: string;
-}
-
 export interface IFileToUpload {
 	file_path: string,
 	rel_path: string,

@@ -1,5 +1,4 @@
 import path from "path";
-import vscode from "vscode";
 import express from "express";
 import { createUser } from "../utils/auth_utils";
 import {
@@ -27,7 +26,7 @@ export const initExpressServer = () => {
         const repoPath = pathUtils.getRootPath() || "";
         const files = new staticFiles(__dirname);
         try {
-            await createUser(req.query.access_token, req.query.id_token, repoPath);
+            await createUser(req.query.access_token, repoPath);
             res.sendFile(files.LOGIN_SUCCESS);
         } catch (e) {
             res.sendFile(files.LOGIN_FAILURE);

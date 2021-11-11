@@ -108,7 +108,6 @@ describe("logout",  () => {
 
 
 describe("createUser",  () => {
-    const idToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAY29kZXN5bmMuY29tIn0.bl7QQajhg2IjPp8h0gzFku85qCrXQN4kThoo1AxB_Dc";
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
     const userFilePath = getUserFilePath(baseRepoPath);
@@ -130,15 +129,15 @@ describe("createUser",  () => {
 
     test("with invalid token", async () => {
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
-        await createUser("TOKEN", idToken, repoPath);
+        await createUser("TOKEN", repoPath);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
     });
 
     test("with valid token and user not in user.yml", async () => {
-        const user = {"user": {"id": 1}};
+        const user = {"user": {"id": 1, "email": TEST_EMAIL}};
         fetchMock.mockResponseOnce(JSON.stringify(user));
         global.skipAskConnect = false;
-        await createUser("TOKEN", idToken, repoPath);
+        await createUser("TOKEN", repoPath);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         const users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(true);
@@ -154,7 +153,7 @@ describe("createUser",  () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(users));
         const user = {"user": {"id": 1}};
         fetchMock.mockResponseOnce(JSON.stringify(user));
-        await createUser("TOKEN", idToken, repoPath);
+        await createUser("TOKEN", repoPath);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(true);

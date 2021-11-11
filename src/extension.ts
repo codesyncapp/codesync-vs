@@ -77,3 +77,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	recallDaemon(statusBarItem, false);
 }
 
+export function deactivate(context: vscode.ExtensionContext) {
+	// pass 
+}

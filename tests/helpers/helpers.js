@@ -1,11 +1,11 @@
-import path from "path";
-import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../src/constants";
 import fs from "fs";
+import path from "path";
 import yaml from "js-yaml";
+
 import {readYML} from "../../src/utils/common";
 import {diff_match_patch} from "diff-match-patch";
-import exp from "constants";
 import {pathUtils} from "../../src/utils/path_utils";
+import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../src/constants";
 
 export function getRandomString(length) {
     var randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';

@@ -1,10 +1,6 @@
 import fetch from "node-fetch";
 
-import jwt_decode from "jwt-decode";
-
 import { API_HEALTHCHECK, API_USERS } from "../constants";
-import { IAuth0User } from "../interface";
-
 
 export const checkServerDown = async () => {
 	let isDown = false;
@@ -41,17 +37,15 @@ export const getUserForToken = async (accessToken: string) => {
 	};
 };
 
-export const createUserWithApi = async (accessToken: string, idToken: string) => {
+export const createUserWithApi = async (accessToken: string) => {
 	let error = "";
-	let user = <IAuth0User>{};
-	user = jwt_decode(idToken);
+	let email = "";
 	const response = await fetch(API_USERS, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				'Authorization': `Basic ${accessToken}`
-			},
-			body: JSON.stringify(user)
+			}
 		}
 	)
 		.then(res => res.json())
@@ -62,8 +56,12 @@ export const createUserWithApi = async (accessToken: string, idToken: string) =>
 		error = response.error;
 	}
 
+	if (!error) {
+		email = response.user.email;
+	}
+
 	return {
-		user,
+		email,
 		error
 	};
 };

@@ -37,21 +37,21 @@ export const redirectToBrowser = (skipAskConnect=false) => {
     vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
 };
 
-export const createUser = async (accessToken: string, idToken: string, repoPath: string) => {
-    const userResponse = await createUserWithApi(accessToken, idToken);
+export const createUser = async (accessToken: string, repoPath: string) => {
+    const userResponse = await createUserWithApi(accessToken);
     if (userResponse.error) {
         vscode.window.showErrorMessage("Sign up to CodeSync failed");
         return;
     }
-    const user = userResponse.user;
+    const userEmail = userResponse.email;
     const settings = generateSettings();
     // Save access token of user against email in user.yml
     const users = readYML(settings.USER_PATH) || {};
-    if (user.email in users) {
-        users[user.email].access_token = accessToken;
-        users[user.email].is_active = true;
+    if (userEmail in users) {
+        users[userEmail].access_token = accessToken;
+        users[userEmail].is_active = true;
     } else {
-        users[user.email] = {
+        users[userEmail] = {
             access_token: accessToken,
             is_active: true
         };
@@ -64,7 +64,7 @@ export const createUser = async (accessToken: string, idToken: string, repoPath:
 
 	if (!isRepoSynced(repoPath)) {
         // Show notification to user to Sync the repo
-        return showConnectRepo(repoPath, user.email, accessToken);
+        return showConnectRepo(repoPath, userEmail, accessToken);
     }
     // Show notification that repo is in sync
     vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath), ...[
