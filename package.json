@@ -13,6 +13,13 @@
   "categories": [
     "SCM Providers"
   ],
+  "keywords": [
+    "Productivity",
+    "Code Review",
+    "Version Control",
+    "Code Tools",
+    "SCM"
+  ],
   "activationEvents": [
     "onStartupFinished"
   ],

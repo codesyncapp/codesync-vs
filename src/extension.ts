@@ -78,5 +78,5 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate(context: vscode.ExtensionContext) {
-	// pass 
+	// pass
 }
