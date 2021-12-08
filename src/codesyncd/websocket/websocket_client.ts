@@ -5,6 +5,8 @@ import {putLogEvent} from "../../logger";
 import {IRepoDiffs} from "../../interface";
 import {WEBSOCKET_ENDPOINT} from "../../constants";
 import {WebSocketEvents} from "./websocket_events";
+import { readYML } from "../../utils/common";
+import {generateSettings} from "../../settings";
 
 export class WebSocketClient {
     client: any;
@@ -12,8 +14,13 @@ export class WebSocketClient {
     repoDiff: IRepoDiffs;
 
     constructor(statusBarItem: vscode.StatusBarItem, repoDiff: IRepoDiffs) {
+        const settings = generateSettings();
+        const users = readYML(settings.USER_PATH) || {};
+        const configJSON = readYML(settings.CONFIG_PATH);
+        const configRepo = configJSON.repos[repoDiff.repoPath];
+        const accessToken = users[configRepo.email].access_token;
         this.client = new client();
-        this.client.connect(WEBSOCKET_ENDPOINT);
+        this.client.connect(`${WEBSOCKET_ENDPOINT}?token=${accessToken}`);
         this.statusBarItem = statusBarItem;
         this.repoDiff = repoDiff;
     }
@@ -40,7 +47,7 @@ export class WebSocketClient {
         });
 
         const webSocketEvents = new WebSocketEvents(connection, this.statusBarItem, this.repoDiff);
-        webSocketEvents.authenticate();
+        // webSocketEvents.authenticate();
 
         connection.on('message', function (message: any) {
             webSocketEvents.onMessage(message);
