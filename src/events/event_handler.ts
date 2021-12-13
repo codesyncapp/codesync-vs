@@ -32,7 +32,7 @@ export class eventHandler {
 	settings = generateSettings();
 
 	constructor(repoPath="", createdAt="", viaDaemon=false) {
-		this.createdAt = createdAt;
+		this.createdAt = createdAt || formatDatetime();
 		this.viaDaemon = viaDaemon;
 		this.repoPath = repoPath || pathUtils.getRootPath();
 		this.repoIsNotSynced = !isRepoSynced(this.repoPath);
@@ -48,9 +48,6 @@ export class eventHandler {
 		if (!diffs && !this.isNewFile && !this.isDelete) {
 			this.log(`addDiff: Skipping empty diffs`);
 			return;
-		}
-		if (!this.createdAt) {
-			this.createdAt = formatDatetime();
 		}
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};

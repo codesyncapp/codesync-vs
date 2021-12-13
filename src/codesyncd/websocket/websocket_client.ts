@@ -13,7 +13,6 @@ export class WebSocketClient {
 
     constructor(statusBarItem: vscode.StatusBarItem, repoDiff: IRepoDiffs) {
         this.client = new client();
-        this.client.connect(WEBSOCKET_ENDPOINT);
         this.statusBarItem = statusBarItem;
         this.repoDiff = repoDiff;
     }
@@ -28,9 +27,12 @@ export class WebSocketClient {
         this.client.on('connect', function (connection: any) {
             that.registerConnectionEvents(connection);
         });
+
+        this.client.connect(WEBSOCKET_ENDPOINT);
     };
 
     registerConnectionEvents = (connection: any) => {
+
         connection.on('error', function (error: any) {
             putLogEvent("Socket Connection Error: " + error.toString());
         });
@@ -40,10 +42,11 @@ export class WebSocketClient {
         });
 
         const webSocketEvents = new WebSocketEvents(connection, this.statusBarItem, this.repoDiff);
-        webSocketEvents.authenticate();
 
         connection.on('message', function (message: any) {
             webSocketEvents.onMessage(message);
         });
+
+        webSocketEvents.authenticate();
     };
 }
