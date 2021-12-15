@@ -311,8 +311,7 @@ describe("bufferHandler", () => {
         expect(connection.on.mock.calls[0][0]).toStrictEqual("error");
         expect(connection.on.mock.calls[1][0]).toStrictEqual("close");
         expect(connection.on.mock.calls[2][0]).toStrictEqual("message");
-        expect(connection.send).toHaveBeenCalledTimes(1);
-        expect(connection.send.mock.calls[0][0]).toStrictEqual("ACCESS_TOKEN");
+        expect(connection.send).toHaveBeenCalledTimes(0);
     });
 
     test("WebSocketEvents: onMessage, invalid msg", async () => {
