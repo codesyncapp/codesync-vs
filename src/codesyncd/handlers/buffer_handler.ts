@@ -4,21 +4,14 @@ import vscode from "vscode";
 
 import {isValidDiff} from '../utils';
 import {putLogEvent} from '../../logger';
-import {checkServerDown} from "../../utils/api_utils";
 import {IFileToDiff, IRepoDiffs} from '../../interface';
-import {
-	CONNECTION_ERROR_MESSAGE,
-	DIFF_FILES_PER_ITERATION,
-	LOG_AFTER_X_TIMES,
-	STATUS_BAR_MSGS
-} from "../../constants";
+import {DIFF_FILES_PER_ITERATION, STATUS_BAR_MSGS} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
 import {pathUtils} from "../../utils/path_utils";
-import {WebSocketClient} from "../websocket/websocket_client";
 import {getActiveUsers, isRepoActive, readYML, updateStatusBarItem} from '../../utils/common';
+import {SocketClient} from "../websocket/socket_client";
 
-let errorCount = 0;
 
 export class bufferHandler {
 	/*
@@ -151,15 +144,6 @@ export class bufferHandler {
 		return STATUS_BAR_MSGS.DEFAULT;
 	}
 
-	handleRepoDiffs = (repoDiffs: IRepoDiffs[]) => {
-		// Iterate repoDiffs and send to server
-		repoDiffs.forEach((repoDiff) => {
-			// Making a new socket connection per repo
-			const webSocketClient = new WebSocketClient(this.statusBarItem, repoDiff);
-			webSocketClient.registerEvents();
-		});
-	}
-
 	async run() {
 		// If there is no config file
 		if (!fs.existsSync(this.settings.CONFIG_PATH)) {
@@ -174,34 +158,16 @@ export class bufferHandler {
 			const diffFiles = this.getDiffFiles();
 
 			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
-
-			const isServerDown = await checkServerDown();
-			if (isServerDown) {
-				if (errorCount == 0 || errorCount > LOG_AFTER_X_TIMES) {
-					putLogEvent(CONNECTION_ERROR_MESSAGE);
-				}
-				if (errorCount > LOG_AFTER_X_TIMES) {
-					errorCount = 0;
-				}
-				errorCount += 1;
-				this.updateStatusBarItem(STATUS_BAR_MSGS.SERVER_DOWN);
-				return recallDaemon(this.statusBarItem);
-			}
-
-			errorCount = 0;
-
 			const repoDiffs = this.groupRepoDiffs(diffFiles);
 
-			// Handle repo diffs
-			this.handleRepoDiffs(repoDiffs);
-
+			const activeUser = getActiveUsers()[0];
+			const webSocketClient = new SocketClient(this.statusBarItem, activeUser.access_token, repoDiffs);
+			webSocketClient.connect();
 		} catch (e) {
 			putLogEvent(`Daemon failed: ${e}`);
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			console.log(e.stack);
 		}
-
-		recallDaemon(this.statusBarItem);
 	}
 }

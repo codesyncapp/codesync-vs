@@ -78,39 +78,39 @@ export function putLogEvent(error: string, userEmail?: string, additionalMsg="",
 		params.sequenceToken = sequenceToken;
 	}
 
-	cloudwatchlogs.putLogEvents(params as unknown as PutLogEventsRequest, function(err: any, data) {
-
-		if (!err) {
-			// successful response
-			updateSequenceToken(email, data.nextSequenceToken || "");
-			return;
-		}
-		// an error occurred
-		/*
-		DataAlreadyAcceptedException: The given batch of log events has already been accepted.
-		The next batch can be sent with sequenceToken: 49615429905286623782064446503967477603282951356289123634
-		*/
-		const errString = err.toString();
-		if (errString.substr('DataAlreadyAcceptedException') || errString.substr('InvalidSequenceTokenException')) {
-			const matches = errString.match(/(\d+)/);
-			if (matches[0]) {
-				sequenceTokenConfig[email] = matches[0];
-				fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
-				if (retryCount) {
-					if (retryCount < 10) {
-						retryCount += 1;
-						putLogEvent(error, email, additionalMsg, retryCount);
-					}
-				} else {
-					putLogEvent(error, email, additionalMsg, 1);
-				}
-			} else {
-				console.log(err, err.stack);
-			}
-		} else {
-			console.log(err, err.stack);
-		}
-	});
+	// cloudwatchlogs.putLogEvents(params as unknown as PutLogEventsRequest, function(err: any, data) {
+	//
+	// 	if (!err) {
+	// 		// successful response
+	// 		updateSequenceToken(email, data.nextSequenceToken || "");
+	// 		return;
+	// 	}
+	// 	// an error occurred
+	// 	/*
+	// 	DataAlreadyAcceptedException: The given batch of log events has already been accepted.
+	// 	The next batch can be sent with sequenceToken: 49615429905286623782064446503967477603282951356289123634
+	// 	*/
+	// 	const errString = err.toString();
+	// 	if (errString.substr('DataAlreadyAcceptedException') || errString.substr('InvalidSequenceTokenException')) {
+	// 		const matches = errString.match(/(\d+)/);
+	// 		if (matches[0]) {
+	// 			sequenceTokenConfig[email] = matches[0];
+	// 			fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
+	// 			if (retryCount) {
+	// 				if (retryCount < 10) {
+	// 					retryCount += 1;
+	// 					putLogEvent(error, email, additionalMsg, retryCount);
+	// 				}
+	// 			} else {
+	// 				putLogEvent(error, email, additionalMsg, 1);
+	// 			}
+	// 		} else {
+	// 			console.log(err, err.stack);
+	// 		}
+	// 	} else {
+	// 		console.log(err, err.stack);
+	// 	}
+	// });
 }
 
 export const updateSequenceToken = (email: string, nextSequenceToken: string) => {

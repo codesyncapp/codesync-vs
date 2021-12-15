@@ -2,11 +2,11 @@ import vscode from "vscode";
 
 import {putLogEvent} from "../../logger";
 import {STATUS_BAR_MSGS} from "../../constants";
-import {readYML, updateStatusBarItem} from "../../utils/common";
-import {generateSettings} from "../../settings";
+import {updateStatusBarItem} from "../../utils/common";
 import {IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffsHandler} from "../handlers/diffs_handler";
 import {DiffHandler} from "../handlers/diff_handler";
+import {recallDaemon} from "../codesyncd";
 
 
 const EVENT_TYPES = {
@@ -14,24 +14,17 @@ const EVENT_TYPES = {
     SYNC: 'sync'
 };
 
-export class WebSocketEvents {
+export class SocketEvents {
     connection: any;
     statusBarItem: any;
-    repoDiff: any;
-
+    repoDiffs: IRepoDiffs[]
     accessToken: string;
-    configJSON: any;
-    configRepo: any;
 
-    constructor(connection: any, statusBarItem: vscode.StatusBarItem, repoDiff: IRepoDiffs) {
-        this.connection = connection;
+    constructor(statusBarItem: vscode.StatusBarItem, repoDiffs: IRepoDiffs[], accessToken: string) {
+        this.connection = (global as any).socketConnection;
         this.statusBarItem = statusBarItem;
-        this.repoDiff = repoDiff;
-        const settings = generateSettings();
-        const users = readYML(settings.USER_PATH) || {};
-        this.configJSON = readYML(settings.CONFIG_PATH);
-        this.configRepo = this.configJSON.repos[repoDiff.repoPath];
-        this.accessToken = users[this.configRepo.email].access_token;
+        this.repoDiffs = repoDiffs;
+        this.accessToken = accessToken;
     }
 
     onInvalidAuth() {
@@ -43,15 +36,19 @@ export class WebSocketEvents {
     async onValidAuth() {
         // Update status bar msg
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.SYNCING);
-        const diffsHandler = new DiffsHandler(this.repoDiff.file_to_diff,
-            this.accessToken, this.repoDiff.repoPath, this.connection);
-        await diffsHandler.run();
+        for (const repoDiff of this.repoDiffs) {
+            const diffsHandler = new DiffsHandler(repoDiff, this.accessToken, this.connection);
+            await diffsHandler.run();
+        }
+        console.log("Recalling daemon", Date.now());
+        return recallDaemon(this.statusBarItem);
     }
 
     onSyncSuccess(diffFilePath: string) {
         // Update status bar msg
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.SYNCING);
         DiffHandler.removeDiffFile(diffFilePath);
+        console.log("SyncSuccess @: ", Date.now());
     }
 
     async onMessage(message: IWebSocketMessage) {
