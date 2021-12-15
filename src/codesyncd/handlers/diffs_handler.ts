@@ -2,7 +2,7 @@ import fs from "fs";
 
 import {IFileToDiff} from "../../interface";
 import {putLogEvent} from "../../logger";
-import {DAY} from "../../constants";
+import {DAY, RESTART_DAEMON_AFTER} from "../../constants";
 import {readYML} from "../../utils/common";
 import {generateSettings} from "../../settings";
 import {DiffHandler} from "./diff_handler";
@@ -30,6 +30,7 @@ export class DiffsHandler {
     }
 
     async run() {
+        const validDiffs = [];
         // Iterate diffs
         for (const fileToDiff of this.diffsList) {
             const diffData = fileToDiff.diff;
@@ -92,8 +93,16 @@ export class DiffsHandler {
 
             // Diff data to be sent to server
             const diffToSend = diffHandler.createDiffToSend(fileId);
-            // Send Diff to server
-            diffHandler.sendDiffToServer(this.webSocketConnection, diffToSend);
+            validDiffs.push(diffToSend);
         }
+
+        if (!validDiffs.length) return;
+        
+        // Send all diffs to server
+        this.webSocketConnection.send(JSON.stringify({'diffs': validDiffs}));
+
+        setTimeout(() => {
+            this.webSocketConnection.send(JSON.stringify({'close': true}));
+        }, RESTART_DAEMON_AFTER);
     }
 }

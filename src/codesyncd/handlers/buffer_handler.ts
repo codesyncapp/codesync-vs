@@ -197,6 +197,9 @@ export class bufferHandler {
 
 		} catch (e) {
 			putLogEvent(`Daemon failed: ${e}`);
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			console.log(e.stack);
 		}
 
 		recallDaemon(this.statusBarItem);
