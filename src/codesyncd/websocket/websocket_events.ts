@@ -34,11 +34,6 @@ export class WebSocketEvents {
         this.accessToken = users[this.configRepo.email].access_token;
     }
 
-    authenticate() {
-        // authenticate via websocket
-        this.connection.send(this.accessToken);
-    }
-
     onInvalidAuth() {
         putLogEvent(STATUS_BAR_MSGS.ERROR_SENDING_DIFF);
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.AUTHENTICATION_FAILED);

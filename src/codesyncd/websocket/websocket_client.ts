@@ -12,16 +12,17 @@ export class WebSocketClient {
     client: any;
     statusBarItem: vscode.StatusBarItem;
     repoDiff: IRepoDiffs;
+    accessToken: string;
 
     constructor(statusBarItem: vscode.StatusBarItem, repoDiff: IRepoDiffs) {
         const settings = generateSettings();
         const users = readYML(settings.USER_PATH) || {};
         const configJSON = readYML(settings.CONFIG_PATH);
         const configRepo = configJSON.repos[repoDiff.repoPath];
-        const accessToken = users[configRepo.email].access_token;
-        this.client = new client();
+        this.accessToken = users[configRepo.email].access_token;
         this.statusBarItem = statusBarItem;
         this.repoDiff = repoDiff;
+        this.client = new client();
     }
 
     registerEvents = () => {
@@ -35,7 +36,7 @@ export class WebSocketClient {
             that.registerConnectionEvents(connection);
         });
 
-        this.client.connect(WEBSOCKET_ENDPOINT);
+        this.client.connect(`${WEBSOCKET_ENDPOINT}?token=${this.accessToken}`);
     };
 
     registerConnectionEvents = (connection: any) => {
@@ -45,7 +46,7 @@ export class WebSocketClient {
         });
 
         connection.on('close', function () {
-            putLogEvent('echo-protocol Connection Closed');
+            console.log('echo-protocol Connection Closed');
         });
 
         const webSocketEvents = new WebSocketEvents(connection, this.statusBarItem, this.repoDiff);
@@ -53,7 +54,5 @@ export class WebSocketClient {
         connection.on('message', function (message: any) {
             webSocketEvents.onMessage(message);
         });
-
-        webSocketEvents.authenticate();
     };
 }

@@ -29,7 +29,7 @@ export const API_FILES = `${API_ENDPOINT}/files`;
 export const API_INIT =  `${API_ENDPOINT}/init`;
 export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
-export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v1/websocket`;
+export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v2/websocket`;
 
 export const PLANS_URL = `${WEB_APP_URL}/plans`;
 // Diff utils

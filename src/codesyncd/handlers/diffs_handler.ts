@@ -101,8 +101,8 @@ export class DiffsHandler {
         // Send all diffs to server
         this.webSocketConnection.send(JSON.stringify({'diffs': validDiffs}));
 
-        setTimeout(() => {
-            this.webSocketConnection.send(JSON.stringify({'close': true}));
-        }, RESTART_DAEMON_AFTER);
+        // setTimeout(() => {
+        //     this.webSocketConnection.send(JSON.stringify({'close': true}));
+        // }, RESTART_DAEMON_AFTER);
     }
 }
