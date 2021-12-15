@@ -97,7 +97,7 @@ export class DiffsHandler {
         }
 
         if (!validDiffs.length) return;
-        
+
         // Send all diffs to server
         this.webSocketConnection.send(JSON.stringify({'diffs': validDiffs}));
 
