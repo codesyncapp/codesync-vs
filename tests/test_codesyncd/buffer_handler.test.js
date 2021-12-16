@@ -162,7 +162,7 @@ describe("bufferHandler", () => {
         fs.rmSync(configPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
+        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.NO_CONFIG)).toBe(true);
     });
 
     test("Server is down, no diff", async () => {
