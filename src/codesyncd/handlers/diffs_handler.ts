@@ -1,6 +1,7 @@
 import fs from "fs";
+import path from "path";
 
-import {IFileToDiff} from "../../interface";
+import {IFileToDiff, IRepoDiffs} from "../../interface";
 import {putLogEvent} from "../../logger";
 import {DAY} from "../../constants";
 import {readYML} from "../../utils/common";
@@ -20,16 +21,17 @@ export class DiffsHandler {
     configJSON: any;
     configRepo: any;
 
-    constructor(diffsList: IFileToDiff[], accessToken: string, repoPath: string, connection: any) {
-        this.diffsList = diffsList;
+    constructor(repoDiff: IRepoDiffs, accessToken: string, connection: any) {
+        this.diffsList = repoDiff.file_to_diff;
         const settings = generateSettings();
         this.accessToken = accessToken;
         this.configJSON = readYML(settings.CONFIG_PATH);
-        this.configRepo = this.configJSON.repos[repoPath];
+        this.configRepo = this.configJSON.repos[repoDiff.repoPath];
         this.webSocketConnection = connection;
     }
 
     async run() {
+        const validDiffs = [];
         // Iterate diffs
         for (const fileToDiff of this.diffsList) {
             const diffData = fileToDiff.diff;
@@ -77,11 +79,16 @@ export class DiffsHandler {
                         fs.unlinkSync(diffFilePath);
                     }
                 } else {
-                    WAITING_FILES[relPath] = (new Date()).getTime() / 1000;
-                    if (this.newFiles.indexOf(relPath) > -1) {
-                        this.newFiles.push(relPath);
+                    const filePath = path.join(diffData.repo_path, relPath);
+                    if (!fs.existsSync(filePath)) {
+                        fs.unlinkSync(diffFilePath);
+                    } else {
+                        WAITING_FILES[relPath] = (new Date()).getTime() / 1000;
+                        if (this.newFiles.indexOf(relPath) > -1) {
+                            this.newFiles.push(relPath);
+                        }
+                        this.configJSON = await diffHandler.forceUploadFile();
                     }
-                    this.configJSON = await diffHandler.forceUploadFile();
                 }
                 continue;
             }
@@ -92,8 +99,11 @@ export class DiffsHandler {
 
             // Diff data to be sent to server
             const diffToSend = diffHandler.createDiffToSend(fileId);
-            // Send Diff to server
-            diffHandler.sendDiffToServer(this.webSocketConnection, diffToSend);
+            validDiffs.push(diffToSend);
         }
+
+        if (!validDiffs.length) return;
+        // Send all diffs to server
+        this.webSocketConnection.send(JSON.stringify({'diffs': validDiffs}));
     }
 }

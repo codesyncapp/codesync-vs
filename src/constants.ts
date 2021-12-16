@@ -29,7 +29,7 @@ export const API_FILES = `${API_ENDPOINT}/files`;
 export const API_INIT =  `${API_ENDPOINT}/init`;
 export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
-export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v1/websocket`;
+export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v2/websocket`;
 
 export const PLANS_URL = `${WEB_APP_URL}/plans`;
 // Diff utils
@@ -114,7 +114,8 @@ export const STATUS_BAR_MSGS = {
 	SERVER_DOWN: 'CodeSync => Offline',
 	GETTING_READY: 'CodeSync => Getting ready',
 	NO_REPO_OPEN: 'CodeSync => No project is open',
-	CONNECT_REPO: 'CodeSync => Click to connect repo!'
+	CONNECT_REPO: 'CodeSync => Click to connect repo!',
+	NO_CONFIG: 'CodeSync => Reload required!'
 };
 
 export const COMMAND = {
@@ -139,4 +140,4 @@ export class staticFiles {
 
 export const DAY = 24 * 60 * 60;
 export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .syncignore. It follows same format as .gitignore.";
-export const LOG_AFTER_X_TIMES = 500;
+export const LOG_AFTER_X_TIMES = 300 / 5;  // Log after 5 min as daemon restarts after 5s
