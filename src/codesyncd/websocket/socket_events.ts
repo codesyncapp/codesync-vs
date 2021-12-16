@@ -1,12 +1,12 @@
 import vscode from "vscode";
 
 import {putLogEvent} from "../../logger";
-import {STATUS_BAR_MSGS} from "../../constants";
-import {readYML, updateStatusBarItem} from "../../utils/common";
-import {generateSettings} from "../../settings";
+import {CONNECTION_ERROR_MESSAGE, LOG_AFTER_X_TIMES, STATUS_BAR_MSGS} from "../../constants";
+import {updateStatusBarItem} from "../../utils/common";
 import {IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffsHandler} from "../handlers/diffs_handler";
 import {DiffHandler} from "../handlers/diff_handler";
+import {recallDaemon} from "../codesyncd";
 
 
 const EVENT_TYPES = {
@@ -14,38 +14,42 @@ const EVENT_TYPES = {
     SYNC: 'sync'
 };
 
-export class WebSocketEvents {
+let errorCount = 0;
+
+export class SocketEvents {
     connection: any;
     statusBarItem: any;
-    repoDiff: any;
-
+    repoDiffs: IRepoDiffs[]
     accessToken: string;
-    configJSON: any;
-    configRepo: any;
 
-    constructor(connection: any, statusBarItem: vscode.StatusBarItem, repoDiff: IRepoDiffs) {
-        this.connection = connection;
+    constructor(statusBarItem: vscode.StatusBarItem, repoDiffs: IRepoDiffs[], accessToken: string) {
+        this.connection = (global as any).socketConnection;
         this.statusBarItem = statusBarItem;
-        this.repoDiff = repoDiff;
-        const settings = generateSettings();
-        const users = readYML(settings.USER_PATH) || {};
-        this.configJSON = readYML(settings.CONFIG_PATH);
-        this.configRepo = this.configJSON.repos[repoDiff.repoPath];
-        this.accessToken = users[this.configRepo.email].access_token;
+        this.repoDiffs = repoDiffs;
+        this.accessToken = accessToken;
     }
 
     onInvalidAuth() {
-        putLogEvent(STATUS_BAR_MSGS.ERROR_SENDING_DIFF);
+        if (errorCount == 0 || errorCount > LOG_AFTER_X_TIMES) {
+            putLogEvent(STATUS_BAR_MSGS.ERROR_SENDING_DIFF);
+        }
+        if (errorCount > LOG_AFTER_X_TIMES) {
+            errorCount = 0;
+        }
+        errorCount += 1;
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
-        return;
+        return recallDaemon(this.statusBarItem);
     }
 
     async onValidAuth() {
+        errorCount = 0;
         // Update status bar msg
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.SYNCING);
-        const diffsHandler = new DiffsHandler(this.repoDiff.file_to_diff,
-            this.accessToken, this.repoDiff.repoPath, this.connection);
-        await diffsHandler.run();
+        for (const repoDiff of this.repoDiffs) {
+            const diffsHandler = new DiffsHandler(repoDiff, this.accessToken, this.connection);
+            await diffsHandler.run();
+        }
+        return recallDaemon(this.statusBarItem);
     }
 
     onSyncSuccess(diffFilePath: string) {
