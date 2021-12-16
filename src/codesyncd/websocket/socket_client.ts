@@ -83,7 +83,6 @@ export class SocketClient {
         });
 
         connection.on('close', function () {
-            console.log('echo-protocol Connection Closed');
             that.resetGlobals();
         });
 

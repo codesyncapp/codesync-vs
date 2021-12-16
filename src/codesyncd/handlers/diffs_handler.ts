@@ -103,8 +103,6 @@ export class DiffsHandler {
         }
 
         if (!validDiffs.length) return;
-
-        // console.log("Sending diffs @: ", Date.now());
         // Send all diffs to server
         this.webSocketConnection.send(JSON.stringify({'diffs': validDiffs}));
     }

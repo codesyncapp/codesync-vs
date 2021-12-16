@@ -133,6 +133,7 @@ export class bufferHandler {
 	};
 
 	getStatusBarMsg = () => {
+		if (!fs.existsSync(this.settings.CONFIG_PATH)) return STATUS_BAR_MSGS.NO_CONFIG;
 		const repoPath = pathUtils.getRootPath();
 		const activeUsers = getActiveUsers();
 		// No Valid account found
@@ -145,19 +146,16 @@ export class bufferHandler {
 	}
 
 	async run() {
-		// If there is no config file
-		if (!fs.existsSync(this.settings.CONFIG_PATH)) {
-			this.updateStatusBarItem(STATUS_BAR_MSGS.CONNECT_REPO);
-			return recallDaemon(this.statusBarItem);
-		}
-
 		try {
 			const statusBarMsg = this.getStatusBarMsg();
 			this.updateStatusBarItem(statusBarMsg);
-
+			// Do not proceed if no active user is found OR no config is found
+			if ([STATUS_BAR_MSGS.AUTHENTICATION_FAILED, STATUS_BAR_MSGS.NO_CONFIG].includes(statusBarMsg)) {
+				return recallDaemon(this.statusBarItem);
+			}
 			const diffFiles = this.getDiffFiles();
-
 			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
+
 			const repoDiffs = this.groupRepoDiffs(diffFiles);
 
 			const activeUser = getActiveUsers()[0];

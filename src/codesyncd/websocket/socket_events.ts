@@ -40,7 +40,6 @@ export class SocketEvents {
             const diffsHandler = new DiffsHandler(repoDiff, this.accessToken, this.connection);
             await diffsHandler.run();
         }
-        console.log("Recalling daemon", Date.now());
         return recallDaemon(this.statusBarItem);
     }
 
@@ -48,7 +47,6 @@ export class SocketEvents {
         // Update status bar msg
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.SYNCING);
         DiffHandler.removeDiffFile(diffFilePath);
-        console.log("SyncSuccess @: ", Date.now());
     }
 
     async onMessage(message: IWebSocketMessage) {

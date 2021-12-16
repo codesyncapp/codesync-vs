@@ -114,7 +114,8 @@ export const STATUS_BAR_MSGS = {
 	SERVER_DOWN: 'CodeSync => Offline',
 	GETTING_READY: 'CodeSync => Getting ready',
 	NO_REPO_OPEN: 'CodeSync => No project is open',
-	CONNECT_REPO: 'CodeSync => Click to connect repo!'
+	CONNECT_REPO: 'CodeSync => Click to connect repo!',
+	NO_CONFIG: 'CodeSync => Restart!'
 };
 
 export const COMMAND = {
