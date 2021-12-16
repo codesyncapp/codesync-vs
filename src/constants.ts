@@ -115,7 +115,7 @@ export const STATUS_BAR_MSGS = {
 	GETTING_READY: 'CodeSync => Getting ready',
 	NO_REPO_OPEN: 'CodeSync => No project is open',
 	CONNECT_REPO: 'CodeSync => Click to connect repo!',
-	NO_CONFIG: 'CodeSync => Restart!'
+	NO_CONFIG: 'CodeSync => Reload required!'
 };
 
 export const COMMAND = {
@@ -140,4 +140,4 @@ export class staticFiles {
 
 export const DAY = 24 * 60 * 60;
 export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .syncignore. It follows same format as .gitignore.";
-export const LOG_AFTER_X_TIMES = 500;
+export const LOG_AFTER_X_TIMES = 300 / 5;  // Log after 5 min as daemon restarts after 5s

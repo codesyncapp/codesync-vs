@@ -1,7 +1,7 @@
 import vscode from "vscode";
 
 import {putLogEvent} from "../../logger";
-import {STATUS_BAR_MSGS} from "../../constants";
+import {CONNECTION_ERROR_MESSAGE, LOG_AFTER_X_TIMES, STATUS_BAR_MSGS} from "../../constants";
 import {updateStatusBarItem} from "../../utils/common";
 import {IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffsHandler} from "../handlers/diffs_handler";
@@ -13,6 +13,8 @@ const EVENT_TYPES = {
     AUTH: 'auth',
     SYNC: 'sync'
 };
+
+let errorCount = 0;
 
 export class SocketEvents {
     connection: any;
@@ -28,12 +30,19 @@ export class SocketEvents {
     }
 
     onInvalidAuth() {
-        putLogEvent(STATUS_BAR_MSGS.ERROR_SENDING_DIFF);
+        if (errorCount == 0 || errorCount > LOG_AFTER_X_TIMES) {
+            putLogEvent(STATUS_BAR_MSGS.ERROR_SENDING_DIFF);
+        }
+        if (errorCount > LOG_AFTER_X_TIMES) {
+            errorCount = 0;
+        }
+        errorCount += 1;
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
-        return;
+        return recallDaemon(this.statusBarItem);
     }
 
     async onValidAuth() {
+        errorCount = 0;
         // Update status bar msg
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.SYNCING);
         for (const repoDiff of this.repoDiffs) {

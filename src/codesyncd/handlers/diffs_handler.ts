@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 
 import {IFileToDiff, IRepoDiffs} from "../../interface";
 import {putLogEvent} from "../../logger";
@@ -6,7 +7,6 @@ import {DAY} from "../../constants";
 import {readYML} from "../../utils/common";
 import {generateSettings} from "../../settings";
 import {DiffHandler} from "./diff_handler";
-import path from "path";
 
 const WAITING_FILES = <any>{};
 
