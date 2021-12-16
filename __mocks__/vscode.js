@@ -81,6 +81,16 @@ const ExtensionContext = {
     subscriptions: []
 };
 
+const extensions = {
+    getExtension: jest.fn(() => {
+        return {
+            packageJSON: {
+                version: "version"
+            }
+        };
+    })
+};
+
 const vscode = {
     languages,
     StatusBarAlignment,
@@ -94,7 +104,8 @@ const vscode = {
     debug,
     commands,
     env,
-    ExtensionContext
+    ExtensionContext,
+    extensions
 };
 
 module.exports = vscode;

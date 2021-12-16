@@ -1,6 +1,8 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
 import AWS from 'aws-sdk';
+import vscode from "vscode";
+
 import { PutLogEventsRequest } from 'aws-sdk/clients/cloudwatchlogs';
 import {
 	AWS_REGION,
@@ -11,6 +13,10 @@ import { readYML, isEmpty } from './utils/common';
 import { generateSettings } from "./settings";
 
 let cloudwatchlogs = <AWS.CloudWatchLogs>{};
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+const VERSION = vscode.extensions.getExtension('codesync.codesync').packageJSON.version;
 
 export function putLogEvent(error: string, userEmail?: string, additionalMsg="", retryCount=0) {
 	if (additionalMsg) {
@@ -60,7 +66,8 @@ export function putLogEvent(error: string, userEmail?: string, additionalMsg="",
 		{
 			message: JSON.stringify({
 				msg: error,
-				source: DIFF_SOURCE
+				source: DIFF_SOURCE,
+				version: VERSION
 			}), /* required */
 			timestamp: new Date().getTime() /* required */
 		}
