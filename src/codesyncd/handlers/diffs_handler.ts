@@ -100,7 +100,9 @@ export class DiffsHandler {
                 const diffToSend = diffHandler.createDiffToSend(fileId);
                 validDiffs.push(diffToSend);
             } catch (e) {
-                errorCount = logMsg(`Error validating diff: ${e}`, errorCount);
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                errorCount = logMsg(`Error validating diff: ${e.stack}`, errorCount);
             }
         }
         return validDiffs;

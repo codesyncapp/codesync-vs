@@ -2,7 +2,7 @@ import vscode from "vscode";
 
 import {STATUS_BAR_MSGS} from "../../constants";
 import {logMsg, updateStatusBarItem} from "../../utils/common";
-import {IRepoDiffs, IWebSocketMessage} from "../../interface";
+import {IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffHandler} from "../handlers/diff_handler";
 import {recallDaemon} from "../codesyncd";
 import {DiffsHandler} from "../handlers/diffs_handler";
@@ -39,12 +39,14 @@ export class SocketEvents {
         // Update status bar msg
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.SYNCING);
         // Send diffs
+        let validDiffs: IDiffToSend[] = [];
         for (const repoDiff of this.repoDiffs) {
             const diffsHandler = new DiffsHandler(repoDiff, this.accessToken);
-            const validDiffs = await diffsHandler.run();
-            if (validDiffs.length) {
-                this.connection.send(JSON.stringify({"diffs": validDiffs}));
-            }
+            const diffs = await diffsHandler.run();
+            validDiffs = validDiffs.concat(diffs);
+        }
+        if (validDiffs.length) {
+            this.connection.send(JSON.stringify({"diffs": validDiffs}));
         }
         // Recall daemon
         return recallDaemon(this.statusBarItem);
