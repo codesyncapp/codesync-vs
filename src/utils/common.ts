@@ -9,12 +9,13 @@ import {
 	COMMAND,
 	DATETIME_FORMAT,
 	DEFAULT_BRANCH,
-	IGNORABLE_DIRECTORIES,
+	IGNORABLE_DIRECTORIES, LOG_AFTER_X_TIMES,
 	STATUS_BAR_MSGS,
 	SYNCIGNORE
 } from "../constants";
 import { IUserProfile } from "../interface";
 import { generateSettings } from "../settings";
+import {putLogEvent} from "../logger";
 
 
 export const readFile = (filePath: string) => {
@@ -102,4 +103,16 @@ export const getActiveUsers = () => {
 		}
 	});
 	return validUsers;
+};
+
+export const logMsg = (msg: string, errCount: number) => {
+	if (errCount === 0 || errCount > LOG_AFTER_X_TIMES) {
+		putLogEvent(msg);
+	}
+	if (errCount > LOG_AFTER_X_TIMES) {
+		errCount = 0;
+		return errCount;
+	}
+	errCount += 1;
+	return errCount;
 };

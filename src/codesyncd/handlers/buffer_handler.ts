@@ -157,15 +157,14 @@ export class bufferHandler {
 			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
 
 			const repoDiffs = this.groupRepoDiffs(diffFiles);
-
 			const activeUser = getActiveUsers()[0];
+
 			const webSocketClient = new SocketClient(this.statusBarItem, activeUser.access_token, repoDiffs);
 			webSocketClient.connect();
 		} catch (e) {
-			putLogEvent(`Daemon failed: ${e}`);
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			console.log(e.stack);
+			putLogEvent(`Daemon failed: ${e.stack}`);
 		}
 	}
 }

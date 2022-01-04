@@ -3,10 +3,16 @@ import {client} from "websocket";
 
 import {putLogEvent} from "../../logger";
 import {IRepoDiffs} from "../../interface";
-import {CONNECTION_ERROR_MESSAGE, LOG_AFTER_X_TIMES, STATUS_BAR_MSGS, WEBSOCKET_ENDPOINT} from "../../constants";
-import {updateStatusBarItem} from "../../utils/common";
+import {logMsg, updateStatusBarItem} from "../../utils/common";
 import {recallDaemon} from "../codesyncd";
 import {SocketEvents} from "./socket_events";
+import {
+    CONNECTION_ERROR_MESSAGE,
+    SOCKET_CONNECT_ERROR_CODES,
+    SOCKET_ERRORS,
+    STATUS_BAR_MSGS,
+    WEBSOCKET_ENDPOINT
+} from "../../constants";
 
 let errorCount = 0;
 
@@ -49,16 +55,11 @@ export class SocketClient {
 
         this.client.on('connectFailed', function (error: any) {
             that.resetGlobals();
-            if (!error.toString().includes("ECONNREFUSED")) {
-                console.log('Socket Connect Error: ' + error.toString());
+            const errStr = error.toString();
+            if (!SOCKET_CONNECT_ERROR_CODES.filter(err => error.code === err).length) {
+                console.log(`Socket Connect Failed: ${errStr}`);
             }
-            if (errorCount == 0 || errorCount > LOG_AFTER_X_TIMES) {
-                putLogEvent(CONNECTION_ERROR_MESSAGE);
-            }
-            if (errorCount > LOG_AFTER_X_TIMES) {
-                errorCount = 0;
-            }
-            errorCount += 1;
+            errorCount = logMsg(CONNECTION_ERROR_MESSAGE, errorCount);
             updateStatusBarItem(that.statusBarItem, STATUS_BAR_MSGS.SERVER_DOWN);
             return recallDaemon(that.statusBarItem);
         });
@@ -78,7 +79,7 @@ export class SocketClient {
         const that = this;
 
         connection.on('error', function (error: any) {
-            putLogEvent("Socket Connection Error: " + error.toString());
+            putLogEvent(`Socket Connection Error: ${error.toString()}`);
             that.resetGlobals();
         });
 
@@ -90,7 +91,11 @@ export class SocketClient {
         const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken);
 
         connection.on('message', function (message: any) {
-            webSocketEvents.onMessage(message);
+            try {
+                webSocketEvents.onMessage(message);
+            } catch (e) {
+                errorCount = logMsg(`${SOCKET_ERRORS.ERROR_MSG_RECEIVE}, ${e}`, errorCount);
+            }
         });
     };
 }

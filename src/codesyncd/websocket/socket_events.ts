@@ -1,12 +1,11 @@
 import vscode from "vscode";
 
-import {putLogEvent} from "../../logger";
-import {CONNECTION_ERROR_MESSAGE, LOG_AFTER_X_TIMES, STATUS_BAR_MSGS} from "../../constants";
-import {updateStatusBarItem} from "../../utils/common";
+import {STATUS_BAR_MSGS} from "../../constants";
+import {logMsg, updateStatusBarItem} from "../../utils/common";
 import {IRepoDiffs, IWebSocketMessage} from "../../interface";
-import {DiffsHandler} from "../handlers/diffs_handler";
 import {DiffHandler} from "../handlers/diff_handler";
 import {recallDaemon} from "../codesyncd";
+import {DiffsHandler} from "../handlers/diffs_handler";
 
 
 const EVENT_TYPES = {
@@ -19,7 +18,7 @@ let errorCount = 0;
 export class SocketEvents {
     connection: any;
     statusBarItem: any;
-    repoDiffs: IRepoDiffs[]
+    repoDiffs: IRepoDiffs[];
     accessToken: string;
 
     constructor(statusBarItem: vscode.StatusBarItem, repoDiffs: IRepoDiffs[], accessToken: string) {
@@ -30,13 +29,7 @@ export class SocketEvents {
     }
 
     onInvalidAuth() {
-        if (errorCount == 0 || errorCount > LOG_AFTER_X_TIMES) {
-            putLogEvent(STATUS_BAR_MSGS.ERROR_SENDING_DIFF);
-        }
-        if (errorCount > LOG_AFTER_X_TIMES) {
-            errorCount = 0;
-        }
-        errorCount += 1;
+        errorCount = logMsg(STATUS_BAR_MSGS.ERROR_SENDING_DIFF, errorCount);
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
         return recallDaemon(this.statusBarItem);
     }
@@ -45,10 +38,15 @@ export class SocketEvents {
         errorCount = 0;
         // Update status bar msg
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.SYNCING);
+        // Send diffs
         for (const repoDiff of this.repoDiffs) {
-            const diffsHandler = new DiffsHandler(repoDiff, this.accessToken, this.connection);
-            await diffsHandler.run();
+            const diffsHandler = new DiffsHandler(repoDiff, this.accessToken);
+            const validDiffs = await diffsHandler.run();
+            if (validDiffs.length) {
+                this.connection.send(JSON.stringify({"diffs": validDiffs}));
+            }
         }
+        // Recall daemon
         return recallDaemon(this.statusBarItem);
     }
 
@@ -59,7 +57,7 @@ export class SocketEvents {
     }
 
     async onMessage(message: IWebSocketMessage) {
-        if (message.type !== 'utf8') return false;
+        if (!message || message.type !== 'utf8') return false;
         const resp = JSON.parse(message.utf8Data || "{}");
         if (!resp.type) return false;
         if (resp.type === EVENT_TYPES.AUTH) {

@@ -49,15 +49,15 @@ export class DiffHandler {
 
     async handleNewFile() {
         const json = await this.handleNewFileUpload();
-        if (json.uploaded) {
-            this.configJSON = json.config;
+        if (!json.uploaded) {
+            return this.configJSON;
         }
+        this.configJSON = json.config;
         this.cleanDiffFile();
         return this.configJSON;
     }
 
     async forceUploadFile() {
-        console.log(`Uploading the file ${this.fileRelPath} first`);
         const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
         const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         const originalsFilePath = path.join(originalsRepoBranchPath, this.fileRelPath);

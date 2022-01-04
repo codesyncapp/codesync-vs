@@ -138,6 +138,13 @@ export class staticFiles {
 	}
 }
 
-export const DAY = 24 * 60 * 60;
+export const FILE_UPLOAD_WAIT_TIMEOUT = 5 * 60;
 export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .syncignore. It follows same format as .gitignore.";
-export const LOG_AFTER_X_TIMES = 300 / 5;  // Log after 5 min as daemon restarts after 5s
+// Log after 5 min, as daemon restarts after 5s so it will log after 60 iterations
+export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
+
+export const SOCKET_CONNECT_ERROR_CODES = ["ECONNREFUSED", "ETIMEDOUT", "ECONNRESET"];
+export const SOCKET_ERRORS = {
+	ERROR_MSG_RECEIVE: 'Error receiving socket msg',
+
+};
