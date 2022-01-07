@@ -107,7 +107,7 @@ export const getPublicPrivateMsg = (repoPath: string) => {
 };
 
 export const STATUS_BAR_MSGS = {
-	ERROR_SENDING_DIFF: 'Error sending diff => Authentication failed',
+	AUTH_FAILED_SENDING_DIFF: 'Error sending diff => Authentication failed',
 	DEFAULT: 'CodeSync => Watching changes',
 	SYNCING: 'CodeSync => Syncing changes',
 	AUTHENTICATION_FAILED: 'CodeSync => Click to authenticate!',

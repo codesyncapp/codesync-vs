@@ -9,9 +9,10 @@ import {DIFF_FILES_PER_ITERATION, STATUS_BAR_MSGS} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
 import {pathUtils} from "../../utils/path_utils";
-import {getActiveUsers, isRepoActive, readYML, updateStatusBarItem} from '../../utils/common';
+import {getActiveUsers, isRepoActive, readYML, updateStatusBarItem, logMsg} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
 
+let errorCount = 0;
 
 export class bufferHandler {
 	/*
@@ -164,7 +165,9 @@ export class bufferHandler {
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			putLogEvent(`Daemon failed: ${e.stack}`);
+			errorCount = logMsg(`Daemon failed: ${e.stack}`, errorCount);
+			// recall daemon
+			return recallDaemon(this.statusBarItem);
 		}
 	}
 }

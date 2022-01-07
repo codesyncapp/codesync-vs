@@ -57,7 +57,7 @@ export class SocketClient {
             that.resetGlobals();
             const errStr = error.toString();
             if (!SOCKET_CONNECT_ERROR_CODES.filter(err => error.code === err).length) {
-                console.log(`Socket Connect Failed: ${errStr}`);
+                console.log(`Socket Connect Failed: ${error.code}, ${errStr}`);
             }
             errorCount = logMsg(CONNECTION_ERROR_MESSAGE, errorCount);
             updateStatusBarItem(that.statusBarItem, STATUS_BAR_MSGS.SERVER_DOWN);
@@ -79,7 +79,11 @@ export class SocketClient {
         const that = this;
 
         connection.on('error', function (error: any) {
-            putLogEvent(`Socket Connection Error: ${error.toString()}`);
+            const msg = `Socket Connection Error: ${error.code}, ${error.toString()}`;
+            if (!SOCKET_CONNECT_ERROR_CODES.filter(err => error.code === err).length) {
+                console.log(msg);
+            }
+            errorCount = logMsg(msg, errorCount);
             that.resetGlobals();
         });
 

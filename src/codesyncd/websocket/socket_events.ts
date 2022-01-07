@@ -29,7 +29,7 @@ export class SocketEvents {
     }
 
     onInvalidAuth() {
-        errorCount = logMsg(STATUS_BAR_MSGS.ERROR_SENDING_DIFF, errorCount);
+        errorCount = logMsg(STATUS_BAR_MSGS.AUTH_FAILED_SENDING_DIFF, errorCount);
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
         return recallDaemon(this.statusBarItem);
     }
@@ -38,15 +38,19 @@ export class SocketEvents {
         errorCount = 0;
         // Update status bar msg
         updateStatusBarItem(this.statusBarItem, STATUS_BAR_MSGS.SYNCING);
+        let diffsCount = 0;
         // Send diffs
         let validDiffs: IDiffToSend[] = [];
         for (const repoDiff of this.repoDiffs) {
+            diffsCount += repoDiff.file_to_diff.length;
             const diffsHandler = new DiffsHandler(repoDiff, this.accessToken);
             const diffs = await diffsHandler.run();
             validDiffs = validDiffs.concat(diffs);
         }
         if (validDiffs.length) {
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
+        } else {
+            errorCount = logMsg(`no valid diff, diffs count: ${diffsCount}`, errorCount);
         }
         // Recall daemon
         return recallDaemon(this.statusBarItem);

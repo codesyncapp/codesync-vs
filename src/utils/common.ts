@@ -31,15 +31,21 @@ export const readYML = (filePath: string) => {
 };
 
 export const updateStatusBarItem = (statusBarItem: vscode.StatusBarItem, text: string) => {
-	if (text === STATUS_BAR_MSGS.AUTHENTICATION_FAILED) {
-		statusBarItem.command = COMMAND.triggerSignUp;
-	} else if (text === STATUS_BAR_MSGS.CONNECT_REPO) {
-		statusBarItem.command = COMMAND.triggerSync;
-	} else {
-		statusBarItem.command = undefined;
+	try {
+		if (text === STATUS_BAR_MSGS.AUTHENTICATION_FAILED) {
+			statusBarItem.command = COMMAND.triggerSignUp;
+		} else if (text === STATUS_BAR_MSGS.CONNECT_REPO) {
+			statusBarItem.command = COMMAND.triggerSync;
+		} else {
+			statusBarItem.command = undefined;
+		}
+		statusBarItem.text = text;
+		statusBarItem.show();
+	} catch (e) {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		putLogEvent(e.stack);
 	}
-	statusBarItem.text = text;
-	statusBarItem.show();
 };
 
 export const isRepoActive = (config: any, repoPath: string) => {

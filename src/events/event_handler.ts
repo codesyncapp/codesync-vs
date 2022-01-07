@@ -85,7 +85,7 @@ export class eventHandler {
 	handleChangeEvent = (changeEvent: vscode.TextDocumentChangeEvent) => {
 		if (this.repoIsNotSynced) return;
 		// If you only care about changes to the active editor's text,
-		//  just check to see if changeEvent.document matches the active editor's document.
+		// just check to see if changeEvent.document matches the active editor's document.
 		const editor = vscode.window.activeTextEditor;
 		if (!editor || editor.document !== changeEvent.document) {
 			this.log("Skipping InActive Editor's document");
