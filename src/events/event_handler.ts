@@ -12,6 +12,7 @@ import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
 import { DIFF_SOURCE } from "../constants";
 import { isRepoSynced, shouldIgnoreFile } from './utils';
+import { putLogEvent } from "../logger";
 
 
 export class eventHandler {
@@ -99,6 +100,7 @@ export class eventHandler {
 
 	handleChanges = (filePath: string, currentText: string) => {
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
+		if (!relPath) return putLogEvent(`no relPath, path: ${filePath}, repoPath: ${this.repoPath}`);
 		// Skip .git and .syncignore files
 		if (shouldIgnoreFile(this.repoPath, relPath)) return;
 		let shadowText = "";
@@ -163,6 +165,7 @@ export class eventHandler {
 		if (lstat.isDirectory()) return;
 
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
+		if (!relPath) return putLogEvent(`no relPath, path: ${filePath}, repoPath: ${this.repoPath}`);
 		if (shouldIgnoreFile(this.repoPath, relPath)) { return; }
 
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
@@ -201,7 +204,7 @@ export class eventHandler {
 		if (this.repoIsNotSynced) return;
 		const itemPath = pathUtils.normalizePath(filePath);
 		const relPath = itemPath.split(path.join(this.repoPath, path.sep))[1];
-
+		if (!relPath) return putLogEvent(`no relPath, path: ${itemPath}, repoPath: ${this.repoPath}`);
 		// Skip .git/ and syncignore files
 		if (shouldIgnoreFile(this.repoPath, relPath)) { return; }
 
@@ -285,6 +288,7 @@ export class eventHandler {
 		const newAbsPath = pathUtils.normalizePath(newPath);
 		const oldRelPath = oldAbsPath.split(path.join(this.repoPath, path.sep))[1];
 		const newRelPath = newAbsPath.split(path.join(this.repoPath, path.sep))[1];
+		if (!newRelPath) return putLogEvent(`no newRelPath, path: ${newAbsPath}, repoPath: ${this.repoPath}`);
 		if (shouldIgnoreFile(this.repoPath, newRelPath)) { return; }
 
 		const isDirectory = fs.lstatSync(newAbsPath).isDirectory();

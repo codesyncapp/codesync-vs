@@ -113,7 +113,11 @@ export class DiffHandler {
 
     static removeDiffFile(diffFilePath: string) {
         if (fs.existsSync(diffFilePath)) {
-            fs.unlinkSync(diffFilePath);
+            try {
+                fs.unlinkSync(diffFilePath);
+            } catch (e) {
+                // pass
+            }
         }
     }
 }

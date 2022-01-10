@@ -94,7 +94,7 @@ export const trackFileHandler = () => {
 	const branch = getBranch(repoPath);
 	const configFiles = configRepo.branches[branch];
 	const relPath = filePath.split(path.join(repoPath, path.sep))[1];
-	if (!(relPath in configFiles )) { return; }
+	if (!(relPath in configFiles)) { return; }
 	const fileId = configFiles[relPath];
 	// Show notification that repo is in sync
 	const playbackLink = `${WEB_APP_URL}/files/${fileId}/history`;

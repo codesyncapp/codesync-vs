@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from "path";
 import ignore from 'ignore';
-import { IGNORABLE_DIRECTORIES } from "../constants";
+import { IGNORABLE_DIRECTORIES, SYNCIGNORE } from "../constants";
 import { isRepoActive, isUserActive, readYML } from '../utils/common';
 import { generateSettings } from "../settings";
 
@@ -10,7 +10,7 @@ export function shouldIgnoreFile(repoPath: string, relPath: string) {
 	const ignorableDirs = ignore().add(IGNORABLE_DIRECTORIES);
 	const isIgnorableDir = ignorableDirs.ignores(relPath);
 	if (isIgnorableDir) return true;
-	const syncIgnorePath = path.join(repoPath, ".syncignore");
+	const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
 	if (!fs.existsSync(syncIgnorePath)) return false;
 	const syncignorePaths = fs.readFileSync(syncIgnorePath, "utf8");
 	const splitLines = syncignorePaths.split("\n");
@@ -24,7 +24,7 @@ export const isRepoSynced = (repoPath: string) => {
 	if (!repoPath) return false;
 	const settings = generateSettings();
 	const configPath = settings.CONFIG_PATH;
-	// If config.yml does not exists, return
+	// If config.yml does not exist, return
 	if (!fs.existsSync(configPath)) return false;
 	try {
 		const config = readYML(configPath);
