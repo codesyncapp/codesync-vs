@@ -19,7 +19,8 @@ import {
     getConfigFilePath,
     getUserFilePath,
     randomBaseRepoPath,
-    randomRepoPath
+    randomRepoPath,
+    setWorkspaceFolders
 } from "./helpers/helpers";
 import {logout} from "../src/utils/auth_utils";
 
@@ -35,6 +36,7 @@ describe("Extension",() => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        setWorkspaceFolders(repoPath);
         untildify.mockReturnValue(baseRepoPath);
         createSystemDirectories();
         global.IS_CODESYNC_DEV = true;
@@ -45,7 +47,7 @@ describe("Extension",() => {
     });
 
     test("Fresh Setup, no user, no repo opened", async () => {
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(undefined);
+        setWorkspaceFolders(undefined);
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
         // showLogin should be true
@@ -99,7 +101,7 @@ describe("Extension",() => {
 
     test("Fresh Setup, no active user, repo not synced", async () => {
         addUser(baseRepoPath, false);
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        setWorkspaceFolders(repoPath);
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
         // showLogin should be true
@@ -114,7 +116,6 @@ describe("Extension",() => {
 
     test("With user, repo not synced", async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
         // showLogin should be true
@@ -132,7 +133,6 @@ describe("Extension",() => {
         const _configData = JSON.parse(JSON.stringify(configData));
         _configData.repos[repoPath].is_disconnected = true;
         fs.writeFileSync(configPath, yaml.safeDump(_configData));
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
         // showLogin should be true
@@ -149,7 +149,6 @@ describe("Extension",() => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
         // showLogin should be true

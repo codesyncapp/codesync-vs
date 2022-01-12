@@ -13,7 +13,8 @@ import {
     getConfigFilePath,
     getSyncIgnoreFilePath,
     randomBaseRepoPath,
-    randomRepoPath
+    randomRepoPath,
+    setWorkspaceFolders
 } from "../../helpers/helpers";
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
@@ -53,7 +54,7 @@ describe("handleChangeEvent",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        setWorkspaceFolders(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
         // Create directories
         fs.mkdirSync(baseRepoPath, { recursive: true });
@@ -226,6 +227,30 @@ describe("handleChangeEvent",  () => {
 
         expect(assertChangeEvent(repoPath, diffsRepo, DUMMY_FILE_CONTENT, updatedText,
             fileRelPath, shadowFilePath)).toBe(true);
+    });
+
+    test("Synced repo, File from other project in workspace", async () => {
+        fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
+        const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
+        const document = {
+            fileName: path.join(randomRepoPath(), "file.js"),
+            getText: function () {
+                return updatedText;
+            }
+        };
+        const handler = new eventHandler();
+        const event = {
+            document,
+            contentChanges: [" Change "]
+        };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
+            document
+        });
+        handler.handleChangeEvent(event);
+        await populateBuffer();
+
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
     });
 
     test("Synced repo, InActive user, should not add diff", () => {

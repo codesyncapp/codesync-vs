@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import vscode from "vscode";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
 
@@ -14,6 +13,7 @@ import {
     getConfigFilePath,
     randomBaseRepoPath,
     randomRepoPath,
+    setWorkspaceFolders,
     waitFor
 } from "../../helpers/helpers";
 import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
@@ -57,7 +57,7 @@ describe("handleDeletedEvent",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        setWorkspaceFolders(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
         // Create directories
         fs.mkdirSync(baseRepoPath, { recursive: true });
@@ -127,6 +127,19 @@ describe("handleDeletedEvent",  () => {
         const handler = new eventHandler();
         handler.handleDeleteEvent(event);
         expect(assertFileDeleteEvent(repoPath, fileRelPath)).toBe(true);
+    });
+
+    test("Event: Synced repo, File from other projec in workspace", () => {
+        const event = {
+            files: [{
+                fsPath: path.join(randomRepoPath(), "file.js")
+            }]
+        };
+        const handler = new eventHandler();
+        handler.handleDeleteEvent(event);
+        // Verify correct diff file has been generated
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
     });
 
     test("With Daemon: Repo synced, shadow exists",  async () => {

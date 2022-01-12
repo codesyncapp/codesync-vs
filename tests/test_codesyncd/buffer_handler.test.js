@@ -15,9 +15,11 @@ import {
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
     getSeqTokenFilePath,
-    getUserFilePath, PRE_SIGNED_URL,
+    getUserFilePath,
+    PRE_SIGNED_URL,
     randomBaseRepoPath,
     randomRepoPath,
+    setWorkspaceFolders,
     TEST_EMAIL,
     TEST_REPO_RESPONSE,
     TEST_USER,
@@ -75,7 +77,7 @@ describe("bufferHandler", () => {
         fs.mkdirSync(baseRepoPath, {recursive: true});
         createSystemDirectories();
         fs.mkdirSync(repoPath, {recursive: true});
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        setWorkspaceFolders(repoPath);
     });
 
     afterEach(() => {
@@ -182,7 +184,7 @@ describe("bufferHandler", () => {
 
     test("No repo opened, no diff", async () => {
         addUser(baseRepoPath);
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(undefined);
+        setWorkspaceFolders(undefined);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.NO_REPO_OPEN)).toBe(true);

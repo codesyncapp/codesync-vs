@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
-import vscode from "vscode";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
 
@@ -17,6 +16,7 @@ import {
     getConfigFilePath,
     randomBaseRepoPath,
     randomRepoPath,
+    setWorkspaceFolders,
     TEST_EMAIL,
     waitFor
 } from "../../helpers/helpers";
@@ -63,7 +63,7 @@ describe("handleRenameFile",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        setWorkspaceFolders(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
         // Create directories
         fs.mkdirSync(baseRepoPath, { recursive: true });
@@ -120,6 +120,27 @@ describe("handleRenameFile",  () => {
                 },
                 newUri: {
                     fsPath: path.join(repoPath, ".git", "objects", "12345")
+                }
+            }]
+        };
+
+        const handler = new eventHandler();
+        handler.handleRenameEvent(event);
+        // Verify no diff file has been generated
+        const diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+    });
+
+    test("Event: Synced repo, File from other project in workspace", () => {
+        const otherRepo = randomRepoPath();
+        const filePath = path.join(otherRepo, "file.js");
+        const event = {
+            files: [{
+                oldUri: {
+                    fsPath: filePath
+                },
+                newUri: {
+                    fsPath: filePath
                 }
             }]
         };

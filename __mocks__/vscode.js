@@ -45,7 +45,7 @@ const workspace = {
     }))
 };
 
-Object.defineProperty(workspace, 'rootPath', {
+Object.defineProperty(workspace, 'workspaceFolders', {
     get: jest.fn(() => undefined),
     set: jest.fn(),
     configurable: true

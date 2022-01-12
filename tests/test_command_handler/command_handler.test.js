@@ -20,6 +20,7 @@ import {
     getUserFilePath,
     randomBaseRepoPath,
     randomRepoPath,
+    setWorkspaceFolders,
     TEST_EMAIL
 } from "../helpers/helpers";
 import {
@@ -52,6 +53,7 @@ describe("SyncHandler",  () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
+        setWorkspaceFolders(repoPath);
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
@@ -70,7 +72,6 @@ describe("SyncHandler",  () => {
     });
 
     test("repo Not In Config", async () => {
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         const user = {
             "email": TEST_EMAIL,
             "plan": {
@@ -93,7 +94,6 @@ describe("SyncHandler",  () => {
     test("repo In Config", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         await SyncHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const repoInSyncMsg = getRepoInSyncMsg(repoPath);
@@ -114,6 +114,7 @@ describe("unSyncHandler",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
+        setWorkspaceFolders(repoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.safeDump(configData));
@@ -131,7 +132,6 @@ describe("unSyncHandler",  () => {
     });
 
     test("Ask Unsync confirmation",  async () => {
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
         await unSyncHandler();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_CONFIRMATION);
@@ -235,6 +235,7 @@ describe("trackRepoHandler",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
+
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.safeDump(configData));
@@ -247,13 +248,13 @@ describe("trackRepoHandler",  () => {
     });
 
     test("No Repo Path",  () => {
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(undefined);
+        setWorkspaceFolders(undefined);
         trackRepoHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(0);
     });
 
     test("Repo in config",  async () => {
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        setWorkspaceFolders(repoPath);
         configData.repos[repoPath] = {
             id: 1234,
             branches: {},
@@ -289,14 +290,14 @@ describe("trackFileHandler",  () => {
     });
 
     test("No Repo Path",  () => {
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(undefined);
+        setWorkspaceFolders(undefined);
         trackFileHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(0);
     });
 
     test("No editor is opened",  () => {
         // Mock data
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        setWorkspaceFolders(repoPath);
         jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce(undefined);
         trackFileHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(0);
@@ -304,7 +305,7 @@ describe("trackFileHandler",  () => {
 
     test("No file is opened",  () => {
         // Mock data
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        setWorkspaceFolders(repoPath);
         jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValueOnce({
             document: {
                 fileName: undefined
@@ -316,7 +317,7 @@ describe("trackFileHandler",  () => {
 
     test("File Path not in config",  () => {
         // Mock data
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        setWorkspaceFolders(repoPath);
         jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document: {
                 fileName: path.join(repoPath, "file.js")
@@ -337,7 +338,7 @@ describe("trackFileHandler",  () => {
 
     test("File Path in config",  () => {
         // Mock data
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        setWorkspaceFolders(repoPath);
         jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document: {
                 fileName: path.join(repoPath, "file.js")

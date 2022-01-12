@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import vscode from "vscode";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
 
@@ -12,7 +11,8 @@ import {
     getConfigFilePath,
     getSyncIgnoreFilePath,
     randomBaseRepoPath,
-    randomRepoPath
+    randomRepoPath,
+    setWorkspaceFolders
 } from "../../helpers/helpers";
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
@@ -56,7 +56,7 @@ describe("handleNewFile",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
-        jest.spyOn(vscode.workspace, 'rootPath', 'get').mockReturnValue(repoPath);
+        setWorkspaceFolders(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
         // Create directories
         fs.mkdirSync(baseRepoPath, { recursive: true });
@@ -126,6 +126,26 @@ describe("handleNewFile",  () => {
         handler.handleCreateEvent(event);
         // Verify file has been created in the .shadow repo and .originals repos
         expect(assertNewFileEvent(repoPath, newRelPath)).toBe(true);
+    });
+
+    test("Event: Synced repo, File of other project in workspace", () => {
+        const otherRepo = randomRepoPath();
+        const filePath = path.join(otherRepo, "file.js");
+        fs.mkdirSync(otherRepo, { recursive: true });
+        fs.writeFileSync(filePath, "use babel;");
+        const handler = new eventHandler();
+        const event = {
+            files: [{
+                fsPath: filePath,
+                path: filePath,
+                scheme: "file"
+            }]
+        };
+        handler.handleCreateEvent(event);
+        // Verify correct diff file has been generated
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+        fs.rmSync(otherRepo, { recursive: true, force: true });
     });
 
     test("Event: handlePastedFile, Repo not synced", () => {

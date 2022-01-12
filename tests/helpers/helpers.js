@@ -6,6 +6,7 @@ import {readYML} from "../../src/utils/common";
 import {diff_match_patch} from "diff-match-patch";
 import {pathUtils} from "../../src/utils/path_utils";
 import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../src/constants";
+import vscode from "vscode";
 
 export function getRandomString(length) {
     var randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -262,4 +263,9 @@ export const addUser = (baseRepoPath, isActive=true) => {
     };
     fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
     return userFilePath;
+};
+
+
+export const setWorkspaceFolders = (repoPath) => {
+    jest.spyOn(vscode.workspace, 'workspaceFolders', 'get').mockReturnValue([{uri: {path: repoPath}}]);
 };
