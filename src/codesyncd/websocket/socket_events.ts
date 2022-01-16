@@ -49,8 +49,6 @@ export class SocketEvents {
         }
         if (validDiffs.length) {
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
-        } else {
-            errorCount = logMsg(`no valid diff, diffs count: ${diffsCount}`, errorCount);
         }
         // Recall daemon
         return recallDaemon(this.statusBarItem);

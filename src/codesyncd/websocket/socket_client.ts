@@ -1,7 +1,6 @@
 import vscode from "vscode";
 import {client} from "websocket";
 
-import {putLogEvent} from "../../logger";
 import {IRepoDiffs} from "../../interface";
 import {logMsg, updateStatusBarItem} from "../../utils/common";
 import {recallDaemon} from "../codesyncd";
