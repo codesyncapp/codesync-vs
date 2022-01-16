@@ -267,5 +267,5 @@ export const addUser = (baseRepoPath, isActive=true) => {
 
 
 export const setWorkspaceFolders = (repoPath) => {
-    jest.spyOn(vscode.workspace, 'workspaceFolders', 'get').mockReturnValue([{uri: {path: repoPath}}]);
+    jest.spyOn(vscode.workspace, 'workspaceFolders', 'get').mockReturnValue([{uri: {fsPath: repoPath}}]);
 };
