@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import yaml from "js-yaml";
 import untildify from "untildify";
 import {isRepoSynced} from "../../../src/events/utils";
@@ -41,6 +42,14 @@ describe("isRepoSynced", () => {
         expect(isRepoSynced(repoPath)).toBe(true);
     });
 
+    test('Nested directory of synced repo', () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+        addUser(baseRepoPath);
+        const subDir = path.join(repoPath, "directory");
+        expect(isRepoSynced(subDir)).toBe(true);
+    });
+    
     test("repoIsNotSynced with invalid config.yml", () => {
         fs.writeFileSync(configPath, "");
         expect(isRepoSynced(repoPath)).toBe(false);

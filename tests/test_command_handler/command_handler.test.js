@@ -138,6 +138,17 @@ describe("unSyncHandler",  () => {
         expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
         expect(vscode.window.showWarningMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.CANCEL);
     });
+
+    test("Ask Unsync confirmation; Nested dir of synced repo",  async () => {
+        const subDir = path.join(repoPath, "directory");
+        setWorkspaceFolders(subDir);
+        await unSyncHandler();
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_CONFIRMATION);
+        expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
+        expect(vscode.window.showWarningMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.CANCEL);
+    });
+
 });
 
 
@@ -264,6 +275,20 @@ describe("trackRepoHandler",  () => {
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
         expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
     });
+
+    test("With nested directory",  async () => {
+        const subDir = path.join(repoPath, "directory");
+        setWorkspaceFolders(subDir);
+    
+        configData.repos[repoPath] = {
+            id: 1234,
+            branches: {},
+        };
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        const playbackLink = trackRepoHandler();
+        expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
+        expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
+    });
 });
 
 describe("trackFileHandler",  () => {
@@ -357,4 +382,26 @@ describe("trackFileHandler",  () => {
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
     });
 
+    test("With nested directory",  () => {
+        // Mock data
+        const subDir = path.join(repoPath, "directory");
+        setWorkspaceFolders(subDir);
+    
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
+            document: {
+                fileName: path.join(repoPath, "file.js")
+            }
+        });
+        getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
+        // Update config file
+        configData.repos[repoPath] = {
+            id: 1234,
+            branches: {}
+        };
+        configData.repos[repoPath].branches[DEFAULT_BRANCH] = {"file.js": 1234};
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+
+        trackFileHandler();
+        expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
+    });
 });

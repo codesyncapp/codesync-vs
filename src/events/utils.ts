@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from "path";
 import ignore from 'ignore';
 import { IGNORABLE_DIRECTORIES, SYNCIGNORE } from "../constants";
-import { isRepoActive, isUserActive, readYML } from '../utils/common';
+import { checkSubDir, isRepoActive, isUserActive, readYML } from '../utils/common';
 import { generateSettings } from "../settings";
 
 export function shouldIgnoreFile(repoPath: string, relPath: string) {
@@ -28,6 +28,10 @@ export const isRepoSynced = (repoPath: string) => {
 	if (!fs.existsSync(configPath)) return false;
 	try {
 		const config = readYML(configPath);
+		const result = checkSubDir(repoPath);
+		if (result.isSubDir) {
+			repoPath = result.parentRepo;
+		}
 		if (!isRepoActive(config, repoPath)) return false;
 		return isAccountActive(config.repos[repoPath].email);
 	} catch (e) {

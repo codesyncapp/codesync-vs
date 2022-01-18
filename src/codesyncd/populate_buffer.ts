@@ -117,14 +117,16 @@ class PopulateBuffer {
 
     async populateBufferForRepo() {
         console.log(`Watching Repo: ${this.repoPath}`);
+        
+        const handler = new eventHandler(this.repoPath, "", this.viaDaemon);
+        
         for (const itemPath of this.itemPaths) {
             let isRename = false;
             const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
             const shadowExists = fs.existsSync(shadowFilePath);
             const fileInConfig = itemPath.rel_path in this.configFiles;
-            const createdAt = formatDatetime(itemPath.modified_at);
+            handler.createdAt = formatDatetime(itemPath.modified_at);
 
-            const handler = new eventHandler(this.repoPath, createdAt, this.viaDaemon);
             // For binary file, can only handle create event
             if (itemPath.is_binary) {
                 if (!fileInConfig) {

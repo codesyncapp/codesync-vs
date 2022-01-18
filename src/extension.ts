@@ -8,7 +8,7 @@ import { COMMAND, STATUS_BAR_MSGS } from './constants';
 
 import { logout } from './utils/auth_utils';
 import { pathUtils } from "./utils/path_utils";
-import { updateStatusBarItem } from "./utils/common";
+import { checkSubDir, updateStatusBarItem } from "./utils/common";
 import { recallDaemon } from "./codesyncd/codesyncd";
 import {
 	unSyncHandler,
@@ -22,7 +22,7 @@ import { putLogEvent } from "./logger";
 
 export async function activate(context: vscode.ExtensionContext) {
 	try {
-		const repoPath = pathUtils.getRootPath() || "";
+		let repoPath = pathUtils.getRootPath();
 
 		vscode.commands.executeCommand('setContext', 'showLogIn', showLogIn());
 		vscode.commands.executeCommand('setContext', 'showConnectRepoView', showConnectRepoView(repoPath));
@@ -45,11 +45,17 @@ export async function activate(context: vscode.ExtensionContext) {
 			console.log(`Configured repo: ${repoPath}`);
 		}
 
+		const result = checkSubDir(repoPath);
+		if (result.isSubDir) {
+			repoPath = result.parentRepo;
+			console.log(`Parent repo: ${repoPath}`);
+		}
+
 		const watcher = vscode.workspace.createFileSystemWatcher("**/*"); //glob search string
 
 		watcher.onDidCreate((e) => {
 			try {
-				const handler = new eventHandler();
+				const handler = new eventHandler(repoPath);
 				handler.handlePastedFile(e.fsPath);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -60,7 +66,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		vscode.workspace.onDidChangeTextDocument(changeEvent => {
 			try {
-				const handler = new eventHandler();
+				const handler = new eventHandler(repoPath);
 				handler.handleChangeEvent(changeEvent);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -71,7 +77,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		vscode.workspace.onDidCreateFiles(changeEvent => {
 			try {
-				const handler = new eventHandler();
+				const handler = new eventHandler(repoPath);
 				handler.handleCreateEvent(changeEvent);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -82,7 +88,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		vscode.workspace.onDidDeleteFiles(changeEvent => {
 			try {
-				const handler = new eventHandler();
+				const handler = new eventHandler(repoPath);
 				handler.handleDeleteEvent(changeEvent);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -93,7 +99,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		vscode.workspace.onDidRenameFiles(changeEvent => {
 			try {
-				const handler = new eventHandler();
+				const handler = new eventHandler(repoPath);
 				handler.handleRenameEvent(changeEvent);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment

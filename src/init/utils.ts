@@ -16,7 +16,7 @@ import { IFileToUpload, IUserPlan } from '../interface';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, DIFF_SOURCE, NOTIFICATION } from '../constants';
-import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems, getBranch } from '../utils/common';
+import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems, getBranch, checkSubDir } from '../utils/common';
 
 export class initUtils {
 	repoPath: string;
@@ -48,6 +48,10 @@ export class initUtils {
 
 	successfullySynced () {
 		const config = readYML(this.settings.CONFIG_PATH);
+		const result = checkSubDir(this.repoPath);
+		if (result.isSubDir) {
+			this.repoPath = result.parentRepo;
+		}
 		if (!(this.repoPath in config.repos)) return false;
 		const configRepo = config.repos[this.repoPath];
 		const branch = getBranch(this.repoPath);

@@ -132,6 +132,21 @@ describe("successfullySynced",  () => {
         const isSynced = initUtilsObj.successfullySynced();
         expect(isSynced).toBe(true);
     });
+
+    test("With nested directory",  () => {
+        const subDir = path.join(repoPath, "directory");
+        const initUtilsObj = new initUtils(subDir);
+        configData.repos[repoPath] = {branches: {}};
+        configData.repos[repoPath].branches[DEFAULT_BRANCH] = {
+            file_1: 123,
+            file_2: 456,
+        };
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
+        const isSynced = initUtilsObj.successfullySynced();
+        expect(isSynced).toBe(true);
+    });
+
 });
 
 describe("getSyncablePaths",  () => {

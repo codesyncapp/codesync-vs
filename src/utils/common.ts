@@ -9,13 +9,14 @@ import {
 	COMMAND,
 	DATETIME_FORMAT,
 	DEFAULT_BRANCH,
-	IGNORABLE_DIRECTORIES, LOG_AFTER_X_TIMES,
+	IGNORABLE_DIRECTORIES,
+	LOG_AFTER_X_TIMES,
 	STATUS_BAR_MSGS,
 	SYNCIGNORE
 } from "../constants";
 import { IUserProfile } from "../interface";
 import { generateSettings } from "../settings";
-import {putLogEvent} from "../logger";
+import { putLogEvent } from "../logger";
 
 
 export const readFile = (filePath: string) => {
@@ -51,6 +52,41 @@ export const updateStatusBarItem = (statusBarItem: vscode.StatusBarItem, text: s
 export const isRepoActive = (config: any, repoPath: string) => {
 	return repoPath in config.repos && !config.repos[repoPath].is_disconnected &&
 		!isEmpty(config.repos[repoPath].branches) && Boolean(config.repos[repoPath].email);
+};
+
+export const checkSubDir = (currentRepoPath: string) => {
+	const settings = generateSettings();
+	const configPath = settings.CONFIG_PATH;
+	// If config.yml does not exist, return
+	if (!fs.existsSync(configPath)) return {
+		isSubDir: false,
+		parentRepo: ""
+	};
+	let config;
+	try {
+		config = readYML(configPath);
+	} catch (e) {
+		return {
+			isSubDir: false,
+			parentRepo: ""
+		};
+	}
+
+	const repoPaths = Object.keys(config.repos);
+	let parentRepo = "";
+	repoPaths.forEach(_repoPath => {
+		const relative = path.relative(_repoPath, currentRepoPath);
+		const isSubdir = relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+		if (isSubdir) {
+			parentRepo = _repoPath;
+			return _repoPath;
+		}
+	});
+	
+	return {
+		isSubDir: !!parentRepo,
+		parentRepo
+	};
 };
 
 export const getSyncIgnoreItems = (repoPath: string) => {

@@ -7,7 +7,7 @@ import {
 	getRepoInSyncMsg,
 	NOTIFICATION
 } from '../constants';
-import { getBranch, isRepoActive, readYML } from '../utils/common';
+import { checkSubDir, getBranch, isRepoActive, readYML } from '../utils/common';
 import { isRepoSynced } from '../events/utils';
 import { initUtils } from '../init/utils';
 import { redirectToBrowser } from "../utils/auth_utils";
@@ -33,8 +33,13 @@ export const SyncHandler = async () => {
 };
 
 export const unSyncHandler = async () => {
-	const repoPath = pathUtils.getRootPath();
+	let repoPath = pathUtils.getRootPath();
 	if (!repoPath) { return; }
+	const result = checkSubDir(repoPath);
+	if (result.isSubDir) {
+		repoPath = result.parentRepo;
+	}
+
 	vscode.window.showWarningMessage(
 		NOTIFICATION.REPO_UNSYNC_CONFIRMATION, ...[
 		NOTIFICATION.YES,
@@ -68,10 +73,14 @@ export const postSelectionUnsync = async (repoPath: string, selection?: string) 
 };
 
 export const trackRepoHandler = () => {
-	const repoPath = pathUtils.getRootPath();
+	let repoPath = pathUtils.getRootPath();
 	if (!repoPath) { return; }
 	const settings = generateSettings();
 	const config = readYML(settings.CONFIG_PATH);
+	const result = checkSubDir(repoPath);
+	if (result.isSubDir) {
+		repoPath = result.parentRepo;
+	}
 	const configRepo = config['repos'][repoPath];
 	// Show notification that repo is in sync
 	const playbackLink = `${WEB_APP_URL}/repos/${configRepo.id}/playback`;
@@ -81,8 +90,12 @@ export const trackRepoHandler = () => {
 
 
 export const trackFileHandler = () => {
-	const repoPath = pathUtils.getRootPath();
+	let repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
+	const result = checkSubDir(repoPath);
+	if (result.isSubDir) {
+		repoPath = result.parentRepo;
+	}
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) return;
 	let filePath = editor?.document.fileName;
