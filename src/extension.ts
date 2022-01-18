@@ -23,9 +23,11 @@ import { putLogEvent } from "./logger";
 export async function activate(context: vscode.ExtensionContext) {
 	try {
 		let repoPath = pathUtils.getRootPath();
-
+		const subDirResult = checkSubDir(repoPath);
 		vscode.commands.executeCommand('setContext', 'showLogIn', showLogIn());
 		vscode.commands.executeCommand('setContext', 'showConnectRepoView', showConnectRepoView(repoPath));
+		vscode.commands.executeCommand('setContext', 'isSubDir', subDirResult.isSubDir);
+		vscode.commands.executeCommand('setContext', 'isSyncIgnored', subDirResult.isSyncIgnored);
 		vscode.commands.executeCommand('setContext', 'CodeSyncActivated', true);
 
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, SignUpHandler));
@@ -43,12 +45,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		if (repoPath) {
 			console.log(`Configured repo: ${repoPath}`);
-		}
-
-		const result = checkSubDir(repoPath);
-		if (result.isSubDir) {
-			repoPath = result.parentRepo;
-			console.log(`Parent repo: ${repoPath}`);
+			if (subDirResult.isSubDir) {
+				repoPath = subDirResult.parentRepo;
+				console.log(`Parent repo: ${repoPath}`);
+			}	
 		}
 
 		const watcher = vscode.workspace.createFileSystemWatcher("**/*"); //glob search string

@@ -68,6 +68,7 @@ export const NOTIFICATION = {
 	OK: "OK!",
 	CONTINUE: "Continue",
 	TRACK_IT: "View on web",
+	TRACK_PARENT_REPO: "View parent repo on web",
 	UNSYNC_REPO: "Unsync",
 	WELCOME_MSG: "Welcome to CodeSync!",
 	LOGIN_SUCCESS: "Success! Now, switch back to Visual Studio Code to connect your repo.",
@@ -86,12 +87,14 @@ export const NOTIFICATION = {
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
 	REPO_IN_SYNC: "is in sync with CodeSync.",
+	REPO_IS_SYNC_IGNORED: "is syncignored and not being synced",
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again",
 	ERROR_SYNCING_REPO: "Error syncing repo.",
 	ERROR_SYNCING_BRANCH: "Error syncing branch",
 	REPO_UNSYNCED: "Repo disconnected successfully",
 	REPO_UNSYNC_FAILED: "Could not unsync the repo",
 	REPO_UNSYNC_CONFIRMATION: "Are you sure to continue? You won't be able to revert this!",
+	REPO_UNSYNC_PARENT_CONFIRMATION: "Are you sure to unsync parent repo? You won't be able to revert this!",
 	LOGGED_OUT_SUCCESSFULLY: "Successfully logged out!"
 };
 
@@ -99,6 +102,13 @@ export const getRepoInSyncMsg = (repoPath: string) => {
     const repoName = path.basename(repoPath);
     return `Repo ${repoName} ${NOTIFICATION.REPO_IN_SYNC}`;
 };
+
+
+export const getRepoIsSyncIgnoredMsg = (repoPath: string) => {
+    const repoName = path.basename(repoPath);
+    return `Repo ${repoName} ${NOTIFICATION.REPO_IS_SYNC_IGNORED}`;
+};
+
 
 export const getPublicPrivateMsg = (repoPath: string) => {
 	// Do you want the repo <name> public or private?
@@ -115,6 +125,7 @@ export const STATUS_BAR_MSGS = {
 	GETTING_READY: 'CodeSync => Getting ready',
 	NO_REPO_OPEN: 'CodeSync => No project is open',
 	CONNECT_REPO: 'CodeSync => Click to connect repo!',
+	IS_SYNCIGNORED_SUB_DIR: 'CodeSync => Repo is syncignored and not being synced!',
 	NO_CONFIG: 'CodeSync => Reload required!'
 };
 

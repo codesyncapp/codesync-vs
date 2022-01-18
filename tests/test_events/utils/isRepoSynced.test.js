@@ -4,11 +4,12 @@ import yaml from "js-yaml";
 import untildify from "untildify";
 import {isRepoSynced} from "../../../src/events/utils";
 import {addUser, Config, getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
-
+import {DEFAULT_BRANCH, SYNCIGNORE} from "../../../src/constants";
 
 describe("isRepoSynced", () => {
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
+    const configData = {repos: {}};
 
     const repoPath = randomRepoPath();
 
@@ -30,19 +31,52 @@ describe("isRepoSynced", () => {
         expect(isRepoSynced(repoPath)).toBe(false);
     });
 
+    test("with invalid config.yml", () => {
+        fs.writeFileSync(configPath, "");
+        expect(isRepoSynced(repoPath)).toBe(false);
+    });
+
+    test("With no repo opened", () => {
+        expect(isRepoSynced("")).toBe(false);
+    });
+
     test("with repo not in config.yml", () => {
         fs.writeFileSync(configPath, yaml.safeDump({'repos': {}}));
         expect(isRepoSynced(repoPath)).toBe(false);
     });
 
-    test("with repo in config.yml", () => {
+    test("Non Synced Branch",  () => {
+        configData.repos[repoPath] = {branches: {}};
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        expect(isRepoSynced(repoPath)).toBe(false);
+    });
+
+    test("Synced repo", () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
         expect(isRepoSynced(repoPath)).toBe(true);
     });
 
-    test('Nested directory of synced repo', () => {
+    test("Invalid file IDs",  () => {
+        configData.repos[repoPath] = {branches: {}};
+        configData.repos[repoPath].branches[DEFAULT_BRANCH] = {
+            file_1: null,
+            file_2: null,
+        };
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        addUser(baseRepoPath);
+        expect(isRepoSynced(repoPath)).toBe(false);
+    });
+
+    test("Disconnected repo",  () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo(true);
+        addUser(baseRepoPath);
+        expect(isRepoSynced(repoPath)).toBe(false);
+    });
+
+    test('Sub directory of synced repo', () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
@@ -50,12 +84,14 @@ describe("isRepoSynced", () => {
         expect(isRepoSynced(subDir)).toBe(true);
     });
     
-    test("repoIsNotSynced with invalid config.yml", () => {
-        fs.writeFileSync(configPath, "");
-        expect(isRepoSynced(repoPath)).toBe(false);
-    });
-
-    test("With no repo opened", () => {
-        expect(isRepoSynced("")).toBe(false);
+    test('Sub directory is syncignored', () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+        addUser(baseRepoPath);
+        // Add subDir to .syncignore
+        const syncignorePath = path.join(repoPath, SYNCIGNORE);
+        fs.writeFileSync(syncignorePath, "directory");        
+        const subDir = path.join(repoPath, "directory");
+        expect(isRepoSynced(subDir)).toBe(false);
     });
 });

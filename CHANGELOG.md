@@ -130,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.29.12] - 2021-10-03
 ### Changed
 - eventHandler class introduced
-- Improved shouldIgnoreFile
+- Improved shouldIgnorePath
 
 ## [2.29.11] - 2021-09-31
 ### Changed

@@ -126,29 +126,30 @@ describe("unSyncHandler",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("No Repo Path",  async () => {
-        await unSyncHandler();
+    test("No Repo Path", () => {
+        unSyncHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Ask Unsync confirmation",  async () => {
-        await unSyncHandler();
+    test("Ask Unsync confirmation", () => {
+        unSyncHandler();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_CONFIRMATION);
         expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
         expect(vscode.window.showWarningMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.CANCEL);
     });
 
-    test("Ask Unsync confirmation; Nested dir of synced repo",  async () => {
+    test("Ask Unsync parent confirmation; Sub Dir of synced repo", () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
-        await unSyncHandler();
+        unSyncHandler();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_CONFIRMATION);
+        expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_PARENT_CONFIRMATION);
         expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
         expect(vscode.window.showWarningMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.CANCEL);
     });
-
 });
 
 

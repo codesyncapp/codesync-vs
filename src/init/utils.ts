@@ -46,22 +46,6 @@ export class initUtils {
 		return isValid;
 	}
 
-	successfullySynced () {
-		const config = readYML(this.settings.CONFIG_PATH);
-		const result = checkSubDir(this.repoPath);
-		if (result.isSubDir) {
-			this.repoPath = result.parentRepo;
-		}
-		if (!(this.repoPath in config.repos)) return false;
-		const configRepo = config.repos[this.repoPath];
-		const branch = getBranch(this.repoPath);
-		// If branch is not synced, daemon will take care of that
-		if (!(branch in configRepo.branches)) { return true; }
-		const configFiles = configRepo.branches[branch];
-		const invalidFiles = Object.keys(configFiles).filter(relPath => configFiles[relPath] === null);
-		return !(invalidFiles.length && invalidFiles.length === Object.keys(configFiles).length);
-	}
-
 	isSyncAble(relPath: string) {
 		const syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
 		const ig = ignore().add(syncIgnoreItems);

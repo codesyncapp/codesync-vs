@@ -17,6 +17,7 @@ import {
 import { IUserProfile } from "../interface";
 import { generateSettings } from "../settings";
 import { putLogEvent } from "../logger";
+import { shouldIgnorePath } from '../events/utils';
 
 
 export const readFile = (filePath: string) => {
@@ -57,10 +58,12 @@ export const isRepoActive = (config: any, repoPath: string) => {
 export const checkSubDir = (currentRepoPath: string) => {
 	const settings = generateSettings();
 	const configPath = settings.CONFIG_PATH;
+	let isSyncIgnored = false;
 	// If config.yml does not exist, return
 	if (!fs.existsSync(configPath)) return {
 		isSubDir: false,
-		parentRepo: ""
+		parentRepo: "",
+		isSyncIgnored
 	};
 	let config;
 	try {
@@ -68,7 +71,8 @@ export const checkSubDir = (currentRepoPath: string) => {
 	} catch (e) {
 		return {
 			isSubDir: false,
-			parentRepo: ""
+			parentRepo: "",
+			isSyncIgnored
 		};
 	}
 
@@ -79,13 +83,16 @@ export const checkSubDir = (currentRepoPath: string) => {
 		const isSubdir = relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 		if (isSubdir) {
 			parentRepo = _repoPath;
+			const relPath = currentRepoPath.split(path.join(_repoPath, path.sep))[1];
+			isSyncIgnored = shouldIgnorePath(_repoPath, relPath);
 			return _repoPath;
 		}
 	});
 	
 	return {
 		isSubDir: !!parentRepo,
-		parentRepo
+		parentRepo,
+		isSyncIgnored
 	};
 };
 

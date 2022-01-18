@@ -9,9 +9,8 @@ import {
 } from "../constants";
 import { isRepoSynced } from '../events/utils';
 import { isPortAvailable } from './auth_utils';
-import { showConnectRepo, showSignUpButtons } from './notifications';
-import { getActiveUsers } from './common';
-import { initUtils } from '../init/utils';
+import { showConnectRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
+import { checkSubDir, getActiveUsers } from './common';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { generateSettings } from "../settings";
 import { initExpressServer } from "../server/server";
@@ -91,6 +90,11 @@ export const setupCodeSync = async (repoPath: string) => {
 		return port;
 	}
 
+	if (showRepoIsSyncIgnoredView(repoPath)) {
+		showSyncIgnoredRepo(repoPath);
+		return port;
+	}
+
 	if (showConnectRepoView(repoPath)) {
 		// Show notification to user to Sync the repo
 		showConnectRepo(repoPath);
@@ -99,10 +103,9 @@ export const setupCodeSync = async (repoPath: string) => {
 
 	if (!repoPath) { return; }
 
+	const button = checkSubDir(repoPath).isSubDir ? NOTIFICATION.TRACK_PARENT_REPO : NOTIFICATION.TRACK_IT;
 	// Show notification that repo is in sync
-	vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath), ...[
-		NOTIFICATION.TRACK_IT
-	]).then(selection => {
+	vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath), button).then(selection => {
 		if (!selection) { return; }
 		if (selection === NOTIFICATION.TRACK_IT) {
 			trackRepoHandler();
@@ -121,6 +124,12 @@ export const showLogIn = () => {
 };
 
 export const showConnectRepoView = (repoPath: string) => {
-	if (!repoPath) { return false; }
-	return !isRepoSynced(repoPath) || !new initUtils(repoPath).successfullySynced();
+	if (!repoPath) return false;
+	return !isRepoSynced(repoPath);
+};
+
+export const showRepoIsSyncIgnoredView = (repoPath: string) => {
+	if (!repoPath) return false;
+	const result = checkSubDir(repoPath);
+	return result.isSubDir && result.isSyncIgnored;
 };

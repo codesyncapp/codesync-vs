@@ -80,12 +80,22 @@
         {
           "id": "codesync-signed-up-not-synced",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && showConnectRepoView && CodeSyncActivated"
+          "when": "workbenchState != empty && !showLogIn && showConnectRepoView && !isSubDir && CodeSyncActivated"
         },
         {
           "id": "codesync-signed-up-and-synced",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && CodeSyncActivated"
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSubDir && CodeSyncActivated"
+        },
+        {
+          "id": "codesync-signed-up-is-sub-dir",
+          "name": "CodeSync",
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && isSubDir && !isSyncIgnored && CodeSyncActivated"
+        },
+        {
+          "id": "codesync-signed-up-is-sub-dir-syncignored",
+          "name": "CodeSync",
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && isSubDir && isSyncIgnored && CodeSyncActivated"
         },
         {
           "id": "codesync-is-loading",
@@ -110,6 +120,14 @@
       {
         "view": "codesync-signed-up-and-synced",
         "contents": "Repo is in sync with CodeSync.\n[View on web](command:codesync.trackRepo)\n[Unsync](command:codesync.unsync)"
+      },
+      {
+        "view": "codesync-signed-up-is-sub-dir",
+        "contents": "Repo is in sync with CodeSync.\n[View parent repo on web](command:codesync.trackRepo)\n[Unsync parent repo](command:codesync.unsync)"
+      },
+      {
+        "view": "codesync-signed-up-is-sub-dir-syncignored",
+        "contents": "Repo is SyncIgnored and not being synced.\n[View parent repo on web](command:codesync.trackRepo)\n[Unsync parent repo](command:codesync.unsync)"
       },
       {
         "view": "codesync-is-loading",

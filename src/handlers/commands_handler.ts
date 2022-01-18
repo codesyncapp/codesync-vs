@@ -9,7 +9,6 @@ import {
 } from '../constants';
 import { checkSubDir, getBranch, isRepoActive, readYML } from '../utils/common';
 import { isRepoSynced } from '../events/utils';
-import { initUtils } from '../init/utils';
 import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
 import { updateRepo } from '../utils/sync_repo_utils';
@@ -23,28 +22,28 @@ export const SignUpHandler = () => {
 export const SyncHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) { return; }
-	if (!isRepoSynced(repoPath) || !new initUtils(repoPath).successfullySynced()) {
-		// Show notification to user to choose account
-		await showChooseAccount(repoPath);
+	if (isRepoSynced(repoPath)) {
+		// Show notification that repo is in sync
+		vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
 		return;
 	}
-	// Show notification that repo is in sync
-	vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
+	// Show notification to user to choose account
+	await showChooseAccount(repoPath);
+	return;
 };
 
 export const unSyncHandler = async () => {
 	let repoPath = pathUtils.getRootPath();
 	if (!repoPath) { return; }
+	let msg = NOTIFICATION.REPO_UNSYNC_CONFIRMATION;
 	const result = checkSubDir(repoPath);
 	if (result.isSubDir) {
 		repoPath = result.parentRepo;
+		msg = NOTIFICATION.REPO_UNSYNC_PARENT_CONFIRMATION;
 	}
-
-	vscode.window.showWarningMessage(
-		NOTIFICATION.REPO_UNSYNC_CONFIRMATION, ...[
-		NOTIFICATION.YES,
-		NOTIFICATION.CANCEL
-	]).then(async selection => {
+	console.log(result.isSubDir, msg);
+	vscode.window.showWarningMessage(msg, NOTIFICATION.YES, NOTIFICATION.CANCEL)
+	.then(async selection => {
 		await postSelectionUnsync(repoPath, selection);
 	});
 };
@@ -81,7 +80,7 @@ export const trackRepoHandler = () => {
 	if (result.isSubDir) {
 		repoPath = result.parentRepo;
 	}
-	const configRepo = config['repos'][repoPath];
+	const configRepo = config.repos[repoPath];
 	// Show notification that repo is in sync
 	const playbackLink = `${WEB_APP_URL}/repos/${configRepo.id}/playback`;
 	vscode.env.openExternal(vscode.Uri.parse(playbackLink));

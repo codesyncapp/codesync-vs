@@ -12,8 +12,14 @@ import {
     randomBaseRepoPath,
     randomRepoPath
 } from "../helpers/helpers";
-import {createSystemDirectories, setupCodeSync, showConnectRepoView, showLogIn} from "../../src/utils/setup_utils";
-import {getRepoInSyncMsg, NOTIFICATION} from "../../src/constants";
+import {
+    createSystemDirectories,
+    setupCodeSync,
+    showConnectRepoView, 
+    showLogIn,
+    showRepoIsSyncIgnoredView
+} from "../../src/utils/setup_utils";
+import {getRepoInSyncMsg, getRepoIsSyncIgnoredMsg, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 
 
 describe("createSystemDirectories",  () => {
@@ -139,7 +145,13 @@ describe("setupCodeSync",  () => {
         expect(shouldShowConnectRepoView).toBe(true);
     });
 
-    test('with nested directory',  async () => {
+    test('showRepoIsSyncIgnoredView',  async () => {
+        fs.writeFileSync(configPath, yaml.safeDump({repos: {}}));
+        const shouldShow = showRepoIsSyncIgnoredView(repoPath);
+        expect(shouldShow).toBe(false);
+    });
+
+    test('with sub directory',  async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
@@ -151,11 +163,31 @@ describe("setupCodeSync",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const repoInSyncMsg = getRepoInSyncMsg(subDir);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(repoInSyncMsg);
-        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_IT);
+        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
         fs.rmSync(userFilePath);
     });
 
-    test('with nested directory and parent is_disconnected',  async () => {
+    test('with sub directory syncignored',  async () => {
+        const subDirName = "directory";
+        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+        addUser(baseRepoPath);
+        // Add subDir to .syncignore
+        const syncignorePath = path.join(repoPath, SYNCIGNORE);
+        fs.writeFileSync(syncignorePath, subDirName);
+        const subDir = path.join(repoPath, subDirName);
+        const port = await setupCodeSync(subDir);
+        // should return port number
+        expect(port).toBeTruthy();
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        const msg = getRepoIsSyncIgnoredMsg(subDir);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
+        fs.rmSync(userFilePath);
+    });
+
+    test('with nested directory whose parent is_disconnected',  async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo(true);
