@@ -95,7 +95,7 @@
         {
           "id": "codesync-signed-up-is-sub-dir-syncignored",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && isSubDir && isSyncIgnored && CodeSyncActivated"
+          "when": "workbenchState != empty && !showLogIn && showConnectRepoView && isSubDir && isSyncIgnored && CodeSyncActivated"
         },
         {
           "id": "codesync-is-loading",
