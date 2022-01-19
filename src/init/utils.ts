@@ -16,7 +16,7 @@ import { IFileToUpload, IUserPlan } from '../interface';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, DIFF_SOURCE, NOTIFICATION } from '../constants';
-import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems, getBranch, checkSubDir } from '../utils/common';
+import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems } from '../utils/common';
 
 export class initUtils {
 	repoPath: string;
@@ -201,7 +201,9 @@ export class initUtils {
 				// the second function had a shorter timeout.
 				if (err) return;
 				// delete .originals repo
-				fs.rmdirSync(originalsRepoBranchPath, { recursive: true });
+				if (fs.existsSync(originalsRepoBranchPath)) {
+					fs.rmdirSync(originalsRepoBranchPath, { recursive: true });
+				}
 				// Hide Connect Repo
 				vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
 

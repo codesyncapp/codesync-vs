@@ -109,7 +109,7 @@ describe("detectBranchChange", () => {
         expect(readyRepos).toStrictEqual({});
     });
 
-    test("No valid user", async () => {
+    test("No active user", async () => {
         addUser(baseRepoPath, false);
         jest.spyOn(global.console, 'log');
         const _configData = {repos: {}};

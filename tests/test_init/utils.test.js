@@ -4,7 +4,6 @@ import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from 'untildify';
-import getBranchName from 'current-git-branch';
 import {initUtils} from "../../src/init/utils";
 
 import {
@@ -16,7 +15,7 @@ import {
     TEST_USER,
     USER_PLAN,
     randomBaseRepoPath,
-    randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, getSeqTokenFilePath, Config, addUser
+    randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, getSeqTokenFilePath, Config, addUser, waitFor
 } from "../helpers/helpers";
 import {DEFAULT_BRANCH, DIFF_SOURCE, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
@@ -323,10 +322,10 @@ describe("uploadRepo",  () => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         // Create directories
-        fs.mkdirSync(baseRepoPath, { recursive: true });
+        fs.mkdirSync(baseRepoPath, {recursive: true});
+        fs.mkdirSync(repoPath, {recursive: true});
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-        fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.safeDump(configData));
         fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
@@ -370,8 +369,18 @@ describe("uploadRepo",  () => {
             .mockResponseOnce(JSON.stringify({status: true}))
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
+        const filePaths = itemPaths.map(itemPath => itemPath.file_path);
+        const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        // copy files to .originals repo
+        const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+        initUtilsObj.copyFilesTo(filePaths, originalsRepoBranchPath);
+        // copy files to .shadow repo
+        const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+        initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
+    
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
             TEST_EMAIL, false);
+        await waitFor(3);
 
         // Verify file Ids have been added in config
         const config = readYML(configPath);
@@ -387,6 +396,12 @@ describe("uploadRepo",  () => {
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_SYNCED);
+        // Make sure files have been deleted from .originals
+        filePaths.forEach(_filePath => {
+            const relPath = _filePath.split(path.join(repoPath, path.sep))[1];
+            const originalPath = path.join(originalsRepoBranchPath, relPath);
+            expect(fs.existsSync(originalPath)).toBe(false);
+        });
     });
 
     test("repo Not In Config",  async () => {
@@ -400,7 +415,7 @@ describe("uploadRepo",  () => {
         fetchMock
             .mockResponseOnce(JSON.stringify({status: true}))
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
-
+    
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
             TEST_EMAIL, false);
 
