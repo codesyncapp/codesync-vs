@@ -87,7 +87,7 @@ export const showSyncIgnoredRepo = (repoPath: string) => {
 	const msg = getRepoIsSyncIgnoredMsg(repoPath);
 	vscode.window.showInformationMessage(msg, NOTIFICATION.TRACK_PARENT_REPO).then(selection => {
 		if (!selection) { return; }
-		if (selection === NOTIFICATION.TRACK_IT) {
+		if (selection === NOTIFICATION.TRACK_PARENT_REPO) {
 			trackRepoHandler();
 		}
 	});

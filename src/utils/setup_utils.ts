@@ -90,6 +90,8 @@ export const setupCodeSync = async (repoPath: string) => {
 		return port;
 	}
 
+	if (!repoPath) { return; }
+
 	if (showRepoIsSyncIgnoredView(repoPath)) {
 		showSyncIgnoredRepo(repoPath);
 		return port;
@@ -100,8 +102,6 @@ export const setupCodeSync = async (repoPath: string) => {
 		showConnectRepo(repoPath);
 		return port;
 	}
-
-	if (!repoPath) { return; }
 
 	const button = checkSubDir(repoPath).isSubDir ? NOTIFICATION.TRACK_PARENT_REPO : NOTIFICATION.TRACK_IT;
 	// Show notification that repo is in sync

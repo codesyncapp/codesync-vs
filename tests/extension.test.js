@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import vscode from "vscode";
 import yaml from "js-yaml";
 import untildify from "untildify";
@@ -23,7 +24,6 @@ import {
     setWorkspaceFolders
 } from "./helpers/helpers";
 import {logout} from "../src/utils/auth_utils";
-import path from "path/posix";
 
 
 describe("Extension",() => {

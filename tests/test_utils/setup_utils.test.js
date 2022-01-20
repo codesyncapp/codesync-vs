@@ -187,7 +187,7 @@ describe("setupCodeSync",  () => {
         fs.rmSync(userFilePath);
     });
 
-    test('with nested directory whose parent is_disconnected',  async () => {
+    test('with sub directory whose parent is_disconnected',  async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo(true);

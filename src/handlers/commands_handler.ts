@@ -41,7 +41,6 @@ export const unSyncHandler = async () => {
 		repoPath = result.parentRepo;
 		msg = NOTIFICATION.REPO_UNSYNC_PARENT_CONFIRMATION;
 	}
-	console.log(result.isSubDir, msg);
 	vscode.window.showWarningMessage(msg, NOTIFICATION.YES, NOTIFICATION.CANCEL)
 	.then(async selection => {
 		await postSelectionUnsync(repoPath, selection);
