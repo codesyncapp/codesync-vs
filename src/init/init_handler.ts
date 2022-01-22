@@ -10,23 +10,25 @@ import {
 } from "../constants";
 import { initUtils } from './utils';
 import { IUser, IUserPlan } from '../interface';
-import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { askPublicPrivate } from '../utils/notifications';
 import { askAndTriggerSignUp } from '../utils/auth_utils';
 import { checkServerDown, getUserForToken } from "../utils/api_utils";
-import { getBranch, isRepoActive, readFile, readYML } from "../utils/common";
+import { getBranch, readFile } from "../utils/common";
+import { isRepoSynced } from '../events/utils';
 
 export class initHandler {
 	repoPath: string;
 	accessToken: string;
 	viaDaemon: boolean;
+	branch: string;
 
 	constructor(repoPath: string, accessToken: string, viaDaemon=false) {
 		this.repoPath = repoPath;
 		this.accessToken = accessToken;
 		// This is set True via daemon
 		this.viaDaemon = viaDaemon;
+		this.branch = getBranch(this.repoPath);
 	}
 
 	syncRepo = async () => {
@@ -51,18 +53,15 @@ export class initHandler {
 			user = json.response;
 		}
 
-		const settings = generateSettings();
-		const branch = getBranch(this.repoPath);
-		const configJSON = readYML(settings.CONFIG_PATH);
-		const isRepoSynced = isRepoActive(configJSON, this.repoPath);
+		const repoSynced = isRepoSynced(this.repoPath);
 
-		if (isRepoSynced && !this.viaDaemon) {
-			vscode.window.showWarningMessage(`Repo is already in sync with branch: ${branch}`);
+		if (repoSynced && !this.viaDaemon) {
+			vscode.window.showWarningMessage(`Repo is already in sync with branch: ${this.branch}`);
 			return;
 		}
 
 		// In case of branch sync, we don't care of user plan
-		if (!isServerDown && !isRepoSynced && !this.viaDaemon && user.repo_count >= user.plan.REPO_COUNT) {
+		if (!isServerDown && !repoSynced && !this.viaDaemon && user.repo_count >= user.plan.REPO_COUNT) {
 			vscode.window.showErrorMessage(NOTIFICATION.UPGRADE_PLAN);
 			return;
 		}
@@ -85,7 +84,7 @@ export class initHandler {
 
 		// Only ask for public/private in case of Repo Sync. Do not ask for Branch Sync.
 		if (this.viaDaemon) {
-			await this.postPublicPrivate(branch, user, false);
+			await this.postPublicPrivate(user, false);
 			return;
 		}
 		// Open .syncignore and ask public/private info
@@ -99,17 +98,17 @@ export class initHandler {
 					return;
 				}
 				const isPublic = buttonSelected == NOTIFICATION.PUBLIC;
-				await this.postPublicPrivate(branch, user, isPublic);
+				await this.postPublicPrivate(user, isPublic);
 			});
 		});
 	};
 
-	postPublicPrivate = async (branch: string, user: IUser, isPublic: boolean) => {
+	postPublicPrivate = async (user: IUser, isPublic: boolean) => {
 		const initUtilsObj = new initUtils(this.repoPath, this.viaDaemon);
 		// get item paths to upload and copy in respective repos
 		const itemPaths = initUtilsObj.getSyncablePaths(user.plan);
 		const filePaths = itemPaths.map(itemPath => itemPath.file_path);
-		const pathUtilsObj = new pathUtils(this.repoPath, branch);
+		const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
 		// copy files to .originals repo
 		const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 		initUtilsObj.copyFilesTo(filePaths, originalsRepoBranchPath);
@@ -117,6 +116,6 @@ export class initHandler {
 		const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
 		initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
 		// Upload repo/branch
-		await initUtilsObj.uploadRepo(branch, this.accessToken, itemPaths, user.email, isPublic);
+		await initUtilsObj.uploadRepo(this.branch, this.accessToken, itemPaths, user.email, isPublic);
 	};
 }

@@ -19,7 +19,8 @@ import {
     TEST_EMAIL,
     TEST_REPO_RESPONSE,
     TEST_USER,
-    waitFor
+    waitFor, 
+    addUser
 } from "../helpers/helpers";
 import {SYNC_IGNORE_FILE_DATA} from "../../src/constants";
 import {pathUtils} from "../../src/utils/path_utils";
@@ -86,6 +87,7 @@ describe("initHandler",  () => {
             // Add repo in config
             const configUtil = new Config(repoPath, configPath);
             configUtil.addRepo();
+            addUser(baseRepoPath);
             await handler.syncRepo();
             // Verify error msg
             expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
