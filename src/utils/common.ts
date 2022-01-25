@@ -78,16 +78,19 @@ export const checkSubDir = (currentRepoPath: string) => {
 
 	const repoPaths = Object.keys(config.repos);
 	let parentRepo = "";
-	repoPaths.forEach(_repoPath => {
+	for (const _repoPath of repoPaths) {
+		const configRepo = config.repos[_repoPath];
+		// Skip disconnected repos
+		if (configRepo.is_disconnected) continue;
 		const relative = path.relative(_repoPath, currentRepoPath);
 		const isSubdir = relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 		if (isSubdir) {
 			parentRepo = _repoPath;
 			const relPath = currentRepoPath.split(path.join(_repoPath, path.sep))[1];
 			isSyncIgnored = shouldIgnorePath(_repoPath, relPath);
-			return _repoPath;
+			break;
 		}
-	});
+	}
 	
 	return {
 		isSubDir: !!parentRepo,

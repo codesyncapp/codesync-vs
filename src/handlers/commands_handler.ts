@@ -56,20 +56,21 @@ export const postSelectionUnsync = async (repoPath: string, selection?: string) 
 	const settings = generateSettings();
 	const config = readYML(settings.CONFIG_PATH);
 	if (!isRepoActive(config, repoPath)) { return; }
-	const configRepo = config['repos'][repoPath];
+	const configRepo = config.repos[repoPath];
 	const users = readYML(settings.USER_PATH);
 	const accessToken = users[configRepo.email].access_token;
 	const json = await updateRepo(accessToken, configRepo.id, { is_in_sync: false });
 	if (json.error) {
-		vscode.window.showErrorMessage(NOTIFICATION.REPO_UNSYNC_FAILED);
-	} else {
-		// Show notification that repo is not in sync
-		configRepo.is_disconnected = true;
-		fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(config));
-		// TODO: Maybe should delete repo from .shadow and .originals,
-		vscode.commands.executeCommand('setContext', 'showConnectRepoView', true);
-		vscode.window.showInformationMessage(NOTIFICATION.REPO_UNSYNCED);
+		return vscode.window.showErrorMessage(NOTIFICATION.REPO_UNSYNC_FAILED);
 	}
+	// Show notification that repo is not in sync
+	configRepo.is_disconnected = true;
+	fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(config));
+	// TODO: Maybe should delete repo from .shadow and .originals,
+	vscode.commands.executeCommand('setContext', 'showConnectRepoView', true);
+	vscode.commands.executeCommand('setContext', 'isSubDir', false);
+	vscode.commands.executeCommand('setContext', 'isSyncIgnored', false);
+	vscode.window.showInformationMessage(NOTIFICATION.REPO_UNSYNCED);
 };
 
 export const trackRepoHandler = () => {
@@ -103,7 +104,7 @@ export const trackFileHandler = () => {
 	filePath = pathUtils.normalizePath(filePath);
 	const settings = generateSettings();
 	const config = readYML(settings.CONFIG_PATH);
-	const configRepo = config['repos'][repoPath];
+	const configRepo = config.repos[repoPath];
 	const branch = getBranch(repoPath);
 	const configFiles = configRepo.branches[branch];
 	const relPath = filePath.split(path.join(repoPath, path.sep))[1];

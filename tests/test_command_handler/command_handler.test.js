@@ -207,16 +207,14 @@ describe("postSelectionUnsync",  () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({error: "NOT SO FAST"}));
-
         await postSelectionUnsync(repoPath, NOTIFICATION.YES);
-
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_FAILED);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Synced successfully",  async () => {
+    test("Should Unsync",  async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({}));
@@ -227,9 +225,16 @@ describe("postSelectionUnsync",  () => {
         const config = readYML(configPath);
         expect(config.repos[repoPath].is_disconnected).toBe(true);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(1);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showConnectRepoView");
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual("setContext");
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual("isSubDir");
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual("setContext");
+        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual("isSyncIgnored");
+        expect(vscode.commands.executeCommand.mock.calls[2][2]).toStrictEqual(false);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNCED);
     });
