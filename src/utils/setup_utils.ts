@@ -2,10 +2,12 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
 import {
+	getDirectoryIsSyncedMsg,
 	getRepoInSyncMsg,
 	MAX_PORT,
 	MIN_PORT,
-	NOTIFICATION
+	NOTIFICATION,
+	SYNCIGNORE
 } from "../constants";
 import { isRepoSynced } from '../events/utils';
 import { isPortAvailable } from './auth_utils';
@@ -90,27 +92,9 @@ export const setupCodeSync = async (repoPath: string) => {
 		return port;
 	}
 
-	if (!repoPath) { return; }
 
-	if (showRepoIsSyncIgnoredView(repoPath)) {
-		showSyncIgnoredRepo(repoPath);
-		return port;
-	}
 
-	if (showConnectRepoView(repoPath)) {
-		// Show notification to user to Sync the repo
-		showConnectRepo(repoPath);
-		return port;
-	}
-
-	const button = checkSubDir(repoPath).isSubDir ? NOTIFICATION.TRACK_PARENT_REPO : NOTIFICATION.TRACK_IT;
-	// Show notification that repo is in sync
-	vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath), button).then(selection => {
-		if (!selection) { return; }
-		if (selection === NOTIFICATION.TRACK_IT) {
-			trackRepoHandler();
-		}
-	});
+	return showRepoStatusMsg(repoPath, port);
 };
 
 export const showLogIn = () => {
@@ -123,6 +107,44 @@ export const showLogIn = () => {
 	return validUsers.length === 0;
 };
 
+export const showRepoStatusMsg = (repoPath: string, port?: number) => {
+	if (!repoPath) { return; }
+
+	const subDirResult = checkSubDir(repoPath);
+
+	vscode.commands.executeCommand('setContext', 'isSubDir', subDirResult.isSubDir);
+	vscode.commands.executeCommand('setContext', 'isSyncIgnored', subDirResult.isSyncIgnored);
+
+	registerSyncIgnoreSaveEvent(repoPath);
+	
+	if (showRepoIsSyncIgnoredView(repoPath)) {
+		showSyncIgnoredRepo(repoPath, subDirResult.parentRepo);
+		return port;
+	}
+
+	if (showConnectRepoView(repoPath)) {
+		// Show notification to user to Sync the repo
+		showConnectRepo(repoPath);
+		return port;
+	}
+
+	let msg = getRepoInSyncMsg(repoPath);
+	let button = NOTIFICATION.TRACK_IT;
+
+	if (subDirResult.isSubDir) {
+		button = NOTIFICATION.TRACK_PARENT_REPO;
+		msg = getDirectoryIsSyncedMsg(repoPath, subDirResult.parentRepo);
+	}
+
+	// Show notification that repo is in sync
+	vscode.window.showInformationMessage(msg, button).then(selection => {
+		if (!selection) { return; }
+		if (selection === NOTIFICATION.TRACK_IT) {
+			trackRepoHandler();
+		}
+	});
+};
+
 export const showConnectRepoView = (repoPath: string) => {
 	if (!repoPath) return false;
 	return !isRepoSynced(repoPath);
@@ -132,4 +154,14 @@ export const showRepoIsSyncIgnoredView = (repoPath: string) => {
 	if (!repoPath) return false;
 	const result = checkSubDir(repoPath);
 	return result.isSubDir && result.isSyncIgnored;
+};
+
+const registerSyncIgnoreSaveEvent = (repoPath: string) => {
+	if (!(global as any).didSaveSyncIgnoreEventAdded) {
+		(global as any).didSaveSyncIgnoreEventAdded = true;
+		vscode.workspace.onDidSaveTextDocument(async event => {
+			if (!event.fileName.endsWith(SYNCIGNORE)) return;
+			showRepoStatusMsg(repoPath);
+		});
+	}
 };

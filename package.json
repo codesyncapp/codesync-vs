@@ -90,12 +90,12 @@
         {
           "id": "codesync-signed-up-is-sub-dir",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && isSubDir && !isSyncIgnored && CodeSyncActivated"
+          "when": "workbenchState != empty && !showLogIn && isSubDir && !isSyncIgnored && CodeSyncActivated"
         },
         {
           "id": "codesync-signed-up-is-sub-dir-syncignored",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && showConnectRepoView && isSubDir && isSyncIgnored && CodeSyncActivated"
+          "when": "workbenchState != empty && !showLogIn && isSubDir && isSyncIgnored && CodeSyncActivated"
         },
         {
           "id": "codesync-is-loading",
@@ -123,11 +123,11 @@
       },
       {
         "view": "codesync-signed-up-is-sub-dir",
-        "contents": "Repo is in sync with CodeSync.\n[View parent repo on web](command:codesync.trackRepo)\n[Unsync parent repo](command:codesync.unsync)"
+        "contents": "You are good to go ✅.\nCurrent directory is in sync with CodeSync because a parent repo is in sync.\n[View parent repo on web](command:codesync.trackRepo)\n[Unsync parent repo](command:codesync.unsync)"
       },
       {
         "view": "codesync-signed-up-is-sub-dir-syncignored",
-        "contents": "Repo is SyncIgnored and not being synced.\n[View parent repo on web](command:codesync.trackRepo)\n[Unsync parent repo](command:codesync.unsync)"
+        "contents": "Current directory is syncignored by a parent repo. To sync this directory, remove it from .syncignore.\n[Open .syncignore](command:codesync.openSyncIgnore)\n[View parent repo on web](command:codesync.trackRepo)\n[Unsync parent repo](command:codesync.unsync)"
       },
       {
         "view": "codesync-is-loading",

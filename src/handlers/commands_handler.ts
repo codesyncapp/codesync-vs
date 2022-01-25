@@ -5,7 +5,8 @@ import yaml from "js-yaml";
 
 import {
 	getRepoInSyncMsg,
-	NOTIFICATION
+	NOTIFICATION,
+	SYNCIGNORE
 } from '../constants';
 import { checkSubDir, getBranch, isRepoActive, readYML } from '../utils/common';
 import { isRepoSynced } from '../events/utils';
@@ -14,6 +15,7 @@ import { showChooseAccount } from "../utils/notifications";
 import { updateRepo } from '../utils/sync_repo_utils';
 import { generateSettings, WEB_APP_URL } from "../settings";
 import { pathUtils } from "../utils/path_utils";
+import { showRepoStatusMsg } from "../utils/setup_utils";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
@@ -110,4 +112,19 @@ export const trackFileHandler = () => {
 	// Show notification that repo is in sync
 	const playbackLink = `${WEB_APP_URL}/files/${fileId}/history`;
 	vscode.env.openExternal(vscode.Uri.parse(playbackLink));
+};
+
+export const openSyncIgnoreHandler = async () => {
+	const repoPath = pathUtils.getRootPath();
+	if (!repoPath) return;
+	const subDirResult = checkSubDir(repoPath);
+	if (!subDirResult.isSubDir || !subDirResult.isSyncIgnored) return;
+	const syncignorePath = path.join(subDirResult.parentRepo, SYNCIGNORE);
+	const setting: vscode.Uri = vscode.Uri.parse("file:" + syncignorePath);
+	// Opening .syncignore
+	await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
+		await vscode.window.showTextDocument(a, 1, false).then(async e => {
+			// 
+		});
+	});
 };

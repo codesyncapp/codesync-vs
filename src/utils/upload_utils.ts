@@ -61,7 +61,6 @@ export const uploadFile = async (token: string, data: any) => {
     		'id': file_id,
     		'url': url
 		}
-
 	*/
 	let error = "";
 	let response = await fetch(API_FILES, {

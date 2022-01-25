@@ -31,7 +31,7 @@ export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v2/websocket`;
 
-export const PLANS_URL = `${WEB_APP_URL}/plans`;
+export const PLANS_URL = `${WEB_APP_URL}/pricing`;
 // Diff utils
 export const DIFF_FILES_PER_ITERATION = 50;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
@@ -69,7 +69,9 @@ export const NOTIFICATION = {
 	CONTINUE: "Continue",
 	TRACK_IT: "View on web",
 	TRACK_PARENT_REPO: "View parent repo on web",
+	OPEN_SYNCIGNORE: "Open .syncignore",
 	UNSYNC_REPO: "Unsync",
+	UNSYNC_PARENT_REPO: "Unsync parent repo",
 	WELCOME_MSG: "Welcome to CodeSync!",
 	LOGIN_SUCCESS: "Success! Now, switch back to Visual Studio Code to connect your repo.",
 	CONNECT_REPO: "Connect your repo with CodeSync",
@@ -87,7 +89,6 @@ export const NOTIFICATION = {
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
 	REPO_IN_SYNC: "is in sync with CodeSync.",
-	REPO_IS_SYNC_IGNORED: "is syncignored and not being synced",
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again",
 	ERROR_SYNCING_REPO: "Error syncing repo.",
 	ERROR_SYNCING_BRANCH: "Error syncing branch",
@@ -103,12 +104,15 @@ export const getRepoInSyncMsg = (repoPath: string) => {
     return `Repo ${repoName} ${NOTIFICATION.REPO_IN_SYNC}`;
 };
 
-
-export const getRepoIsSyncIgnoredMsg = (repoPath: string) => {
-    const repoName = path.basename(repoPath);
-    return `Repo ${repoName} ${NOTIFICATION.REPO_IS_SYNC_IGNORED}`;
+export const getDirectoryIsSyncedMsg = (repoPath: string, parentPath: string) => {
+	const subDirName = path.basename(repoPath);
+	return `You are good to go ✅. Directory ${subDirName} is in sync with CodeSync because parent repo ${parentPath} is in sync.`;
 };
 
+export const getDirectorySyncIgnoredMsg = (repoPath: string, parentPath: string) => {
+    const subDirName = path.basename(repoPath);
+	return `Directory ${subDirName} is syncignored by parent repo at ${parentPath}. To sync this directory, remove it from .syncignore`;
+};
 
 export const getPublicPrivateMsg = (repoPath: string) => {
 	// Do you want the repo <name> public or private?
@@ -135,7 +139,8 @@ export const COMMAND = {
 	triggerSync: 'codesync.sync',
 	triggerUnsync: 'codesync.unsync',
 	trackRepo: 'codesync.trackRepo',
-	trackFile: 'codesync.trackFile'
+	trackFile: 'codesync.trackFile',
+	openSyncIgnore: 'codesync.openSyncIgnore'
 };
 
 export class staticFiles {

@@ -15,7 +15,8 @@ import {
 	SignUpHandler,
 	SyncHandler,
 	trackRepoHandler,
-	trackFileHandler
+	trackFileHandler,
+	openSyncIgnoreHandler
 } from './handlers/commands_handler';
 import { putLogEvent } from "./logger";
 
@@ -36,6 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerUnsync, unSyncHandler));
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackRepo, trackRepoHandler));
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackFile, trackFileHandler));
+		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.openSyncIgnore, openSyncIgnoreHandler));
 
 		const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 		statusBarItem.command = COMMAND.triggerUnsync;

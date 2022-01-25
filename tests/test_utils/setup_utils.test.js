@@ -19,7 +19,7 @@ import {
     showLogIn,
     showRepoIsSyncIgnoredView
 } from "../../src/utils/setup_utils";
-import {getRepoInSyncMsg, getRepoIsSyncIgnoredMsg, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
+import {getRepoInSyncMsg, getDirectorySyncIgnoredMsg, getDirectoryIsSyncedMsg, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 
 
 describe("createSystemDirectories",  () => {
@@ -133,8 +133,8 @@ describe("setupCodeSync",  () => {
         // should return port number
         expect(port).toBeFalsy();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        const repoInSyncMsg = getRepoInSyncMsg(repoPath);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(repoInSyncMsg);
+        const msg = getRepoInSyncMsg(repoPath);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_IT);
         fs.rmSync(userFilePath);
     });
@@ -161,8 +161,8 @@ describe("setupCodeSync",  () => {
         // should return port number
         expect(port).toBeFalsy();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        const repoInSyncMsg = getRepoInSyncMsg(subDir);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(repoInSyncMsg);
+        const msg = getDirectoryIsSyncedMsg(subDir, repoPath);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
         fs.rmSync(userFilePath);
     });
@@ -181,9 +181,11 @@ describe("setupCodeSync",  () => {
         // should return port number
         expect(port).toBeTruthy();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        const msg = getRepoIsSyncIgnoredMsg(subDir);
+        const msg = getDirectorySyncIgnoredMsg(subDir, repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
-        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
+        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.OPEN_SYNCIGNORE);
+        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
+        expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.UNSYNC_PARENT_REPO);
         fs.rmSync(userFilePath);
     });
 
