@@ -61,7 +61,8 @@ export const postSelectionUnsync = async (repoPath: string, selection?: string) 
 	const accessToken = users[configRepo.email].access_token;
 	const json = await updateRepo(accessToken, configRepo.id, { is_in_sync: false });
 	if (json.error) {
-		return vscode.window.showErrorMessage(NOTIFICATION.REPO_UNSYNC_FAILED);
+		vscode.window.showErrorMessage(NOTIFICATION.REPO_UNSYNC_FAILED);
+		return;
 	}
 	// Show notification that repo is not in sync
 	configRepo.is_disconnected = true;
