@@ -100,6 +100,7 @@ export class eventHandler {
 	handleChanges = (filePath: string, currentText: string) => {
 		if (!filePath.startsWith(this.repoPath)) return;
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
+
 		// Skip .git and .syncignore files
 		if (shouldIgnorePath(this.repoPath, relPath)) return;
 		let shadowText = "";

@@ -237,7 +237,7 @@ describe("Extension",() => {
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_IT);
     });
 
-    test("With user, repo is subDir and synced", async () => {
+    test("With user, repo is sub directory and synced", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
@@ -269,7 +269,7 @@ describe("Extension",() => {
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
     });
 
-    test("With user, repo is subDir and syncignored", async () => {
+    test("With user, repo is sub directory and syncignored", async () => {
         const subDirName = "directory";
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
