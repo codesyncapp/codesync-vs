@@ -4,7 +4,7 @@ import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from 'untildify';
 
-import {DEFAULT_BRANCH, GITIGNORE, NOTIFICATION} from "../../src/constants";
+import {DEFAULT_BRANCH, GITIGNORE, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 import fetchMock from "jest-fetch-mock";
 import {initHandler} from "../../src/init/init_handler";
 import {
@@ -19,7 +19,8 @@ import {
     TEST_EMAIL,
     TEST_REPO_RESPONSE,
     TEST_USER,
-    waitFor
+    waitFor, 
+    addUser
 } from "../helpers/helpers";
 import {SYNC_IGNORE_FILE_DATA} from "../../src/constants";
 import {pathUtils} from "../../src/utils/path_utils";
@@ -86,6 +87,7 @@ describe("initHandler",  () => {
             // Add repo in config
             const configUtil = new Config(repoPath, configPath);
             configUtil.addRepo();
+            addUser(baseRepoPath);
             await handler.syncRepo();
             // Verify error msg
             expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
@@ -104,16 +106,58 @@ describe("initHandler",  () => {
             expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.UPGRADE_PLAN);
         });
 
+        test("Repo is_disconnected",  async () => {
+            const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
+            fetchMock
+                .mockResponseOnce(JSON.stringify({ status: true }))
+                .mockResponseOnce(JSON.stringify(user));
+            // Add repo in config
+            const configUtil = new Config(repoPath, configPath);
+            configUtil.addRepo(true);
+            addUser(baseRepoPath);
+            await handler.syncRepo();
+            // Verify error msg
+            expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
+            expect(fs.existsSync(syncIgnorePath)).toBe(true);
+            expect(vscode.workspace.openTextDocument).toHaveBeenCalledTimes(1);
+        });
+
+        test("Repo is_disconnected, syncing sub directory",  async () => {
+            const subDir = path.join(repoPath, "directory");
+            fs.mkdirSync(subDir);
+            const syncIgnorePath = path.join(subDir, SYNCIGNORE);
+            const handler = new initHandler(subDir, "ACCESS_TOKEN");
+            fetchMock
+                .mockResponseOnce(JSON.stringify({ status: true }))
+                .mockResponseOnce(JSON.stringify(user));
+            // Add repo in config
+            const configUtil = new Config(repoPath, configPath);
+            configUtil.addRepo(true);
+            addUser(baseRepoPath);
+            await handler.syncRepo();
+            // Verify error msg
+            expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
+            expect(fs.existsSync(syncIgnorePath)).toBe(true);
+            const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
+            expect(_syncIgnoreData).toStrictEqual(SYNC_IGNORE_FILE_DATA);
+            expect(vscode.workspace.openTextDocument).toHaveBeenCalledTimes(1);
+        });
+
         test(".syncignore should be created",  async () => {
             fetchMock
                 .mockResponseOnce(JSON.stringify({ status: true }))
                 .mockResponseOnce(JSON.stringify(user));
             await handler.syncRepo();
             // Verify error msg
-            const syncIgnorePath = path.join(repoPath, ".syncignore");
+            const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
             expect(fs.existsSync(syncIgnorePath)).toBe(true);
             const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
             expect(_syncIgnoreData).toStrictEqual(SYNC_IGNORE_FILE_DATA);
+            expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
+            expect(vscode.workspace.openTextDocument).toHaveBeenCalledTimes(1);
         });
 
         test(".syncignore should match with .gitignore",  async () => {
@@ -125,28 +169,34 @@ describe("initHandler",  () => {
                 .mockResponseOnce(JSON.stringify(user));
             await handler.syncRepo();
             // Verify error msg
-            const syncIgnorePath = path.join(repoPath, ".syncignore");
+            const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
             expect(fs.existsSync(syncIgnorePath)).toBe(true);
             const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
             expect(_syncIgnoreData).toStrictEqual(gitignoreData);
+            expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
+            expect(vscode.workspace.openTextDocument).toHaveBeenCalledTimes(1);
         });
 
         test(".syncignore exists",  async () => {
-            const syncIgnorePath = path.join(repoPath, ".syncignore");
+            const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
             const syncIgnoreData = ".idea\nnode_modules";
             fs.writeFileSync(syncIgnorePath, syncIgnoreData);
             fetchMock
                 .mockResponseOnce(JSON.stringify({ status: true }))
                 .mockResponseOnce(JSON.stringify(user));
-            await handler.syncRepo();
-            // Verify error msg
+            await handler.syncRepo();            
             expect(fs.existsSync(syncIgnorePath)).toBe(true);
             const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
             expect(_syncIgnoreData).toStrictEqual(syncIgnoreData);
+            expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
+            expect(vscode.workspace.openTextDocument).toHaveBeenCalledTimes(1);
         });
 
         test("via Daemon",  async () => {
-            const syncIgnorePath = path.join(repoPath, ".syncignore");
+            const handler = new initHandler(repoPath, "ACCESS_TOKEN", true);
+            const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
             const syncIgnoreData = ".idea\nnode_modules";
             fs.writeFileSync(syncIgnorePath, syncIgnoreData);
             fetchMock
@@ -157,6 +207,9 @@ describe("initHandler",  () => {
             expect(fs.existsSync(syncIgnorePath)).toBe(true);
             const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
             expect(_syncIgnoreData).toStrictEqual(syncIgnoreData);
+            expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
+            expect(vscode.workspace.openTextDocument).toHaveBeenCalledTimes(0);
         });
     });
 

@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
@@ -11,8 +12,14 @@ import {
     randomBaseRepoPath,
     randomRepoPath
 } from "../helpers/helpers";
-import {createSystemDirectories, setupCodeSync, showConnectRepoView, showLogIn} from "../../src/utils/setup_utils";
-import {getRepoInSyncMsg, NOTIFICATION} from "../../src/constants";
+import {
+    createSystemDirectories,
+    setupCodeSync,
+    showConnectRepoView, 
+    showLogIn,
+    showRepoIsSyncIgnoredView
+} from "../../src/utils/setup_utils";
+import {getRepoInSyncMsg, getDirectorySyncIgnoredMsg, getDirectoryIsSyncedMsg, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 
 
 describe("createSystemDirectories",  () => {
@@ -91,7 +98,7 @@ describe("setupCodeSync",  () => {
 
     test('with no active user', async () => {
         addUser(baseRepoPath, false);
-        const port = await setupCodeSync(undefined);
+        const port = await setupCodeSync(repoPath);
         // should return port number
         expect(port).toBeTruthy();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -102,7 +109,7 @@ describe("setupCodeSync",  () => {
 
     test('with user no repo opened', async () => {
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
-        await setupCodeSync(undefined);
+        await setupCodeSync("");
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
@@ -126,8 +133,8 @@ describe("setupCodeSync",  () => {
         // should return port number
         expect(port).toBeFalsy();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        const repoInSyncMsg = getRepoInSyncMsg(repoPath);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(repoInSyncMsg);
+        const msg = getRepoInSyncMsg(repoPath);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_IT);
         fs.rmSync(userFilePath);
     });
@@ -136,6 +143,66 @@ describe("setupCodeSync",  () => {
         fs.writeFileSync(configPath, yaml.safeDump({repos: {}}));
         const shouldShowConnectRepoView = showConnectRepoView(repoPath);
         expect(shouldShowConnectRepoView).toBe(true);
+    });
+
+    test('showRepoIsSyncIgnoredView',  async () => {
+        fs.writeFileSync(configPath, yaml.safeDump({repos: {}}));
+        const shouldShow = showRepoIsSyncIgnoredView(repoPath);
+        expect(shouldShow).toBe(false);
+    });
+
+    test('with sub directory',  async () => {
+        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+        addUser(baseRepoPath);
+        const subDir = path.join(repoPath, "directory");
+        const port = await setupCodeSync(subDir);
+        // should return port number
+        expect(port).toBeFalsy();
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        const msg = getDirectoryIsSyncedMsg(subDir, repoPath);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
+        fs.rmSync(userFilePath);
+    });
+
+    test('with sub directory syncignored',  async () => {
+        const subDirName = "directory";
+        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+        addUser(baseRepoPath);
+        // Add subDir to .syncignore
+        const syncignorePath = path.join(repoPath, SYNCIGNORE);
+        fs.writeFileSync(syncignorePath, subDirName);
+        const subDir = path.join(repoPath, subDirName);
+        const port = await setupCodeSync(subDir);
+        // should return port number
+        expect(port).toBeTruthy();
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        const msg = getDirectorySyncIgnoredMsg(subDir, repoPath);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.OPEN_SYNCIGNORE);
+        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
+        expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.UNSYNC_PARENT_REPO);
+        fs.rmSync(userFilePath);
+    });
+
+    test('with sub directory whose parent is_disconnected',  async () => {
+        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo(true);
+        addUser(baseRepoPath);
+        const subDir = path.join(repoPath, "directory");
+        const port = await setupCodeSync(subDir);
+        // should return port number
+        // should return port number
+        expect(port).toBeTruthy();
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.CONNECT_REPO);
+        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.CONNECT);
+        fs.rmSync(userFilePath);
     });
 });
 

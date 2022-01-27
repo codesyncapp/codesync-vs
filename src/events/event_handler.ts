@@ -11,7 +11,7 @@ import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
 import { DIFF_SOURCE } from "../constants";
-import { isRepoSynced, shouldIgnoreFile } from './utils';
+import { isRepoSynced, shouldIgnorePath } from './utils';
 
 
 export class eventHandler {
@@ -35,7 +35,7 @@ export class eventHandler {
 		this.createdAt = createdAt || formatDatetime();
 		this.viaDaemon = viaDaemon;
 		this.repoPath = repoPath || pathUtils.getRootPath();
-		this.repoIsNotSynced = !isRepoSynced(this.repoPath);
+		this.repoIsNotSynced = !isRepoSynced(this.repoPath, false);
 		this.branch = getBranch(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
 		this.shadowRepoBranchPath = this.pathUtils.getShadowRepoBranchPath();
@@ -100,8 +100,9 @@ export class eventHandler {
 	handleChanges = (filePath: string, currentText: string) => {
 		if (!filePath.startsWith(this.repoPath)) return;
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
+
 		// Skip .git and .syncignore files
-		if (shouldIgnoreFile(this.repoPath, relPath)) return;
+		if (shouldIgnorePath(this.repoPath, relPath)) return;
 		let shadowText = "";
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
 		if (!fs.existsSync(shadowPath)) {
@@ -165,7 +166,7 @@ export class eventHandler {
 		if (!filePath.startsWith(this.repoPath)) return;
 
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
-		if (shouldIgnoreFile(this.repoPath, relPath)) { return; }
+		if (shouldIgnorePath(this.repoPath, relPath)) { return; }
 
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
 		const originalsPath = path.join(this.originalsRepoBranchPath, relPath);
@@ -206,7 +207,7 @@ export class eventHandler {
 
 		const relPath = itemPath.split(path.join(this.repoPath, path.sep))[1];
 		// Skip .git/ and syncignore files
-		if (shouldIgnoreFile(this.repoPath, relPath)) { return; }
+		if (shouldIgnorePath(this.repoPath, relPath)) { return; }
 
 		// Shadow path
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
@@ -290,7 +291,7 @@ export class eventHandler {
 		const newRelPath = newAbsPath.split(path.join(this.repoPath, path.sep))[1];
 
 		if (!newAbsPath.startsWith(this.repoPath)) return;
-		if (shouldIgnoreFile(this.repoPath, newRelPath)) { return; }
+		if (shouldIgnorePath(this.repoPath, newRelPath)) { return; }
 
 		const isDirectory = fs.lstatSync(newAbsPath).isDirectory();
 		if (isDirectory) {

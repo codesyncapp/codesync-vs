@@ -2,7 +2,7 @@ import fs from 'fs';
 import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
-import {API_FILES, API_INIT} from "../constants";
+import { API_FILES, API_INIT} from "../constants";
 
 
 export const uploadRepoToServer = async (token: string, data: any) => {
@@ -61,7 +61,6 @@ export const uploadFile = async (token: string, data: any) => {
     		'id': file_id,
     		'url': url
 		}
-
 	*/
 	let error = "";
 	let response = await fetch(API_FILES, {
@@ -138,7 +137,7 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 		const error = (s3json as any).error;
 		if (error) {
 			return {
-				error,
+				error: `s3UploadFailed: ${error}`,
 				fileId: json.response.id
 			};
 		}

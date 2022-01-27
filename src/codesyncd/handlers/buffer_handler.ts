@@ -9,7 +9,7 @@ import {DIFF_FILES_PER_ITERATION, STATUS_BAR_MSGS} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
 import {pathUtils} from "../../utils/path_utils";
-import {getActiveUsers, isRepoActive, readYML, updateStatusBarItem, logMsg} from '../../utils/common';
+import {getActiveUsers, isRepoActive, readYML, updateStatusBarItem, logMsg, checkSubDir} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
 
 let errorCount = 0;
@@ -141,6 +141,13 @@ export class bufferHandler {
 		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
 		// No repo is opened
 		if (!repoPath) return STATUS_BAR_MSGS.NO_REPO_OPEN;
+		const subDirResult = checkSubDir(repoPath);
+		if (subDirResult.isSubDir) {
+			if (subDirResult.isSyncIgnored) {
+				return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
+			}
+			return STATUS_BAR_MSGS.DEFAULT;	
+		}
 		// Repo is not synced
 		if (!isRepoActive(this.configJSON, repoPath)) return STATUS_BAR_MSGS.CONNECT_REPO;
 		return STATUS_BAR_MSGS.DEFAULT;

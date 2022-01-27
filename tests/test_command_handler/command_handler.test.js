@@ -126,15 +126,27 @@ describe("unSyncHandler",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("No Repo Path",  async () => {
-        await unSyncHandler();
+    test("No Repo Path", () => {
+        unSyncHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Ask Unsync confirmation",  async () => {
-        await unSyncHandler();
+    test("Ask Unsync confirmation", () => {
+        unSyncHandler();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_CONFIRMATION);
+        expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
+        expect(vscode.window.showWarningMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.CANCEL);
+    });
+
+    test("Ask Unsync parent confirmation; Sub Dir of synced repo", () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+        const subDir = path.join(repoPath, "directory");
+        setWorkspaceFolders(subDir);
+        unSyncHandler();
+        expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_PARENT_CONFIRMATION);
         expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
         expect(vscode.window.showWarningMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.CANCEL);
     });
@@ -195,16 +207,14 @@ describe("postSelectionUnsync",  () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({error: "NOT SO FAST"}));
-
         await postSelectionUnsync(repoPath, NOTIFICATION.YES);
-
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_FAILED);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Synced successfully",  async () => {
+    test("Should Unsync",  async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({}));
@@ -215,9 +225,16 @@ describe("postSelectionUnsync",  () => {
         const config = readYML(configPath);
         expect(config.repos[repoPath].is_disconnected).toBe(true);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(1);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showConnectRepoView");
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual("setContext");
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual("isSubDir");
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual("setContext");
+        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual("isSyncIgnored");
+        expect(vscode.commands.executeCommand.mock.calls[2][2]).toStrictEqual(false);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNCED);
     });
@@ -255,6 +272,20 @@ describe("trackRepoHandler",  () => {
 
     test("Repo in config",  async () => {
         setWorkspaceFolders(repoPath);
+        configData.repos[repoPath] = {
+            id: 1234,
+            branches: {},
+        };
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        const playbackLink = trackRepoHandler();
+        expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
+        expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
+    });
+
+    test("With nested directory",  async () => {
+        const subDir = path.join(repoPath, "directory");
+        setWorkspaceFolders(subDir);
+    
         configData.repos[repoPath] = {
             id: 1234,
             branches: {},
@@ -357,4 +388,26 @@ describe("trackFileHandler",  () => {
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
     });
 
+    test("With nested directory",  () => {
+        // Mock data
+        const subDir = path.join(repoPath, "directory");
+        setWorkspaceFolders(subDir);
+    
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
+            document: {
+                fileName: path.join(repoPath, "file.js")
+            }
+        });
+        getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
+        // Update config file
+        configData.repos[repoPath] = {
+            id: 1234,
+            branches: {}
+        };
+        configData.repos[repoPath].branches[DEFAULT_BRANCH] = {"file.js": 1234};
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
+
+        trackFileHandler();
+        expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
+    });
 });

@@ -2,7 +2,8 @@ import vscode from 'vscode';
 import { initHandler } from '../init/init_handler';
 import { getActiveUsers } from './common';
 import { redirectToBrowser } from './auth_utils';
-import { getPublicPrivateMsg, NOTIFICATION } from '../constants';
+import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION } from '../constants';
+import { trackRepoHandler, unSyncHandler, openSyncIgnoreHandler } from '../handlers/commands_handler';
 
 
 export const showSignUpButtons = () => {
@@ -80,4 +81,26 @@ export const askPublicPrivate = async (repoPath: string) => {
 		NOTIFICATION.PRIVATE
 	]).then(selection => selection);
 	return buttonSelected;
+};
+
+export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) => {
+	const msg = getDirectorySyncIgnoredMsg(repoPath, parentRepoPath);
+	vscode.window.showInformationMessage(msg, 
+		NOTIFICATION.OPEN_SYNCIGNORE, 
+		NOTIFICATION.TRACK_PARENT_REPO, 
+		NOTIFICATION.UNSYNC_PARENT_REPO).then(async selection => {
+		if (!selection) { return; }
+		switch (selection) {
+			case NOTIFICATION.TRACK_PARENT_REPO:
+				trackRepoHandler();
+				break;
+			case NOTIFICATION.OPEN_SYNCIGNORE:
+				openSyncIgnoreHandler();
+				break;
+			case NOTIFICATION.UNSYNC_PARENT_REPO:
+				unSyncHandler();
+				break;
+			default:
+			}
+		});
 };

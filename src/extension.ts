@@ -8,24 +8,27 @@ import { COMMAND, STATUS_BAR_MSGS } from './constants';
 
 import { logout } from './utils/auth_utils';
 import { pathUtils } from "./utils/path_utils";
-import { updateStatusBarItem } from "./utils/common";
+import { checkSubDir, updateStatusBarItem } from "./utils/common";
 import { recallDaemon } from "./codesyncd/codesyncd";
 import {
 	unSyncHandler,
 	SignUpHandler,
 	SyncHandler,
 	trackRepoHandler,
-	trackFileHandler
+	trackFileHandler,
+	openSyncIgnoreHandler
 } from './handlers/commands_handler';
 import { putLogEvent } from "./logger";
 
 
 export async function activate(context: vscode.ExtensionContext) {
 	try {
-		const repoPath = pathUtils.getRootPath() || "";
-
+		let repoPath = pathUtils.getRootPath();
+		const subDirResult = checkSubDir(repoPath);
 		vscode.commands.executeCommand('setContext', 'showLogIn', showLogIn());
 		vscode.commands.executeCommand('setContext', 'showConnectRepoView', showConnectRepoView(repoPath));
+		vscode.commands.executeCommand('setContext', 'isSubDir', subDirResult.isSubDir);
+		vscode.commands.executeCommand('setContext', 'isSyncIgnored', subDirResult.isSyncIgnored);
 		vscode.commands.executeCommand('setContext', 'CodeSyncActivated', true);
 
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, SignUpHandler));
@@ -34,6 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerUnsync, unSyncHandler));
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackRepo, trackRepoHandler));
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackFile, trackFileHandler));
+		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.openSyncIgnore, openSyncIgnoreHandler));
 
 		const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 		statusBarItem.command = COMMAND.triggerUnsync;
@@ -43,13 +47,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		if (repoPath) {
 			console.log(`Configured repo: ${repoPath}`);
+			if (subDirResult.isSubDir) {
+				repoPath = subDirResult.parentRepo;
+				console.log(`Parent repo: ${repoPath}`);
+			}	
 		}
 
 		const watcher = vscode.workspace.createFileSystemWatcher("**/*"); //glob search string
 
 		watcher.onDidCreate((e) => {
 			try {
-				const handler = new eventHandler();
+				const handler = new eventHandler(repoPath);
 				handler.handlePastedFile(e.fsPath);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -60,7 +68,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		vscode.workspace.onDidChangeTextDocument(changeEvent => {
 			try {
-				const handler = new eventHandler();
+				const handler = new eventHandler(repoPath);
 				handler.handleChangeEvent(changeEvent);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -71,7 +79,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		vscode.workspace.onDidCreateFiles(changeEvent => {
 			try {
-				const handler = new eventHandler();
+				const handler = new eventHandler(repoPath);
 				handler.handleCreateEvent(changeEvent);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -82,7 +90,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		vscode.workspace.onDidDeleteFiles(changeEvent => {
 			try {
-				const handler = new eventHandler();
+				const handler = new eventHandler(repoPath);
 				handler.handleDeleteEvent(changeEvent);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -93,7 +101,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		vscode.workspace.onDidRenameFiles(changeEvent => {
 			try {
-				const handler = new eventHandler();
+				const handler = new eventHandler(repoPath);
 				handler.handleRenameEvent(changeEvent);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment

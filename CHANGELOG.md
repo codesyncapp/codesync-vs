@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2022-01-25
+### Added
+- Checking if opened repo is a sub directory of already synced repo
+- Different views and notification buttons for subDir and syncignored subDir
+- Cannot treat sub directory as a separate repo
+
 ## [3.3.5] - 2022-01-16
 ### Added
 - Using uri.fsPath instead of uri.path for WorkspaceFolder (For windows support)
@@ -126,7 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.29.12] - 2021-10-03
 ### Changed
 - eventHandler class introduced
-- Improved shouldIgnoreFile
+- Improved shouldIgnorePath
 
 ## [2.29.11] - 2021-09-31
 ### Changed

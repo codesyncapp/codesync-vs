@@ -16,7 +16,7 @@ import { IFileToUpload, IUserPlan } from '../interface';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, DIFF_SOURCE, NOTIFICATION } from '../constants';
-import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems, getBranch } from '../utils/common';
+import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems } from '../utils/common';
 
 export class initUtils {
 	repoPath: string;
@@ -44,18 +44,6 @@ export class initUtils {
 			You can add only ${userPlan.FILE_COUNT} files (Trying to add ${filesCount} files)`);
 		}
 		return isValid;
-	}
-
-	successfullySynced () {
-		const config = readYML(this.settings.CONFIG_PATH);
-		if (!(this.repoPath in config.repos)) return false;
-		const configRepo = config.repos[this.repoPath];
-		const branch = getBranch(this.repoPath);
-		// If branch is not synced, daemon will take care of that
-		if (!(branch in configRepo.branches)) { return true; }
-		const configFiles = configRepo.branches[branch];
-		const invalidFiles = Object.keys(configFiles).filter(relPath => configFiles[relPath] === null);
-		return !(invalidFiles.length && invalidFiles.length === Object.keys(configFiles).length);
 	}
 
 	isSyncAble(relPath: string) {
@@ -213,7 +201,9 @@ export class initUtils {
 				// the second function had a shorter timeout.
 				if (err) return;
 				// delete .originals repo
-				fs.rmdirSync(originalsRepoBranchPath, { recursive: true });
+				if (fs.existsSync(originalsRepoBranchPath)) {
+					fs.rmdirSync(originalsRepoBranchPath, { recursive: true });
+				}
 				// Hide Connect Repo
 				vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
 

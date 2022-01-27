@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import {shouldIgnoreFile} from "../../../src/events/utils";
+import {shouldIgnorePath} from "../../../src/events/utils";
 import {getSyncIgnoreFilePath, randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
 import {IGNORABLE_DIRECTORIES} from "../../../src/constants";
 
@@ -16,7 +16,7 @@ const normalFilePath = path.join(repoPath, "12345.js");
 const ignorableFilePath = path.join(repoPath, "ignore.js");
 
 
-describe("shouldIgnoreFile",  () => {
+describe("shouldIgnorePath",  () => {
     beforeEach(() => {
         // Create directories
         fs.mkdirSync(repoPath, { recursive: true });
@@ -34,22 +34,22 @@ describe("shouldIgnoreFile",  () => {
 
     test("Standard ignorable directories",  () => {
         IGNORABLE_DIRECTORIES.forEach((item) => {
-            expect(shouldIgnoreFile(repoPath, item)).toBe(true);
+            expect(shouldIgnorePath(repoPath, item)).toBe(true);
         });
     });
 
     test("with normal file and no .syncignore",  () => {
-        expect(shouldIgnoreFile(repoPath, "12345.js")).toBe(false);
+        expect(shouldIgnorePath(repoPath, "12345.js")).toBe(false);
     });
 
     test("with normal file and with .syncignore",  () => {
         fs.writeFileSync(syncIgnorePath, syncIgnoreData);
-        expect(shouldIgnoreFile(repoPath, "12345.js")).toBe(false);
+        expect(shouldIgnorePath(repoPath, "12345.js")).toBe(false);
     });
 
     test("with file name in .syncignore",  () => {
         fs.writeFileSync(syncIgnorePath, syncIgnoreData);
-        expect(shouldIgnoreFile(repoPath, "ignore.js")).toBe(true);
+        expect(shouldIgnorePath(repoPath, "ignore.js")).toBe(true);
     });
 });
 

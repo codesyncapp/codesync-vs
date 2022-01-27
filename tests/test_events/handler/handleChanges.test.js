@@ -229,6 +229,71 @@ describe("handleChangeEvent",  () => {
             fileRelPath, shadowFilePath)).toBe(true);
     });
 
+    test("Sub directory, should add diff and update shadow file", () => {
+        const subDirName = "directory";
+        const subDir = path.join(repoPath, subDirName);
+        fs.mkdirSync(subDir);
+        const nestedFile = path.join(subDir, fileRelPath);
+        const _shadowRepoPath = path.join(shadowRepoBranchPath, subDirName);
+        const _shadowFile = path.join(_shadowRepoPath, fileRelPath);
+        fs.mkdirSync(_shadowRepoPath);
+        fs.writeFileSync(nestedFile, DUMMY_FILE_CONTENT);
+        fs.writeFileSync(_shadowFile, DUMMY_FILE_CONTENT);
+        const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
+        const document = {
+            fileName: nestedFile,
+            getText: function () {
+                return updatedText;
+            }
+        };
+        const handler = new eventHandler();
+        const event = {
+            document,
+            contentChanges: [" Change "]
+        };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
+            document
+        });
+        handler.handleChangeEvent(event);
+
+        const relPath = path.join(subDirName, fileRelPath);
+        expect(assertChangeEvent(repoPath, diffsRepo, DUMMY_FILE_CONTENT, updatedText,
+            relPath, _shadowFile)).toBe(true);
+    });
+
+    test("Sync Ignored sub directory, should not add diff", () => {
+        const subDirName = "directory";
+        fs.writeFileSync(syncIgnorePath, subDirName);
+        const subDir = path.join(repoPath, subDirName);
+        fs.mkdirSync(subDir);
+        const nestedFile = path.join(subDir, fileRelPath);
+        const _shadowRepoPath = path.join(shadowRepoBranchPath, subDirName);
+        const _shadowFile = path.join(_shadowRepoPath, fileRelPath);
+        fs.mkdirSync(_shadowRepoPath);
+        fs.writeFileSync(nestedFile, DUMMY_FILE_CONTENT);
+        fs.writeFileSync(_shadowFile, DUMMY_FILE_CONTENT);
+        const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
+        const document = {
+            fileName: nestedFile,
+            getText: function () {
+                return updatedText;
+            }
+        };
+        const handler = new eventHandler();
+        const event = {
+            document,
+            contentChanges: [" Change "]
+        };
+        jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
+            document
+        });
+        handler.handleChangeEvent(event);
+
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+    });
+
+
     test("Synced repo, File from other project in workspace", async () => {
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;

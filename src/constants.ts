@@ -31,7 +31,7 @@ export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v2/websocket`;
 
-export const PLANS_URL = `${WEB_APP_URL}/plans`;
+export const PLANS_URL = `${WEB_APP_URL}/pricing`;
 // Diff utils
 export const DIFF_FILES_PER_ITERATION = 50;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
@@ -68,7 +68,10 @@ export const NOTIFICATION = {
 	OK: "OK!",
 	CONTINUE: "Continue",
 	TRACK_IT: "View on web",
+	TRACK_PARENT_REPO: "View parent repo on web",
+	OPEN_SYNCIGNORE: "Open .syncignore",
 	UNSYNC_REPO: "Unsync",
+	UNSYNC_PARENT_REPO: "Unsync parent repo",
 	WELCOME_MSG: "Welcome to CodeSync!",
 	LOGIN_SUCCESS: "Success! Now, switch back to Visual Studio Code to connect your repo.",
 	CONNECT_REPO: "Connect your repo with CodeSync",
@@ -92,12 +95,23 @@ export const NOTIFICATION = {
 	REPO_UNSYNCED: "Repo disconnected successfully",
 	REPO_UNSYNC_FAILED: "Could not unsync the repo",
 	REPO_UNSYNC_CONFIRMATION: "Are you sure to continue? You won't be able to revert this!",
+	REPO_UNSYNC_PARENT_CONFIRMATION: "Are you sure to unsync parent repo? You won't be able to revert this!",
 	LOGGED_OUT_SUCCESSFULLY: "Successfully logged out!"
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {
     const repoName = path.basename(repoPath);
     return `Repo ${repoName} ${NOTIFICATION.REPO_IN_SYNC}`;
+};
+
+export const getDirectoryIsSyncedMsg = (repoPath: string, parentPath: string) => {
+	const subDirName = path.basename(repoPath);
+	return `You are good to go ✅. Directory ${subDirName} is in sync with CodeSync because parent repo ${parentPath} is in sync.`;
+};
+
+export const getDirectorySyncIgnoredMsg = (repoPath: string, parentPath: string) => {
+    const subDirName = path.basename(repoPath);
+	return `Directory ${subDirName} is syncignored by parent repo at ${parentPath}. To sync this directory, remove it from .syncignore`;
 };
 
 export const getPublicPrivateMsg = (repoPath: string) => {
@@ -115,6 +129,7 @@ export const STATUS_BAR_MSGS = {
 	GETTING_READY: 'CodeSync => Getting ready',
 	NO_REPO_OPEN: 'CodeSync => No project is open',
 	CONNECT_REPO: 'CodeSync => Click to connect repo!',
+	IS_SYNCIGNORED_SUB_DIR: 'CodeSync => Repo is syncignored and not being synced!',
 	NO_CONFIG: 'CodeSync => Reload required!'
 };
 
@@ -124,7 +139,8 @@ export const COMMAND = {
 	triggerSync: 'codesync.sync',
 	triggerUnsync: 'codesync.unsync',
 	trackRepo: 'codesync.trackRepo',
-	trackFile: 'codesync.trackFile'
+	trackFile: 'codesync.trackFile',
+	openSyncIgnore: 'codesync.openSyncIgnore'
 };
 
 export class staticFiles {

@@ -14,7 +14,9 @@ import {
     randomBaseRepoPath,
     randomRepoPath,
     setWorkspaceFolders,
-    waitFor
+    waitFor,
+    DUMMY_FILE_CONTENT,
+    getSyncIgnoreFilePath
 } from "../../helpers/helpers";
 import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
 
@@ -129,7 +131,52 @@ describe("handleDeletedEvent",  () => {
         expect(assertFileDeleteEvent(repoPath, fileRelPath)).toBe(true);
     });
 
-    test("Event: Synced repo, File from other projec in workspace", () => {
+    test("Sub dirctory, shadow exists",  () => {
+        const subDirName = "directory";
+        const subDir = path.join(repoPath, subDirName);
+        const nestedFile = path.join(subDir, fileRelPath);
+        const _shadowRepoPath = path.join(shadowRepoBranchPath, subDirName);
+        const _shadowFile = path.join(_shadowRepoPath, fileRelPath);
+        fs.writeFileSync(_shadowFile, DUMMY_FILE_CONTENT);
+
+        const event = {
+            files: [{
+                fsPath: nestedFile,
+                path: nestedFile,
+                scheme: "file"
+            }]
+        };
+        const handler = new eventHandler();
+        handler.handleDeleteEvent(event);
+        const relPath = path.join(subDirName, fileRelPath);
+        expect(assertFileDeleteEvent(repoPath, relPath)).toBe(true);
+    });
+
+    test("Sync ignored sub dirctory, shadow exists",  () => {
+        const subDirName = "directory";
+        const syncIgnorePath = getSyncIgnoreFilePath(repoPath);
+        fs.writeFileSync(syncIgnorePath, subDirName);
+        const subDir = path.join(repoPath, subDirName);
+        const nestedFile = path.join(subDir, fileRelPath);
+        const _shadowRepoPath = path.join(shadowRepoBranchPath, subDirName);
+        const _shadowFile = path.join(_shadowRepoPath, fileRelPath);
+        fs.writeFileSync(_shadowFile, DUMMY_FILE_CONTENT);
+
+        const event = {
+            files: [{
+                fsPath: nestedFile,
+                path: nestedFile,
+                scheme: "file"
+            }]
+        };
+        const handler = new eventHandler();
+        handler.handleDeleteEvent(event);
+        // Verify correct diff file has been generated
+        let diffFiles = fs.readdirSync(diffsRepo);
+        expect(diffFiles).toHaveLength(0);
+    });
+
+    test("Event: Synced repo, File from other project in workspace", () => {
         const event = {
             files: [{
                 fsPath: path.join(randomRepoPath(), "file.js")
