@@ -54,6 +54,11 @@
         "command": "codesync.trackFile",
         "title": "View File Playback",
         "category": "CodeSync"
+      },
+      {
+        "command": "codesync.openSyncIgnore",
+        "title": "Open .syncignore",
+        "category": "CodeSync"
       }
     ],
     "viewsContainers": {
@@ -168,22 +173,27 @@
         {
           "group": "1_modification",
           "command": "codesync.sync",
-          "when": "workbenchState != empty && !showLogIn && showConnectRepoView"
+          "when": "workbenchState != empty && !showLogIn && showConnectRepoView && !isSyncIgnored"
         },
         {
           "group": "1_modification",
           "command": "codesync.trackFile",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView"
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSyncIgnored"
         },
         {
           "group": "1_modification",
           "command": "codesync.trackRepo",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView"
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSyncIgnored"
         },
         {
           "group": "1_modification",
           "command": "codesync.unsync",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView"
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSyncIgnored"
+        },
+        {
+          "group": "1_modification",
+          "command": "codesync.openSyncIgnore",
+          "when": "workbenchState != empty && !showLogIn && isSyncIgnored"
         },
         {
           "group": "navigation",
