@@ -19,11 +19,11 @@ let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 const VERSION = vscode.extensions.getExtension('codesync.codesync').packageJSON.version;
 
 export function putLogEvent(error: string, userEmail?: string, additionalMsg="", retryCount=0) {
+	let errorMsg = error;
 	if (additionalMsg) {
-		console.log(error, additionalMsg);
-	} else {
-		console.log(error);
+		errorMsg = `${error}, ${additionalMsg}`;
 	}
+	console.log(errorMsg);
 	const settings = generateSettings();
 	if (!fs.existsSync(settings.USER_PATH)) { return; }
 	const users = readYML(settings.USER_PATH);
@@ -62,13 +62,14 @@ export function putLogEvent(error: string, userEmail?: string, additionalMsg="",
 		});
 	}
 
+	const eventMsg = {
+		msg: errorMsg,
+		source: DIFF_SOURCE,
+		version: VERSION
+	};
 	const logEvents = [ /* required */
 		{
-			message: JSON.stringify({
-				msg: error,
-				source: DIFF_SOURCE,
-				version: VERSION
-			}), /* required */
+			message: JSON.stringify(eventMsg), /* required */
 			timestamp: new Date().getTime() /* required */
 		}
 	];

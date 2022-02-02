@@ -40,8 +40,8 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 		.then(json => json)
 		.catch(err => error = err);
 
-	if ("error" in response) {
-		error = response.error;
+	if (response.error) {
+		error = response.error.message;
 	}
 	if (error) {
 		response = {};
@@ -76,13 +76,12 @@ export const uploadFile = async (token: string, data: any) => {
 	.then(json => json)
 	.catch(err => error = err);
 
-	if ("error" in response) {
-		error = response.error;
+	if (response.error) {
+		error = response.error.message;
 	}
 	if (error) {
 		response = {};
 	}
-
 	return {
 		response,
 		error

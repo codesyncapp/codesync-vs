@@ -16,8 +16,8 @@ export const updateRepo = async (accessToken: string, repoId: number, data: any)
 		.then(json => json)
 		.catch(err => error = err);
 
-	if ("error" in response) {
-		error = response["error"];
+	if (response.error) {
+		error = response.error.message;
 	}
 	if (error) {
 		response = {};

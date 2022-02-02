@@ -161,6 +161,5 @@ export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
 
 export const SOCKET_CONNECT_ERROR_CODES = ["ECONNREFUSED", "ETIMEDOUT", "ECONNRESET"];
 export const SOCKET_ERRORS = {
-	ERROR_MSG_RECEIVE: 'Error receiving socket msg',
-
+	ERROR_MSG_RECEIVE: 'Error receiving socket msg'
 };

@@ -69,7 +69,7 @@ export const PRE_SIGNED_URL = {
 
 export const TEST_EMAIL = 'test@codesync.com';
 export const ANOTHER_TEST_EMAIL = 'anotherTest@codesync.com';
-export const INVALID_TOKEN_JSON = {"error": "Invalid token"};
+export const INVALID_TOKEN_JSON = {"error": {"message": "Invalid token"}};
 export const SYNC_IGNORE_DATA = ".DS_Store\n.git\n\n\n.node_modules\n";
 export const DUMMY_FILE_CONTENT = "DUMMY FILE CONTENT";
 

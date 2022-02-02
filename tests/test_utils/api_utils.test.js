@@ -130,7 +130,7 @@ describe("createUserWithApi",  () => {
     test('should get auth error', async () => {
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
         const resp = await createUserWithApi("INVALID_TOKEN");
-        expect(resp.error).toBe(INVALID_TOKEN_JSON.error);
+        expect(resp.error).toBe(INVALID_TOKEN_JSON.error.message);
         expect(resp.email).toBeFalsy();
         expect(assertAPICall("INVALID_TOKEN")).toBe(true);
     });

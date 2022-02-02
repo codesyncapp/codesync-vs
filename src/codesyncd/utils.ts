@@ -63,7 +63,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 
 	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, createdAt);
 	if (response.error) {
-		putLogEvent(`Error uploading to server: ${response.error}`);
+		putLogEvent(`Error uploading file to server: ${response.error}`);
 		return {
 			uploaded: false,
 			config: configJSON

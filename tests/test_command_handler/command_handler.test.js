@@ -206,7 +206,8 @@ describe("postSelectionUnsync",  () => {
     test("Unsyncing error from server",  async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-        fetchMock.mockResponseOnce(JSON.stringify({error: "NOT SO FAST"}));
+        const errJSON = {error: {message: "NOT SO FAST"}};
+        fetchMock.mockResponseOnce(JSON.stringify(errJSON));
         await postSelectionUnsync(repoPath, NOTIFICATION.YES);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_FAILED);

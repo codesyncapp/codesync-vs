@@ -28,8 +28,8 @@ export const getUserForToken = async (accessToken: string) => {
 	.catch(err => {
 		isTokenValid = false;
 	});
-	if (response) {
-		isTokenValid = !("error" in response);
+	if (response && !(response.error)) {
+		isTokenValid = true;
 	}
 	return {
 		isTokenValid,
@@ -52,8 +52,8 @@ export const createUserWithApi = async (accessToken: string) => {
 		.then(json => json)
 		.catch(err => error = err);
 
-	if ("error" in response) {
-		error = response.error;
+	if (response.error) {
+		error = response.error.message;
 	}
 
 	if (!error) {
