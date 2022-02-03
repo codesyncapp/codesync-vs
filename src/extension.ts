@@ -1,6 +1,7 @@
 'use strict';
 
 import vscode from 'vscode';
+import lockFile from 'lockfile';
 
 import { eventHandler } from "./events/event_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
@@ -19,7 +20,8 @@ import {
 	openSyncIgnoreHandler
 } from './handlers/commands_handler';
 import { putLogEvent } from "./logger";
-
+import { generateSettings } from './settings';
+import { CodeSyncState, CODESYNC_STATES } from './utils/state_utils';
 
 export async function activate(context: vscode.ExtensionContext) {
 	try {
@@ -120,5 +122,23 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate(context: vscode.ExtensionContext) {
-	// pass
+	try {
+		const settings = generateSettings();
+		const shouldRunPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
+		const shouldRunBufferHandler = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+		if (shouldRunPopulateBuffer) {
+			lockFile.unlock(settings.POPULATE_BUFFER_LOCK_FILE, function (er) {
+				if (!er) CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
+			});    
+		}
+		if (shouldRunBufferHandler) {
+			lockFile.unlock(settings.DIFFS_SEND_LOCK_FILE, function (er) {
+				if (!er) CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
+			});    
+		}
+	} catch (e) {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		putLogEvent(e.stack);
+	}
 }

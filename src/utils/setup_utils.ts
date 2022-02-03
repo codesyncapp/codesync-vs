@@ -27,6 +27,7 @@ export const createSystemDirectories = () => {
 		settings.ORIGINALS_REPO,
 		settings.SHADOW_REPO,
 		settings.DELETED_REPO,
+		settings.LOCKS_REPO
 	];
 
 	paths.forEach((path) => {
