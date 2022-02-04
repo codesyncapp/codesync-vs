@@ -122,16 +122,18 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate(context: vscode.ExtensionContext) {
+	const settings = generateSettings();
+
 	try {
-		const settings = generateSettings();
-		const shouldRunPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
-		const shouldRunBufferHandler = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
-		if (shouldRunPopulateBuffer) {
+        // If locks were acquired by current instance, release the locks
+		const canRunPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
+		const canRunBufferHandler = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+		if (canRunPopulateBuffer) {
 			lockFile.unlock(settings.POPULATE_BUFFER_LOCK_FILE, function (er) {
 				if (!er) CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
 			});    
 		}
-		if (shouldRunBufferHandler) {
+		if (canRunBufferHandler) {
 			lockFile.unlock(settings.DIFFS_SEND_LOCK_FILE, function (er) {
 				if (!er) CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
 			});    
@@ -140,5 +142,12 @@ export function deactivate(context: vscode.ExtensionContext) {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		putLogEvent(e.stack);
+		// Release locks anyway in case there is some exception
+		lockFile.unlock(settings.POPULATE_BUFFER_LOCK_FILE, function (er) { 
+			// 
+		});    
+		lockFile.unlock(settings.DIFFS_SEND_LOCK_FILE, function (er) { 
+			// 
+		});
 	}
 }

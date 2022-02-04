@@ -35,9 +35,6 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
         - If locks are available, we acquire the lock
         - Recall the daemon without doing anything so that it continue to check the locks
     */
-    // Do not run daemon in case of tests
-    if ((global as any).IS_CODESYNC_DEV) return;
-
     const settings = generateSettings();
     const canRunPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
     const canRunBufferHandler = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
@@ -59,7 +56,8 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
         case !canRunPopulateBuffer && !canRunBufferHandler:
             if (!isPopulateBufferLockAcquired) acquirePopulateBufferLock();
             if (!isSendingDiffsLockAcquired) acquireSendDiffsLock();
-            console.log("Recalling Daemon");
+            // Do not re-run daemon in case of tests
+            if ((global as any).IS_CODESYNC_DEV) return;
             return setTimeout(() => {
                 recallDaemon(statusBarItem, viaDaemon);
             }, RESTART_DAEMON_AFTER);
@@ -67,6 +65,9 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
             break;
     }
     
+    // Do not re-run daemon in case of tests
+    if ((global as any).IS_CODESYNC_DEV) return;
+
     return setTimeout(() => {
         populateBuffer(viaDaemon);
         // Buffer Handler
@@ -75,21 +76,20 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
     }, RESTART_DAEMON_AFTER);
 };
 
-const acquirePopulateBufferLock = () => {
+export const acquirePopulateBufferLock = () => {
     const settings = generateSettings();
-    console.log(1, "acquiring Lock");
     lockFile.lockSync(settings.POPULATE_BUFFER_LOCK_FILE);
     CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, true);
 };
 
-const acquireSendDiffsLock = () => {
+export const acquireSendDiffsLock = () => {
     const settings = generateSettings();
-    console.log(2, "acquiring Lock");
     lockFile.lockSync(settings.DIFFS_SEND_LOCK_FILE);
     CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, true);
 };
 
 const runBufferHandler = (statusBarItem: vscode.StatusBarItem) => {
+    if ((global as any).IS_CODESYNC_DEV) return;
     console.log("sending diffs only");
     setTimeout(() => {
         // Buffer Handler
@@ -99,6 +99,7 @@ const runBufferHandler = (statusBarItem: vscode.StatusBarItem) => {
 };
 
 const runPopulateBuffer = (statusBarItem: vscode.StatusBarItem, viaDaemon: boolean) => {
+    if ((global as any).IS_CODESYNC_DEV) return;
     console.log("Populating buffer only");
     setTimeout(() => {
         // Buffer Handler

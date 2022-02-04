@@ -31,7 +31,6 @@ import {SocketClient} from "../../src/codesyncd/websocket/socket_client";
 import {SocketEvents} from "../../src/codesyncd/websocket/socket_events";
 import {readYML} from "../../src/utils/common";
 import {DIFF_SOURCE} from "../../src/constants";
-import {recallDaemon} from "../../src/codesyncd/codesyncd";
 
 
 describe("bufferHandler", () => {
@@ -590,10 +589,4 @@ describe("bufferHandler", () => {
         // File should be deleted from .originals
         expect(fs.existsSync(originalsFilePath)).toBe(false);
     });
-
-    test("codesyncd.ts", async () => {
-        recallDaemon(statusBarItem);
-        expect(global.IS_CODESYNC_DEV).toBe(true);
-    });
-
 });
