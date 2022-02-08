@@ -1,12 +1,15 @@
 import fs from 'fs';
-import yaml from 'js-yaml';
 import path from 'path';
+import vscode from 'vscode';
+import yaml from 'js-yaml';
 import { IDiff } from "../interface";
 import {
+	COMMAND,
 	DIFF_SIZE_LIMIT,
 	REQUIRED_DIFF_KEYS,
 	REQUIRED_DIR_RENAME_DIFF_KEYS,
-	REQUIRED_FILE_RENAME_DIFF_KEYS
+	REQUIRED_FILE_RENAME_DIFF_KEYS,
+	STATUS_BAR_MSGS
 } from "../constants";
 import { uploadFileToServer } from '../utils/upload_utils';
 import { isBinaryFileSync } from 'isbinaryfile';
@@ -14,6 +17,7 @@ import { diff_match_patch } from 'diff-match-patch';
 import { putLogEvent } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
+import { checkSubDir, getActiveUsers, isRepoActive, readYML, updateStatusBarItem } from '../utils/common';
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -162,3 +166,56 @@ const editDistance = (s1: string, s2: string) => {
 	}
 	return costs[s2.length];
 };
+
+export class statusBarMsgs {
+	/*
+		Handles status bar msgs from daemon
+	*/
+	statusBarItem: vscode.StatusBarItem
+	settings: any;
+	configJSON: any;
+
+	constructor(statusBarItem: vscode.StatusBarItem) {
+		this.statusBarItem = statusBarItem;
+		this.settings = generateSettings();
+		this.configJSON = readYML(this.settings.CONFIG_PATH);
+	}
+
+	updateStatusBar = (text: string) => {
+		try {
+			if (text === STATUS_BAR_MSGS.AUTHENTICATION_FAILED) {
+				this.statusBarItem.command = COMMAND.triggerSignUp;
+			} else if (text === STATUS_BAR_MSGS.CONNECT_REPO) {
+				this.statusBarItem.command = COMMAND.triggerSync;
+			} else {
+				this.statusBarItem.command = undefined;
+			}
+			this.statusBarItem.text = text;
+			this.statusBarItem.show();
+		} catch (e) {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			putLogEvent(e.stack);
+		}	
+	};
+
+	getMsg = () => {
+		if (!fs.existsSync(this.settings.CONFIG_PATH)) return STATUS_BAR_MSGS.NO_CONFIG;
+		const repoPath = pathUtils.getRootPath();
+		const activeUsers = getActiveUsers();
+		// No Valid account found
+		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
+		// No repo is opened
+		if (!repoPath) return STATUS_BAR_MSGS.NO_REPO_OPEN;
+		const subDirResult = checkSubDir(repoPath);
+		if (subDirResult.isSubDir) {
+			if (subDirResult.isSyncIgnored) {
+				return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
+			}
+			return STATUS_BAR_MSGS.DEFAULT;	
+		}
+		// Repo is not synced
+		if (!isRepoActive(this.configJSON, repoPath)) return STATUS_BAR_MSGS.CONNECT_REPO;
+		return STATUS_BAR_MSGS.DEFAULT;
+	}
+}

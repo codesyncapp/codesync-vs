@@ -15,14 +15,12 @@ import {
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
     getSeqTokenFilePath,
-    getUserFilePath,
     PRE_SIGNED_URL,
     randomBaseRepoPath,
     randomRepoPath,
     setWorkspaceFolders,
     TEST_EMAIL,
     TEST_REPO_RESPONSE,
-    TEST_USER,
     waitFor
 } from "../helpers/helpers";
 import {bufferHandler} from "../../src/codesyncd/handlers/buffer_handler";
@@ -37,7 +35,6 @@ describe("bufferHandler", () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
-    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {};
     userData[TEST_EMAIL] = {access_token: "ABC"};
     const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
@@ -102,13 +99,7 @@ describe("bufferHandler", () => {
         const users = {};
         users[TEST_EMAIL] = "";
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
-        const userData = {};
-        userData[TEST_EMAIL] = {
-            access_token: "ACCESS_TOKEN",
-            access_key: TEST_USER.iam_access_key,
-            secret_key: TEST_USER.iam_secret_key
-        };
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        addUser(baseRepoPath, true);
     };
 
     const addNewFileDiff = (branch = DEFAULT_BRANCH) => {
@@ -148,14 +139,10 @@ describe("bufferHandler", () => {
         return handler.addDiff(relPath, "");
     };
 
-    const assertDiffsCount = (diffsCount = 0, command = undefined,
-                              text = STATUS_BAR_MSGS.DEFAULT, times=1) => {
+    const assertDiffsCount = (diffsCount = 0) => {
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
         expect(diffFiles).toHaveLength(diffsCount);
-        expect(statusBarItem.show).toHaveBeenCalledTimes(times);
-        expect(statusBarItem.command).toStrictEqual(command);
-        expect(statusBarItem.text).toStrictEqual(text);
         return true;
     };
 
@@ -163,22 +150,22 @@ describe("bufferHandler", () => {
         fs.rmSync(configPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.NO_CONFIG)).toBe(true);
+        expect(assertDiffsCount(0)).toBe(true);
     });
 
-    test("Server is down, no diff", async () => {
+    test("No diff", async () => {
         addRepo();
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.DEFAULT)).toBe(true);
+        expect(assertDiffsCount(0)).toBe(true);
     });
 
-    test("Server is down, 1 valid diff", async () => {
+    test("1 valid diff", async () => {
         addRepo();
         addNewFileDiff();
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(1, undefined)).toBe(true);
+        expect(assertDiffsCount(1)).toBe(true);
     });
 
     test("No repo opened, no diff", async () => {
@@ -186,14 +173,14 @@ describe("bufferHandler", () => {
         setWorkspaceFolders(undefined);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.NO_REPO_OPEN)).toBe(true);
+        expect(assertDiffsCount(0)).toBe(true);
     });
 
     test("Repo opened but not synced", async () => {
         addUser(baseRepoPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
+        expect(assertDiffsCount(0)).toBe(true);
     });
 
     test("Repo opened and synced", async () => {
@@ -250,20 +237,20 @@ describe("bufferHandler", () => {
         addUser(baseRepoPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
+        expect(assertDiffsCount(0)).toBe(true);
     });
 
     test("No valid user", async () => {
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(0, COMMAND.triggerSignUp, STATUS_BAR_MSGS.AUTHENTICATION_FAILED)).toBe(true);
+        expect(assertDiffsCount(0)).toBe(true);
     });
 
     test("No active user", async () => {
         addUser(baseRepoPath, false);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(0, COMMAND.triggerSignUp, STATUS_BAR_MSGS.AUTHENTICATION_FAILED)).toBe(true);
+        expect(assertDiffsCount(0)).toBe(true);
     });
 
     test("Diff file for disconnected repo", async () => {

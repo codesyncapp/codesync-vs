@@ -1,11 +1,12 @@
 import vscode from "vscode";
 import lockFile from 'lockfile';
 
-import { RESTART_DAEMON_AFTER } from "../constants";
+import { RESTART_DAEMON_AFTER, STATUS_BAR_MSGS } from "../constants";
 import { bufferHandler } from "./handlers/buffer_handler";
 import { populateBuffer } from "./populate_buffer";
 import { generateSettings } from "../settings";
 import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
+import { statusBarMsgs } from "./utils";
 
 
 
@@ -35,6 +36,18 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
         - If locks are available, we acquire the lock
         - Recall the daemon without doing anything so that it continue to check the locks
     */
+    const statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
+    const statusBarMsg = statusBarMsgsHandler.getMsg();
+    statusBarMsgsHandler.updateStatusBar(statusBarMsg);
+    // Do not proceed if no active user is found OR no config is found
+    if ([STATUS_BAR_MSGS.AUTHENTICATION_FAILED, STATUS_BAR_MSGS.NO_CONFIG].includes(statusBarMsg)) {
+        // Do not re-run daemon in case of tests
+        if ((global as any).IS_CODESYNC_DEV) return;
+        return setTimeout(() => {
+            recallDaemon(statusBarItem, viaDaemon);
+        }, RESTART_DAEMON_AFTER);
+    }
+    // Check permissions to run populateBuffer and bufferHandler
     const settings = generateSettings();
     const canRunPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
     const canRunBufferHandler = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);

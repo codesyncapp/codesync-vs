@@ -8,11 +8,11 @@ import {IFileToDiff, IRepoDiffs} from '../../interface';
 import {DIFF_FILES_PER_ITERATION, STATUS_BAR_MSGS} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
-import {pathUtils} from "../../utils/path_utils";
-import {getActiveUsers, isRepoActive, readYML, updateStatusBarItem, logMsg, checkSubDir} from '../../utils/common';
+import {getActiveUsers, readYML, logMsg} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
 
 let errorCount = 0;
+
 
 export class bufferHandler {
 	/*
@@ -55,21 +55,15 @@ export class bufferHandler {
 				- Remove the shadow file
 			- Remove the diff file if data is successfully uploaded
 	*/
-	statusBarItem: vscode.StatusBarItem
+	statusBarItem: vscode.StatusBarItem;
 	settings: any;
-	users: any;
 	configJSON: any;
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		this.statusBarItem = statusBarItem;
 		this.settings = generateSettings();
-		this.users = readYML(this.settings.USER_PATH) || {};
 		this.configJSON = readYML(this.settings.CONFIG_PATH);
 	}
-
-	updateStatusBarItem = (text: string) => {
-		updateStatusBarItem(this.statusBarItem, text);
-	};
 
 	getDiffFiles = () => {
 		let diffFiles = fs.readdirSync(this.settings.DIFFS_REPO);
@@ -133,34 +127,8 @@ export class bufferHandler {
 		return repoDiffs;
 	};
 
-	getStatusBarMsg = () => {
-		if (!fs.existsSync(this.settings.CONFIG_PATH)) return STATUS_BAR_MSGS.NO_CONFIG;
-		const repoPath = pathUtils.getRootPath();
-		const activeUsers = getActiveUsers();
-		// No Valid account found
-		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
-		// No repo is opened
-		if (!repoPath) return STATUS_BAR_MSGS.NO_REPO_OPEN;
-		const subDirResult = checkSubDir(repoPath);
-		if (subDirResult.isSubDir) {
-			if (subDirResult.isSyncIgnored) {
-				return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
-			}
-			return STATUS_BAR_MSGS.DEFAULT;	
-		}
-		// Repo is not synced
-		if (!isRepoActive(this.configJSON, repoPath)) return STATUS_BAR_MSGS.CONNECT_REPO;
-		return STATUS_BAR_MSGS.DEFAULT;
-	}
-
 	async run() {
 		try {
-			const statusBarMsg = this.getStatusBarMsg();
-			this.updateStatusBarItem(statusBarMsg);
-			// Do not proceed if no active user is found OR no config is found
-			if ([STATUS_BAR_MSGS.AUTHENTICATION_FAILED, STATUS_BAR_MSGS.NO_CONFIG].includes(statusBarMsg)) {
-				return recallDaemon(this.statusBarItem);
-			}
 			const diffFiles = this.getDiffFiles();
 			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
 
