@@ -17,7 +17,7 @@ import { diff_match_patch } from 'diff-match-patch';
 import { putLogEvent } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
-import { checkSubDir, getActiveUsers, isRepoActive, readYML, updateStatusBarItem } from '../utils/common';
+import { checkSubDir, getActiveUsers, isRepoActive, readYML } from '../utils/common';
 
 
 export const isValidDiff = (diffData: IDiff) => {

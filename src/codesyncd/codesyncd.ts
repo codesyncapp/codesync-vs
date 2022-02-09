@@ -44,7 +44,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
         // Do not re-run daemon in case of tests
         if ((global as any).IS_CODESYNC_DEV) return;
         return setTimeout(() => {
-            recallDaemon(statusBarItem, viaDaemon);
+            recallDaemon(statusBarItem);
         }, RESTART_DAEMON_AFTER);
     }
     // Check permissions to run populateBuffer and bufferHandler
@@ -59,7 +59,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
         case canRunPopulateBuffer && canRunBufferHandler:
             break;
         case canRunPopulateBuffer:
-            if (isSendingDiffsLockAcquired) return runPopulateBuffer(statusBarItem, viaDaemon);
+            if (isSendingDiffsLockAcquired) return runPopulateBuffer(statusBarItem);
             acquireSendDiffsLock();
             break;
         case canRunBufferHandler:
@@ -72,7 +72,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
             // Do not re-run daemon in case of tests
             if ((global as any).IS_CODESYNC_DEV) return;
             return setTimeout(() => {
-                recallDaemon(statusBarItem, viaDaemon);
+                recallDaemon(statusBarItem);
             }, RESTART_DAEMON_AFTER);
         default:
             break;
@@ -82,7 +82,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
     if ((global as any).IS_CODESYNC_DEV) return;
 
     return setTimeout(() => {
-        populateBuffer(viaDaemon);
+        populateBuffer();
         // Buffer Handler
         const handler = new bufferHandler(statusBarItem);
         handler.run();
@@ -111,12 +111,12 @@ const runBufferHandler = (statusBarItem: vscode.StatusBarItem) => {
     }, RESTART_DAEMON_AFTER);
 };
 
-const runPopulateBuffer = (statusBarItem: vscode.StatusBarItem, viaDaemon: boolean) => {
+const runPopulateBuffer = (statusBarItem: vscode.StatusBarItem) => {
     if ((global as any).IS_CODESYNC_DEV) return;
     console.log("Populating buffer only");
     setTimeout(() => {
         // Buffer Handler
-        populateBuffer(viaDaemon);
-        recallDaemon(statusBarItem, viaDaemon);
+        populateBuffer();
+        recallDaemon(statusBarItem);
     }, RESTART_DAEMON_AFTER);
 };

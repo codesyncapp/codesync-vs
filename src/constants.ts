@@ -121,16 +121,15 @@ export const getPublicPrivateMsg = (repoPath: string) => {
 };
 
 export const STATUS_BAR_MSGS = {
-	AUTH_FAILED_SENDING_DIFF: '❌ Error sending diff => Authentication failed',
-	DEFAULT: '✅ CodeSync => Watching changes',
-	SYNCING: '✅ CodeSync => Syncing changes',
-	AUTHENTICATION_FAILED: '❌ CodeSync => Click to authenticate!',
-	SERVER_DOWN: '❌ CodeSync => Offline',
+	AUTH_FAILED_SENDING_DIFF: 'Authentication failed while sending diff ',
+	DEFAULT: ' CodeSync ✅',
+	AUTHENTICATION_FAILED: ' CodeSync ❌, Click to authenticate!',
+	SERVER_DOWN: ' CodeSync ❌, Offline',
 	GETTING_READY: 'CodeSync => Getting ready',
-	NO_REPO_OPEN: 'CodeSync => No project is open',
-	CONNECT_REPO: '❌ CodeSync => Click to connect repo!',
-	IS_SYNCIGNORED_SUB_DIR: '❌ CodeSync => Repo is syncignored and not being synced!',
-	NO_CONFIG: '❌ CodeSync => Reload required!'
+	NO_REPO_OPEN: ' CodeSync => No project is open',
+	CONNECT_REPO: ' CodeSync ❌, Click to connect repo!',
+	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
+	NO_CONFIG: ' CodeSync ❌, Reload required!'
 };
 
 export const COMMAND = {

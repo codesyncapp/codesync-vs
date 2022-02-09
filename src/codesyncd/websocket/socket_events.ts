@@ -7,6 +7,7 @@ import {DiffHandler} from "../handlers/diff_handler";
 import {recallDaemon} from "../codesyncd";
 import {DiffsHandler} from "../handlers/diffs_handler";
 import {statusBarMsgs} from "../utils";
+import {markUsersInactive} from "../../utils/auth_utils";
 
 
 const EVENT_TYPES = {
@@ -29,19 +30,20 @@ export class SocketEvents {
         this.repoDiffs = repoDiffs;
         this.accessToken = accessToken;
         this.statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
-    
     }
 
     onInvalidAuth() {
         errorCount = logMsg(STATUS_BAR_MSGS.AUTH_FAILED_SENDING_DIFF, errorCount);
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
+        // Mark user as inactive in user.yml
+        markUsersInactive(false);
         return recallDaemon(this.statusBarItem);
     }
 
     async onValidAuth() {
         errorCount = 0;
         // Update status bar msg
-        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.SYNCING);
+        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
         let diffsCount = 0;
         // Send diffs
         let validDiffs: IDiffToSend[] = [];
@@ -53,7 +55,7 @@ export class SocketEvents {
         }
         if (validDiffs.length) {
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
-            this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.SYNCING);
+            this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
         }
         // Recall daemon
         return recallDaemon(this.statusBarItem);
@@ -61,7 +63,7 @@ export class SocketEvents {
 
     onSyncSuccess(diffFilePath: string) {
         // Update status bar msg
-        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.SYNCING);
+        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
         DiffHandler.removeDiffFile(diffFilePath);
     }
 
