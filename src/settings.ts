@@ -19,8 +19,11 @@ export const generateSettings = () => {
         ORIGINALS_REPO: path.join(rootRepo, ".originals"),
         SHADOW_REPO: path.join(rootRepo, ".shadow"),
         DELETED_REPO: path.join(rootRepo, ".deleted"),
+        LOCKS_REPO: path.join(rootRepo, ".locks"),
         CONFIG_PATH: path.join(rootRepo, "config.yml"),
         USER_PATH: path.join(rootRepo, "user.yml"),
-        SEQUENCE_TOKEN_PATH: path.join(rootRepo, "sequence_token.yml")
+        SEQUENCE_TOKEN_PATH: path.join(rootRepo, "sequence_token.yml"),
+        POPULATE_BUFFER_LOCK_FILE: path.join(rootRepo, ".locks", "daemon.lock"),
+        DIFFS_SEND_LOCK_FILE: path.join(rootRepo, ".locks", "vscode.lock")
     };
 };

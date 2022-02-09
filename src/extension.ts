@@ -9,7 +9,7 @@ import { COMMAND, STATUS_BAR_MSGS } from './constants';
 
 import { logout } from './utils/auth_utils';
 import { pathUtils } from "./utils/path_utils";
-import { checkSubDir, updateStatusBarItem } from "./utils/common";
+import { checkSubDir } from "./utils/common";
 import { recallDaemon } from "./codesyncd/codesyncd";
 import {
 	unSyncHandler,
@@ -112,7 +112,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 		});
 
-		updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.GETTING_READY);
 		recallDaemon(statusBarItem, false);
 	} catch (e) {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment

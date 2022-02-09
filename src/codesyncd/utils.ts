@@ -181,7 +181,7 @@ export class statusBarMsgs {
 		this.configJSON = readYML(this.settings.CONFIG_PATH);
 	}
 
-	updateStatusBar = (text: string) => {
+	update = (text: string) => {
 		try {
 			if (text === STATUS_BAR_MSGS.AUTHENTICATION_FAILED) {
 				this.statusBarItem.command = COMMAND.triggerSignUp;

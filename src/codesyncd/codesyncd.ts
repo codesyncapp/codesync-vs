@@ -37,8 +37,8 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
         - Recall the daemon without doing anything so that it continue to check the locks
     */
     const statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
-    const statusBarMsg = statusBarMsgsHandler.getMsg();
-    statusBarMsgsHandler.updateStatusBar(statusBarMsg);
+    const statusBarMsg = viaDaemon ? statusBarMsgsHandler.getMsg() : STATUS_BAR_MSGS.GETTING_READY;
+    statusBarMsgsHandler.update(statusBarMsg);
     // Do not proceed if no active user is found OR no config is found
     if ([STATUS_BAR_MSGS.AUTHENTICATION_FAILED, STATUS_BAR_MSGS.NO_CONFIG].includes(statusBarMsg)) {
         // Do not re-run daemon in case of tests

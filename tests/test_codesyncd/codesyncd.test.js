@@ -203,21 +203,21 @@ describe("updateStatusBarItem", () => {
 
     test('Random Text', () => {
         const statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
-        statusBarMsgsHandler.updateStatusBar("text");
+        statusBarMsgsHandler.update("text");
         expect(statusBarItem.text).toEqual("text");
         expect(statusBarItem.command).toEqual(undefined);
     });
 
     test('Auth Failed', () => {
         const statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
-        statusBarMsgsHandler.updateStatusBar(STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
+        statusBarMsgsHandler.update(STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
         expect(statusBarItem.text).toEqual(STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
         expect(statusBarItem.command).toEqual(COMMAND.triggerSignUp);
     });
 
     test('Connect Repo', () => {
         const statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
-        statusBarMsgsHandler.updateStatusBar(STATUS_BAR_MSGS.CONNECT_REPO);
+        statusBarMsgsHandler.update(STATUS_BAR_MSGS.CONNECT_REPO);
         expect(statusBarItem.text).toEqual(STATUS_BAR_MSGS.CONNECT_REPO);
         expect(statusBarItem.command).toEqual(COMMAND.triggerSync);
     });

@@ -35,8 +35,6 @@ describe("bufferHandler", () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
-    const userData = {};
-    userData[TEST_EMAIL] = {access_token: "ABC"};
     const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
 
     untildify.mockReturnValue(baseRepoPath);
