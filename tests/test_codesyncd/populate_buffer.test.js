@@ -123,6 +123,7 @@ describe("populateBuffer", () => {
         addRepo();
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
+        await waitFor(0.01);
         fs.writeFileSync(filePath, updatedText);
         await populateBuffer();
         expect(assertChangeEvent(repoPath, diffsRepo, DUMMY_FILE_CONTENT, updatedText, fileRelPath, shadowFilePath)).toBe(true);

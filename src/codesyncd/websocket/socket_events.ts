@@ -47,11 +47,9 @@ export class SocketEvents {
         errorCount = 0;
         // Update status bar msg
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
-        let diffsCount = 0;
         // Send diffs
         let validDiffs: IDiffToSend[] = [];
         for (const repoDiff of this.repoDiffs) {
-            diffsCount += repoDiff.file_to_diff.length;
             const diffsHandler = new DiffsHandler(repoDiff, this.accessToken);
             const diffs = await diffsHandler.run();
             validDiffs = validDiffs.concat(diffs);
@@ -59,8 +57,6 @@ export class SocketEvents {
         if (validDiffs.length) {
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
             this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
-        } else {
-            errorCount = logMsg(`no valid diff, diffs count: ${diffsCount}`, errorCount);
         }
         // Recall daemon
         return recallDaemon(this.statusBarItem);
