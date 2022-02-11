@@ -9,10 +9,8 @@ import {
     CONNECTION_ERROR_MESSAGE,
     SOCKET_CONNECT_ERROR_CODES,
     SOCKET_ERRORS,
-    STATUS_BAR_MSGS,
     WEBSOCKET_ENDPOINT
 } from "../../constants";
-import { statusBarMsgs } from "../utils";
 
 let errorCount = 0;
 
@@ -28,7 +26,6 @@ export class SocketClient {
         this.accessToken = accessToken;
         this.repoDiffs = repoDiffs;
         this.client = (global as any).client;
-        this.statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
     }
 
     resetGlobals = () => {
@@ -62,8 +59,7 @@ export class SocketClient {
                 console.log(`Socket Connect Failed: ${error.code}, ${errStr}`);
             }
             errorCount = logMsg(CONNECTION_ERROR_MESSAGE, errorCount);
-            that.statusBarMsgsHandler.update(STATUS_BAR_MSGS.SERVER_DOWN);
-            return recallDaemon(that.statusBarItem);
+            return recallDaemon(that.statusBarItem, true, true);
         });
 
         this.client.on('connect', function (connection: any) {

@@ -1,7 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import vscode from 'vscode';
 import yaml from 'js-yaml';
+import vscode from 'vscode';
+import { isBinaryFileSync } from 'isbinaryfile';
+import { diff_match_patch } from 'diff-match-patch';
+
 import { IDiff } from "../interface";
 import {
 	COMMAND,
@@ -12,8 +15,6 @@ import {
 	STATUS_BAR_MSGS
 } from "../constants";
 import { uploadFileToServer } from '../utils/upload_utils';
-import { isBinaryFileSync } from 'isbinaryfile';
-import { diff_match_patch } from 'diff-match-patch';
 import { putLogEvent } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";

@@ -123,6 +123,10 @@ class PopulateBuffer {
             const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
             const shadowExists = fs.existsSync(shadowFilePath);
             const fileInConfig = itemPath.rel_path in this.configFiles;
+            // Reset values for each file
+            handler.isNewFile = false;
+            handler.isRename = false;
+            handler.isDelete = false;
             handler.createdAt = formatDatetime(itemPath.modified_at);
 
             // For binary file, can only handle create event
@@ -225,6 +229,7 @@ class PopulateBuffer {
          - present in .shadow repo
         */
         const activeRelPaths = this.itemPaths.map(itemPath => itemPath.rel_path);
+        const handler = new eventHandler(this.repoPath);
         Object.keys(this.configFiles).forEach(relPath => {
             // Cache path of file
             const cacheFilePath = path.join(this.deletedRepoBranchPath, relPath);
@@ -238,7 +243,6 @@ class PopulateBuffer {
                 return;
             }
             const filePath = path.join(this.repoPath, relPath);
-            const handler = new eventHandler(this.repoPath);
             handler.handleDelete(filePath);
         });
     }

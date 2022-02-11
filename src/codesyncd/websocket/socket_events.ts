@@ -8,6 +8,7 @@ import {recallDaemon} from "../codesyncd";
 import {DiffsHandler} from "../handlers/diffs_handler";
 import {statusBarMsgs} from "../utils";
 import {markUsersInactive} from "../../utils/auth_utils";
+import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
 
 
 const EVENT_TYPES = {
@@ -41,6 +42,8 @@ export class SocketEvents {
     }
 
     async onValidAuth() {
+        const canRunBufferHandler = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+        if (!canRunBufferHandler) return recallDaemon(this.statusBarItem);
         errorCount = 0;
         // Update status bar msg
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
@@ -56,12 +59,16 @@ export class SocketEvents {
         if (validDiffs.length) {
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
             this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
+        } else {
+            errorCount = logMsg(`no valid diff, diffs count: ${diffsCount}`, errorCount);
         }
         // Recall daemon
         return recallDaemon(this.statusBarItem);
     }
 
     onSyncSuccess(diffFilePath: string) {
+        const canRunBufferHandler = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+        if (!canRunBufferHandler) return;
         // Update status bar msg
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
         DiffHandler.removeDiffFile(diffFilePath);

@@ -125,7 +125,7 @@ export const STATUS_BAR_MSGS = {
 	DEFAULT: ' CodeSync ✅',
 	AUTHENTICATION_FAILED: ' CodeSync ❌, Click to authenticate!',
 	SERVER_DOWN: ' CodeSync ❌, Offline',
-	GETTING_READY: 'CodeSync => Getting ready',
+	GETTING_READY: ' CodeSync => Getting ready',
 	NO_REPO_OPEN: ' CodeSync => No project is open',
 	CONNECT_REPO: ' CodeSync ❌, Click to connect repo!',
 	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
