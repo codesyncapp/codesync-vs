@@ -42,8 +42,8 @@ export class SocketEvents {
     }
 
     async onValidAuth() {
-        const canRunBufferHandler = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
-        if (!canRunBufferHandler) return recallDaemon(this.statusBarItem);
+        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+        if (!canSendDiffs) return recallDaemon(this.statusBarItem);
         errorCount = 0;
         // Update status bar msg
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
@@ -67,10 +67,10 @@ export class SocketEvents {
     }
 
     onSyncSuccess(diffFilePath: string) {
-        const canRunBufferHandler = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
-        if (!canRunBufferHandler) return;
         // Update status bar msg
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
+        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+        if (!canSendDiffs) return;
         DiffHandler.removeDiffFile(diffFilePath);
     }
 
