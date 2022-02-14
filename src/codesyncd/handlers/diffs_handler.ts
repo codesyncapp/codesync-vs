@@ -70,7 +70,10 @@ export class DiffsHandler {
                         diffHandler.handleNonSyncedDeletedFile();
                         continue;
                     }
-                    if (diffData.is_rename) continue;
+                    if (diffData.is_rename) {
+                        this.configJSON = await diffHandler.forceUploadFile();
+                        continue;
+                    }
                     if (relPath in WAITING_FILES) {
                         const now = (new Date()).getTime() / 1000;
                         if ((now - WAITING_FILES[relPath]) > FILE_UPLOAD_WAIT_TIMEOUT) {
