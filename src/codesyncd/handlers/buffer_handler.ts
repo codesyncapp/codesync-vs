@@ -127,7 +127,7 @@ export class bufferHandler {
 		return repoDiffs;
 	};
 
-	async run() {
+	async run(canSendDiffs: boolean) {
 		try {
 			const diffFiles = this.getDiffFiles();
 			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
@@ -136,7 +136,7 @@ export class bufferHandler {
 			const activeUser = getActiveUsers()[0];
 
 			const webSocketClient = new SocketClient(this.statusBarItem, activeUser.access_token, repoDiffs);
-			webSocketClient.connect();
+			webSocketClient.connect(canSendDiffs);
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore

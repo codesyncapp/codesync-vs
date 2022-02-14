@@ -12,18 +12,18 @@ import { statusBarMsgs } from "./utils";
 
 export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true, isServerDown=false) => {
     /*
-    There are two types of locks we are using. 
+    There are two types of locks we are using.
     1- POPULATE_BUFFER_LOCK (Overall across all IDEs)
     2- DIFFS_SEND_LOCK (Per IDE type)
-    
+
     Whenever a lock is acquired, we set following states in global
     1- POPULATE_BUFFER_LOCK_ACQUIRED
     2- DIFFS_SEND_LOCK_ACQUIRED
-    respectively 
+    respectively
 
-    Case 1: 
+    Case 1:
         If both locks have been acquired by this instance, Daemon runs both populateBuffer and bufferHandler
-    Case 2: 
+    Case 2:
         If only POPULATE_BUFFER_LOCK is acquried by this instance:
         - If DIFFS_SEND_LOCK is already acquired, run only populateBuffer
         - Othewise acqurie DIFFS_SEND_LOCK and run both populateBuffer and bufferHandler
@@ -76,16 +76,16 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
         default:
             break;
     }
-    
+
     // Do not re-run daemon in case of tests
     if ((global as any).IS_CODESYNC_DEV) return;
-
     return setTimeout(() => {
         const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
         if (canPopulateBuffer) populateBuffer();
+        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
         // Buffer Handler
         const handler = new bufferHandler(statusBarItem);
-        handler.run();
+        handler.run(canSendDiffs);
     }, RESTART_DAEMON_AFTER);
 };
 

@@ -112,7 +112,10 @@ export class DiffHandler {
     }
 
     static removeDiffFile(diffFilePath: string) {
-        if (fs.existsSync(diffFilePath)) {
+        const settings = generateSettings();
+        const relative = path.relative(settings.DIFFS_REPO, diffFilePath);
+        const isRelative = relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+        if (isRelative && fs.existsSync(diffFilePath)) {
             try {
                 fs.unlinkSync(diffFilePath);
             } catch (e) {

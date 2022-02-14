@@ -9,6 +9,7 @@ import fetchMock from "jest-fetch-mock";
 
 import {pathUtils} from "../../src/utils/path_utils";
 import {createSystemDirectories} from "../../src/utils/setup_utils";
+import {CODESYNC_STATES, CodeSyncState} from "../../src/utils/state_utils";
 import {COMMAND, DEFAULT_BRANCH, STATUS_BAR_MSGS} from "../../src/constants";
 import {
     addUser,
@@ -72,9 +73,11 @@ describe("bufferHandler", () => {
         createSystemDirectories();
         fs.mkdirSync(repoPath, {recursive: true});
         setWorkspaceFolders(repoPath);
+        CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, true);
     });
 
     afterEach(() => {
+        CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
         fs.rmSync(repoPath, {recursive: true, force: true});
         fs.rmSync(baseRepoPath, {recursive: true, force: true});
     });
@@ -448,8 +451,10 @@ describe("bufferHandler", () => {
         handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
         expect(fs.existsSync(diffFilePathForChanges)).toBe(true);
-        expect(global.socketConnection.send).toHaveBeenCalledTimes(1);
-        const diffJSON = JSON.parse(global.socketConnection.send.mock.calls[0][0]).diffs[0];
+        expect(global.socketConnection.send).toHaveBeenCalledTimes(3);
+        expect(JSON.parse(global.socketConnection.send.mock.calls[0][0]).auth).toStrictEqual(200);
+        expect(JSON.parse(global.socketConnection.send.mock.calls[1][0]).auth).toStrictEqual(200);
+        const diffJSON = JSON.parse(global.socketConnection.send.mock.calls[2][0]).diffs[0];
         expect(diffJSON.file_id).toStrictEqual(newFileId);
         expect(diffJSON.path).toStrictEqual(newRelPath);
         expect(diffJSON.is_deleted).toBeFalsy();
@@ -491,8 +496,9 @@ describe("bufferHandler", () => {
         const handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(true);
-        expect(global.socketConnection.send).toHaveBeenCalledTimes(1);
-        const diffJSON = JSON.parse(global.socketConnection.send.mock.calls[0][0]).diffs[0];
+        expect(global.socketConnection.send).toHaveBeenCalledTimes(2);
+        expect(JSON.parse(global.socketConnection.send.mock.calls[0][0]).auth).toStrictEqual(200);
+        const diffJSON = JSON.parse(global.socketConnection.send.mock.calls[1][0]).diffs[0];
         expect(diffJSON.file_id).toStrictEqual(1234);
         expect(diffJSON.path).toStrictEqual(fileRelPath);
         expect(diffJSON.is_deleted).toBeFalsy();
@@ -521,7 +527,8 @@ describe("bufferHandler", () => {
         const handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(false);
-        expect(global.socketConnection.send).toHaveBeenCalledTimes(0);
+        expect(global.socketConnection.send).toHaveBeenCalledTimes(1);
+        expect(JSON.parse(global.socketConnection.send.mock.calls[0][0]).auth).toStrictEqual(200);
     });
 
     test("SocketEvents: onMessage, Valid Deleted file", async () => {
@@ -542,7 +549,16 @@ describe("bufferHandler", () => {
         const handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
         expect(fs.existsSync(shadowFilePath)).toBe(false);
-        expect(global.socketConnection.send).toHaveBeenCalledTimes(1);
+        expect(global.socketConnection.send).toHaveBeenCalledTimes(2);
+        expect(JSON.parse(global.socketConnection.send.mock.calls[0][0]).auth).toStrictEqual(200);
+        const diffJSON = JSON.parse(global.socketConnection.send.mock.calls[1][0]).diffs[0];
+        expect(diffJSON.file_id).toStrictEqual(1234);
+        expect(diffJSON.path).toStrictEqual(fileRelPath);
+        expect(diffJSON.is_deleted).toBeTruthy();
+        expect(diffJSON.is_rename).toBeFalsy();
+        expect(diffJSON.diff_file_path).toStrictEqual(diffFilePath);
+        expect(diffJSON.source).toStrictEqual(DIFF_SOURCE);
+        expect(diffJSON.platform).toStrictEqual(os.platform());
     });
 
     test("SocketEvents: onMessage, Changes for non synced file", async () => {

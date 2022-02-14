@@ -42,13 +42,14 @@ export class SocketEvents {
     }
 
     async onValidAuth() {
-        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
-        if (!canSendDiffs) return recallDaemon(this.statusBarItem);
-        errorCount = 0;
+        this.connection.send(JSON.stringify({"auth": 200}));
         // Update status bar msg
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
+        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+        if (!canSendDiffs) return recallDaemon(this.statusBarItem);
         // Send diffs
         let validDiffs: IDiffToSend[] = [];
+        errorCount = 0;
         for (const repoDiff of this.repoDiffs) {
             const diffsHandler = new DiffsHandler(repoDiff, this.accessToken);
             const diffs = await diffsHandler.run();
@@ -56,15 +57,12 @@ export class SocketEvents {
         }
         if (validDiffs.length) {
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
-            this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
         }
         // Recall daemon
         return recallDaemon(this.statusBarItem);
     }
 
     onSyncSuccess(diffFilePath: string) {
-        // Update status bar msg
-        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
         const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
         if (!canSendDiffs) return;
         DiffHandler.removeDiffFile(diffFilePath);

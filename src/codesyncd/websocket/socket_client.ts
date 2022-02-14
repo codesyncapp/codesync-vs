@@ -7,6 +7,7 @@ import {recallDaemon} from "../codesyncd";
 import {SocketEvents} from "./socket_events";
 import {
     CONNECTION_ERROR_MESSAGE,
+    DIFF_SOURCE,
     SOCKET_CONNECT_ERROR_CODES,
     SOCKET_ERRORS,
     WEBSOCKET_ENDPOINT
@@ -34,11 +35,11 @@ export class SocketClient {
         (global as any).socketConnection = null;
     }
 
-    connect = () => {
+    connect = (canSendDiffs: boolean) => {
         if (!this.client) {
             this.client = new client();
             (global as any).client = this.client;
-            this.registerEvents();
+            this.registerEvents(canSendDiffs);
         } else {
             const socketConnection = (global as any).socketConnection;
             if (!socketConnection) return;
@@ -48,7 +49,7 @@ export class SocketClient {
         }
     };
 
-    registerEvents = () => {
+    registerEvents = (canSendDiffs: boolean) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const that = this;
 
@@ -67,7 +68,11 @@ export class SocketClient {
             that.registerConnectionEvents(connection);
         });
 
-        this.client.connect(`${WEBSOCKET_ENDPOINT}?token=${this.accessToken}`);
+        let url = `${WEBSOCKET_ENDPOINT}?token=${this.accessToken}&source=${DIFF_SOURCE}`;
+        if (!canSendDiffs) {
+            url += '&auth_only=1';
+        }
+        this.client.connect(url);
     };
 
     registerConnectionEvents = (connection: any) => {
