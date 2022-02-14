@@ -88,7 +88,7 @@ export const logout = () => {
     return logoutUrl;
 };
 
-const markUsersInactive = () => {
+export const markUsersInactive = (notify=true) => {
     vscode.commands.executeCommand('setContext', 'showLogIn', true);
     // Mark all users as is_active=false in user.yml
     const settings = generateSettings();
@@ -97,6 +97,7 @@ const markUsersInactive = () => {
         users[email].is_active = false;
     });
     fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
+    if (!notify) return;
     setTimeout(() => {
         vscode.window.showInformationMessage(NOTIFICATION.LOGGED_OUT_SUCCESSFULLY);
     }, 1000);

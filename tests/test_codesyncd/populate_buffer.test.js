@@ -18,7 +18,6 @@ import {
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
     getSeqTokenFilePath,
-    getUserFilePath,
     randomBaseRepoPath,
     randomRepoPath,
     TEST_EMAIL,
@@ -32,7 +31,6 @@ describe("populateBuffer", () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
-    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {};
     userData[TEST_EMAIL] = {access_token: "ABC"};
     const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
@@ -123,6 +121,7 @@ describe("populateBuffer", () => {
         addRepo();
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         const updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
+        await waitFor(0.01);
         fs.writeFileSync(filePath, updatedText);
         await populateBuffer();
         expect(assertChangeEvent(repoPath, diffsRepo, DUMMY_FILE_CONTENT, updatedText, fileRelPath, shadowFilePath)).toBe(true);
@@ -177,6 +176,27 @@ describe("populateBuffer", () => {
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         await populateBuffer();
         expect(assertFileDeleteEvent(repoPath, fileRelPath)).toBe(true);
+    });
+
+    test("1 New File, 1 Edit of other file in same iteration", async () => {
+        fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
+        addRepo();
+        // Another new file 
+        const newFfileRelPath = 'abc.js';
+        const newFilePath = path.join(repoPath, newFfileRelPath);
+        fs.writeFileSync(newFilePath, DUMMY_FILE_CONTENT);
+        // Edit of other file
+        let updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
+        fs.writeFileSync(filePath, updatedText);
+        await populateBuffer();
+        await waitFor(0.1);
+        let diffFiles = fs.readdirSync(diffsRepo);
+        const newFileDiffs =  diffFiles.filter(diffFile => {
+            const diffFilePath = path.join(diffsRepo, diffFile);
+            const diffData = readYML(diffFilePath);
+            return diffData.is_new_file;
+        });
+        expect(newFileDiffs).toHaveLength(1);
     });
 
     test("New File -> Edit -> Rename -> Edit", async () => {

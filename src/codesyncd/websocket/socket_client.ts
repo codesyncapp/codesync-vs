@@ -2,14 +2,13 @@ import vscode from "vscode";
 import {client} from "websocket";
 
 import {IRepoDiffs} from "../../interface";
-import {logMsg, updateStatusBarItem} from "../../utils/common";
+import {logMsg} from "../../utils/common";
 import {recallDaemon} from "../codesyncd";
 import {SocketEvents} from "./socket_events";
 import {
     CONNECTION_ERROR_MESSAGE,
     SOCKET_CONNECT_ERROR_CODES,
     SOCKET_ERRORS,
-    STATUS_BAR_MSGS,
     WEBSOCKET_ENDPOINT
 } from "../../constants";
 
@@ -19,7 +18,8 @@ export class SocketClient {
     client: any;
     statusBarItem: vscode.StatusBarItem;
     accessToken: string;
-    repoDiffs: IRepoDiffs[]
+    repoDiffs: IRepoDiffs[];
+    statusBarMsgsHandler: any;
 
     constructor(statusBarItem: vscode.StatusBarItem, accessToken: string, repoDiffs: IRepoDiffs[]) {
         this.statusBarItem = statusBarItem;
@@ -59,8 +59,7 @@ export class SocketClient {
                 console.log(`Socket Connect Failed: ${error.code}, ${errStr}`);
             }
             errorCount = logMsg(CONNECTION_ERROR_MESSAGE, errorCount);
-            updateStatusBarItem(that.statusBarItem, STATUS_BAR_MSGS.SERVER_DOWN);
-            return recallDaemon(that.statusBarItem);
+            return recallDaemon(that.statusBarItem, true, true);
         });
 
         this.client.on('connect', function (connection: any) {

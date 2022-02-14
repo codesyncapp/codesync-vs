@@ -23,15 +23,15 @@ import { SEQUENCE_MATCHER_RATIO } from "../constants";
 import {eventHandler} from "../events/event_handler";
 
 
-export const populateBuffer = async (viaDaemon=false) => {
+export const populateBuffer = async () => {
     const readyRepos = await detectBranchChange();
-    await populateBufferForMissedEvents(readyRepos, viaDaemon);
+    await populateBufferForMissedEvents(readyRepos);
 };
 
-export const populateBufferForMissedEvents = async (readyRepos: any, viaDaemon=false) => {
+export const populateBufferForMissedEvents = async (readyRepos: any) => {
     for (const repoPath of Object.keys(readyRepos)) {
         const branch = readyRepos[repoPath];
-        const obj = new PopulateBuffer(repoPath, branch, viaDaemon);
+        const obj = new PopulateBuffer(repoPath, branch);
         if (!obj.modifiedInPast) {
             // Go for content diffs if repo was modified after lastSyncedAt
             await obj.populateBufferForRepo();
@@ -67,7 +67,6 @@ class PopulateBuffer {
 
     repoPath: string;
     branch: string;
-    viaDaemon: boolean;
     repoBranchPath: string;
     repoModifiedAt: number;
     modifiedInPast: boolean;
@@ -82,10 +81,9 @@ class PopulateBuffer {
     deletedRepoBranchPath: string;
     originalsRepoBranchPath: string;
 
-    constructor(repoPath: string, branch: string, viaDaemon=false) {
+    constructor(repoPath: string, branch: string) {
         this.repoPath = repoPath;
         this.branch = branch;
-        this.viaDaemon = viaDaemon;
         this.repoModifiedAt = -1;
         this.settings = generateSettings();
         this.repoBranchPath = path.join(this.repoPath, this.branch);
@@ -118,13 +116,17 @@ class PopulateBuffer {
     async populateBufferForRepo() {
         console.log(`Watching Repo: ${this.repoPath}`);
         
-        const handler = new eventHandler(this.repoPath, "", this.viaDaemon);
+        const handler = new eventHandler(this.repoPath, "", true);
         
         for (const itemPath of this.itemPaths) {
             let isRename = false;
             const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
             const shadowExists = fs.existsSync(shadowFilePath);
             const fileInConfig = itemPath.rel_path in this.configFiles;
+            // Reset values for each file
+            handler.isNewFile = false;
+            handler.isRename = false;
+            handler.isDelete = false;
             handler.createdAt = formatDatetime(itemPath.modified_at);
 
             // For binary file, can only handle create event
@@ -227,6 +229,7 @@ class PopulateBuffer {
          - present in .shadow repo
         */
         const activeRelPaths = this.itemPaths.map(itemPath => itemPath.rel_path);
+        const handler = new eventHandler(this.repoPath);
         Object.keys(this.configFiles).forEach(relPath => {
             // Cache path of file
             const cacheFilePath = path.join(this.deletedRepoBranchPath, relPath);
@@ -240,7 +243,6 @@ class PopulateBuffer {
                 return;
             }
             const filePath = path.join(this.repoPath, relPath);
-            const handler = new eventHandler(this.repoPath);
             handler.handleDelete(filePath);
         });
     }

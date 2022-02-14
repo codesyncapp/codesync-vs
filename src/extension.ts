@@ -1,6 +1,7 @@
 'use strict';
 
 import vscode from 'vscode';
+import lockFile from 'lockfile';
 
 import { eventHandler } from "./events/event_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
@@ -8,7 +9,7 @@ import { COMMAND, STATUS_BAR_MSGS } from './constants';
 
 import { logout } from './utils/auth_utils';
 import { pathUtils } from "./utils/path_utils";
-import { checkSubDir, updateStatusBarItem } from "./utils/common";
+import { checkSubDir } from "./utils/common";
 import { recallDaemon } from "./codesyncd/codesyncd";
 import {
 	unSyncHandler,
@@ -19,7 +20,8 @@ import {
 	openSyncIgnoreHandler
 } from './handlers/commands_handler';
 import { putLogEvent } from "./logger";
-
+import { generateSettings } from './settings';
+import { CodeSyncState, CODESYNC_STATES } from './utils/state_utils';
 
 export async function activate(context: vscode.ExtensionContext) {
 	try {
@@ -110,7 +112,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 		});
 
-		updateStatusBarItem(statusBarItem, STATUS_BAR_MSGS.GETTING_READY);
 		recallDaemon(statusBarItem, false);
 	} catch (e) {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -120,5 +121,32 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate(context: vscode.ExtensionContext) {
-	// pass
+	const settings = generateSettings();
+
+	try {
+        // If locks were acquired by current instance, release the locks
+		const canRunPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
+		const canRunBufferHandler = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+		if (canRunPopulateBuffer) {
+			lockFile.unlock(settings.POPULATE_BUFFER_LOCK_FILE, function (er) {
+				if (!er) CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
+			});    
+		}
+		if (canRunBufferHandler) {
+			lockFile.unlock(settings.DIFFS_SEND_LOCK_FILE, function (er) {
+				if (!er) CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
+			});    
+		}
+	} catch (e) {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		putLogEvent(e.stack);
+		// Release locks anyway in case there is some exception
+		lockFile.unlock(settings.POPULATE_BUFFER_LOCK_FILE, function (er) { 
+			// 
+		});    
+		lockFile.unlock(settings.DIFFS_SEND_LOCK_FILE, function (er) { 
+			// 
+		});
+	}
 }

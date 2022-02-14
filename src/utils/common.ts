@@ -1,17 +1,14 @@
 import fs from 'fs';
 import path from "path";
-import vscode from 'vscode';
 import yaml from 'js-yaml';
 import dateFormat from "dateformat";
 import getBranchName from "current-git-branch";
 
 import {
-	COMMAND,
 	DATETIME_FORMAT,
 	DEFAULT_BRANCH,
 	IGNORABLE_DIRECTORIES,
 	LOG_AFTER_X_TIMES,
-	STATUS_BAR_MSGS,
 	SYNCIGNORE
 } from "../constants";
 import { IUserProfile } from "../interface";
@@ -29,24 +26,6 @@ export const readYML = (filePath: string) => {
 		return yaml.load(readFile(filePath));
 	} catch (e) {
 		return null;
-	}
-};
-
-export const updateStatusBarItem = (statusBarItem: vscode.StatusBarItem, text: string) => {
-	try {
-		if (text === STATUS_BAR_MSGS.AUTHENTICATION_FAILED) {
-			statusBarItem.command = COMMAND.triggerSignUp;
-		} else if (text === STATUS_BAR_MSGS.CONNECT_REPO) {
-			statusBarItem.command = COMMAND.triggerSync;
-		} else {
-			statusBarItem.command = undefined;
-		}
-		statusBarItem.text = text;
-		statusBarItem.show();
-	} catch (e) {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		putLogEvent(e.stack);
 	}
 };
 
