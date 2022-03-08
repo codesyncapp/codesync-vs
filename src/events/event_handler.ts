@@ -70,6 +70,8 @@ export class eventHandler {
 	addPathToConfig = (relPath: string, oldRelPath = "") => {
 		const configJSON = readYML(this.settings.CONFIG_PATH);
 		const configFiles = configJSON.repos[this.repoPath].branches[this.branch];
+		// If branch is not synced, discard the event
+		if (!configFiles) return;
 		if (this.isNewFile) {
 			configFiles[relPath] = null;
 		}
@@ -99,8 +101,9 @@ export class eventHandler {
 
 	handleChanges = (filePath: string, currentText: string) => {
 		if (!filePath.startsWith(this.repoPath)) return;
+		// If file does not exist, return
+		if (!fs.existsSync(filePath)) return;
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
-
 		// Skip .git and .syncignore files
 		if (shouldIgnorePath(this.repoPath, relPath)) return;
 		let shadowText = "";
@@ -149,10 +152,6 @@ export class eventHandler {
 		event.files.forEach((file) => {
 			this.handleNewFile(file.fsPath);
 		});
-	}
-
-	handlePastedFile = (filePath: string) => {
-		this.handleNewFile(filePath);
 	}
 
 	handleNewFile = (_filePath: string) => {

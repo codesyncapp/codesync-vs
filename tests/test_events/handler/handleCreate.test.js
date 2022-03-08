@@ -149,25 +149,6 @@ describe("handleNewFile",  () => {
         fs.rmSync(otherRepo, { recursive: true, force: true });
     });
 
-    test("Event: handlePastedFile, Repo not synced", () => {
-        const configUtil = new Config(repoPath, configPath);
-        configUtil.removeRepo();
-        const handler = new eventHandler();
-        handler.handlePastedFile(newFilePath);
-        // Verify file has been created in the .shadow repo and .originals repos
-        expect(fs.existsSync(shadowFilePath)).toBe(false);
-        expect(fs.existsSync(originalsFilePath)).toBe(false);
-        // Verify no diff file has been generated
-        const diffFiles = fs.readdirSync(diffsRepo);
-        expect(diffFiles).toHaveLength(0);
-    });
-
-    test("Event: handlePastedFile, Synced Repo", () => {
-        const handler = new eventHandler();
-        handler.handlePastedFile(newFilePath);
-        expect(assertNewFileEvent(repoPath, newRelPath)).toBe(true);
-    });
-
     test("New File",  async () => {
         const handler = new eventHandler();
         handler.handleNewFile(newFilePath);

@@ -127,7 +127,7 @@ class PopulateBuffer {
             handler.isNewFile = false;
             handler.isRename = false;
             handler.isDelete = false;
-            handler.createdAt = formatDatetime(itemPath.modified_at);
+            handler.createdAt = formatDatetime(itemPath.created_at);
 
             // For binary file, can only handle create event
             if (itemPath.is_binary) {
@@ -139,6 +139,7 @@ class PopulateBuffer {
             }
             // It is a change event
             if (fileInConfig) {
+                handler.createdAt = formatDatetime(itemPath.modified_at);
                 // Read latest content of the file
                 const currentContent = fs.readFileSync(itemPath.file_path, "utf8");
                 handler.handleChanges(itemPath.file_path, currentContent);

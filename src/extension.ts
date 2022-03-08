@@ -5,7 +5,7 @@ import lockFile from 'lockfile';
 
 import { eventHandler } from "./events/event_handler";
 import { setupCodeSync, showConnectRepoView, showLogIn } from "./utils/setup_utils";
-import { COMMAND, STATUS_BAR_MSGS } from './constants';
+import { COMMAND } from './constants';
 
 import { logout } from './utils/auth_utils';
 import { pathUtils } from "./utils/path_utils";
@@ -54,19 +54,6 @@ export async function activate(context: vscode.ExtensionContext) {
 				console.log(`Parent repo: ${repoPath}`);
 			}	
 		}
-
-		const watcher = vscode.workspace.createFileSystemWatcher("**/*"); //glob search string
-
-		watcher.onDidCreate((e) => {
-			try {
-				const handler = new eventHandler(repoPath);
-				handler.handlePastedFile(e.fsPath);
-			} catch (e) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
-				putLogEvent(e.stack);
-			}
-		});
 
 		vscode.workspace.onDidChangeTextDocument(changeEvent => {
 			try {

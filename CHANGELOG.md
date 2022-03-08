@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.3] - 2022-03-08
+### Fixed
+- Handled vscode.workspace.workspaceFolders case for undefine
+- Removing Watcher for Pasted file, Daemon takes care of it
+
 ## [3.5.2] - 2022-02-15
 ### Fixed
 - Force uploading file for rename-event if file_id is null in config

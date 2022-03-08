@@ -38,17 +38,13 @@ export class DiffHandler {
         this.configRepo = this.configJSON.repos[this.repoPath];
     }
 
-    handleNewFileUpload = async () => {
+    async handleNewFile() {
         /*
             Uploads new file to server and adds it in config
             Ignores if file is not present in .originals repo
         */
-        return await handleNewFileUpload(this.accessToken, this.repoPath, this.branch, this.createdAt,
+        const json = await handleNewFileUpload(this.accessToken, this.repoPath, this.branch, this.createdAt,
             this.fileRelPath, this.configRepo.id, this.configJSON);
-    };
-
-    async handleNewFile() {
-        const json = await this.handleNewFileUpload();
         if (!json.uploaded) {
             return this.configJSON;
         }

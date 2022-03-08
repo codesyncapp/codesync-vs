@@ -19,7 +19,7 @@ export class pathUtils {
 
     static getRootPath = () => {
         // TODO: Note => Supporting root directory of workspace for now
-        if (!vscode.workspace.workspaceFolders) return "";
+        if (!vscode.workspace.workspaceFolders || !vscode.workspace.workspaceFolders.length || !vscode.workspace.workspaceFolders[0]) return "";
         let rootPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
         rootPath = pathUtils.normalizePath(rootPath);
         return rootPath;

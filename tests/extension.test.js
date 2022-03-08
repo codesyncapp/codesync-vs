@@ -108,9 +108,6 @@ describe("Extension: activate",() => {
         expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.IGNORE);
 
         // Verify events listeners are registered just fine
-        // createFileSystemWatcher
-        expect(vscode.workspace.createFileSystemWatcher).toHaveBeenCalledTimes(1);
-        expect(vscode.workspace.createFileSystemWatcher.mock.calls[0][0]).toBe(`**/*`);
         // onDidChangeTextDocument
         expect(vscode.workspace.onDidChangeTextDocument).toHaveBeenCalledTimes(1);
         // onDidCreateFiles
