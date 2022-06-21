@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.4] - 2022-06-23
+### Added
+- Changed 2 tags, added Others in categoris
+- Using proper-lockfile instead of lockfile now
+
 ## [3.5.3] - 2022-03-08
 ### Fixed
 - Handled vscode.workspace.workspaceFolders case for undefine

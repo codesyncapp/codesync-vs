@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import vscode from "vscode";
 import yaml from "js-yaml";
-import lockFile from "lockfile";
+import lockFile from "proper-lockfile";
 import untildify from "untildify";
 
 import {activate, deactivate} from "../src/extension";
@@ -300,63 +300,5 @@ describe("Extension: activate",() => {
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.OPEN_SYNCIGNORE);
         expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
         expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.UNSYNC_PARENT_REPO);
-    });
-});
-
-describe("Extension: deactivate",() => {
-    const baseRepoPath = randomBaseRepoPath();
-    untildify.mockReturnValue(baseRepoPath);
-    const settings = generateSettings();
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-        jest.spyOn(global.console, 'log');
-        untildify.mockReturnValue(baseRepoPath);
-        createSystemDirectories();
-        const settings = generateSettings();
-        lockFile.lockSync(settings.POPULATE_BUFFER_LOCK_FILE);
-        lockFile.lockSync(settings.DIFFS_SEND_LOCK_FILE);
-    });
-
-    afterEach(() => {
-        lockFile.unlockSync(settings.POPULATE_BUFFER_LOCK_FILE);
-        lockFile.unlockSync(settings.DIFFS_SEND_LOCK_FILE);
-        fs.rmSync(baseRepoPath, { recursive: true, force: true });
-    });
-
-    test("Acquried no lock", () => {
-        CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
-        CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
-        deactivate(vscode.ExtensionContext);
-        expect(console.log).toHaveBeenCalledTimes(0);
-        expect(lockFile.checkSync(settings.POPULATE_BUFFER_LOCK_FILE)).toBe(true);
-        expect(lockFile.checkSync(settings.DIFFS_SEND_LOCK_FILE)).toBe(true);
-    });
-
-    test("Acquried populateBuffer lock", () => {
-        CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, true);
-        CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
-        deactivate(vscode.ExtensionContext);
-        expect(console.log).toHaveBeenCalledTimes(0);
-        expect(lockFile.checkSync(settings.POPULATE_BUFFER_LOCK_FILE)).toBe(false);
-        expect(lockFile.checkSync(settings.DIFFS_SEND_LOCK_FILE)).toBe(true);
-    });
-
-    test("Acquried diffsSend lock", () => {
-        CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
-        CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, true);
-        deactivate(vscode.ExtensionContext);
-        expect(console.log).toHaveBeenCalledTimes(0);
-        expect(lockFile.checkSync(settings.POPULATE_BUFFER_LOCK_FILE)).toBe(true);
-        expect(lockFile.checkSync(settings.DIFFS_SEND_LOCK_FILE)).toBe(false);
-    });
-
-    test("Acquried both locks", () => {
-        CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, true);
-        CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, true);
-        deactivate(vscode.ExtensionContext);
-        expect(console.log).toHaveBeenCalledTimes(0);
-        expect(lockFile.checkSync(settings.POPULATE_BUFFER_LOCK_FILE)).toBe(false);
-        expect(lockFile.checkSync(settings.DIFFS_SEND_LOCK_FILE)).toBe(false);
     });
 });

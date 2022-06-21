@@ -1,12 +1,11 @@
 import vscode from "vscode";
-import lockFile from 'lockfile';
 
 import { RESTART_DAEMON_AFTER, STATUS_BAR_MSGS } from "../constants";
 import { bufferHandler } from "./handlers/buffer_handler";
 import { populateBuffer } from "./populate_buffer";
-import { generateSettings } from "../settings";
 import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
 import { statusBarMsgs } from "./utils";
+import { LockUtils } from "../utils/lock_utils";
 
 
 
@@ -52,26 +51,27 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
             recallDaemon(statusBarItem);
         }, RESTART_DAEMON_AFTER);
     }
+
     // Check permissions to run populateBuffer and bufferHandler
-    const settings = generateSettings();
     const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
     const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
     // Check Locks availability
-    const isPopulateBufferLockAcquired = lockFile.checkSync(settings.POPULATE_BUFFER_LOCK_FILE);
-    const isSendingDiffsLockAcquired = lockFile.checkSync(settings.DIFFS_SEND_LOCK_FILE);
+    const lockUtils = new LockUtils();
+    const isPopulateBufferLockAcquired = lockUtils.checkPopulateBufferLock();
+    const isSendingDiffsLockAcquired = lockUtils.checkDiffsSendLock();
 
     switch (true) {
         case canPopulateBuffer && canSendDiffs:
             break;
         case canPopulateBuffer && !isSendingDiffsLockAcquired:
-            acquireSendDiffsLock();
+            lockUtils.acquireSendDiffsLock();
             break;
         case canSendDiffs && !isPopulateBufferLockAcquired:
-            acquirePopulateBufferLock();
+            lockUtils.acquirePopulateBufferLock();
             break;
         case !canPopulateBuffer && !canSendDiffs:
-            if (!isPopulateBufferLockAcquired) acquirePopulateBufferLock();
-            if (!isSendingDiffsLockAcquired) acquireSendDiffsLock();
+            if (!isPopulateBufferLockAcquired) lockUtils.acquirePopulateBufferLock();
+            if (!isSendingDiffsLockAcquired) lockUtils.acquireSendDiffsLock();
             break;
         default:
             break;
@@ -87,16 +87,4 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
         const handler = new bufferHandler(statusBarItem);
         handler.run(canSendDiffs);
     }, RESTART_DAEMON_AFTER);
-};
-
-export const acquirePopulateBufferLock = () => {
-    const settings = generateSettings();
-    lockFile.lockSync(settings.POPULATE_BUFFER_LOCK_FILE);
-    CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, true);
-};
-
-export const acquireSendDiffsLock = () => {
-    const settings = generateSettings();
-    lockFile.lockSync(settings.DIFFS_SEND_LOCK_FILE);
-    CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, true);
 };

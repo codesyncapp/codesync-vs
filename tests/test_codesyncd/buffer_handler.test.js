@@ -30,6 +30,7 @@ import {SocketClient} from "../../src/codesyncd/websocket/socket_client";
 import {SocketEvents} from "../../src/codesyncd/websocket/socket_events";
 import {readYML} from "../../src/utils/common";
 import {DIFF_SOURCE} from "../../src/constants";
+import {LockUtils} from "../../src/utils/lock_utils";
 
 
 describe("bufferHandler", () => {
@@ -73,10 +74,12 @@ describe("bufferHandler", () => {
         createSystemDirectories();
         fs.mkdirSync(repoPath, {recursive: true});
         setWorkspaceFolders(repoPath);
+        CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, true);
         CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, true);
     });
 
     afterEach(() => {
+        CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
         CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
         fs.rmSync(repoPath, {recursive: true, force: true});
         fs.rmSync(baseRepoPath, {recursive: true, force: true});
@@ -562,6 +565,9 @@ describe("bufferHandler", () => {
     });
 
     test("SocketEvents: onMessage, Changes for non synced file", async () => {
+        const lockUtils = new LockUtils();
+        lockUtils.acquireSendDiffsLock();
+        lockUtils.acquirePopulateBufferLock();    
         addRepo();
         fs.writeFileSync(newFilePath, DUMMY_FILE_CONTENT);
         const response = {id: newFileId, url: PRE_SIGNED_URL};

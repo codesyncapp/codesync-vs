@@ -49,6 +49,16 @@ export const createSystemDirectories = () => {
 	if (!sequenceTokenExists) {
 		fs.writeFileSync(sequenceTokenPath, yaml.safeDump({}));
 	}
+
+	// Create lock files
+	const populateBufferLockFileExists = fs.existsSync(settings.DIFFS_SEND_LOCK_FILE);
+	const diffsSendLockFileExists = fs.existsSync(settings.DIFFS_SEND_LOCK_FILE);
+	if (!populateBufferLockFileExists) {
+		fs.writeFileSync(settings.POPULATE_BUFFER_LOCK_FILE, "");
+	}
+	if (!diffsSendLockFileExists) {
+		fs.writeFileSync(settings.DIFFS_SEND_LOCK_FILE, "");
+	}
 	return settings;
 };
 
@@ -92,8 +102,6 @@ export const setupCodeSync = async (repoPath: string) => {
 		showSignUpButtons();
 		return port;
 	}
-
-
 
 	return showRepoStatusMsg(repoPath, port);
 };
