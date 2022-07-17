@@ -1,7 +1,7 @@
 {
   "name": "codesync",
   "displayName": "CodeSync",
-  "description": "Stream all code changes to the cloud, in real-time. Never lose code again - no commits needed.",
+  "description": "Stream code to the cloud. Save it forever. Play it back later. No commits needed.",
   "icon": "images/icon.png",
   "version": "3.5.6",
   "publisher": "codesync",
