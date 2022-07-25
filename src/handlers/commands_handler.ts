@@ -6,6 +6,7 @@ import yaml from "js-yaml";
 import {
 	getRepoInSyncMsg,
 	NOTIFICATION,
+	PRICING_URL,
 	SYNCIGNORE
 } from '../constants';
 import { checkSubDir, getBranch, isRepoActive, readYML } from '../utils/common';
@@ -129,4 +130,8 @@ export const openSyncIgnoreHandler = async () => {
 			// 
 		});
 	});
+};
+
+export const upgradePlanHandler = () => {
+	vscode.env.openExternal(vscode.Uri.parse(PRICING_URL));
 };

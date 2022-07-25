@@ -17,6 +17,7 @@ import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, DIFF_SOURCE, NOTIFICATION } from '../constants';
 import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems } from '../utils/common';
+import { getPlanLimitReached } from '../utils/pricing_utils';
 
 export class initUtils {
 	repoPath: string;
@@ -223,6 +224,11 @@ export class initUtils {
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
 					userEmail: string, isPublic=false) {
+
+		// Check plan limits
+		const { planLimitReached, canRetry } = getPlanLimitReached();
+		if (planLimitReached && !canRetry) return;
+					
 		const repoName = path.basename(this.repoPath);
 		const configJSON = readYML(this.settings.CONFIG_PATH);
 		const repoInConfig = isRepoActive(configJSON, this.repoPath);

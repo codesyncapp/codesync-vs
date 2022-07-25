@@ -12,6 +12,7 @@ import {
     SOCKET_ERRORS,
     WEBSOCKET_ENDPOINT
 } from "../../constants";
+import { getPlanLimitReached } from "../../utils/pricing_utils";
 
 let errorCount = 0;
 
@@ -36,6 +37,10 @@ export class SocketClient {
     }
 
     connect = (canSendDiffs: boolean) => {
+        // Check plan limits
+        const { planLimitReached, canRetry } = getPlanLimitReached();
+		if (planLimitReached && !canRetry) return recallDaemon(this.statusBarItem);
+
         if (!this.client) {
             this.client = new client();
             (global as any).client = this.client;
@@ -84,9 +89,8 @@ export class SocketClient {
         connection.on('error', function (error: any) {
             const msg = `Socket Connection Error: ${error.code}, ${error.toString()}`;
             if (!SOCKET_CONNECT_ERROR_CODES.filter(err => error.code === err).length) {
-                console.log(msg);
+                errorCount = logMsg(msg, errorCount);
             }
-            errorCount = logMsg(msg, errorCount);
             that.resetGlobals();
         });
 

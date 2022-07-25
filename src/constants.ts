@@ -31,7 +31,7 @@ export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
 export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v2/websocket`;
 
-export const PLANS_URL = `${WEB_APP_URL}/pricing`;
+export const PRICING_URL = `${WEB_APP_URL}/pricing`;
 // Diff utils
 export const DIFF_FILES_PER_ITERATION = 50;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
@@ -67,6 +67,7 @@ export const NOTIFICATION = {
 	CANCEL: "Cancel",
 	OK: "OK!",
 	CONTINUE: "Continue",
+	UPGRADE: "Upgrade",
 	TRACK_IT: "View on web",
 	TRACK_PARENT_REPO: "View parent repo on web",
 	OPEN_SYNCIGNORE: "Open .syncignore",
@@ -85,7 +86,7 @@ export const NOTIFICATION = {
 	REPOS_LIMIT_BREACHED: "Repo size exceeds the limit. Allowed repo size is",
 	FILES_LIMIT_BREACHED: "FIles count exceeds the limit.",
 	SERVICE_NOT_AVAILABLE: "CodeSync service is unavailable. Please try again in a moment.",
-	UPGRADE_PLAN: `Upgrade your plan: ${PLANS_URL}`,
+	UPGRADE_PLAN: "Please upgrade your plan to continue using CodeSync",
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
 	REPO_IN_SYNC: "is in sync with CodeSync.",
@@ -129,7 +130,8 @@ export const STATUS_BAR_MSGS = {
 	NO_REPO_OPEN: ' CodeSync => No project is open',
 	CONNECT_REPO: ' CodeSync ❌, Click to connect repo!',
 	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
-	NO_CONFIG: ' CodeSync ❌, Reload required!'
+	NO_CONFIG: ' CodeSync ❌, Reload required!',
+	UPGRADE_PLAN: ' CodeSync ❌, Click to upgrade plan!',
 };
 
 export const COMMAND = {
@@ -139,7 +141,8 @@ export const COMMAND = {
 	triggerUnsync: 'codesync.unsync',
 	trackRepo: 'codesync.trackRepo',
 	trackFile: 'codesync.trackFile',
-	openSyncIgnore: 'codesync.openSyncIgnore'
+	openSyncIgnore: 'codesync.openSyncIgnore',
+	upgradePlan: 'codesync.upgradePlan'
 };
 
 export class staticFiles {
@@ -157,7 +160,8 @@ export const FILE_UPLOAD_WAIT_TIMEOUT = 5 * 60;
 export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .syncignore. It follows same format as .gitignore.";
 // Log after 5 min, as daemon restarts after 5s so it will log after 60 iterations
 export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
-
+// export const RETRY_REQUEST_AFTER = 3 * 60 * 1000; // 1000 is for ms;
+export const RETRY_REQUEST_AFTER = 20 * 1000; // 1000 is for ms;
 export const SOCKET_CONNECT_ERROR_CODES = ["ECONNREFUSED", "ETIMEDOUT", "ECONNRESET"];
 export const SOCKET_ERRORS = {
 	ERROR_MSG_RECEIVE: 'Error receiving socket msg'

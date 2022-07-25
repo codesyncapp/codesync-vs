@@ -19,6 +19,7 @@ import { putLogEvent } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { checkSubDir, getActiveUsers, isRepoActive, readYML } from '../utils/common';
+import { getPlanLimitReached } from '../utils/pricing_utils';
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -65,6 +66,12 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 			config: configJSON
 		};
 	}
+	// Check plan limits
+	const {planLimitReached, canRetry } = getPlanLimitReached();
+	if (planLimitReached && !canRetry) return {
+		uploaded: false,
+		config: configJSON
+	};
 
 	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, createdAt);
 	if (response.error) {
@@ -188,6 +195,8 @@ export class statusBarMsgs {
 				this.statusBarItem.command = COMMAND.triggerSignUp;
 			} else if (text === STATUS_BAR_MSGS.CONNECT_REPO) {
 				this.statusBarItem.command = COMMAND.triggerSync;
+			} else if (text === STATUS_BAR_MSGS.UPGRADE_PLAN) {
+				this.statusBarItem.command = COMMAND.upgradePlan;
 			} else {
 				this.statusBarItem.command = undefined;
 			}
@@ -217,6 +226,7 @@ export class statusBarMsgs {
 		}
 		// Repo is not synced
 		if (!isRepoActive(this.configJSON, repoPath)) return STATUS_BAR_MSGS.CONNECT_REPO;
-		return STATUS_BAR_MSGS.DEFAULT;
+		const { planLimitReached } = getPlanLimitReached();
+		return planLimitReached ? STATUS_BAR_MSGS.UPGRADE_PLAN : STATUS_BAR_MSGS.DEFAULT;
 	}
 }

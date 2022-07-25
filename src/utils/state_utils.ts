@@ -4,12 +4,14 @@ export const CODESYNC_STATES = {
     IS_SUB_DIR: "isSubDir",
     IS_SYNCIGNORED_SUB_DIR: "isSyncIgnored",
 	DIFFS_SEND_LOCK_ACQUIRED: "diffsSendLockAcquired",
-	POPULATE_BUFFER_LOCK_ACQUIRED: "populateBufferLockAcquired"
+	POPULATE_BUFFER_LOCK_ACQUIRED: "populateBufferLockAcquired",
+    PRICING_PLAN_LIMIT_REACHED: "pricingPlanLimitReache",
+    REQUEST_SENT_AT: "requestSentAt"
 };
 
 export class CodeSyncState {
 
-    static set = (key: string, value: string|boolean) => {
+    static set = (key: string, value: string|boolean|number) => {
         if (!(global as any).codeSyncState) {
             (global as any).codeSyncState = {};
         }    

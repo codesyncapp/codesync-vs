@@ -16,9 +16,11 @@ import {
 	SyncHandler,
 	trackRepoHandler,
 	trackFileHandler,
-	openSyncIgnoreHandler
+	openSyncIgnoreHandler,
+	upgradePlanHandler
 } from './handlers/commands_handler';
 import { putLogEvent } from "./logger";
+import { getPlanLimitReached } from './utils/pricing_utils';
 
 export async function activate(context: vscode.ExtensionContext) {
 	try {
@@ -29,6 +31,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.executeCommand('setContext', 'isSubDir', subDirResult.isSubDir);
 		vscode.commands.executeCommand('setContext', 'isSyncIgnored', subDirResult.isSyncIgnored);
 		vscode.commands.executeCommand('setContext', 'CodeSyncActivated', true);
+		vscode.commands.executeCommand('setContext', 'upgradePlan', getPlanLimitReached().planLimitReached);
 
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, SignUpHandler));
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerLogout, logout));
@@ -37,6 +40,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackRepo, trackRepoHandler));
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackFile, trackFileHandler));
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.openSyncIgnore, openSyncIgnoreHandler));
+		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.upgradePlan, upgradePlanHandler));
 
 		const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 		statusBarItem.command = COMMAND.triggerUnsync;
