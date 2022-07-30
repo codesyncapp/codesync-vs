@@ -16,7 +16,6 @@ import { showChooseAccount } from "../utils/notifications";
 import { updateRepo } from '../utils/sync_repo_utils';
 import { generateSettings, WEB_APP_URL } from "../settings";
 import { pathUtils } from "../utils/path_utils";
-import { showRepoStatusMsg } from "../utils/setup_utils";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();

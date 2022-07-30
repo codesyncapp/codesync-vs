@@ -131,10 +131,11 @@ export class bufferHandler {
 		try {
 			const diffFiles = this.getDiffFiles();
 			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
-
 			const repoDiffs = this.groupRepoDiffs(diffFiles);
+			// Check if we have an active user
 			const activeUser = getActiveUsers()[0];
-
+			if (!activeUser) return recallDaemon(this.statusBarItem);
+			// Create Websocket client
 			const webSocketClient = new SocketClient(this.statusBarItem, activeUser.access_token, repoDiffs);
 			webSocketClient.connect(canSendDiffs);
 		} catch (e) {
