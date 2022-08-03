@@ -9,29 +9,40 @@ import { getRepoPlanInfo } from './sync_repo_utils';
 
 
 export const setPlanLimitReached = async (accessToken: string) => {
-	let repoPath = pathUtils.getRootPath();
-	if (!repoPath) { return; }
-	const settings = generateSettings();
-	const config = readYML(settings.CONFIG_PATH);
-	const result = checkSubDir(repoPath);
-	if (result.isSubDir) {
-		repoPath = result.parentRepo;
-	}
-	const configRepo = config.repos[repoPath];
-	let msg = NOTIFICATION.UPGRADE_PRICING_PLAN;
-	let pricingUrl = PRICING_URL;
-	const json = await getRepoPlanInfo(accessToken, configRepo.id);
-	if (!json.error) {
-		pricingUrl = json.response.url;
-		const isOrgRepo = json.response.is_org_repo;
-		msg = isOrgRepo ? NOTIFICATION.UPGRADE_ORG_PLAN : NOTIFICATION.UPGRADE_PRICING_PLAN;
-	}
-	vscode.commands.executeCommand('setContext', 'upgradePricingPlan', true);
-	CodeSyncState.set(CODESYNC_STATES.PRICING_URL, pricingUrl);
+	/*
+		Checks from server if repo is a User's repo or an Organization's repo
+		- Sets alert msg and pricing URL accordingly
+		- Sets REQUEST_SENT_AT in CodeSyncState after which we retry syncing data
+	*/
 	const loctUtils = new LockUtils();
 	loctUtils.acquirePricingAlertLock();
+
+	let pricingUrl = PRICING_URL;
+	let isOrgRepo = false;
+
+	// Mark upgradePricingPlan to show button in left panel
+	vscode.commands.executeCommand('setContext', 'upgradePricingPlan', true);
 	// Set time when request is sent
 	CodeSyncState.set(CODESYNC_STATES.REQUEST_SENT_AT, new Date().getTime());
+
+	let repoPath = pathUtils.getRootPath();
+	if (repoPath) {
+		const settings = generateSettings();
+		const config = readYML(settings.CONFIG_PATH);
+		const result = checkSubDir(repoPath);
+		if (result.isSubDir) {
+			repoPath = result.parentRepo;
+		}
+		const configRepo = config.repos[repoPath];
+		const json = await getRepoPlanInfo(accessToken, configRepo.id);
+		if (!json.error) {
+			pricingUrl = json.response.url;
+			isOrgRepo = json.response.is_org_repo;
+		}	
+	}
+
+	const msg = isOrgRepo ? NOTIFICATION.UPGRADE_ORG_PLAN : NOTIFICATION.UPGRADE_PRICING_PLAN;
+	CodeSyncState.set(CODESYNC_STATES.PRICING_URL, pricingUrl);
 	// Show alert msg
 	vscode.window.showErrorMessage(msg, ...[
 		NOTIFICATION.UPGRADE
@@ -44,7 +55,9 @@ export const setPlanLimitReached = async (accessToken: string) => {
 
 
 export const getPlanLimitReached = () => {
-	// Return if key is already set
+	/*
+		If pricingAlertlock is acquried by any IDE instance, means pricing limit has been reached. 
+	*/
 	const loctUtils = new LockUtils();
 	const planLimitReached = loctUtils.checkPricingAlertLock();
 	const requestSentAt = CodeSyncState.get(CODESYNC_STATES.REQUEST_SENT_AT);

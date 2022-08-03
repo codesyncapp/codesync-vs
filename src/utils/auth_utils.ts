@@ -59,10 +59,13 @@ export const createUser = async (accessToken: string, repoPath: string) => {
     fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
 
     vscode.commands.executeCommand('setContext', 'showLogIn', false);
-
+    
     if (!repoPath) { return; }
-
-	if (!isRepoSynced(repoPath)) {
+    
+    const repoInSync = isRepoSynced(repoPath);
+    vscode.commands.executeCommand('setContext', 'showConnectRepoView', !repoInSync);
+    
+	if (!repoInSync) {
         // Show notification to user to Sync the repo
         return showConnectRepo(repoPath, userEmail, accessToken);
     }
