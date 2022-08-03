@@ -1,6 +1,6 @@
 import vscode from 'vscode';
 import { NOTIFICATION, PRICING_URL, RETRY_REQUEST_AFTER } from '../constants';
-import { generateSettings, WEB_APP_URL } from '../settings';
+import { generateSettings } from '../settings';
 import { checkSubDir, readYML } from './common';
 import { LockUtils } from './lock_utils';
 import { pathUtils } from './path_utils';

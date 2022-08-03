@@ -59,6 +59,16 @@
         "command": "codesync.openSyncIgnore",
         "title": "Open .syncignore",
         "category": "CodeSync"
+      },
+      {
+        "command": "codesync.viewDashboard",
+        "title": "View Dashboard",
+        "category": "CodeSync"
+      },
+      {
+        "command": "codesync.upgradePricingPlan",
+        "title": "Upgrade Pricing Plan",
+        "category": "CodeSync"
       }
     ],
     "viewsContainers": {
@@ -125,23 +135,23 @@
       },
       {
         "view": "codesync-signed-up-not-synced",
-        "contents": "You are conneced with CodeSync.\nConnect your repo.\n[Connect](command:codesync.sync)\n"
+        "contents": "You are conneced with CodeSync.\nConnect your repo.\n[Connect](command:codesync.sync)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-and-synced",
-        "contents": "Repo is in sync with CodeSync.\n[View on web](command:codesync.trackRepo)\n[Unsync](command:codesync.unsync)"
+        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.unsync)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-and-synced-and-pricing-plan-limit-reached",
-        "contents": "Repo is in sync with CodeSync.\n[View on web](command:codesync.trackRepo)\n[Unsync](command:codesync.unsync)\n[Upgrade Plan](command:codesync.upgradePlan)"
+        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.unsync)\n[Upgrade Plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-is-sub-dir",
-        "contents": "You are good to go ✅.\nCurrent directory is in sync with CodeSync because a parent repo is in sync.\n[View parent repo on web](command:codesync.trackRepo)\n[Unsync parent repo](command:codesync.unsync)"
+        "contents": "You are good to go ✅.\nCurrent directory is in sync with CodeSync because a parent repo is in sync.\n[View parent repo on web](command:codesync.trackRepo)\n[Disconnect parent repo](command:codesync.unsync))\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-is-sub-dir-syncignored",
-        "contents": "Current directory is syncignored by a parent repo. To sync this directory, remove it from .syncignore.\n[Open .syncignore](command:codesync.openSyncIgnore)\n[View parent repo on web](command:codesync.trackRepo)\n[Unsync parent repo](command:codesync.unsync)"
+        "contents": "Current directory is syncignored by a parent repo. To sync this directory, remove it from .syncignore.\n[Open .syncignore](command:codesync.openSyncIgnore)\n[View parent repo on web](command:codesync.trackRepo)\n[Disconnect parent repo](command:codesync.unsync))\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-is-loading",
@@ -167,6 +177,12 @@
           "group": "CodeSync"
         }
       ],
+      "editor/title/context": [
+        {
+          "submenu": "codesync-submenu",
+          "group": "CodeSync"
+        }
+      ],
       "explorer/context": [
         {
           "submenu": "codesync-submenu",
@@ -178,6 +194,11 @@
           "group": "navigation",
           "command": "codesync.signup",
           "when": "workbenchState != empty && showLogIn"
+        },
+        {
+          "group": "navigation",
+          "command": "codesync.logout",
+          "when": "workbenchState != empty && !showLogIn"
         },
         {
           "group": "1_modification",
@@ -205,9 +226,14 @@
           "when": "workbenchState != empty && !showLogIn && isSyncIgnored"
         },
         {
-          "group": "navigation",
-          "command": "codesync.logout",
-          "when": "workbenchState != empty && !showLogIn"
+          "group": "1_modification",
+          "command": "codesync.viewDashboard",
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSyncIgnored"
+        },
+        {
+          "group": "1_modification",
+          "command": "codesync.upgradePricingPlan",
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSyncIgnored && upgradePricingPlan"
         }
       ]
     }

@@ -68,7 +68,7 @@ export const NOTIFICATION = {
 	OK: "OK!",
 	CONTINUE: "Continue",
 	UPGRADE: "Upgrade",
-	TRACK_IT: "View on web",
+	TRACK_IT: "View repo on web",
 	TRACK_PARENT_REPO: "View parent repo on web",
 	OPEN_SYNCIGNORE: "Open .syncignore",
 	UNSYNC_REPO: "Unsync",
@@ -143,7 +143,8 @@ export const COMMAND = {
 	trackRepo: 'codesync.trackRepo',
 	trackFile: 'codesync.trackFile',
 	openSyncIgnore: 'codesync.openSyncIgnore',
-	upgradePlan: 'codesync.upgradePlan'
+	upgradePlan: 'codesync.upgradePlan',
+	viewDashboard: 'codesync.viewDashboard'
 };
 
 export class staticFiles {

@@ -4,10 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.5.7] - 2022-08-03
+## [3.6.0] - 2022-08-03
 ### Added
 - Notification alerts added if plan Limit is reached 
 - Logging platform info to CW
+- Improved menu options in left panel, right click menu
 
 ## [3.5.6] - 2022-07-13
 ## [3.5.5] - 2022-07-13
