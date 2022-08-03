@@ -49,7 +49,6 @@ export class LockUtils {
 		try {
 			lockFile.lockSync(this.settings.PRICING_ALERT_LOCK);
 		} catch (e) {
-			console.log(e);
 			// 
 		}
 	}
