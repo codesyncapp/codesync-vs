@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import yaml from 'js-yaml';
 import AWS from 'aws-sdk';
 import vscode from "vscode";
@@ -65,7 +66,8 @@ export function putLogEvent(error: string, userEmail?: string, additionalMsg="",
 	const eventMsg = {
 		msg: errorMsg,
 		source: DIFF_SOURCE,
-		version: VERSION
+		version: VERSION,
+		platform: os.platform()
 	};
 	const logEvents = [ /* required */
 		{

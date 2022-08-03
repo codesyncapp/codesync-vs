@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.5.7] - 2022-08-03
 ### Added
-- Alerts if plan Limit reached 
+- Notification alerts added if plan Limit is reached 
+- Logging platform info to CW
 
 ## [3.5.6] - 2022-07-13
 ## [3.5.5] - 2022-07-13
