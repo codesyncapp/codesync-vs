@@ -44,7 +44,20 @@ export class LockUtils {
 			// 
 		}
 	};
+
+	acquirePricingAlertLock () {
+		try {
+			lockFile.lockSync(this.settings.PRICING_ALERT_LOCK);
+		} catch (e) {
+			// 
+		}
+	}
+
+	checkPricingAlertLock () {
+		try {
+			return lockFile.checkSync(this.settings.PRICING_ALERT_LOCK);
+		} catch (e) {
+			return false;
+		}
+	}
 }
-
-
-

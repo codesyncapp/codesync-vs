@@ -282,7 +282,7 @@ export const detectBranchChange = async () => {
         const initUtilsObj = new initUtils(repoPath, true);
 
         if (branch in configRepo.branches) {
-            const configFiles = configRepo['branches'][branch];
+            const configFiles = configRepo.branches[branch];
             if (isEmpty(configFiles)) continue;
             // If all files IDs are None in config.yml, we need to sync the branch
             const shouldSyncBranch = Object.values(configFiles).every(element => element === null);

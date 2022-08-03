@@ -90,7 +90,12 @@
         {
           "id": "codesync-signed-up-and-synced",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSubDir && CodeSyncActivated"
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSubDir && CodeSyncActivated && !upgradePricingPlan"
+        },
+        {
+          "id": "codesync-signed-up-and-synced-and-pricing-plan-limit-reached",
+          "name": "CodeSync",
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSubDir && CodeSyncActivated && upgradePricingPlan"
         },
         {
           "id": "codesync-signed-up-is-sub-dir",
@@ -125,6 +130,10 @@
       {
         "view": "codesync-signed-up-and-synced",
         "contents": "Repo is in sync with CodeSync.\n[View on web](command:codesync.trackRepo)\n[Unsync](command:codesync.unsync)"
+      },
+      {
+        "view": "codesync-signed-up-and-synced-and-pricing-plan-limit-reached",
+        "contents": "Repo is in sync with CodeSync.\n[View on web](command:codesync.trackRepo)\n[Unsync](command:codesync.unsync)\n[Upgrade Plan](command:codesync.upgradePlan)"
       },
       {
         "view": "codesync-signed-up-is-sub-dir",

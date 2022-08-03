@@ -9,6 +9,7 @@ import {DiffsHandler} from "../handlers/diffs_handler";
 import {statusBarMsgs} from "../utils";
 import {markUsersInactive} from "../../utils/auth_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
+import { getPlanLimitReached, setPlanLimitReached } from "../../utils/pricing_utils";
 
 
 const EVENT_TYPES = {
@@ -41,10 +42,19 @@ export class SocketEvents {
         return recallDaemon(this.statusBarItem);
     }
 
+    async onPlanLimitReached() {
+        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN);
+        await setPlanLimitReached(this.accessToken);
+        return recallDaemon(this.statusBarItem);
+    }
+
     async onValidAuth() {
         this.connection.send(JSON.stringify({"auth": 200}));
-        // Update status bar msg
-        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.DEFAULT);
+        const statusBarMsg =  this.statusBarMsgsHandler.getMsg();
+        // Check plan limits
+        const { planLimitReached } = getPlanLimitReached();
+        if (!planLimitReached) vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
+        this.statusBarMsgsHandler.update(statusBarMsg);
         const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
         if (!canSendDiffs) return recallDaemon(this.statusBarItem);
         // Send diffs
@@ -72,20 +82,28 @@ export class SocketEvents {
         if (!message || message.type !== 'utf8') return false;
         const resp = JSON.parse(message.utf8Data || "{}");
         if (!resp.type) return false;
-        if (resp.type === EVENT_TYPES.AUTH) {
-            if (resp.status !== 200) {
-                this.onInvalidAuth();
-                return true;
-            }
-            await this.onValidAuth();
-            return true;
+        switch (resp.type) {
+            case EVENT_TYPES.AUTH:
+                switch (resp.status) {
+                    case 200:
+                        return await this.onValidAuth();
+                    default:
+                        this.onInvalidAuth();
+                        break;
+                }
+                break;
+            case EVENT_TYPES.SYNC:
+                switch (resp.status) {
+                    case 200:
+                        return this.onSyncSuccess(resp.diff_file_path);
+                    case 402:
+                        return await this.onPlanLimitReached(); 
+                    default:
+                        break;
+                }
+                break;
+            default:
+                break;        
         }
-        if (resp.type === EVENT_TYPES.SYNC) {
-            if (resp.status === 200) {
-                this.onSyncSuccess(resp.diff_file_path);
-                return true;
-            }
-        }
-        return false;
     }
 }

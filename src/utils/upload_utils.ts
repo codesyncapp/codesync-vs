@@ -1,8 +1,10 @@
 import fs from 'fs';
+import vscode from 'vscode';
 import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
 import { API_FILES, API_INIT} from "../constants";
+import { setPlanLimitReached } from './pricing_utils';
 
 
 export const uploadRepoToServer = async (token: string, data: any) => {
@@ -27,6 +29,7 @@ export const uploadRepoToServer = async (token: string, data: any) => {
         }
 	*/
 	let error = '';
+	let statusCode = null;
 	let response = await fetch(API_INIT, {
 			method: 'POST',
 			body: JSON.stringify(data),
@@ -36,10 +39,19 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 			},
 		}
 	)
-		.then(res => res.json())
-		.then(json => json)
-		.catch(err => error = err);
+	.then(res => {
+		statusCode = res.status;
+		return res.json();
+	})
+	.then(json => json)
+	.catch(err => error = err);
 
+	if (statusCode === 402) {
+		// Check if key is set or not
+		await setPlanLimitReached(token);
+	} else {
+		vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
+	}
 	if (response.error) {
 		error = response.error.message;
 	}
@@ -63,6 +75,7 @@ export const uploadFile = async (token: string, data: any) => {
 		}
 	*/
 	let error = "";
+	let statusCode = null;
 	let response = await fetch(API_FILES, {
 			method: 'POST',
 			body: JSON.stringify(data),
@@ -72,9 +85,19 @@ export const uploadFile = async (token: string, data: any) => {
 			},
 		}
 	)
-	.then(res => res.json())
+	.then(res => {
+		statusCode = res.status;
+		return res.json();
+	})
 	.then(json => json)
 	.catch(err => error = err);
+
+	if (statusCode === 402) {
+		// Check if key is set or not
+		await setPlanLimitReached(token);
+	} else {
+		vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
+	}
 
 	if (response.error) {
 		error = response.error.message;
@@ -103,7 +126,9 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 		// Actual file has to be appended last.
 		formData.append("file", content);
 		formData.submit(presignedUrl.url, function(err, res) {
-			if (err) resolve({error: err});
+			if (err) {
+				resolve({error: err});
+			}
 			resolve({error: null});
 		});
 	});

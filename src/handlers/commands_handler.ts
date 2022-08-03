@@ -15,7 +15,7 @@ import { showChooseAccount } from "../utils/notifications";
 import { updateRepo } from '../utils/sync_repo_utils';
 import { generateSettings, WEB_APP_URL } from "../settings";
 import { pathUtils } from "../utils/path_utils";
-import { showRepoStatusMsg } from "../utils/setup_utils";
+import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
@@ -129,4 +129,8 @@ export const openSyncIgnoreHandler = async () => {
 			// 
 		});
 	});
+};
+
+export const upgradePlanHandler = () => {
+	vscode.env.openExternal(vscode.Uri.parse(CodeSyncState.get(CODESYNC_STATES.PRICING_URL)));
 };

@@ -24,6 +24,7 @@ export const generateSettings = () => {
         USER_PATH: path.join(rootRepo, "user.yml"),
         SEQUENCE_TOKEN_PATH: path.join(rootRepo, "sequence_token.yml"),
         POPULATE_BUFFER_LOCK_FILE: path.join(rootRepo, ".locks", "daemon.lock"),
-        DIFFS_SEND_LOCK_FILE: path.join(rootRepo, ".locks", "vscode.lock")
+        DIFFS_SEND_LOCK_FILE: path.join(rootRepo, ".locks", "vscode.lock"),
+        PRICING_ALERT_LOCK: path.join(rootRepo, ".locks", "pricing.lock")
     };
 };
