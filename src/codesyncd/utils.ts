@@ -195,7 +195,7 @@ export class statusBarMsgs {
 				this.statusBarItem.command = COMMAND.triggerSignUp;
 			} else if (text === STATUS_BAR_MSGS.CONNECT_REPO) {
 				this.statusBarItem.command = COMMAND.triggerSync;
-			} else if (text === STATUS_BAR_MSGS.UPGRADE_PLAN) {
+			} else if (text === STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN) {
 				this.statusBarItem.command = COMMAND.upgradePlan;
 			} else {
 				this.statusBarItem.command = undefined;
@@ -227,6 +227,6 @@ export class statusBarMsgs {
 		// Repo is not synced
 		if (!isRepoActive(this.configJSON, repoPath)) return STATUS_BAR_MSGS.CONNECT_REPO;
 		const { planLimitReached } = getPlanLimitReached();
-		return planLimitReached ? STATUS_BAR_MSGS.UPGRADE_PLAN : STATUS_BAR_MSGS.DEFAULT;
+		return planLimitReached ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN : STATUS_BAR_MSGS.DEFAULT;
 	}
 }

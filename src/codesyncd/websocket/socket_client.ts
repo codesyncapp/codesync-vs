@@ -31,6 +31,11 @@ export class SocketClient {
     }
 
     resetGlobals = () => {
+        try {
+            this.client.abort();
+        } catch (e) {
+            // Not logging the error
+        }
         this.client = null;
         (global as any).client = null;
         (global as any).socketConnection = null;

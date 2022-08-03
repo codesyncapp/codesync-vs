@@ -51,14 +51,11 @@ export const createSystemDirectories = () => {
 	}
 
 	// Create lock files
-	const populateBufferLockFileExists = fs.existsSync(settings.DIFFS_SEND_LOCK_FILE);
-	const diffsSendLockFileExists = fs.existsSync(settings.DIFFS_SEND_LOCK_FILE);
-	if (!populateBufferLockFileExists) {
-		fs.writeFileSync(settings.POPULATE_BUFFER_LOCK_FILE, "");
-	}
-	if (!diffsSendLockFileExists) {
-		fs.writeFileSync(settings.DIFFS_SEND_LOCK_FILE, "");
-	}
+	[settings.POPULATE_BUFFER_LOCK_FILE, settings.DIFFS_SEND_LOCK_FILE, settings.PRICING_ALERT_LOCK].forEach((lockFile) => {
+		if (!fs.existsSync(lockFile)) {
+			fs.writeFileSync(lockFile, "");
+		}
+	});
 	return settings;
 };
 

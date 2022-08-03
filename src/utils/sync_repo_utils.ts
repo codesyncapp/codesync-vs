@@ -26,5 +26,28 @@ export const updateRepo = async (accessToken: string, repoId: number, data: any)
 		response,
 		error
 	};
-
 };
+
+export const getRepoPlanInfo = async (accessToken: string, repoId: number) => {
+	let error = "";
+	let response = await fetch(`${API_ENDPOINT}/repos/${repoId}/upgrade_plan`, {
+		headers: {
+			'Authorization': `Basic ${accessToken}`
+		},
+	})
+		.then(res => res.json())
+		.then(json => json)
+		.catch(err => error = err);
+
+	if (response.error) {
+		error = response.error.message;
+	}
+	if (error) {
+		response = {};
+	}
+	return {
+		response,
+		error
+	};
+};
+

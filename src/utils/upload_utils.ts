@@ -48,9 +48,9 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 
 	if (statusCode === 402) {
 		// Check if key is set or not
-		setPlanLimitReached();
+		await setPlanLimitReached(token);
 	} else {
-		vscode.commands.executeCommand('setContext', 'upgradePlan', false);
+		vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
 	}
 	if (response.error) {
 		error = response.error.message;
@@ -94,9 +94,9 @@ export const uploadFile = async (token: string, data: any) => {
 
 	if (statusCode === 402) {
 		// Check if key is set or not
-		setPlanLimitReached();
+		await setPlanLimitReached(token);
 	} else {
-		vscode.commands.executeCommand('setContext', 'upgradePlan', false);
+		vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
 	}
 
 	if (response.error) {
@@ -126,7 +126,9 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 		// Actual file has to be appended last.
 		formData.append("file", content);
 		formData.submit(presignedUrl.url, function(err, res) {
-			if (err) resolve({error: err});
+			if (err) {
+				resolve({error: err});
+			}
 			resolve({error: null});
 		});
 	});

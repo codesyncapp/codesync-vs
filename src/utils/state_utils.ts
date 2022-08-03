@@ -5,7 +5,7 @@ export const CODESYNC_STATES = {
     IS_SYNCIGNORED_SUB_DIR: "isSyncIgnored",
 	DIFFS_SEND_LOCK_ACQUIRED: "diffsSendLockAcquired",
 	POPULATE_BUFFER_LOCK_ACQUIRED: "populateBufferLockAcquired",
-    PRICING_PLAN_LIMIT_REACHED: "pricingPlanLimitReache",
+    PRICING_URL: "pricingUrl",
     REQUEST_SENT_AT: "requestSentAt"
 };
 

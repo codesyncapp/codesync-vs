@@ -62,7 +62,7 @@ export class initHandler {
 
 		// In case of branch sync, we don't care of user plan
 		if (!isServerDown && !repoSynced && !this.viaDaemon && user.repo_count >= user.plan.REPO_COUNT) {
-			vscode.window.showErrorMessage(NOTIFICATION.UPGRADE_PLAN);
+			vscode.window.showErrorMessage(NOTIFICATION.UPGRADE_PRICING_PLAN);
 			return;
 		}
 

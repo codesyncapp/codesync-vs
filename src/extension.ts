@@ -20,7 +20,7 @@ import {
 	upgradePlanHandler
 } from './handlers/commands_handler';
 import { putLogEvent } from "./logger";
-import { getPlanLimitReached } from './utils/pricing_utils';
+
 
 export async function activate(context: vscode.ExtensionContext) {
 	try {
@@ -31,7 +31,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.executeCommand('setContext', 'isSubDir', subDirResult.isSubDir);
 		vscode.commands.executeCommand('setContext', 'isSyncIgnored', subDirResult.isSyncIgnored);
 		vscode.commands.executeCommand('setContext', 'CodeSyncActivated', true);
-		vscode.commands.executeCommand('setContext', 'upgradePlan', getPlanLimitReached().planLimitReached);
+		vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
 
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, SignUpHandler));
 		context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerLogout, logout));

@@ -42,22 +42,18 @@ export class SocketEvents {
         return recallDaemon(this.statusBarItem);
     }
 
-    onPlanLimitReached() {
-        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.UPGRADE_PLAN);
-        setPlanLimitReached();
+    async onPlanLimitReached() {
+        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN);
+        await setPlanLimitReached(this.accessToken);
         return recallDaemon(this.statusBarItem);
     }
 
     async onValidAuth() {
         this.connection.send(JSON.stringify({"auth": 200}));
-        let statusBarMsg =  STATUS_BAR_MSGS.DEFAULT;
-        // Update status bar msg
-		const { planLimitReached } = getPlanLimitReached();
-        if (planLimitReached) {
-            statusBarMsg = STATUS_BAR_MSGS.UPGRADE_PLAN;
-        } else {
-            vscode.commands.executeCommand('setContext', 'upgradePlan', false);
-        }
+        const statusBarMsg =  this.statusBarMsgsHandler.getMsg();
+        // Check plan limits
+        const { planLimitReached } = getPlanLimitReached();
+        if (!planLimitReached) vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
         this.statusBarMsgsHandler.update(statusBarMsg);
         const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
         if (!canSendDiffs) return recallDaemon(this.statusBarItem);
@@ -101,7 +97,7 @@ export class SocketEvents {
                     case 200:
                         return this.onSyncSuccess(resp.diff_file_path);
                     case 402:
-                        return this.onPlanLimitReached(); 
+                        return await this.onPlanLimitReached(); 
                     default:
                         break;
                 }

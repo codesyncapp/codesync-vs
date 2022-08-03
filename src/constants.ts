@@ -86,7 +86,8 @@ export const NOTIFICATION = {
 	REPOS_LIMIT_BREACHED: "Repo size exceeds the limit. Allowed repo size is",
 	FILES_LIMIT_BREACHED: "FIles count exceeds the limit.",
 	SERVICE_NOT_AVAILABLE: "CodeSync service is unavailable. Please try again in a moment.",
-	UPGRADE_PLAN: "Please upgrade your plan to continue using CodeSync",
+	UPGRADE_PRICING_PLAN: "Please upgrade your plan to continue using CodeSync",
+	UPGRADE_ORG_PLAN: "Please upgrade your Organization's plan to continue using CodeSync",
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
 	REPO_IN_SYNC: "is in sync with CodeSync.",
@@ -131,7 +132,7 @@ export const STATUS_BAR_MSGS = {
 	CONNECT_REPO: ' CodeSync ❌, Click to connect repo!',
 	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
 	NO_CONFIG: ' CodeSync ❌, Reload required!',
-	UPGRADE_PLAN: ' CodeSync ❌, Click to upgrade plan!',
+	UPGRADE_PRICING_PLAN: ' CodeSync ❌, Click to upgrade pricing plan!',
 };
 
 export const COMMAND = {
