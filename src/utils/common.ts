@@ -66,7 +66,7 @@ export const checkSubDir = (currentRepoPath: string) => {
 		if (isSubdir) {
 			parentRepo = _repoPath;
 			const relPath = currentRepoPath.split(path.join(_repoPath, path.sep))[1];
-			isSyncIgnored = shouldIgnorePath(_repoPath, relPath);
+			isSyncIgnored = relPath ? shouldIgnorePath(_repoPath, relPath) : false;
 			break;
 		}
 	}
