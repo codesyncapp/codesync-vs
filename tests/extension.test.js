@@ -19,8 +19,10 @@ import {
     SyncHandler,
     trackFileHandler,
     trackRepoHandler,
-    unSyncHandler,
-    openSyncIgnoreHandler
+    disconnectRepoHandler,
+    openSyncIgnoreHandler,
+    upgradePlanHandler,
+    viewDashboardHandler
 } from "../src/handlers/commands_handler";
 import {createSystemDirectories} from "../src/utils/setup_utils";
 import {
@@ -59,7 +61,7 @@ describe("Extension: activate",() => {
     test("Fresh Setup, no user, no repo opened", async () => {
         setWorkspaceFolders("");
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(5);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
@@ -82,21 +84,25 @@ describe("Extension: activate",() => {
         expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
 
         // Register commands
-        expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(7);
+        expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(9);
         expect(vscode.commands.registerCommand.mock.calls[0][0]).toStrictEqual(COMMAND.triggerSignUp);
         expect(vscode.commands.registerCommand.mock.calls[0][1]).toStrictEqual(SignUpHandler);
         expect(vscode.commands.registerCommand.mock.calls[1][0]).toStrictEqual(COMMAND.triggerLogout);
         expect(vscode.commands.registerCommand.mock.calls[1][1]).toStrictEqual(logout);
         expect(vscode.commands.registerCommand.mock.calls[2][0]).toStrictEqual(COMMAND.triggerSync);
         expect(vscode.commands.registerCommand.mock.calls[2][1]).toStrictEqual(SyncHandler);
-        expect(vscode.commands.registerCommand.mock.calls[3][0]).toStrictEqual(COMMAND.triggerUnsync);
-        expect(vscode.commands.registerCommand.mock.calls[3][1]).toStrictEqual(unSyncHandler);
+        expect(vscode.commands.registerCommand.mock.calls[3][0]).toStrictEqual(COMMAND.triggerDisconnectRepo);
+        expect(vscode.commands.registerCommand.mock.calls[3][1]).toStrictEqual(disconnectRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[4][0]).toStrictEqual(COMMAND.trackRepo);
         expect(vscode.commands.registerCommand.mock.calls[4][1]).toStrictEqual(trackRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[5][0]).toStrictEqual(COMMAND.trackFile);
         expect(vscode.commands.registerCommand.mock.calls[5][1]).toStrictEqual(trackFileHandler);
         expect(vscode.commands.registerCommand.mock.calls[6][0]).toStrictEqual(COMMAND.openSyncIgnore);
         expect(vscode.commands.registerCommand.mock.calls[6][1]).toStrictEqual(openSyncIgnoreHandler);
+        expect(vscode.commands.registerCommand.mock.calls[7][0]).toStrictEqual(COMMAND.upgradePlan);
+        expect(vscode.commands.registerCommand.mock.calls[7][1]).toStrictEqual(upgradePlanHandler);
+        expect(vscode.commands.registerCommand.mock.calls[8][0]).toStrictEqual(COMMAND.viewDashboard);
+        expect(vscode.commands.registerCommand.mock.calls[8][1]).toStrictEqual(viewDashboardHandler);
 
         // createStatusBarItem
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
@@ -120,7 +126,7 @@ describe("Extension: activate",() => {
         addUser(baseRepoPath, false);
         setWorkspaceFolders(repoPath);
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(5);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
@@ -148,7 +154,7 @@ describe("Extension: activate",() => {
     test("With user, repo not synced", async () => {
         addUser(baseRepoPath);
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(8);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
@@ -178,7 +184,7 @@ describe("Extension: activate",() => {
         _configData.repos[repoPath].is_disconnected = true;
         fs.writeFileSync(configPath, yaml.safeDump(_configData));
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(8);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
@@ -207,7 +213,7 @@ describe("Extension: activate",() => {
         configUtil.addRepo();
         addUser(baseRepoPath);
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(8);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
@@ -239,7 +245,7 @@ describe("Extension: activate",() => {
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(8);
         // showLogin should be false
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
@@ -275,7 +281,7 @@ describe("Extension: activate",() => {
         const subDir = path.join(repoPath, subDirName);
         setWorkspaceFolders(subDir);
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(8);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
@@ -299,6 +305,6 @@ describe("Extension: activate",() => {
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.OPEN_SYNCIGNORE);
         expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
-        expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.UNSYNC_PARENT_REPO);
+        expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.DISCONNECT_PARENT_REPO);
     });
 });

@@ -187,7 +187,7 @@ describe("setupCodeSync",  () => {
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.OPEN_SYNCIGNORE);
         expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
-        expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.UNSYNC_PARENT_REPO);
+        expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.DISCONNECT_PARENT_REPO);
         fs.rmSync(userFilePath);
     });
 

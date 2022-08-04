@@ -34,22 +34,22 @@ export const SyncHandler = async () => {
 	return;
 };
 
-export const unSyncHandler = async () => {
+export const disconnectRepoHandler = async () => {
 	let repoPath = pathUtils.getRootPath();
 	if (!repoPath) { return; }
-	let msg = NOTIFICATION.REPO_UNSYNC_CONFIRMATION;
+	let msg = NOTIFICATION.REPO_DISCONNECT_CONFIRMATION;
 	const result = checkSubDir(repoPath);
 	if (result.isSubDir) {
 		repoPath = result.parentRepo;
-		msg = NOTIFICATION.REPO_UNSYNC_PARENT_CONFIRMATION;
+		msg = NOTIFICATION.REPO_DISCONNECT_PARENT_CONFIRMATION;
 	}
 	vscode.window.showWarningMessage(msg, NOTIFICATION.YES, NOTIFICATION.CANCEL)
 	.then(async selection => {
-		await postSelectionUnsync(repoPath, selection);
+		await postSelectionDisconnectRepo(repoPath, selection);
 	});
 };
 
-export const postSelectionUnsync = async (repoPath: string, selection?: string) => {
+export const postSelectionDisconnectRepo = async (repoPath: string, selection?: string) => {
 	if (!selection || selection !== NOTIFICATION.YES) {
 		return;
 	}
@@ -61,7 +61,7 @@ export const postSelectionUnsync = async (repoPath: string, selection?: string) 
 	const accessToken = users[configRepo.email].access_token;
 	const json = await updateRepo(accessToken, configRepo.id, { is_in_sync: false });
 	if (json.error) {
-		vscode.window.showErrorMessage(NOTIFICATION.REPO_UNSYNC_FAILED);
+		vscode.window.showErrorMessage(NOTIFICATION.REPO_DISCONNECT_FAILED);
 		return;
 	}
 	// Show notification that repo is not in sync
@@ -71,7 +71,7 @@ export const postSelectionUnsync = async (repoPath: string, selection?: string) 
 	vscode.commands.executeCommand('setContext', 'showConnectRepoView', true);
 	vscode.commands.executeCommand('setContext', 'isSubDir', false);
 	vscode.commands.executeCommand('setContext', 'isSyncIgnored', false);
-	vscode.window.showInformationMessage(NOTIFICATION.REPO_UNSYNCED);
+	vscode.window.showInformationMessage(NOTIFICATION.REPO_DISCONNECTED);
 };
 
 export const trackRepoHandler = () => {

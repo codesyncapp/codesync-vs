@@ -303,7 +303,7 @@ export const detectBranchChange = async () => {
             await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
         } else {
             const handler = new initHandler(repoPath, accessToken, true);
-            await handler.syncRepo();
+            await handler.connectRepo();
         }
         readyRepos[repoPath] = branch;
     }

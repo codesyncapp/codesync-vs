@@ -141,10 +141,13 @@ describe("createUser",  () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         const users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(true);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(1);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
         expect(vscode.commands.executeCommand.mock.calls[0][2]).toBe(false);
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual("setContext");
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual("showConnectRepoView");
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toBe(true);
     });
 
     test("with user in user.yml", async () => {
@@ -157,10 +160,13 @@ describe("createUser",  () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(true);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(1);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
         expect(vscode.commands.executeCommand.mock.calls[0][2]).toBe(false);
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual("setContext");
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual("showConnectRepoView");
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toBe(true);
     });
 });
 

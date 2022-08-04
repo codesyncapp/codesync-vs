@@ -86,24 +86,25 @@ export class SocketEvents {
             case EVENT_TYPES.AUTH:
                 switch (resp.status) {
                     case 200:
-                        return await this.onValidAuth();
+                        await this.onValidAuth();
+                        return true;
                     default:
                         this.onInvalidAuth();
-                        break;
+                        return true;
                 }
-                break;
             case EVENT_TYPES.SYNC:
                 switch (resp.status) {
                     case 200:
-                        return this.onSyncSuccess(resp.diff_file_path);
+                        this.onSyncSuccess(resp.diff_file_path);
+                        return true;
                     case 402:
-                        return await this.onPlanLimitReached(); 
+                        await this.onPlanLimitReached(); 
+                        return true;
                     default:
-                        break;
+                        return false;
                 }
-                break;
             default:
-                break;        
+                return false; 
         }
     }
 }

@@ -196,7 +196,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.29.7] - 2021-09-27
 ### Changed
-- Removed UnSync from dialog,
+- Removed Disconnect from dialog
 - Updated private/public msg
 - Skipping Update .syncignore step
 ### Added
@@ -293,7 +293,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.19.0] - 2021-08-07
 ### Added
-- Option to Unsync the repo
+- Option to Disconnect the repo
 
 ## [2.18.0] - 2021-08-05
 ### Added
@@ -338,7 +338,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.9.0] - 2021-07-15
 ### Added
 - Init Flow, Should be able to connect a repo with CodeSync
-- Views added in activiy bar to sign up, sync a repo and unsync a repo
+- Views added in activiy bar to sign up, sync a repo and disconnect a repo
 
 ### Changed
 - Updated README

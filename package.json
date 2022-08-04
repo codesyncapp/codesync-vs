@@ -41,7 +41,7 @@
         "category": "CodeSync"
       },
       {
-        "command": "codesync.unsync",
+        "command": "codesync.disconnectRepo",
         "title": "Disconnect Repo",
         "category": "CodeSync"
       },
@@ -139,19 +139,19 @@
       },
       {
         "view": "codesync-signed-up-and-synced",
-        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.unsync)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.disconnectRepo)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-and-synced-and-pricing-plan-limit-reached",
-        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.unsync)\n[Upgrade Plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.disconnectRepo)\n[Upgrade Plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-is-sub-dir",
-        "contents": "You are good to go ✅.\nCurrent directory is in sync with CodeSync because a parent repo is in sync.\n[View parent repo on web](command:codesync.trackRepo)\n[Disconnect parent repo](command:codesync.unsync))\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "You are good to go ✅.\nCurrent directory is in sync with CodeSync because a parent repo is in sync.\n[View parent repo on web](command:codesync.trackRepo)\n[Disconnect parent repo](command:codesync.disconnectRepo))\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-is-sub-dir-syncignored",
-        "contents": "Current directory is syncignored by a parent repo. To sync this directory, remove it from .syncignore.\n[Open .syncignore](command:codesync.openSyncIgnore)\n[View parent repo on web](command:codesync.trackRepo)\n[Disconnect parent repo](command:codesync.unsync))\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Current directory is syncignored by a parent repo. To sync this directory, remove it from .syncignore.\n[Open .syncignore](command:codesync.openSyncIgnore)\n[View parent repo on web](command:codesync.trackRepo)\n[Disconnect parent repo](command:codesync.disconnectRepo))\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-is-loading",
@@ -217,7 +217,7 @@
         },
         {
           "group": "1_modification",
-          "command": "codesync.unsync",
+          "command": "codesync.disconnectRepo",
           "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSyncIgnored"
         },
         {

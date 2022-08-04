@@ -7,12 +7,12 @@ import fetchMock from "jest-fetch-mock";
 import getBranchName from "current-git-branch";
 
 import {
-    postSelectionUnsync,
+    postSelectionDisconnectRepo,
     SignUpHandler,
     SyncHandler,
     trackFileHandler,
     trackRepoHandler,
-    unSyncHandler
+    disconnectRepoHandler
 } from "../../src/handlers/commands_handler";
 import {
     Config,
@@ -102,7 +102,7 @@ describe("SyncHandler",  () => {
 
 });
 
-describe("unSyncHandler",  () => {
+describe("disconnectRepoHandler",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
@@ -127,33 +127,33 @@ describe("unSyncHandler",  () => {
     });
 
     test("No Repo Path", () => {
-        unSyncHandler();
+        disconnectRepoHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Ask Unsync confirmation", () => {
-        unSyncHandler();
+    test("Ask Dicsonnect confirmation", () => {
+        disconnectRepoHandler();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_CONFIRMATION);
+        expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECT_CONFIRMATION);
         expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
         expect(vscode.window.showWarningMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.CANCEL);
     });
 
-    test("Ask Unsync parent confirmation; Sub Dir of synced repo", () => {
+    test("Ask Dicsonnect parent confirmation; Sub Dir of synced repo", () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
-        unSyncHandler();
+        disconnectRepoHandler();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_PARENT_CONFIRMATION);
+        expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECT_PARENT_CONFIRMATION);
         expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
         expect(vscode.window.showWarningMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.CANCEL);
     });
 });
 
 
-describe("postSelectionUnsync",  () => {
+describe("postSelectionDisconnectRepo",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
@@ -178,14 +178,14 @@ describe("postSelectionUnsync",  () => {
     });
 
     test("No Selection",  async () => {
-        await postSelectionUnsync(repoPath, undefined);
+        await postSelectionDisconnectRepo(repoPath, undefined);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
     test("Clicked Cancel",  async () => {
-        await postSelectionUnsync(repoPath, NOTIFICATION.CANCEL);
+        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.CANCEL);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
@@ -197,30 +197,30 @@ describe("postSelectionUnsync",  () => {
             branches: {}
         };
         fs.writeFileSync(configPath, yaml.safeDump(configData));
-        await postSelectionUnsync(repoPath, NOTIFICATION.YES);
+        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.YES);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Unsyncing error from server",  async () => {
+    test("Disconnecting error from server",  async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         const errJSON = {error: {message: "NOT SO FAST"}};
         fetchMock.mockResponseOnce(JSON.stringify(errJSON));
-        await postSelectionUnsync(repoPath, NOTIFICATION.YES);
+        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.YES);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNC_FAILED);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECT_FAILED);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Should Unsync",  async () => {
+    test("Should Dicsonnect",  async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({}));
 
-        await postSelectionUnsync(repoPath, NOTIFICATION.YES);
+        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.YES);
 
         // Read config
         const config = readYML(configPath);
@@ -237,7 +237,7 @@ describe("postSelectionUnsync",  () => {
         expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual("isSyncIgnored");
         expect(vscode.commands.executeCommand.mock.calls[2][2]).toStrictEqual(false);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_UNSYNCED);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECTED);
     });
 });
 

@@ -57,12 +57,12 @@ describe("initHandler",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    describe("syncRepo",  () => {
+    describe("connectRepo",  () => {
         const handler = new initHandler(repoPath, "ACCESS_TOKEN");
 
         test("Server is down",  async () => {
             fetchMock.mockResponseOnce(null);
-            await handler.syncRepo();
+            await handler.connectRepo();
             // Verify error msg
             expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
             expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.SERVICE_NOT_AVAILABLE);
@@ -72,7 +72,7 @@ describe("initHandler",  () => {
             fetchMock
                 .mockResponseOnce(JSON.stringify({ status: true }))
                 .mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
-            await handler.syncRepo();
+            await handler.connectRepo();
             // Verify error msg
             expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
             expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.AUTHENTICATION_FAILED);
@@ -88,7 +88,7 @@ describe("initHandler",  () => {
             const configUtil = new Config(repoPath, configPath);
             configUtil.addRepo();
             addUser(baseRepoPath);
-            await handler.syncRepo();
+            await handler.connectRepo();
             // Verify error msg
             expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
             expect(vscode.window.showWarningMessage.mock.calls[0][0].startsWith("Repo is already in sync with branch")).toBe(true);
@@ -100,10 +100,10 @@ describe("initHandler",  () => {
             fetchMock
                 .mockResponseOnce(JSON.stringify({ status: true }))
                 .mockResponseOnce(JSON.stringify(_user));
-            await handler.syncRepo();
+            await handler.connectRepo();
             // Verify error msg
             expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-            expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.UPGRADE_PLAN);
+            expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.UPGRADE_PRICING_PLAN);
         });
 
         test("Repo is_disconnected",  async () => {
@@ -115,7 +115,7 @@ describe("initHandler",  () => {
             const configUtil = new Config(repoPath, configPath);
             configUtil.addRepo(true);
             addUser(baseRepoPath);
-            await handler.syncRepo();
+            await handler.connectRepo();
             // Verify error msg
             expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
             expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
@@ -135,7 +135,7 @@ describe("initHandler",  () => {
             const configUtil = new Config(repoPath, configPath);
             configUtil.addRepo(true);
             addUser(baseRepoPath);
-            await handler.syncRepo();
+            await handler.connectRepo();
             // Verify error msg
             expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
             expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
@@ -149,7 +149,7 @@ describe("initHandler",  () => {
             fetchMock
                 .mockResponseOnce(JSON.stringify({ status: true }))
                 .mockResponseOnce(JSON.stringify(user));
-            await handler.syncRepo();
+            await handler.connectRepo();
             // Verify error msg
             const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
             expect(fs.existsSync(syncIgnorePath)).toBe(true);
@@ -167,7 +167,7 @@ describe("initHandler",  () => {
             fetchMock
                 .mockResponseOnce(JSON.stringify({ status: true }))
                 .mockResponseOnce(JSON.stringify(user));
-            await handler.syncRepo();
+            await handler.connectRepo();
             // Verify error msg
             const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
             expect(fs.existsSync(syncIgnorePath)).toBe(true);
@@ -185,7 +185,7 @@ describe("initHandler",  () => {
             fetchMock
                 .mockResponseOnce(JSON.stringify({ status: true }))
                 .mockResponseOnce(JSON.stringify(user));
-            await handler.syncRepo();            
+            await handler.connectRepo();            
             expect(fs.existsSync(syncIgnorePath)).toBe(true);
             const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
             expect(_syncIgnoreData).toStrictEqual(syncIgnoreData);
@@ -202,7 +202,7 @@ describe("initHandler",  () => {
             fetchMock
                 .mockResponseOnce(JSON.stringify({ status: true }))
                 .mockResponseOnce(JSON.stringify(user));
-            await handler.syncRepo();
+            await handler.connectRepo();
             // Verify error msg
             expect(fs.existsSync(syncIgnorePath)).toBe(true);
             const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
@@ -229,7 +229,7 @@ describe("initHandler",  () => {
                 .mockResponseOnce(JSON.stringify(user))
                 .mockResponseOnce(JSON.stringify({status: false}));
 
-            await handler.syncRepo();
+            await handler.connectRepo();
             // Verify error msg
             expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
             // Verify null against file_id in config file
@@ -251,7 +251,7 @@ describe("initHandler",  () => {
                 .mockResponseOnce(JSON.stringify({status: true}))
                 .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
-            await handler.syncRepo();
+            await handler.connectRepo();
             // Verify error msg
             expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
             // Verify null against file_id in config file

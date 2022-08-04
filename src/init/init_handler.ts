@@ -31,7 +31,7 @@ export class initHandler {
 		this.branch = getBranch(this.repoPath);
 	}
 
-	syncRepo = async () => {
+	connectRepo = async () => {
 		/* Syncs a repo with CodeSync */
 		const isServerDown = await checkServerDown();
 		if (!this.viaDaemon && isServerDown) {

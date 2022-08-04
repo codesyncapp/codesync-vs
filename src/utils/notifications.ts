@@ -3,7 +3,7 @@ import { initHandler } from '../init/init_handler';
 import { getActiveUsers } from './common';
 import { redirectToBrowser } from './auth_utils';
 import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION } from '../constants';
-import { trackRepoHandler, unSyncHandler, openSyncIgnoreHandler } from '../handlers/commands_handler';
+import { trackRepoHandler, disconnectRepoHandler, openSyncIgnoreHandler } from '../handlers/commands_handler';
 
 
 export const showSignUpButtons = () => {
@@ -22,7 +22,7 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 	const skipAskConnect = (global as any).skipAskConnect;
 	if (skipAskConnect && email && accessToken) {
 		const handler = new initHandler(repoPath, accessToken);
-		handler.syncRepo();
+		handler.connectRepo();
 		(global as any).skipAskConnect = false;
 		return;
 	}
@@ -34,7 +34,7 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 
 			if (email && accessToken) {
 				const handler = new initHandler(repoPath, accessToken);
-				await handler.syncRepo();
+				await handler.connectRepo();
 				return;
 			}
 
@@ -54,7 +54,7 @@ export const showChooseAccount = async (repoPath: string) => {
 	// By Default choosing first account
 	const user = validUsers[0];
 	const handler = new initHandler(repoPath, user.access_token);
-	await handler.syncRepo();
+	await handler.connectRepo();
 	return handler;
 	// TODO: Option to choose different account
 	// const emails = validUsers.map(account => account.email);
@@ -70,7 +70,7 @@ export const showChooseAccount = async (repoPath: string) => {
 	// 	const index = validUsers.findIndex(user => user.email === selection);
 	// 	const user = validUsers[index];
 	// 	// We have token, repoPath Trigger Init
-	// 	await syncRepo(repoPath, user.access_token);
+	// 	await connectRepo(repoPath, user.access_token);
 	// });
 };
 
@@ -88,7 +88,7 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 	vscode.window.showInformationMessage(msg, 
 		NOTIFICATION.OPEN_SYNCIGNORE, 
 		NOTIFICATION.TRACK_PARENT_REPO, 
-		NOTIFICATION.UNSYNC_PARENT_REPO).then(async selection => {
+		NOTIFICATION.DISCONNECT_PARENT_REPO).then(async selection => {
 		if (!selection) { return; }
 		switch (selection) {
 			case NOTIFICATION.TRACK_PARENT_REPO:
@@ -97,8 +97,8 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 			case NOTIFICATION.OPEN_SYNCIGNORE:
 				openSyncIgnoreHandler();
 				break;
-			case NOTIFICATION.UNSYNC_PARENT_REPO:
-				unSyncHandler();
+			case NOTIFICATION.DISCONNECT_PARENT_REPO:
+				disconnectRepoHandler();
 				break;
 			default:
 			}
