@@ -2,8 +2,8 @@ import path from "path";
 import untildify from "untildify";
 
 const ROOT_REPO_NAME = '~/.codesync';
-export const CODESYNC_DOMAIN = "codesync-server.herokuapp.com";
-export const CODESYNC_HOST = 'https://codesync-server.herokuapp.com';
+export const CODESYNC_DOMAIN = "api.codesync.com";
+export const CODESYNC_HOST = "https://api.codesync.com";
 export const WEB_APP_URL = "https://www.codesync.com";
 
 // const ROOT_REPO_NAME = '~/.codesync-local';
