@@ -2,12 +2,12 @@ import path from "path";
 import untildify from "untildify";
 
 const ROOT_REPO_NAME = '~/.codesync';
-export const CODESYNC_DOMAIN = "api.codesync.com";
+export const CODESYNC_WEBSOCKET_HOST = "wss://api.codesync.com";
 export const CODESYNC_HOST = "https://api.codesync.com";
 export const WEB_APP_URL = "https://www.codesync.com";
 
 // const ROOT_REPO_NAME = '~/.codesync-local';
-// export const CODESYNC_DOMAIN = '127.0.0.1:8000';
+// export const CODESYNC_WEBSOCKET_HOST = "ws://127.0.0.1:8000";
 // export const CODESYNC_HOST = 'http://127.0.0.1:8000';
 // export const WEB_APP_URL = "http://localhost:3000";
 

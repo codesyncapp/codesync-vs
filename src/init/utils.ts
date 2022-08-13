@@ -273,8 +273,10 @@ export class initUtils {
 			platform: os.platform()
 		};
 
+		// Set key here that Branch is being synced
 		const json = await uploadRepoToServer(token, data);
 		if (json.error) {
+			// Reset the key here and try again in next attempt
 			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
 			putLogEvent(error, userEmail, json.error);
 			if (!this.viaDaemon) {

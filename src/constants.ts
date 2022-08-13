@@ -2,7 +2,7 @@
 
 import path from "path";
 import {
-	CODESYNC_DOMAIN,
+	CODESYNC_WEBSOCKET_HOST,
 	CODESYNC_HOST,
 	WEB_APP_URL
 } from "./settings";
@@ -29,7 +29,7 @@ export const API_FILES = `${API_ENDPOINT}/files`;
 export const API_INIT =  `${API_ENDPOINT}/init`;
 export const API_USERS =  `${API_ENDPOINT}/users`;
 export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
-export const WEBSOCKET_ENDPOINT = `ws://${CODESYNC_DOMAIN}/v2/websocket`;
+export const WEBSOCKET_ENDPOINT = `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`;
 
 export const PRICING_URL = `${WEB_APP_URL}/pricing`;
 // Diff utils
