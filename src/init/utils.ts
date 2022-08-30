@@ -253,7 +253,7 @@ export class initUtils {
 				created_at: new Date(fileToUpload.created_at).getTime() / 1000
 			};
 		});
-
+		
 		if (!repoInConfig) {
 			configJSON.repos[this.repoPath] = {
 				branches: {},

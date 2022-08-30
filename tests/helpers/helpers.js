@@ -237,7 +237,7 @@ export const assertFileDeleteEvent = (repoPath, fileRelPath, isDirectory=false) 
         expect(fs.existsSync(cacheFilePath)).toBe(true);
     }
     // Verify correct diff file has been generated
-    let diffFiles = fs.readdirSync(diffsRepo);
+    let diffFiles = fs.readdirSync(diffsRepo).filter(diffFilePath => readYML(path.join(diffsRepo, diffFilePath)).is_deleted);
     expect(diffFiles).toHaveLength(1);
     const diffFilePath = path.join(diffsRepo, diffFiles[0]);
     const diffData = readYML(diffFilePath);
