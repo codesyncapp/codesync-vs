@@ -15,9 +15,10 @@ import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload, IUserPlan } from '../interface';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
-import { CONNECTION_ERROR_MESSAGE, DIFF_SOURCE, NOTIFICATION } from '../constants';
+import { CONNECTION_ERROR_MESSAGE, DIFF_SOURCE, NOTIFICATION, RETRY_BRANCH_SYNC_AFTER } from '../constants';
 import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
+import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 
 export class initUtils {
 	repoPath: string;
@@ -28,6 +29,12 @@ export class initUtils {
 		this.repoPath = repoPath;
 		this.viaDaemon = viaDaemon;
 		this.settings = generateSettings();
+	}
+
+	isBranchSyncInProcess (syncingBranchKey: string) {
+		const branchSyncStartedAt = CodeSyncState.get(syncingBranchKey);
+		const isSyncInProcess = branchSyncStartedAt && (new Date().getTime() - branchSyncStartedAt) < RETRY_BRANCH_SYNC_AFTER;
+		return isSyncInProcess;
 	}
 
 	isValidRepoSize (syncSize: number, userPlan: IUserPlan)  {
@@ -176,7 +183,7 @@ export class initUtils {
 		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
 	}
 
-	async uploadRepoToS3(branch: string, token: string, uploadResponse: any) {
+	async uploadRepoToS3(branch: string, token: string, uploadResponse: any, syncingBranchKey: string) {
 		const viaDaemon = this.viaDaemon;
 		const s3Urls =  uploadResponse.urls;
 		const tasks: any[] = [];
@@ -200,14 +207,18 @@ export class initUtils {
 			function (err, results) {
 				// the results array will equal ['one','two'] even though
 				// the second function had a shorter timeout.
-				if (err) return;
+				if (err) {
+					CodeSyncState.set(syncingBranchKey, false);
+					return;
+				}
 				// delete .originals repo
 				if (fs.existsSync(originalsRepoBranchPath)) {
 					fs.rmdirSync(originalsRepoBranchPath, { recursive: true });
 				}
 				// Hide Connect Repo
 				vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
-
+				// Reset key for syncingBranch
+				CodeSyncState.set(syncingBranchKey, false);
 				// Show success notification
 				if (!viaDaemon) {
 					vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
@@ -224,7 +235,6 @@ export class initUtils {
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
 					userEmail: string, isPublic=false) {
-
 		// Check plan limits
 		const { planLimitReached, canRetry } = getPlanLimitReached();
 		if (planLimitReached && !canRetry) return;
@@ -262,6 +272,14 @@ export class initUtils {
 			return;
 		}
 
+		// Check if branch is already being synced, skip it
+		const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${repoName}:${branch}`;
+		const isSyncInProcess = this.isBranchSyncInProcess(syncingBranchKey);
+		if (isSyncInProcess) return;
+
+		// Set key here that Branch is being synced
+		CodeSyncState.set(syncingBranchKey, new Date().getTime());
+
 		console.log(`Uploading new branch: ${branch} for repo: ${this.repoPath}`);
 
 		const data = {
@@ -273,10 +291,10 @@ export class initUtils {
 			platform: os.platform()
 		};
 
-		// Set key here that Branch is being synced
 		const json = await uploadRepoToServer(token, data);
 		if (json.error) {
 			// Reset the key here and try again in next attempt
+			CodeSyncState.set(syncingBranchKey, false);
 			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
 			putLogEvent(error, userEmail, json.error);
 			if (!this.viaDaemon) {
@@ -311,6 +329,6 @@ export class initUtils {
 		this.saveFileIds(branch, token, user.email, json.response);
 
 		// Upload to s3
-		await this.uploadRepoToS3(branch, token, json.response);
+		await this.uploadRepoToS3(branch, token, json.response, syncingBranchKey);
 	}
 }

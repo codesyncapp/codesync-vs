@@ -5,7 +5,7 @@ import vscode from "vscode";
 import {isValidDiff} from '../utils';
 import {putLogEvent} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
-import {DIFF_FILES_PER_ITERATION, STATUS_BAR_MSGS} from "../../constants";
+import {DIFF_FILES_PER_ITERATION} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
 import {getActiveUsers, readYML, logMsg} from '../../utils/common';

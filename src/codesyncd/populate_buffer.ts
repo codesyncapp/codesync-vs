@@ -117,7 +117,7 @@ class PopulateBuffer {
         console.log(`Watching Repo: ${this.repoPath}`);
         
         const handler = new eventHandler(this.repoPath, "", true);
-        
+
         for (const itemPath of this.itemPaths) {
             let isRename = false;
             const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
@@ -128,7 +128,7 @@ class PopulateBuffer {
             handler.isRename = false;
             handler.isDelete = false;
             handler.createdAt = formatDatetime(itemPath.created_at);
-
+            
             // For binary file, can only handle create event
             if (itemPath.is_binary) {
                 if (!fileInConfig) {
@@ -296,7 +296,7 @@ export const detectBranchChange = async () => {
         // Need to sync the branch
         const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
-
+        
         if (originalsRepoExists) {
             // init has been called, now see if we can upload the repo/branch
             const itemPaths = initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);

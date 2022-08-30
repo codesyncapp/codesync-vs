@@ -6,7 +6,8 @@ export const CODESYNC_STATES = {
 	DIFFS_SEND_LOCK_ACQUIRED: "diffsSendLockAcquired",
 	POPULATE_BUFFER_LOCK_ACQUIRED: "populateBufferLockAcquired",
     PRICING_URL: "pricingUrl",
-    REQUEST_SENT_AT: "requestSentAt"
+    REQUEST_SENT_AT: "requestSentAt",
+    SYNCING_BRANCH: "syncingBranch"
 };
 
 export class CodeSyncState {

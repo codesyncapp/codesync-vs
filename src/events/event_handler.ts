@@ -165,16 +165,25 @@ export class eventHandler {
 		if (!filePath.startsWith(this.repoPath)) return;
 
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
-		if (shouldIgnorePath(this.repoPath, relPath)) { return; }
+		if (shouldIgnorePath(this.repoPath, relPath)) return;
 
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
 		const originalsPath = path.join(this.originalsRepoBranchPath, relPath);
-		if (fs.existsSync(shadowPath) || fs.existsSync(originalsPath)) { return; }
 
+		if (!this.viaDaemon && fs.existsSync(shadowPath) || fs.existsSync(originalsPath)) return;
+		
 		this.log(`FileCreated: ${filePath}`);
+
 		const initUtilsObj = new initUtils(this.repoPath);
-		initUtilsObj.copyFilesTo([filePath], this.shadowRepoBranchPath);
-		initUtilsObj.copyFilesTo([filePath], this.originalsRepoBranchPath);
+		// Copy file to .shadow & .originals, it is conditional as in case of branch upload, file is copied to .shadow and .original but 
+		// server only process X number of files in /init , it is not uploaded immediately
+		if (!fs.existsSync(shadowPath)) {
+			initUtilsObj.copyFilesTo([filePath], this.shadowRepoBranchPath);
+		}
+		// Copy file to .originals
+		if (!fs.existsSync(originalsPath)) {
+			initUtilsObj.copyFilesTo([filePath], this.originalsRepoBranchPath);
+		}
 		// Add new diff in the buffer
 		this.isNewFile = true;
 		// Add null fileId in config
