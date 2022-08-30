@@ -10,7 +10,7 @@ import {
     DIFF_SOURCE,
     SOCKET_CONNECT_ERROR_CODES,
     SOCKET_ERRORS,
-    WEBSOCKET_ENDPOINT
+    API_ROUTES
 } from "../../constants";
 import { getPlanLimitReached } from "../../utils/pricing_utils";
 
@@ -78,7 +78,7 @@ export class SocketClient {
             that.registerConnectionEvents(connection);
         });
 
-        let url = `${WEBSOCKET_ENDPOINT}?token=${this.accessToken}&source=${DIFF_SOURCE}`;
+        let url = `${API_ROUTES.DIFFS_WEBSOCKET}?token=${this.accessToken}&source=${DIFF_SOURCE}`;
         if (!canSendDiffs) {
             url += '&auth_only=1';
         }

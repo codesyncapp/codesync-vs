@@ -3,7 +3,7 @@ import vscode from 'vscode';
 import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
-import { API_FILES, API_INIT} from "../constants";
+import { API_ROUTES } from "../constants";
 import { setPlanLimitReached } from './pricing_utils';
 
 
@@ -30,7 +30,8 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 	*/
 	let error = '';
 	let statusCode = null;
-	let response = await fetch(API_INIT, {
+	let response = await fetch(
+		API_ROUTES.REPO_INIT, {
 			method: 'POST',
 			body: JSON.stringify(data),
 			headers: {
@@ -76,7 +77,8 @@ export const uploadFile = async (token: string, data: any) => {
 	*/
 	let error = "";
 	let statusCode = null;
-	let response = await fetch(API_FILES, {
+	let response = await fetch(
+		API_ROUTES.FILES, {
 			method: 'POST',
 			body: JSON.stringify(data),
 			headers: {

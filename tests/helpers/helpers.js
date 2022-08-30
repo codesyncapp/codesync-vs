@@ -73,12 +73,6 @@ export const INVALID_TOKEN_JSON = {"error": {"message": "Invalid token"}};
 export const SYNC_IGNORE_DATA = ".DS_Store\n.git\n\n\n.node_modules\n";
 export const DUMMY_FILE_CONTENT = "DUMMY FILE CONTENT";
 
-export const USER_PLAN = {
-    "SIZE": 10 * 1000 * 1000,  // 10 MB
-    "FILE_COUNT": 100,
-    "REPO_COUNT": 5
-};
-
 export const TEST_USER = {
     email: TEST_EMAIL,
     iam_access_key: "iam_access_key",

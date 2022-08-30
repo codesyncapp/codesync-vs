@@ -12,7 +12,7 @@ import { putLogEvent } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from '../utils/path_utils';
 import { checkServerDown } from '../utils/api_utils';
-import { IFileToUpload, IUserPlan } from '../interface';
+import { IFileToUpload } from '../interface';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, DIFF_SOURCE, NOTIFICATION, RETRY_BRANCH_SYNC_AFTER } from '../constants';
@@ -37,37 +37,18 @@ export class initUtils {
 		return isSyncInProcess;
 	}
 
-	isValidRepoSize (syncSize: number, userPlan: IUserPlan)  {
-		const isValid = userPlan.SIZE >= syncSize;
-		if (!isValid) {
-			vscode.window.showErrorMessage(`${NOTIFICATION.REPOS_LIMIT_BREACHED} ${userPlan.SIZE}`);
-		}
-		return isValid;
-	}
-
-	isValidFilesCount (filesCount: number, userPlan: IUserPlan) {
-		const isValid = userPlan.FILE_COUNT >= filesCount;
-		if (!isValid) {
-			vscode.window.showErrorMessage(`${NOTIFICATION.FILES_LIMIT_BREACHED}\n
-			You can add only ${userPlan.FILE_COUNT} files (Trying to add ${filesCount} files)`);
-		}
-		return isValid;
-	}
-
 	isSyncAble(relPath: string) {
 		const syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
 		const ig = ignore().add(syncIgnoreItems);
 		return !ig.ignores(relPath);
 	}
 
-	getSyncablePaths (userPlan: IUserPlan, isPopulatingBuffer = false) {
+	getSyncablePaths () {
 		const itemPaths: IFileToUpload[] = [];
 		const repoPath = this.repoPath;
 		const viaDaemon = this.viaDaemon;
 		const syncIgnoreItems = getSyncIgnoreItems(repoPath);
 
-		let syncSize = 0;
-		let limitReached = false;
 		const skipRepos = getSkipRepos(repoPath, syncIgnoreItems);
 
 		const options = {
@@ -87,19 +68,13 @@ export class initUtils {
 							created_at: fileStats.ctime,
 							modified_at: fileStats.mtime
 						});
-						syncSize += fileStats.size;
-					}
-					if (!viaDaemon && !isPopulatingBuffer &&
-						(!self.isValidRepoSize(syncSize, userPlan) ||
-						!self.isValidFilesCount(itemPaths.length, userPlan))) {
-						limitReached = true;
 					}
 					next();
 				}
 			}
 		};
 		walk.walkSync(repoPath, options);
-		return limitReached ? [] : itemPaths;
+		return itemPaths;
 	}
 
 	copyFilesTo(filePaths: string[], destination: string, useFormattedRepoPath = false) {
@@ -237,7 +212,7 @@ export class initUtils {
 					userEmail: string, isPublic=false) {
 		// Check plan limits
 		const { planLimitReached, canRetry } = getPlanLimitReached();
-		if (planLimitReached && !canRetry) return;
+		if (planLimitReached && !canRetry) return false;
 					
 		const repoName = path.basename(this.repoPath);
 		const configJSON = readYML(this.settings.CONFIG_PATH);
@@ -269,13 +244,13 @@ export class initUtils {
 		const isServerDown = await checkServerDown();
 		if (isServerDown) {
 			if (!this.viaDaemon) putLogEvent(CONNECTION_ERROR_MESSAGE);
-			return;
+			return false;
 		}
 
 		// Check if branch is already being synced, skip it
 		const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${repoName}:${branch}`;
 		const isSyncInProcess = this.isBranchSyncInProcess(syncingBranchKey);
-		if (isSyncInProcess) return;
+		if (isSyncInProcess) return false;
 
 		// Set key here that Branch is being synced
 		CodeSyncState.set(syncingBranchKey, new Date().getTime());
@@ -300,7 +275,7 @@ export class initUtils {
 			if (!this.viaDaemon) {
 				vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			}
-			return;
+			return false;
 		}
 		/*
 			Response from server looks like
@@ -330,5 +305,7 @@ export class initUtils {
 
 		// Upload to s3
 		await this.uploadRepoToS3(branch, token, json.response, syncingBranchKey);
+
+		return true;
 	}
 }
