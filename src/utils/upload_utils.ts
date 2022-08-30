@@ -153,7 +153,7 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 	const json = await uploadFile(accessToken, data);
 	if (json.error) {
 		return {
-			error: json.error
+			error: `serverError: ${json.error}`
 		};
 	}
 	if (fileInfo.size && json.response.url) {
@@ -161,7 +161,7 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 		const error = (s3json as any).error;
 		if (error) {
 			return {
-				error: `s3UploadFailed: ${error}`,
+				error: `s3Error: ${error}`,
 				fileId: json.response.id
 			};
 		}
