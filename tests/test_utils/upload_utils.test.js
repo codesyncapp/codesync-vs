@@ -3,7 +3,7 @@ import path from "path";
 import fetchMock from "jest-fetch-mock";
 import {INVALID_TOKEN_JSON, PRE_SIGNED_URL, randomRepoPath, TEST_REPO_RESPONSE} from "../helpers/helpers";
 import {uploadFile, uploadFileTos3, uploadFileToServer, uploadRepoToServer} from "../../src/utils/upload_utils";
-import {API_FILES, API_INIT, DEFAULT_BRANCH} from "../../src/constants";
+import {API_ROUTES, DEFAULT_BRANCH} from "../../src/constants";
 
 
 describe('uploadRepoToServer', () => {
@@ -13,7 +13,7 @@ describe('uploadRepoToServer', () => {
 
     const assertAPICall = (token="ACCESS_TOKEN") => {
         // Assert API call
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_INIT);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.REPO_INIT);
         const options = fetch.mock.calls[0][1];
         expect(options.method).toStrictEqual('POST');
         expect(options.headers).toStrictEqual({
@@ -55,7 +55,7 @@ describe('uploadFile', () => {
 
     const assertAPICall = (token="ACCESS_TOKEN") => {
         // Assert API call
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_FILES);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.FILES);
         const options = fetch.mock.calls[0][1];
         expect(options.method).toStrictEqual('POST');
         expect(options.headers).toStrictEqual({
@@ -140,7 +140,7 @@ describe('uploadFileToServer', () => {
 
     const assertAPICall = (token="ACCESS_TOKEN") => {
         // Assert API call
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_FILES);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.FILES);
         const options = fetch.mock.calls[0][1];
         expect(options.method).toStrictEqual('POST');
         expect(options.headers).toStrictEqual({
@@ -154,7 +154,7 @@ describe('uploadFileToServer', () => {
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
         const res = await uploadFileToServer("ACCESS_TOKEN", 12345, DEFAULT_BRANCH, filePath,
             "file.txt", "");
-        expect(res.error).toStrictEqual(INVALID_TOKEN_JSON.error.message);
+        expect(res.error.endsWith(INVALID_TOKEN_JSON.error.message)).toBe(true);
         expect(assertAPICall()).toBe(true);
     });
 

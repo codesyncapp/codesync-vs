@@ -1,10 +1,10 @@
 import fetch from "node-fetch";
 
-import { API_HEALTHCHECK, API_USERS } from "../constants";
+import { API_ROUTES } from "../constants";
 
 export const checkServerDown = async () => {
 	let isDown = false;
-	const response = await fetch(API_HEALTHCHECK)
+	const response = await fetch(API_ROUTES.HEALTHCHECK)
 	.then(res => res.json())
     .then(json => json)
 	.catch(err => {
@@ -17,7 +17,7 @@ export const checkServerDown = async () => {
 export const getUserForToken = async (accessToken: string) => {
 	let isTokenValid = false;
 	const response = await fetch(
-		API_USERS, {
+		API_ROUTES.USERS, {
 		headers: {
 			'Content-Type': 'application/json',
 			'Authorization': `Basic ${accessToken}`
@@ -40,7 +40,7 @@ export const getUserForToken = async (accessToken: string) => {
 export const createUserWithApi = async (accessToken: string) => {
 	let error = "";
 	let email = "";
-	const response = await fetch(API_USERS, {
+	const response = await fetch(API_ROUTES.USERS, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

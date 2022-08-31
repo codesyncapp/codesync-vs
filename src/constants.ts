@@ -24,12 +24,17 @@ export const IGNORABLE_DIRECTORIES = [
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
-export const API_ENDPOINT = `${CODESYNC_HOST}/v1`;
-export const API_FILES = `${API_ENDPOINT}/files`;
-export const API_INIT =  `${API_ENDPOINT}/init`;
-export const API_USERS =  `${API_ENDPOINT}/users`;
-export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
-export const WEBSOCKET_ENDPOINT = `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`;
+export const API_BASE_URL = `${CODESYNC_HOST}/v1`;
+export const API_ROUTES = {
+	HEALTHCHECK: `${CODESYNC_HOST}/healthcheck`,
+	FILES: `${API_BASE_URL}/files`,
+	REPO_INIT: `${API_BASE_URL}/init`,
+	REPOS: `${API_BASE_URL}/repos`,
+	USERS: `${API_BASE_URL}/users`,
+	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription`,
+	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`
+};
+
 
 export const PRICING_URL = `${WEB_APP_URL}/pricing`;
 // Diff utils
@@ -83,8 +88,6 @@ export const NOTIFICATION = {
 	PRIVATE: "Private",
 	REPO_SYNCED: "Repo synced successfully!",
 	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later",
-	REPOS_LIMIT_BREACHED: "Repo size exceeds the limit. Allowed repo size is",
-	FILES_LIMIT_BREACHED: "FIles count exceeds the limit.",
 	SERVICE_NOT_AVAILABLE: "CodeSync service is unavailable. Please try again in a moment.",
 	UPGRADE_PRICING_PLAN: "Please upgrade your plan to continue using CodeSync",
 	UPGRADE_ORG_PLAN: "Please upgrade your Organization's plan to continue using CodeSync",

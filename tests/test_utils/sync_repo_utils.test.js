@@ -1,6 +1,6 @@
 import fetchMock from "jest-fetch-mock";
 import { updateRepo} from "../../src/utils/sync_repo_utils";
-import { API_ENDPOINT } from "../../src/constants";
+import { API_ROUTES } from "../../src/constants";
 import { INVALID_TOKEN_JSON } from "../helpers/helpers";
 
 describe('updateRepo', () => {
@@ -9,7 +9,7 @@ describe('updateRepo', () => {
     });
 
     const assertAPICall = (token="ACCESS_TOKEN") => {
-        const url = `${API_ENDPOINT}/repos/REPO_ID`;
+        const url = `${API_ROUTES.REPOS}/REPO_ID`;
         expect(fetch.mock.calls[0][0]).toStrictEqual(url);
         const options = fetch.mock.calls[0][1];
         expect(options.method).toStrictEqual("PATCH");
