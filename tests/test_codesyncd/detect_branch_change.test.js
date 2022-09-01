@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
 import untildify from "untildify";
@@ -24,23 +25,34 @@ import {
 
 
 describe("detectBranchChange", () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const repoPath = randomRepoPath();
+    let baseRepoPath;
+    let repoPath;
     const configData = {repos: {}};
-
-    const configPath = getConfigFilePath(baseRepoPath);
-    const userFilePath = getUserFilePath(baseRepoPath);
-    const userData = {};
+    const userData = {};    
+    let configPath;
+    let sequenceTokenFilePath;
+    let userFilePath;
     userData[TEST_EMAIL] = {access_token: "ABC"};
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
 
-    untildify.mockReturnValue(baseRepoPath);
-
-    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-    const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-    const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+    let pathUtilsObj;
+    let originalsRepoBranchPath;
+    let shadowRepoBranchPath;
 
     beforeEach(() => {
+        baseRepoPath = randomBaseRepoPath();
+        repoPath = randomRepoPath();
+    
+        configPath = getConfigFilePath(baseRepoPath);
+        userFilePath = getUserFilePath(baseRepoPath);
+        userData[TEST_EMAIL] = {access_token: "ABC"};
+        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
+    
+        untildify.mockReturnValue(baseRepoPath);
+    
+        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+        shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+    
         fetch.resetMocks();
         jest.clearAllMocks();
         jest.spyOn(global.console, 'log');
@@ -258,4 +270,38 @@ describe("detectBranchChange", () => {
         const readyRepos = await detectBranchChange();
         expect(assertValidUpload(readyRepos)).toBe(true);
     });
+
+    test("Repo is not synced with given branch but .originals branch repo exists, should not upload again", async () => {
+        const newFilePath = path.join(repoPath, "file_1.js");
+        fs.writeFileSync(newFilePath, "");
+        fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
+        fs.mkdirSync(originalsRepoBranchPath, {recursive: true});
+        getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
+        const _configData = {repos: {}};
+        _configData.repos[repoPath] = {
+            branches: {},
+            email: TEST_EMAIL
+        };
+        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        
+        fetchMock
+            .mockResponseOnce(JSON.stringify({status: true}))
+            .mockResponseOnce(() => new Promise(resolve => setTimeout(() => resolve(JSON.stringify(TEST_REPO_RESPONSE)), 3000)));
+
+        setTimeout(async () => {
+            fetchMock
+                .mockResponseOnce(JSON.stringify({status: true}))
+                .mockResponseOnce(() => new Promise(resolve => setTimeout(() => resolve(JSON.stringify(TEST_REPO_RESPONSE)), 3000)));
+            await detectBranchChange();
+            // Should not increase the counter
+            expect(console.log).toHaveBeenCalledTimes(1);
+
+        }, 1000);
+        const readyRepos = await detectBranchChange();
+        expect(assertValidUpload(readyRepos)).toBe(true);
+        expect(console.log).toHaveBeenCalledTimes(1);
+        expect(console.log.mock.calls[0][0].startsWith("Uploading")).toBe(true);
+
+    });
+
 });

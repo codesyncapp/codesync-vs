@@ -9,13 +9,14 @@ import {
 	SYNCIGNORE
 } from "../constants";
 import { initUtils } from './utils';
-import { IUser, IUserPlan } from '../interface';
+import { IUser } from '../interface';
 import { pathUtils } from "../utils/path_utils";
 import { askPublicPrivate } from '../utils/notifications';
 import { askAndTriggerSignUp } from '../utils/auth_utils';
 import { checkServerDown, getUserForToken } from "../utils/api_utils";
 import { getBranch, readFile } from "../utils/common";
 import { isRepoSynced } from '../events/utils';
+
 
 export class initHandler {
 	repoPath: string;
@@ -36,34 +37,27 @@ export class initHandler {
 		const isServerDown = await checkServerDown();
 		if (!this.viaDaemon && isServerDown) {
 			vscode.window.showErrorMessage(NOTIFICATION.SERVICE_NOT_AVAILABLE);
-			return;
+			return false;
 		}
 
-		let user = <IUser>{};
+		const user = <IUser>{};
 		user.email = "";
-		user.plan = <IUserPlan>{};
 
 		if (!isServerDown) {
 			// Validate access token
-			const json = await getUserForToken(this.accessToken);
-			if (!json.isTokenValid) {
+			const userJSON = await getUserForToken(this.accessToken);
+			if (!userJSON.isTokenValid) {
 				askAndTriggerSignUp();
-				return;
+				return false;
 			}
-			user = json.response;
+			user.email = userJSON.response.email;
 		}
 
 		const repoSynced = isRepoSynced(this.repoPath);
 
 		if (repoSynced && !this.viaDaemon) {
 			vscode.window.showWarningMessage(`Repo is already in sync with branch: ${this.branch}`);
-			return;
-		}
-
-		// In case of branch sync, we don't care of user plan
-		if (!isServerDown && !repoSynced && !this.viaDaemon && user.repo_count >= user.plan.REPO_COUNT) {
-			vscode.window.showErrorMessage(NOTIFICATION.UPGRADE_PRICING_PLAN);
-			return;
+			return false;
 		}
 
 		const syncignorePath = path.join(this.repoPath, SYNCIGNORE);
@@ -84,29 +78,28 @@ export class initHandler {
 
 		// Only ask for public/private in case of Repo Sync. Do not ask for Branch Sync.
 		if (this.viaDaemon) {
-			await this.postPublicPrivate(user, false);
-			return;
+			return await this.postPublicPrivate(user.email, false);
 		}
 		// Open .syncignore and ask public/private info
 		const setting: vscode.Uri = vscode.Uri.parse("file:" + syncignorePath);
 		// Opening .syncignore
-		await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
-			await vscode.window.showTextDocument(a, 1, false).then(async e => {
+		return await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
+			return await vscode.window.showTextDocument(a, 1, false).then(async e => {
 				const buttonSelected = await askPublicPrivate(this.repoPath);
 				if (!buttonSelected) {
 					vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
-					return;
+					return false;
 				}
 				const isPublic = buttonSelected == NOTIFICATION.PUBLIC;
-				await this.postPublicPrivate(user, isPublic);
+				return await this.postPublicPrivate(user.email, isPublic);
 			});
 		});
 	};
 
-	postPublicPrivate = async (user: IUser, isPublic: boolean) => {
+	postPublicPrivate = async (userEmail: string, isPublic: boolean) => {
 		const initUtilsObj = new initUtils(this.repoPath, this.viaDaemon);
 		// get item paths to upload and copy in respective repos
-		const itemPaths = initUtilsObj.getSyncablePaths(user.plan);
+		const itemPaths = initUtilsObj.getSyncablePaths();
 		const filePaths = itemPaths.map(itemPath => itemPath.file_path);
 		const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
 		// copy files to .originals repo
@@ -116,6 +109,6 @@ export class initHandler {
 		const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
 		initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
 		// Upload repo/branch
-		await initUtilsObj.uploadRepo(this.branch, this.accessToken, itemPaths, user.email, isPublic);
+		return await initUtilsObj.uploadRepo(this.branch, this.accessToken, itemPaths, userEmail, isPublic);
 	};
 }

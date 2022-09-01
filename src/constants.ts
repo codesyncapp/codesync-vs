@@ -24,12 +24,17 @@ export const IGNORABLE_DIRECTORIES = [
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
-export const API_ENDPOINT = `${CODESYNC_HOST}/v1`;
-export const API_FILES = `${API_ENDPOINT}/files`;
-export const API_INIT =  `${API_ENDPOINT}/init`;
-export const API_USERS =  `${API_ENDPOINT}/users`;
-export const API_HEALTHCHECK = `${CODESYNC_HOST}/healthcheck`;
-export const WEBSOCKET_ENDPOINT = `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`;
+export const API_BASE_URL = `${CODESYNC_HOST}/v1`;
+export const API_ROUTES = {
+	HEALTHCHECK: `${CODESYNC_HOST}/healthcheck`,
+	FILES: `${API_BASE_URL}/files`,
+	REPO_INIT: `${API_BASE_URL}/init`,
+	REPOS: `${API_BASE_URL}/repos`,
+	USERS: `${API_BASE_URL}/users`,
+	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription`,
+	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`
+};
+
 
 export const PRICING_URL = `${WEB_APP_URL}/pricing`;
 // Diff utils
@@ -83,8 +88,6 @@ export const NOTIFICATION = {
 	PRIVATE: "Private",
 	REPO_SYNCED: "Repo synced successfully!",
 	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later",
-	REPOS_LIMIT_BREACHED: "Repo size exceeds the limit. Allowed repo size is",
-	FILES_LIMIT_BREACHED: "FIles count exceeds the limit.",
 	SERVICE_NOT_AVAILABLE: "CodeSync service is unavailable. Please try again in a moment.",
 	UPGRADE_PRICING_PLAN: "Please upgrade your plan to continue using CodeSync",
 	UPGRADE_ORG_PLAN: "Please upgrade your Organization's plan to continue using CodeSync",
@@ -163,6 +166,7 @@ export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .sy
 // Log after 5 min, as daemon restarts after 5s so it will log after 60 iterations
 export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
 export const RETRY_REQUEST_AFTER = 3 * 60 * 1000; // 1000 is for ms;
+export const RETRY_BRANCH_SYNC_AFTER = 1 * 60 * 1000; // 1 minute, 1000 is for ms
 export const SOCKET_CONNECT_ERROR_CODES = ["ECONNREFUSED", "ETIMEDOUT", "ECONNRESET"];
 export const SOCKET_ERRORS = {
 	ERROR_MSG_RECEIVE: 'Error receiving socket msg'

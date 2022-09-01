@@ -13,65 +13,15 @@ import {
     TEST_EMAIL,
     TEST_REPO_RESPONSE,
     TEST_USER,
-    USER_PLAN,
     randomBaseRepoPath,
     randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, getSeqTokenFilePath, Config, addUser, waitFor
 } from "../helpers/helpers";
-import {DEFAULT_BRANCH, DIFF_SOURCE, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
+import {API_ROUTES, DEFAULT_BRANCH, DIFF_SOURCE, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {isBinaryFileSync} from "isbinaryfile";
 import {pathUtils} from "../../src/utils/path_utils";
-import {API_INIT} from "../../src/constants";
 
-
-describe("isValidRepoSize",  () => {
-    const baseRepoPath = randomBaseRepoPath();
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-        untildify.mockReturnValue(baseRepoPath);
-    });
-
-    test("true result",  () => {
-        const initUtilsObj = new initUtils();
-        const isValid = initUtilsObj.isValidRepoSize(USER_PLAN.SIZE-10, USER_PLAN);
-        expect(isValid).toBe(true);
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
-    });
-
-    test("false result",  () => {
-        const initUtilsObj = new initUtils();
-        const isValid = initUtilsObj.isValidRepoSize(USER_PLAN.SIZE+10, USER_PLAN);
-        expect(isValid).toBe(false);
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showErrorMessage.mock.calls[0][0].startsWith(NOTIFICATION.REPOS_LIMIT_BREACHED)).toBe(true);
-    });
-});
-
-describe("isValidFilesCount",  () => {
-    const baseRepoPath = randomBaseRepoPath();
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-        untildify.mockReturnValue(baseRepoPath);
-    });
-
-    test("true result",  () => {
-        const initUtilsObj = new initUtils();
-        const isValid = initUtilsObj.isValidFilesCount(USER_PLAN.FILE_COUNT-10, USER_PLAN);
-        expect(isValid).toBe(true);
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
-    });
-
-    test("false result",  () => {
-        const initUtilsObj = new initUtils();
-        const isValid = initUtilsObj.isValidFilesCount(USER_PLAN.FILE_COUNT+10, USER_PLAN);
-        expect(isValid).toBe(false);
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showErrorMessage.mock.calls[0][0].startsWith(NOTIFICATION.FILES_LIMIT_BREACHED)).toBe(true);
-    });
-});
 
 describe("getSyncablePaths",  () => {
     const baseRepoPath = randomBaseRepoPath();
@@ -94,7 +44,7 @@ describe("getSyncablePaths",  () => {
     test("No .syncignore",  () => {
         fs.writeFileSync(filePath, "");
         const initUtilsObj = new initUtils(repoPath);
-        const paths = initUtilsObj.getSyncablePaths(USER_PLAN);
+        const paths = initUtilsObj.getSyncablePaths();
         expect(paths).toHaveLength(1);
     });
 
@@ -104,7 +54,7 @@ describe("getSyncablePaths",  () => {
         fs.writeFileSync(path.join(repoPath, "ignore.js"), DUMMY_FILE_CONTENT);
         fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
         const initUtilsObj = new initUtils(repoPath);
-        const paths = initUtilsObj.getSyncablePaths(USER_PLAN);
+        const paths = initUtilsObj.getSyncablePaths();
 
         // 1 is .syncignore, other is file.js
         expect(paths).toHaveLength(2);
@@ -116,17 +66,6 @@ describe("getSyncablePaths",  () => {
         expect(paths[1].is_binary).toBe(false);
         expect(paths[1].file_path).toStrictEqual(filePath);
         expect(paths[1].size).toStrictEqual(0);
-    });
-
-    test("Size increases the limit",  () => {
-        fs.writeFileSync(filePath, "");
-        fs.writeFileSync(path.join(repoPath, "ignore.js"), "DUMMY FILE CONTENT");
-        fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
-        const userPlan = Object.assign({}, USER_PLAN);
-        userPlan.SIZE = 0;
-        const initUtilsObj = new initUtils(repoPath);
-        const paths = initUtilsObj.getSyncablePaths(userPlan);
-        expect(paths).toHaveLength(0);
     });
 });
 
@@ -340,7 +279,7 @@ describe("uploadRepo",  () => {
     test("Server Down",  async () => {
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths(USER_PLAN);
+        const itemPaths = initUtilsObj.getSyncablePaths();
         // 1 is .syncignore, other is file.js
         expect(itemPaths).toHaveLength(2);
         // Mock response for checkServerDown
@@ -361,7 +300,7 @@ describe("uploadRepo",  () => {
     test("repo In Config",  async () => {
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths(USER_PLAN);
+        const itemPaths = initUtilsObj.getSyncablePaths();
         // 1 is .syncignore, other is file.js
         expect(itemPaths).toHaveLength(2);
         // Mock response for checkServerDown
@@ -408,7 +347,7 @@ describe("uploadRepo",  () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.removeRepo();
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths(USER_PLAN);
+        const itemPaths = initUtilsObj.getSyncablePaths();
         // 1 is .syncignore, other is file.js
         expect(itemPaths).toHaveLength(2);
         // Mock response for checkServerDown
@@ -436,7 +375,7 @@ describe("uploadRepo",  () => {
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_SYNCED);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         // Assert API call
-        expect(fetch.mock.calls[1][0]).toStrictEqual(API_INIT);
+        expect(fetch.mock.calls[1][0]).toStrictEqual(API_ROUTES.REPO_INIT);
         const options = fetch.mock.calls[1][1];
         expect(options.method).toStrictEqual('POST');
         expect(options.headers).toStrictEqual({
@@ -461,7 +400,7 @@ describe("uploadRepo",  () => {
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
 
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths(USER_PLAN);
+        const itemPaths = initUtilsObj.getSyncablePaths();
         // 1 is .syncignore, other is file.js
         expect(itemPaths).toHaveLength(2);
         // Mock response for checkServerDown

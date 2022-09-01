@@ -3,7 +3,7 @@ import yaml from "js-yaml";
 import untildify from "untildify";
 import fetchMock from "jest-fetch-mock";
 
-import {API_HEALTHCHECK, API_USERS} from "../../src/constants";
+import {API_ROUTES} from "../../src/constants";
 import {checkServerDown, createUserWithApi, getUserForToken} from "../../src/utils/api_utils";
 import {
     getSeqTokenFilePath,
@@ -36,21 +36,21 @@ describe('checkServerDown', () => {
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const isServerDown = await checkServerDown();
         expect(isServerDown).toBe(false);
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_HEALTHCHECK);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.HEALTHCHECK);
     });
 
     test("with status: false", async () => {
         fetchMock.mockResponseOnce(JSON.stringify({status: false}));
         const isServerDown = await checkServerDown();
         expect(isServerDown).toBe(true);
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_HEALTHCHECK);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.HEALTHCHECK);
     });
 
     test("will null response", async () => {
         fetchMock.mockResponseOnce(null);
         const isServerDown = await checkServerDown();
         expect(isServerDown).toBe(true);
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_HEALTHCHECK);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.HEALTHCHECK);
     });
 });
 
@@ -67,7 +67,7 @@ describe("getUserForToken",  () => {
     };
 
     const assertAPICall = (token="ACCESS_TOKEN") => {
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_USERS);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.USERS);
         const options = fetch.mock.calls[0][1];
         expect(options.headers).toStrictEqual({
             'Content-Type': 'application/json',
@@ -111,7 +111,7 @@ describe("createUserWithApi",  () => {
     });
 
     const assertAPICall = (token="ACCESS_TOKEN") => {
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_USERS);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.USERS);
         const options = fetch.mock.calls[0][1];
         expect(options.method).toStrictEqual("POST");
         expect(options.headers).toStrictEqual({

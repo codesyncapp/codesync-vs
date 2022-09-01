@@ -5,7 +5,7 @@ import ignore from "ignore";
 import {isBinaryFileSync} from "isbinaryfile";
 
 import {initUtils} from "../init/utils";
-import {IFileToUpload, IUserPlan} from "../interface";
+import {IFileToUpload} from "../interface";
 import {initHandler} from "../init/init_handler";
 import {similarity} from "./utils";
 import {generateSettings} from "../settings";
@@ -88,7 +88,7 @@ class PopulateBuffer {
         this.settings = generateSettings();
         this.repoBranchPath = path.join(this.repoPath, this.branch);
         this.initUtilsObj = new initUtils(this.repoPath, true);
-        this.itemPaths = this.initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
+        this.itemPaths = this.initUtilsObj.getSyncablePaths();
         this.modifiedInPast = this.getModifiedInPast();
         this.config = readYML(this.settings.CONFIG_PATH);
         const configRepo = this.config.repos[this.repoPath];
@@ -117,7 +117,7 @@ class PopulateBuffer {
         console.log(`Watching Repo: ${this.repoPath}`);
         
         const handler = new eventHandler(this.repoPath, "", true);
-        
+
         for (const itemPath of this.itemPaths) {
             let isRename = false;
             const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
@@ -128,7 +128,7 @@ class PopulateBuffer {
             handler.isRename = false;
             handler.isDelete = false;
             handler.createdAt = formatDatetime(itemPath.created_at);
-
+            
             // For binary file, can only handle create event
             if (itemPath.is_binary) {
                 if (!fileInConfig) {
@@ -280,6 +280,7 @@ export const detectBranchChange = async () => {
         }
 
         const initUtilsObj = new initUtils(repoPath, true);
+        let uploaded = false; 
 
         if (branch in configRepo.branches) {
             const configFiles = configRepo.branches[branch];
@@ -287,9 +288,11 @@ export const detectBranchChange = async () => {
             // If all files IDs are None in config.yml, we need to sync the branch
             const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
             if (shouldSyncBranch) {
-                const itemPaths = initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
-                await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
+                const itemPaths = initUtilsObj.getSyncablePaths();
+                uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
+                if (!uploaded) continue;    
             }
+            // By default, add repo to readyRepos
             readyRepos[repoPath] = branch;
             continue;
         }
@@ -299,13 +302,16 @@ export const detectBranchChange = async () => {
 
         if (originalsRepoExists) {
             // init has been called, now see if we can upload the repo/branch
-            const itemPaths = initUtilsObj.getSyncablePaths(<IUserPlan>{}, true);
-            await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
+            const itemPaths = initUtilsObj.getSyncablePaths();
+            uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
         } else {
             const handler = new initHandler(repoPath, accessToken, true);
-            await handler.connectRepo();
+            uploaded = await handler.connectRepo();
         }
-        readyRepos[repoPath] = branch;
+        if (uploaded) {
+            readyRepos[repoPath] = branch;
+        }
     }
+
     return readyRepos;
 };

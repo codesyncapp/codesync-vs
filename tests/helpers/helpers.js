@@ -73,12 +73,6 @@ export const INVALID_TOKEN_JSON = {"error": {"message": "Invalid token"}};
 export const SYNC_IGNORE_DATA = ".DS_Store\n.git\n\n\n.node_modules\n";
 export const DUMMY_FILE_CONTENT = "DUMMY FILE CONTENT";
 
-export const USER_PLAN = {
-    "SIZE": 10 * 1000 * 1000,  // 10 MB
-    "FILE_COUNT": 100,
-    "REPO_COUNT": 5
-};
-
 export const TEST_USER = {
     email: TEST_EMAIL,
     iam_access_key: "iam_access_key",
@@ -237,7 +231,7 @@ export const assertFileDeleteEvent = (repoPath, fileRelPath, isDirectory=false) 
         expect(fs.existsSync(cacheFilePath)).toBe(true);
     }
     // Verify correct diff file has been generated
-    let diffFiles = fs.readdirSync(diffsRepo);
+    let diffFiles = fs.readdirSync(diffsRepo).filter(diffFilePath => readYML(path.join(diffsRepo, diffFilePath)).is_deleted);
     expect(diffFiles).toHaveLength(1);
     const diffFilePath = path.join(diffsRepo, diffFiles[0]);
     const diffData = readYML(diffFilePath);

@@ -94,18 +94,6 @@ describe("initHandler",  () => {
             expect(vscode.window.showWarningMessage.mock.calls[0][0].startsWith("Repo is already in sync with branch")).toBe(true);
         });
 
-        test("Upgrade Plan",  async () => {
-            const _user = JSON.parse(JSON.stringify(user));
-            _user.repo_count = 5;
-            fetchMock
-                .mockResponseOnce(JSON.stringify({ status: true }))
-                .mockResponseOnce(JSON.stringify(_user));
-            await handler.connectRepo();
-            // Verify error msg
-            expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-            expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.UPGRADE_PRICING_PLAN);
-        });
-
         test("Repo is_disconnected",  async () => {
             const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
             fetchMock
