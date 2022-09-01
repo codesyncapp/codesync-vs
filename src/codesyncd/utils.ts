@@ -15,7 +15,7 @@ import {
 	STATUS_BAR_MSGS
 } from "../constants";
 import { uploadFileToServer } from '../utils/upload_utils';
-import { putLogEvent } from '../logger';
+import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { checkSubDir, getActiveUsers, isRepoActive, readYML } from '../utils/common';
@@ -75,7 +75,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 
 	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, createdAt);
 	if (response.error) {
-		putLogEvent(`Error uploading file: ${response.error}`);
+		CodeSyncLogger.error(`Error uploading file: ${response.error}`);
 		return {
 			uploaded: false,
 			config: configJSON
@@ -205,7 +205,7 @@ export class statusBarMsgs {
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			putLogEvent(e.stack);
+			CodeSyncLogger.error(e.stack);
 		}	
 	};
 

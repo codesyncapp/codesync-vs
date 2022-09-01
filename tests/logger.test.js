@@ -5,7 +5,7 @@ import untildify from "untildify";
 
 import {getSeqTokenFilePath, getUserFilePath, randomBaseRepoPath, TEST_EMAIL, TEST_USER} from "./helpers/helpers";
 import {AWS_REGION} from "../src/constants";
-import {putLogEvent, updateSequenceToken} from "../src/logger";
+import {CodeSyncLogger, updateSequenceToken} from "../src/logger";
 import {readYML} from "../src/utils/common";
 
 
@@ -28,13 +28,13 @@ describe("putLogEvent",  () => {
     });
 
     test("No user.yml", () => {
-        putLogEvent("Error message");
+        CodeSyncLogger.error("Error message");
         const sequenceTokenUsers = readYML(sequenceTokenFilePath);
         expect(sequenceTokenUsers).toStrictEqual({});
     });
 
     test("No User in user.yml", () => {
-        putLogEvent("Error message");
+        CodeSyncLogger.error("Error message");
         const sequenceTokenUsers = readYML(sequenceTokenFilePath);
         expect(sequenceTokenUsers).toStrictEqual({});
     });
@@ -47,7 +47,7 @@ describe("putLogEvent",  () => {
         };
         fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
 
-        putLogEvent("Error message");
+        CodeSyncLogger.error("Error message");
 
         expect(AWS.CloudWatchLogs.mock.instances).toHaveLength(1);
         expect(AWS.CloudWatchLogs.mock.calls[0][0]).toStrictEqual({
@@ -68,7 +68,7 @@ describe("putLogEvent",  () => {
         };
         fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
 
-        putLogEvent("Error message", TEST_EMAIL);
+        CodeSyncLogger.error("Error message", TEST_EMAIL);
 
         const sequenceTokenUsers = readYML(sequenceTokenFilePath);
         expect(sequenceTokenUsers).toStrictEqual({});
@@ -86,7 +86,7 @@ describe("putLogEvent",  () => {
         users[TEST_EMAIL] = "Sequence Token";
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
 
-        putLogEvent("Error message", TEST_USER.email);
+        CodeSyncLogger.error("Error message", TEST_USER.email);
 
         const sequenceTokenUsers = readYML(sequenceTokenFilePath);
         expect(sequenceTokenUsers).toStrictEqual(users);

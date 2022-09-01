@@ -8,7 +8,7 @@ import ignore from 'ignore';
 import parallel from "run-parallel";
 import { isBinaryFileSync } from 'isbinaryfile';
 
-import { putLogEvent } from '../logger';
+import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from '../utils/path_utils';
 import { checkServerDown } from '../utils/api_utils';
@@ -243,7 +243,7 @@ export class initUtils {
 
 		const isServerDown = await checkServerDown();
 		if (isServerDown) {
-			if (!this.viaDaemon) putLogEvent(CONNECTION_ERROR_MESSAGE);
+			if (!this.viaDaemon) CodeSyncLogger.error(CONNECTION_ERROR_MESSAGE);
 			return false;
 		}
 
@@ -271,7 +271,7 @@ export class initUtils {
 			// Reset the key here and try again in next attempt
 			CodeSyncState.set(syncingBranchKey, false);
 			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
-			putLogEvent(error, userEmail, json.error);
+			CodeSyncLogger.error(error, userEmail, json.error);
 			if (!this.viaDaemon) {
 				vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			}

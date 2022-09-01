@@ -1,7 +1,7 @@
 import vscode from "vscode";
 
 import {STATUS_BAR_MSGS} from "../../constants";
-import {logMsg} from "../../utils/common";
+import {logErrorMsg} from "../../logger";
 import {IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffHandler} from "../handlers/diff_handler";
 import {recallDaemon} from "../codesyncd";
@@ -35,7 +35,7 @@ export class SocketEvents {
     }
 
     onInvalidAuth() {
-        errorCount = logMsg(STATUS_BAR_MSGS.AUTH_FAILED_SENDING_DIFF, errorCount);
+        errorCount = logErrorMsg(STATUS_BAR_MSGS.AUTH_FAILED_SENDING_DIFF, errorCount);
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
         // Mark user as inactive in user.yml
         markUsersInactive(false);

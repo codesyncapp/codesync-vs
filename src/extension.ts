@@ -20,7 +20,7 @@ import {
 	upgradePlanHandler,
 	viewDashboardHandler
 } from './handlers/commands_handler';
-import { putLogEvent } from "./logger";
+import { CodeSyncLogger } from "./logger";
 
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -65,7 +65,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
-				putLogEvent(e.stack);
+				CodeSyncLogger.error(e.stack);
 			}
 		});
 
@@ -76,7 +76,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
-				putLogEvent(e.stack);
+				CodeSyncLogger.error(e.stack);
 			}
 		});
 
@@ -87,7 +87,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
-				putLogEvent(e.stack);
+				CodeSyncLogger.error(e.stack);
 			}
 		});
 
@@ -98,7 +98,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
-				putLogEvent(e.stack);
+				CodeSyncLogger.error(e.stack);
 			}
 		});
 
@@ -106,7 +106,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	} catch (e) {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		putLogEvent(e.stack);
+		CodeSyncLogger.error(e.stack);
 	}
 }
 

@@ -8,25 +8,43 @@ import { PutLogEventsRequest } from 'aws-sdk/clients/cloudwatchlogs';
 import {
 	AWS_REGION,
 	CLIENT_LOGS_GROUP_NAME,
-	DIFF_SOURCE
+	DIFF_SOURCE,
+	LOG_AFTER_X_TIMES
 } from './constants';
 import { readYML, isEmpty } from './utils/common';
 import { generateSettings } from "./settings";
-
-let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const VERSION = vscode.extensions.getExtension('codesync.codesync').packageJSON.version;
 
-export function putLogEvent(error: string, userEmail?: string, additionalMsg="", retryCount=0) {
-	let errorMsg = error;
+let cloudwatchlogs = <AWS.CloudWatchLogs>{};
+const logErrorMsgTypes = {
+	CRITICAL: "CRITICAL",
+	ERROR: "ERROR",
+	WARNING: "WARNING",
+	INFO: "INFO",
+	DEBUG: "DEBUG"
+};
+
+export class CodeSyncLogger {
+	static info (msg: string, userEmail?: string, additionalMsg="", retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.INFO, userEmail, additionalMsg, retryCount);
+	}
+
+	static error (msg: string, userEmail?: string, additionalMsg="", retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.ERROR, userEmail, additionalMsg, retryCount);
+	}
+}
+
+const putLogEvent = (msg: string, eventType: string, userEmail?: string, additionalMsg="", retryCount=0) => {
+	let errorMsg = msg;
 	if (additionalMsg) {
-		errorMsg = `${error}, ${additionalMsg}`;
+		errorMsg = `${msg}, ${additionalMsg}`;
 	}
 	console.log(errorMsg);
 	const settings = generateSettings();
-	if (!fs.existsSync(settings.USER_PATH)) { return; }
+	if (!fs.existsSync(settings.USER_PATH)) return;
 	const users = readYML(settings.USER_PATH);
 	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
 	let accessKey = '';
@@ -65,6 +83,7 @@ export function putLogEvent(error: string, userEmail?: string, additionalMsg="",
 
 	const eventMsg = {
 		msg: errorMsg,
+		type: eventType,
 		source: DIFF_SOURCE,
 		version: VERSION,
 		platform: os.platform()
@@ -109,10 +128,10 @@ export function putLogEvent(error: string, userEmail?: string, additionalMsg="",
 				if (retryCount) {
 					if (retryCount < 10) {
 						retryCount += 1;
-						putLogEvent(error, email, additionalMsg, retryCount);
+						putLogEvent(msg, eventType, email, additionalMsg, retryCount);
 					}
 				} else {
-					putLogEvent(error, email, additionalMsg, 1);
+					putLogEvent(msg, eventType, email, additionalMsg, 1);
 				}
 			} else {
 				console.log(err, err.stack);
@@ -121,11 +140,24 @@ export function putLogEvent(error: string, userEmail?: string, additionalMsg="",
 			console.log(err, err.stack);
 		}
 	});
-}
+};
 
 export const updateSequenceToken = (email: string, nextSequenceToken: string) => {
 	const settings = generateSettings();
 	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
 	sequenceTokenConfig[email] = nextSequenceToken;
 	fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
+};
+
+
+export const logErrorMsg = (msg: string, errCount: number) => {
+	if (errCount === 0 || errCount > LOG_AFTER_X_TIMES) {
+		CodeSyncLogger.error(msg);
+	}
+	if (errCount > LOG_AFTER_X_TIMES) {
+		errCount = 0;
+		return errCount;
+	}
+	errCount += 1;
+	return errCount;
 };
