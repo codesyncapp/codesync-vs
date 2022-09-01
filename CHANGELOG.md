@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.6.4] - 2022-08-30
 ### Updated
 - Fixed multiple API calls for branch upload from daemon
+- Handling server side Plan Limit errors upon repo/branch sync
 
 ## [3.6.3] - 2022-08-13
 ### Updated
