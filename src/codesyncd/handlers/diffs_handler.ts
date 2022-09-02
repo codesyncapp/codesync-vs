@@ -2,14 +2,13 @@ import fs from "fs";
 import path from "path";
 
 import {IDiffToSend, IFileToDiff, IRepoDiffs} from "../../interface";
-import {CodeSyncLogger, logErrorMsg} from "../../logger";
+import {CodeSyncLogger} from "../../logger";
 import {FILE_UPLOAD_WAIT_TIMEOUT} from "../../constants";
 import {readYML} from "../../utils/common";
 import {generateSettings} from "../../settings";
 import {DiffHandler} from "./diff_handler";
 
 const WAITING_FILES = <any>{};
-let errorCount = 0;
 
 export class DiffsHandler {
 
@@ -105,7 +104,7 @@ export class DiffsHandler {
             } catch (e) {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                errorCount = logErrorMsg(`Error handling diff: ${e.stack}`, errorCount);
+                CodeSyncLogger.critical("Error handling diff", e.stack);
             }
         }
         return validDiffs;
