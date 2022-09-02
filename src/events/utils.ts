@@ -4,6 +4,7 @@ import ignore from 'ignore';
 import { IGNORABLE_DIRECTORIES, SYNCIGNORE } from "../constants";
 import { checkSubDir, getBranch, isRepoActive, isUserActive, readYML } from '../utils/common';
 import { generateSettings } from "../settings";
+import { CodeSyncLogger } from '../logger';
 
 export function shouldIgnorePath(repoPath: string, relPath: string) {
 	// Allow file sync if it is not there is no .syncignore
@@ -58,6 +59,9 @@ export const isRepoSynced = (repoPath: string, checkFileIds=true) => {
 		}
 		return true;
 	} catch (e) {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		CodeSyncLogger.critical("Failed to check isRepoSynced", e.stack);
 		return false;
 	}
 };

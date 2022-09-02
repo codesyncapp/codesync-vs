@@ -13,6 +13,7 @@ import {
 import { IUserProfile } from "../interface";
 import { generateSettings } from "../settings";
 import { shouldIgnorePath } from '../events/utils';
+import { CodeSyncLogger } from '../logger';
 
 
 export const readFile = (filePath: string) => {
@@ -23,6 +24,7 @@ export const readYML = (filePath: string) => {
 	try {
 		return yaml.load(readFile(filePath));
 	} catch (e) {
+		CodeSyncLogger.error("Exception reading yml file", filePath);
 		return null;
 	}
 };
@@ -42,10 +44,8 @@ export const checkSubDir = (currentRepoPath: string) => {
 		parentRepo: "",
 		isSyncIgnored
 	};
-	let config;
-	try {
-		config = readYML(configPath);
-	} catch (e) {
+	const config = readYML(configPath);
+	if (!config) {
 		return {
 			isSubDir: false,
 			parentRepo: "",

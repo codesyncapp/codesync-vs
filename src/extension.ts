@@ -51,10 +51,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		await setupCodeSync(repoPath);
 
 		if (repoPath) {
-			console.log(`Configured repo: ${repoPath}`);
+			CodeSyncLogger.info(`Configured repo: ${repoPath}`);
 			if (subDirResult.isSubDir) {
 				repoPath = subDirResult.parentRepo;
-				console.log(`Parent repo: ${repoPath}`);
+				CodeSyncLogger.debug(`Parent repo: ${repoPath}`);
 			}	
 		}
 
@@ -65,7 +65,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
-				CodeSyncLogger.error(e.stack);
+				CodeSyncLogger.error("Failed handling changeEvent", e.stack);
 			}
 		});
 
@@ -76,7 +76,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
-				CodeSyncLogger.error(e.stack);
+				CodeSyncLogger.error("Failed handling createEvent", e.stack);
 			}
 		});
 
@@ -87,7 +87,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
-				CodeSyncLogger.error(e.stack);
+				CodeSyncLogger.error("Failed handling deleteEvent", e.stack);
 			}
 		});
 
@@ -98,7 +98,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
-				CodeSyncLogger.error(e.stack);
+				CodeSyncLogger.error("Failed handling renameEvent", e.stack);
 			}
 		});
 
@@ -106,10 +106,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	} catch (e) {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		CodeSyncLogger.error(e.stack);
+		CodeSyncLogger.critical("Failed to activate extension", e.stack);
 	}
+	CodeSyncLogger.info("activated...");
 }
 
 export function deactivate(context: vscode.ExtensionContext) {
-	// Empty body for now
+	CodeSyncLogger.info("deactivated...");
 }

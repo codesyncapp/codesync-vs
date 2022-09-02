@@ -77,7 +77,7 @@ export class DiffsHandler {
                     if (relPath in WAITING_FILES) {
                         const now = (new Date()).getTime() / 1000;
                         if ((now - WAITING_FILES[relPath]) > FILE_UPLOAD_WAIT_TIMEOUT) {
-                            CodeSyncLogger.error(`File ID not found for: ${relPath}`, this.configRepo.email);
+                            CodeSyncLogger.error("diffsHandler: File ID not found", relPath, this.configRepo.email);
                             delete WAITING_FILES[relPath];
                             fs.unlinkSync(diffFilePath);
                         }
@@ -105,7 +105,7 @@ export class DiffsHandler {
             } catch (e) {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                errorCount = logErrorMsg(`Error validating diff: ${e.stack}`, errorCount);
+                errorCount = logErrorMsg(`Error handling diff: ${e.stack}`, errorCount);
             }
         }
         return validDiffs;

@@ -3,7 +3,7 @@ import path from 'path';
 import vscode from "vscode";
 
 import {isValidDiff} from '../utils';
-import {CodeSyncLogger, logErrorMsg} from '../../logger';
+import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
 import {DIFF_FILES_PER_ITERATION} from "../../constants";
 import {recallDaemon} from "../codesyncd";
@@ -11,7 +11,6 @@ import {generateSettings} from "../../settings";
 import {getActiveUsers, readYML} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
 
-let errorCount = 0;
 
 
 export class bufferHandler {
@@ -88,7 +87,7 @@ export class bufferHandler {
 				return false;
 			}
 			if (this.configJSON.repos[diffData.repo_path].is_disconnected) {
-				CodeSyncLogger.info(`Repo ${diffData.repo_path} is disconnected`);
+				CodeSyncLogger.error(`Repo ${diffData.repo_path} is disconnected`);
 				fs.unlinkSync(filePath);
 				return false;
 			}
@@ -96,7 +95,7 @@ export class bufferHandler {
 
 			if (!(diffData.branch in configRepo.branches)) {
 				CodeSyncLogger.error(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`,
-					configRepo.email);
+					"", configRepo.email);
 				return false;
 			}
 			return true;
@@ -141,7 +140,7 @@ export class bufferHandler {
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			errorCount = logErrorMsg(`Daemon failed: ${e.stack}`, errorCount);
+			CodeSyncLogger.critical("Daemon failed to run", e.stack);
 			// recall daemon
 			return recallDaemon(this.statusBarItem);
 		}

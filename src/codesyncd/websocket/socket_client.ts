@@ -2,7 +2,7 @@ import vscode from "vscode";
 import {client} from "websocket";
 
 import {IRepoDiffs} from "../../interface";
-import {logErrorMsg} from "../../logger";
+import {CodeSyncLogger, logErrorMsg} from "../../logger";
 import {recallDaemon} from "../codesyncd";
 import {SocketEvents} from "./socket_events";
 import {
@@ -110,7 +110,9 @@ export class SocketClient {
             try {
                 webSocketEvents.onMessage(message);
             } catch (e) {
-                errorCount = logErrorMsg(`${SOCKET_ERRORS.ERROR_MSG_RECEIVE}, ${e}`, errorCount);
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                CodeSyncLogger.critical(SOCKET_ERRORS.ERROR_MSG_RECEIVE, e.stack);
             }
         });
     };

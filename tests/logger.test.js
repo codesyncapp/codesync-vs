@@ -68,7 +68,7 @@ describe("putLogEvent",  () => {
         };
         fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
 
-        CodeSyncLogger.error("Error message", TEST_EMAIL);
+        CodeSyncLogger.error("Error message", "", TEST_EMAIL);
 
         const sequenceTokenUsers = readYML(sequenceTokenFilePath);
         expect(sequenceTokenUsers).toStrictEqual({});
@@ -86,7 +86,7 @@ describe("putLogEvent",  () => {
         users[TEST_EMAIL] = "Sequence Token";
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
 
-        CodeSyncLogger.error("Error message", TEST_USER.email);
+        CodeSyncLogger.error("Error message", "", TEST_USER.email);
 
         const sequenceTokenUsers = readYML(sequenceTokenFilePath);
         expect(sequenceTokenUsers).toStrictEqual(users);

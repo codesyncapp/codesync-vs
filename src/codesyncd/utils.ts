@@ -63,6 +63,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 	if (!fs.existsSync(originalsFilePath)) {
 		return {
 			uploaded: false,
+			deleteDiff: true,
 			config: configJSON
 		};
 	}
@@ -70,6 +71,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 	const {planLimitReached, canRetry } = getPlanLimitReached();
 	if (planLimitReached && !canRetry) return {
 		uploaded: false,
+		deleteDiff: false,
 		config: configJSON
 	};
 
@@ -78,6 +80,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		CodeSyncLogger.error(`Error uploading file: ${response.error}`);
 		return {
 			uploaded: false,
+			deleteDiff: false,
 			config: configJSON
 		};
 	}
@@ -92,6 +95,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 
 	return {
 		uploaded: true,
+		deleteDiff: true,
 		config: configJSON
 	};
 };
@@ -205,7 +209,7 @@ export class statusBarMsgs {
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			CodeSyncLogger.error(e.stack);
+			CodeSyncLogger.error("Error updating statusBar message", e.stack);
 		}	
 	};
 

@@ -90,8 +90,7 @@ export class initUtils {
 			try {
 				fs.copyFileSync(filePath, destinationPath);
 			} catch (error) {
-				console.log("Unable to copy", filePath, destinationPath);
-				console.log(error);
+				CodeSyncLogger.error("Unable to copy", `${filePath} -> ${destinationPath}`);
 			}
 		});
 	}
@@ -105,8 +104,7 @@ export class initUtils {
         try {
             fs.copyFileSync(from, to);
         } catch (error) {
-            console.log("Unable to copy", from, to);
-            console.log(error);
+			CodeSyncLogger.error("Unable to copy for rename", `${from} -> ${to}`);
         }
     }
 	saveIamUser (user: any) {
@@ -271,7 +269,7 @@ export class initUtils {
 			// Reset the key here and try again in next attempt
 			CodeSyncState.set(syncingBranchKey, false);
 			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
-			CodeSyncLogger.error(error, userEmail, json.error);
+			CodeSyncLogger.error(error, json.error, userEmail);
 			if (!this.viaDaemon) {
 				vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			}

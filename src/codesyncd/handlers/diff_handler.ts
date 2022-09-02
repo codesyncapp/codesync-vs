@@ -45,11 +45,13 @@ export class DiffHandler {
         */
         const json = await handleNewFileUpload(this.accessToken, this.repoPath, this.branch, this.createdAt,
             this.fileRelPath, this.configRepo.id, this.configJSON);
-        if (!json.uploaded) {
-            return this.configJSON;
-        }
+
+        // Clean up diff file
+        if (json.deleteDiff) this.cleanDiffFile();
+        
+        if (!json.uploaded) return this.configJSON;
+        
         this.configJSON = json.config;
-        this.cleanDiffFile();
         return this.configJSON;
     }
 
@@ -71,8 +73,7 @@ export class DiffHandler {
 
     handleNonSyncedDeletedFile() {
         // It can be a directory delete
-        CodeSyncLogger.error(`is_deleted non-synced file found: ${path.join(this.repoPath, this.fileRelPath)}`,
-            this.configRepo.email);
+        CodeSyncLogger.error("is_deleted non-synced file found", path.join(this.repoPath, this.fileRelPath), this.configRepo.email);
         cleanUpDeleteDiff(this.repoPath, this.branch, this.fileRelPath,
             this.configJSON);
         this.cleanDiffFile();

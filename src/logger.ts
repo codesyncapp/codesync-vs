@@ -28,16 +28,37 @@ const logErrorMsgTypes = {
 };
 
 export class CodeSyncLogger {
-	static info (msg: string, userEmail?: string, additionalMsg="", retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.INFO, userEmail, additionalMsg, retryCount);
+	/*
+	  DEBUG: for developer oriented messages, only usable for brief testing of new features and should be removed once new features are fully tested.
+	  INFO: Informational messages, could be useful while debugging but can be ignore during normal execution.
+	  WARNING: Mild errors that do not affect the user but should be fixed in some time frame
+	  ERROR: Errors that cause a bad UX and should be fixed soon.
+	  CRITICAL: Errors that are blocking for the normal operation of the plugin and should be fixed immediately.
+	*/
+
+	static debug (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.DEBUG, additionalMsg, userEmail, retryCount);
 	}
 
-	static error (msg: string, userEmail?: string, additionalMsg="", retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.ERROR, userEmail, additionalMsg, retryCount);
+	static info (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.INFO, additionalMsg, userEmail, retryCount);
 	}
+
+	static warning (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.WARNING, additionalMsg, userEmail, retryCount);
+	}
+
+	static error (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.ERROR, additionalMsg, userEmail, retryCount);
+	}
+
+	static critical (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.CRITICAL, additionalMsg, userEmail, retryCount);
+	}
+
 }
 
-const putLogEvent = (msg: string, eventType: string, userEmail?: string, additionalMsg="", retryCount=0) => {
+const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail?: string, retryCount=0) => {
 	let errorMsg = msg;
 	if (additionalMsg) {
 		errorMsg = `${msg}, ${additionalMsg}`;
