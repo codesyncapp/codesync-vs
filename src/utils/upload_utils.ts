@@ -119,8 +119,15 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 			error: `file not found on : ${filePath}`
 		};
 	}
+
 	return new Promise((resolve, reject) => {
-		const content = fs.readFileSync(filePath, "utf8");
+		// reject raises an expcetion so not using it
+		let content;
+		try {
+			content = fs.readFileSync(filePath, "utf8");
+		} catch (e) {
+			resolve({error: `Could not read file: ${filePath}`});
+		}
 		const formData = new FormData();
 		Object.keys(presignedUrl.fields).forEach(key => {
 			formData.append(key, presignedUrl.fields[key]);

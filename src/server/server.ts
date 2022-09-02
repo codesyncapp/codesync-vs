@@ -6,6 +6,7 @@ import {
     staticFiles
 } from "../constants";
 import {pathUtils} from "../utils/path_utils";
+import { CodeSyncLogger } from "../logger";
 
 export const initExpressServer = () => {
     // Create an express server
@@ -29,6 +30,9 @@ export const initExpressServer = () => {
             await createUser(req.query.access_token, repoPath);
             res.sendFile(files.LOGIN_SUCCESS);
         } catch (e) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            CodeSyncLogger.critical("Login failed", e.stack);
             res.sendFile(files.LOGIN_FAILURE);
         }
     });

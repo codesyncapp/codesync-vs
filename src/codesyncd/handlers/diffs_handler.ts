@@ -2,14 +2,13 @@ import fs from "fs";
 import path from "path";
 
 import {IDiffToSend, IFileToDiff, IRepoDiffs} from "../../interface";
-import {putLogEvent} from "../../logger";
+import {CodeSyncLogger} from "../../logger";
 import {FILE_UPLOAD_WAIT_TIMEOUT} from "../../constants";
-import {logMsg, readYML} from "../../utils/common";
+import {readYML} from "../../utils/common";
 import {generateSettings} from "../../settings";
 import {DiffHandler} from "./diff_handler";
 
 const WAITING_FILES = <any>{};
-let errorCount = 0;
 
 export class DiffsHandler {
 
@@ -77,7 +76,7 @@ export class DiffsHandler {
                     if (relPath in WAITING_FILES) {
                         const now = (new Date()).getTime() / 1000;
                         if ((now - WAITING_FILES[relPath]) > FILE_UPLOAD_WAIT_TIMEOUT) {
-                            putLogEvent(`File ID not found for: ${relPath}`, this.configRepo.email);
+                            CodeSyncLogger.error("diffsHandler: File ID not found", relPath, this.configRepo.email);
                             delete WAITING_FILES[relPath];
                             fs.unlinkSync(diffFilePath);
                         }
@@ -105,7 +104,7 @@ export class DiffsHandler {
             } catch (e) {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                errorCount = logMsg(`Error validating diff: ${e.stack}`, errorCount);
+                CodeSyncLogger.critical("Error handling diff", e.stack);
             }
         }
         return validDiffs;

@@ -8,7 +8,7 @@ import ignore from 'ignore';
 import parallel from "run-parallel";
 import { isBinaryFileSync } from 'isbinaryfile';
 
-import { putLogEvent } from '../logger';
+import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from '../utils/path_utils';
 import { checkServerDown } from '../utils/api_utils';
@@ -90,8 +90,7 @@ export class initUtils {
 			try {
 				fs.copyFileSync(filePath, destinationPath);
 			} catch (error) {
-				console.log("Unable to copy", filePath, destinationPath);
-				console.log(error);
+				CodeSyncLogger.error("Unable to copy", `${filePath} -> ${destinationPath}`);
 			}
 		});
 	}
@@ -105,8 +104,7 @@ export class initUtils {
         try {
             fs.copyFileSync(from, to);
         } catch (error) {
-            console.log("Unable to copy", from, to);
-            console.log(error);
+			CodeSyncLogger.error("Unable to copy for rename", `${from} -> ${to}`);
         }
     }
 	saveIamUser (user: any) {
@@ -243,7 +241,7 @@ export class initUtils {
 
 		const isServerDown = await checkServerDown();
 		if (isServerDown) {
-			if (!this.viaDaemon) putLogEvent(CONNECTION_ERROR_MESSAGE);
+			if (!this.viaDaemon) CodeSyncLogger.error(CONNECTION_ERROR_MESSAGE);
 			return false;
 		}
 
@@ -271,7 +269,7 @@ export class initUtils {
 			// Reset the key here and try again in next attempt
 			CodeSyncState.set(syncingBranchKey, false);
 			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
-			putLogEvent(error, userEmail, json.error);
+			CodeSyncLogger.error(error, json.error, userEmail);
 			if (!this.viaDaemon) {
 				vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			}

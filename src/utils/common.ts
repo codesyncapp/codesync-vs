@@ -8,13 +8,12 @@ import {
 	DATETIME_FORMAT,
 	DEFAULT_BRANCH,
 	IGNORABLE_DIRECTORIES,
-	LOG_AFTER_X_TIMES,
 	SYNCIGNORE
 } from "../constants";
 import { IUserProfile } from "../interface";
 import { generateSettings } from "../settings";
-import { putLogEvent } from "../logger";
 import { shouldIgnorePath } from '../events/utils';
+import { CodeSyncLogger } from '../logger';
 
 
 export const readFile = (filePath: string) => {
@@ -25,6 +24,7 @@ export const readYML = (filePath: string) => {
 	try {
 		return yaml.load(readFile(filePath));
 	} catch (e) {
+		CodeSyncLogger.error("Exception reading yml file", filePath);
 		return null;
 	}
 };
@@ -44,10 +44,8 @@ export const checkSubDir = (currentRepoPath: string) => {
 		parentRepo: "",
 		isSyncIgnored
 	};
-	let config;
-	try {
-		config = readYML(configPath);
-	} catch (e) {
+	const config = readYML(configPath);
+	if (!config) {
 		return {
 			isSubDir: false,
 			parentRepo: "",
@@ -134,16 +132,4 @@ export const getActiveUsers = () => {
 		}
 	});
 	return validUsers;
-};
-
-export const logMsg = (msg: string, errCount: number) => {
-	if (errCount === 0 || errCount > LOG_AFTER_X_TIMES) {
-		putLogEvent(msg);
-	}
-	if (errCount > LOG_AFTER_X_TIMES) {
-		errCount = 0;
-		return errCount;
-	}
-	errCount += 1;
-	return errCount;
 };

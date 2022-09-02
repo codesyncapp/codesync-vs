@@ -6,7 +6,7 @@ import {IDiff, IDiffToSend} from "../../interface";
 import {cleanUpDeleteDiff, getDIffForDeletedFile, handleNewFileUpload} from "../utils";
 import {generateSettings} from "../../settings";
 import {readYML} from "../../utils/common";
-import {putLogEvent} from "../../logger";
+import {CodeSyncLogger} from "../../logger";
 import {pathUtils} from "../../utils/path_utils";
 import {initUtils} from "../../init/utils";
 import {DIFF_SOURCE} from "../../constants";
@@ -45,11 +45,13 @@ export class DiffHandler {
         */
         const json = await handleNewFileUpload(this.accessToken, this.repoPath, this.branch, this.createdAt,
             this.fileRelPath, this.configRepo.id, this.configJSON);
-        if (!json.uploaded) {
-            return this.configJSON;
-        }
+
+        // Clean up diff file
+        if (json.deleteDiff) this.cleanDiffFile();
+        
+        if (!json.uploaded) return this.configJSON;
+        
         this.configJSON = json.config;
-        this.cleanDiffFile();
         return this.configJSON;
     }
 
@@ -71,15 +73,14 @@ export class DiffHandler {
 
     handleNonSyncedDeletedFile() {
         // It can be a directory delete
-        putLogEvent(`is_deleted non-synced file found: ${path.join(this.repoPath, this.fileRelPath)}`,
-            this.configRepo.email);
+        CodeSyncLogger.error("is_deleted non-synced file found", path.join(this.repoPath, this.fileRelPath), this.configRepo.email);
         cleanUpDeleteDiff(this.repoPath, this.branch, this.fileRelPath,
             this.configJSON);
         this.cleanDiffFile();
     }
 
     handleEmptyDiff() {
-        putLogEvent(`Empty diff found in file: ${this.diffFilePath}`, this.configRepo.email);
+        CodeSyncLogger.info(`Empty diff found in file: ${this.diffFilePath}`, this.configRepo.email);
         this.cleanDiffFile();
     }
 

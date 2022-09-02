@@ -2,7 +2,7 @@ import vscode from "vscode";
 import {client} from "websocket";
 
 import {IRepoDiffs} from "../../interface";
-import {logMsg} from "../../utils/common";
+import {CodeSyncLogger, logErrorMsg} from "../../logger";
 import {recallDaemon} from "../codesyncd";
 import {SocketEvents} from "./socket_events";
 import {
@@ -69,7 +69,7 @@ export class SocketClient {
             if (!SOCKET_CONNECT_ERROR_CODES.filter(err => error.code === err).length) {
                 console.log(`Socket Connect Failed: ${error.code}, ${errStr}`);
             }
-            errorCount = logMsg(CONNECTION_ERROR_MESSAGE, errorCount);
+            errorCount = logErrorMsg(CONNECTION_ERROR_MESSAGE, errorCount);
             return recallDaemon(that.statusBarItem, true, true);
         });
 
@@ -94,7 +94,7 @@ export class SocketClient {
         connection.on('error', function (error: any) {
             const msg = `Socket Connection Error: ${error.code}, ${error.toString()}`;
             if (!SOCKET_CONNECT_ERROR_CODES.filter(err => error.code === err).length) {
-                errorCount = logMsg(msg, errorCount);
+                errorCount = logErrorMsg(msg, errorCount);
             }
             that.resetGlobals();
         });
@@ -110,7 +110,9 @@ export class SocketClient {
             try {
                 webSocketEvents.onMessage(message);
             } catch (e) {
-                errorCount = logMsg(`${SOCKET_ERRORS.ERROR_MSG_RECEIVE}, ${e}`, errorCount);
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                CodeSyncLogger.critical(SOCKET_ERRORS.ERROR_MSG_RECEIVE, e.stack);
             }
         });
     };

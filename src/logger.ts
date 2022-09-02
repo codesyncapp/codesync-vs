@@ -8,25 +8,64 @@ import { PutLogEventsRequest } from 'aws-sdk/clients/cloudwatchlogs';
 import {
 	AWS_REGION,
 	CLIENT_LOGS_GROUP_NAME,
-	DIFF_SOURCE
+	DIFF_SOURCE,
+	LOG_AFTER_X_TIMES
 } from './constants';
 import { readYML, isEmpty } from './utils/common';
 import { generateSettings } from "./settings";
-
-let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const VERSION = vscode.extensions.getExtension('codesync.codesync').packageJSON.version;
 
-export function putLogEvent(error: string, userEmail?: string, additionalMsg="", retryCount=0) {
-	let errorMsg = error;
+let cloudwatchlogs = <AWS.CloudWatchLogs>{};
+const logErrorMsgTypes = {
+	CRITICAL: "CRITICAL",
+	ERROR: "ERROR",
+	WARNING: "WARNING",
+	INFO: "INFO",
+	DEBUG: "DEBUG"
+};
+
+export class CodeSyncLogger {
+	/*
+	  DEBUG: for developer oriented messages, only usable for brief testing of new features and should be removed once new features are fully tested.
+	  INFO: Informational messages, could be useful while debugging but can be ignore during normal execution.
+	  WARNING: Mild errors that do not affect the user but should be fixed in some time frame
+	  ERROR: Errors that cause a bad UX and should be fixed soon.
+	  CRITICAL: Errors that are blocking for the normal operation of the plugin and should be fixed immediately.
+	*/
+
+	static debug (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.DEBUG, additionalMsg, userEmail, retryCount);
+	}
+
+	static info (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.INFO, additionalMsg, userEmail, retryCount);
+	}
+
+	static warning (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.WARNING, additionalMsg, userEmail, retryCount);
+	}
+
+	static error (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.ERROR, additionalMsg, userEmail, retryCount);
+	}
+
+	static critical (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.CRITICAL, additionalMsg, userEmail, retryCount);
+	}
+
+}
+
+const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail?: string, retryCount=0) => {
+	let errorMsg = msg;
 	if (additionalMsg) {
-		errorMsg = `${error}, ${additionalMsg}`;
+		errorMsg = `${msg}, ${additionalMsg}`;
 	}
 	console.log(errorMsg);
 	const settings = generateSettings();
-	if (!fs.existsSync(settings.USER_PATH)) { return; }
+	if (!fs.existsSync(settings.USER_PATH)) return;
 	const users = readYML(settings.USER_PATH);
 	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
 	let accessKey = '';
@@ -65,6 +104,7 @@ export function putLogEvent(error: string, userEmail?: string, additionalMsg="",
 
 	const eventMsg = {
 		msg: errorMsg,
+		type: eventType,
 		source: DIFF_SOURCE,
 		version: VERSION,
 		platform: os.platform()
@@ -109,10 +149,10 @@ export function putLogEvent(error: string, userEmail?: string, additionalMsg="",
 				if (retryCount) {
 					if (retryCount < 10) {
 						retryCount += 1;
-						putLogEvent(error, email, additionalMsg, retryCount);
+						putLogEvent(msg, eventType, email, additionalMsg, retryCount);
 					}
 				} else {
-					putLogEvent(error, email, additionalMsg, 1);
+					putLogEvent(msg, eventType, email, additionalMsg, 1);
 				}
 			} else {
 				console.log(err, err.stack);
@@ -121,11 +161,24 @@ export function putLogEvent(error: string, userEmail?: string, additionalMsg="",
 			console.log(err, err.stack);
 		}
 	});
-}
+};
 
 export const updateSequenceToken = (email: string, nextSequenceToken: string) => {
 	const settings = generateSettings();
 	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
 	sequenceTokenConfig[email] = nextSequenceToken;
 	fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
+};
+
+
+export const logErrorMsg = (msg: string, errCount: number) => {
+	if (errCount === 0 || errCount > LOG_AFTER_X_TIMES) {
+		CodeSyncLogger.error(msg);
+	}
+	if (errCount > LOG_AFTER_X_TIMES) {
+		errCount = 0;
+		return errCount;
+	}
+	errCount += 1;
+	return errCount;
 };

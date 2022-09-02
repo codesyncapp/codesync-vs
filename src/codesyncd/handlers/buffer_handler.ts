@@ -3,15 +3,14 @@ import path from 'path';
 import vscode from "vscode";
 
 import {isValidDiff} from '../utils';
-import {putLogEvent} from '../../logger';
+import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
 import {DIFF_FILES_PER_ITERATION} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
-import {getActiveUsers, readYML, logMsg} from '../../utils/common';
+import {getActiveUsers, readYML} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
 
-let errorCount = 0;
 
 
 export class bufferHandler {
@@ -78,25 +77,25 @@ export class bufferHandler {
 			}
 			const diffData = readYML(filePath);
 			if (!diffData || !isValidDiff(diffData)) {
-				putLogEvent(`Skipping invalid diff file: ${diffFile}`, "", diffData);
+				CodeSyncLogger.info(`Skipping invalid diff file: ${diffFile}`, "", diffData);
 				fs.unlinkSync(filePath);
 				return false;
 			}
 			if (!(diffData.repo_path in this.configJSON.repos)) {
-				putLogEvent(`Repo ${diffData.repo_path} is not in config.yml`);
+				CodeSyncLogger.error(`Repo ${diffData.repo_path} is not in config.yml`);
 				fs.unlinkSync(filePath);
 				return false;
 			}
 			if (this.configJSON.repos[diffData.repo_path].is_disconnected) {
-				putLogEvent(`Repo ${diffData.repo_path} is disconnected`);
+				CodeSyncLogger.error(`Repo ${diffData.repo_path} is disconnected`);
 				fs.unlinkSync(filePath);
 				return false;
 			}
 			const configRepo = this.configJSON.repos[diffData.repo_path];
 
 			if (!(diffData.branch in configRepo.branches)) {
-				putLogEvent(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`,
-					configRepo.email);
+				CodeSyncLogger.error(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`,
+					"", configRepo.email);
 				return false;
 			}
 			return true;
@@ -141,7 +140,7 @@ export class bufferHandler {
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			errorCount = logMsg(`Daemon failed: ${e.stack}`, errorCount);
+			CodeSyncLogger.critical("Daemon failed to run", e.stack);
 			// recall daemon
 			return recallDaemon(this.statusBarItem);
 		}

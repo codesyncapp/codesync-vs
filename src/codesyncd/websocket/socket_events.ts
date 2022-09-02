@@ -1,7 +1,7 @@
 import vscode from "vscode";
 
 import {STATUS_BAR_MSGS} from "../../constants";
-import {logMsg} from "../../utils/common";
+import {CodeSyncLogger, logErrorMsg} from "../../logger";
 import {IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffHandler} from "../handlers/diff_handler";
 import {recallDaemon} from "../codesyncd";
@@ -35,7 +35,7 @@ export class SocketEvents {
     }
 
     onInvalidAuth() {
-        errorCount = logMsg(STATUS_BAR_MSGS.AUTH_FAILED_SENDING_DIFF, errorCount);
+        errorCount = logErrorMsg(STATUS_BAR_MSGS.AUTH_FAILED_SENDING_DIFF, errorCount);
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
         // Mark user as inactive in user.yml
         markUsersInactive(false);
@@ -44,6 +44,7 @@ export class SocketEvents {
 
     async onPlanLimitReached() {
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN);
+        CodeSyncLogger.error("Failed sending diff, Limit has been reached");
         await setPlanLimitReached(this.accessToken);
         return recallDaemon(this.statusBarItem);
     }
@@ -58,6 +59,7 @@ export class SocketEvents {
         const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
         if (!canSendDiffs) return recallDaemon(this.statusBarItem);
         // Send diffs
+        
         let validDiffs: IDiffToSend[] = [];
         errorCount = 0;
         for (const repoDiff of this.repoDiffs) {
