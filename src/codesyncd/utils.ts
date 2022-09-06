@@ -219,8 +219,12 @@ export class statusBarMsgs {
 		const activeUsers = getActiveUsers();
 		// No Valid account found
 		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
+		// Check plan limits
+		const { planLimitReached } = getPlanLimitReached();
+		if (planLimitReached) return STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
 		// No repo is opened
 		if (!repoPath) return STATUS_BAR_MSGS.NO_REPO_OPEN;
+
 		const subDirResult = checkSubDir(repoPath);
 		if (subDirResult.isSubDir) {
 			if (subDirResult.isSyncIgnored) {
@@ -230,7 +234,6 @@ export class statusBarMsgs {
 		}
 		// Repo is not synced
 		if (!isRepoActive(this.configJSON, repoPath)) return STATUS_BAR_MSGS.CONNECT_REPO;
-		const { planLimitReached } = getPlanLimitReached();
-		return planLimitReached ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN : STATUS_BAR_MSGS.DEFAULT;
+		return STATUS_BAR_MSGS.DEFAULT;
 	}
 }

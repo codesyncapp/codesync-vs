@@ -59,11 +59,11 @@ export class CodeSyncLogger {
 }
 
 const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail?: string, retryCount=0) => {
-	let errorMsg = msg;
+	let eventMsg = msg;
 	if (additionalMsg) {
-		errorMsg = `${msg}, ${additionalMsg}`;
+		eventMsg = `${msg}, ${additionalMsg}`;
 	}
-	console.log(errorMsg);
+	console.log(eventMsg);
 	const settings = generateSettings();
 	if (!fs.existsSync(settings.USER_PATH)) return;
 	const users = readYML(settings.USER_PATH);
@@ -102,8 +102,8 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail
 		});
 	}
 
-	const eventMsg = {
-		msg: errorMsg,
+	const CWEventMsg = {
+		msg: eventMsg,
 		type: eventType,
 		source: DIFF_SOURCE,
 		version: VERSION,
@@ -111,7 +111,7 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail
 	};
 	const logEvents = [ /* required */
 		{
-			message: JSON.stringify(eventMsg), /* required */
+			message: JSON.stringify(CWEventMsg), /* required */
 			timestamp: new Date().getTime() /* required */
 		}
 	];

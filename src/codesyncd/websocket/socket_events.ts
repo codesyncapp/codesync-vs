@@ -10,6 +10,7 @@ import {statusBarMsgs} from "../utils";
 import {markUsersInactive} from "../../utils/auth_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
 import { getPlanLimitReached, setPlanLimitReached } from "../../utils/pricing_utils";
+import { ErrorCodes } from "../../utils/common";
 
 
 const EVENT_TYPES = {
@@ -42,7 +43,14 @@ export class SocketEvents {
         return recallDaemon(this.statusBarItem);
     }
 
-    async onPlanLimitReached() {
+    async onRepoSizeLimitReached() {
+        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN);
+        CodeSyncLogger.error("Failed sending diff, Repo-Size Limit has been reached");
+        await setPlanLimitReached(this.accessToken);
+        return recallDaemon(this.statusBarItem);
+    }
+
+    async onDiffsLimitReached() {
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN);
         CodeSyncLogger.error("Failed sending diff, Limit has been reached");
         await setPlanLimitReached(this.accessToken);
@@ -99,9 +107,12 @@ export class SocketEvents {
                     case 200:
                         this.onSyncSuccess(resp.diff_file_path);
                         return true;
-                    case 402:
-                        await this.onPlanLimitReached(); 
+                    case ErrorCodes.REPO_SIZE_LIMIT_REACHED:
+                        await this.onRepoSizeLimitReached(); 
                         return true;
+                    case ErrorCodes.DIFFS_LIMIT_REACHED:
+                        await this.onDiffsLimitReached();
+                        return true;    
                     default:
                         return false;
                 }
