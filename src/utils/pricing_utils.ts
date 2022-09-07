@@ -34,11 +34,13 @@ export const setPlanLimitReached = async (accessToken: string) => {
 			repoPath = result.parentRepo;
 		}
 		const configRepo = config.repos[repoPath];
-		const json = await getRepoPlanInfo(accessToken, configRepo.id);
-		if (!json.error) {
-			pricingUrl = json.response.url;
-			isOrgRepo = json.response.is_org_repo;
-		}	
+		if (configRepo) {
+			const json = await getRepoPlanInfo(accessToken, configRepo.id);
+			if (!json.error) {
+				pricingUrl = json.response.url;
+				isOrgRepo = json.response.is_org_repo;
+			}	
+		}
 	}
 
 	const msg = isOrgRepo ? NOTIFICATION.UPGRADE_ORG_PLAN : NOTIFICATION.UPGRADE_PRICING_PLAN;
