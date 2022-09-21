@@ -81,7 +81,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 		});
 
-		// Do not re-run daemon in case of tests
+		// Do not run daemon in case of tests
 		if ((global as any).IS_CODESYNC_DEV) return;
 		recallDaemon(statusBarItem, false);
 	} catch (e) {

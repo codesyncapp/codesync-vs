@@ -70,10 +70,7 @@ export const createUserWithApi = async (accessToken: string) => {
 
 export const getPluginUser = async () => {
 	let error = "";
-	const response = await fetch(PLUGIN_USER.url, {
-			method: 'GET'
-		}
-	)
+	const response = await fetch(PLUGIN_USER.url)
 		.then(res => res.json())
 		.then(json => json)
 		.catch(err => error = err);
