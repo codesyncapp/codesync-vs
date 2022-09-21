@@ -24,7 +24,7 @@ export const readYML = (filePath: string) => {
 	try {
 		return yaml.load(readFile(filePath));
 	} catch (e) {
-		CodeSyncLogger.error("Exception reading yml file", filePath);
+		CodeSyncLogger.error(`Exception reading yml file: ${filePath}}`);
 		return null;
 	}
 };

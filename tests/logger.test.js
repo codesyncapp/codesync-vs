@@ -4,9 +4,10 @@ import AWS from "aws-sdk";
 import untildify from "untildify";
 
 import {getSeqTokenFilePath, getUserFilePath, randomBaseRepoPath, TEST_EMAIL, TEST_USER} from "./helpers/helpers";
-import {AWS_REGION} from "../src/constants";
+import {LOGS_METADATA, PLUGIN_USER} from "../src/settings";
 import {CodeSyncLogger, updateSequenceToken} from "../src/logger";
 import {readYML} from "../src/utils/common";
+import {addPluginUser} from "../src/utils/setup_utils";
 
 
 describe("putLogEvent",  () => {
@@ -29,12 +30,23 @@ describe("putLogEvent",  () => {
 
     test("No user.yml", () => {
         CodeSyncLogger.error("Error message");
+        expect(AWS.CloudWatchLogs.mock.instances).toHaveLength(0);
         const sequenceTokenUsers = readYML(sequenceTokenFilePath);
         expect(sequenceTokenUsers).toStrictEqual({});
     });
 
-    test("No User in user.yml", () => {
+    test("No User in user.yml", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({
+            IAM_ACCESS_KEY: "IAM_ACCESS_KEY",
+            IAM_SECRET_KEY: "IAM_SECRET_KEY"
+        }));
+        await addPluginUser();
         CodeSyncLogger.error("Error message");
+        expect(AWS.CloudWatchLogs.mock.calls[0][0]).toStrictEqual({
+            accessKeyId: "IAM_ACCESS_KEY",
+            secretAccessKey: "IAM_SECRET_KEY",
+            region: LOGS_METADATA.AWS_REGION
+        });
         const sequenceTokenUsers = readYML(sequenceTokenFilePath);
         expect(sequenceTokenUsers).toStrictEqual({});
     });
@@ -44,17 +56,11 @@ describe("putLogEvent",  () => {
         userFileData[TEST_USER.email] = {
             access_key: TEST_USER.iam_access_key,
             secret_key: TEST_USER.iam_secret_key,
+            is_active: true
         };
         fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
 
         CodeSyncLogger.error("Error message");
-
-        expect(AWS.CloudWatchLogs.mock.instances).toHaveLength(1);
-        expect(AWS.CloudWatchLogs.mock.calls[0][0]).toStrictEqual({
-            accessKeyId: TEST_USER.iam_access_key,
-            secretAccessKey: TEST_USER.iam_secret_key,
-            region: AWS_REGION
-        });
 
         const sequenceTokenUsers = readYML(sequenceTokenFilePath);
         expect(sequenceTokenUsers).toStrictEqual({});

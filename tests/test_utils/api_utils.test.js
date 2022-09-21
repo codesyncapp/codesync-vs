@@ -4,7 +4,12 @@ import untildify from "untildify";
 import fetchMock from "jest-fetch-mock";
 
 import {API_ROUTES} from "../../src/constants";
-import {checkServerDown, createUserWithApi, getUserForToken} from "../../src/utils/api_utils";
+import {
+    checkServerDown,
+    createUserWithApi, 
+    getUserForToken,
+    getPluginUser
+} from "../../src/utils/api_utils";
 import {
     getSeqTokenFilePath,
     getUserFilePath,
@@ -149,5 +154,25 @@ describe("createUserWithApi",  () => {
         expect(resp.error).toEqual("");
         expect(resp.email).toBe(user.email);
         expect(assertAPICall()).toBe(true);
+    });
+});
+
+
+describe('getPluginUser', () => {
+
+    beforeEach(() => {
+        fetch.resetMocks();
+        jest.clearAllMocks();
+    });
+
+    test("s3 URL should work", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({
+            IAM_ACCESS_KEY: "IAM_ACCESS_KEY",
+            IAM_SECRET_KEY: "IAM_SECRET_KEY"
+        }));
+        const response = await getPluginUser();
+        expect(response.error).toEqual("");
+        expect(response.user.IAM_ACCESS_KEY).toBe("IAM_ACCESS_KEY");
+        expect(response.user.IAM_SECRET_KEY).toBe("IAM_SECRET_KEY");
     });
 });

@@ -12,6 +12,7 @@ import {createUserWithApi} from "./api_utils";
 import {generateSettings} from "../settings";
 import {trackRepoHandler} from "../handlers/commands_handler";
 import {Auth0URLs, getRepoInSyncMsg, NOTIFICATION} from "../constants";
+import { CodeSyncLogger } from "../logger";
 
 
 export const isPortAvailable = async (port: number) => {
@@ -41,6 +42,7 @@ export const createUser = async (accessToken: string, repoPath: string) => {
     const userResponse = await createUserWithApi(accessToken);
     if (userResponse.error) {
         vscode.window.showErrorMessage("Sign up to CodeSync failed");
+        CodeSyncLogger.critical("Error creaing user from API", userResponse.error);
         return;
     }
     const userEmail = userResponse.email;

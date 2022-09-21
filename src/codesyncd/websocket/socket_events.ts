@@ -107,11 +107,11 @@ export class SocketEvents {
                     case 200:
                         this.onSyncSuccess(resp.diff_file_path);
                         return true;
-                    case ErrorCodes.REPO_SIZE_LIMIT_REACHED:
-                        await this.onRepoSizeLimitReached(); 
-                        return true;
                     case ErrorCodes.DIFFS_LIMIT_REACHED:
                         await this.onDiffsLimitReached();
+                        return true;    
+                    case ErrorCodes.REPO_SIZE_LIMIT_REACHED:
+                        await this.onRepoSizeLimitReached(); 
                         return true;    
                     default:
                         return false;

@@ -6,13 +6,11 @@ import vscode from "vscode";
 
 import { PutLogEventsRequest } from 'aws-sdk/clients/cloudwatchlogs';
 import {
-	AWS_REGION,
-	CLIENT_LOGS_GROUP_NAME,
 	DIFF_SOURCE,
 	LOG_AFTER_X_TIMES
 } from './constants';
 import { readYML, isEmpty } from './utils/common';
-import { generateSettings } from "./settings";
+import { generateSettings, LOGS_METADATA, PLUGIN_USER } from "./settings";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -64,43 +62,55 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail
 		eventMsg = `${msg}, ${additionalMsg}`;
 	}
 	console.log(eventMsg);
+
+	let email = "";
+	let accessKey = "";
+	let secretKey = "";
+
 	const settings = generateSettings();
-	if (!fs.existsSync(settings.USER_PATH)) return;
+
+	if (!fs.existsSync(settings.USER_PATH) || !fs.existsSync(settings.SEQUENCE_TOKEN_PATH)) return;
+
 	const users = readYML(settings.USER_PATH);
 	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
-	let accessKey = '';
-	let secretKey = '';
-	let sequenceToken = '';
-	let email = '';
 
-	if (userEmail && userEmail in users) {
+	if (userEmail) {
 		const user = users[userEmail];
-		email = userEmail;
-		accessKey = user.access_key;
-		secretKey = user.secret_key;
-		sequenceToken = sequenceTokenConfig[userEmail];
+		if (user && user.is_active) {
+			email = userEmail;
+			accessKey = user.access_key;
+			secretKey = user.secret_key;
+		}
 	} else {
-		Object.keys(users).forEach(function (_email, index) {
-			if (index === 0) {
-				email = _email;
-				const user = users[email];
-				accessKey = user.access_key;
-				secretKey = user.secret_key;
-				sequenceToken = sequenceTokenConfig[email];
-			}
-		});
+		const activeUserEmail = Object.keys(users).filter(_email => users[_email].is_active)[0];
+		if (activeUserEmail) {
+			email = activeUserEmail;
+			accessKey = users[activeUserEmail].access_key;
+			secretKey = users[activeUserEmail].secret_key;
+		}
 	}
 
+	// Set default user for logging
 	if (!(accessKey && secretKey && email)) {
-		return;
+		email = PLUGIN_USER.logStream;
+		const pluginUser = users[email];
+		if (!pluginUser) return;
+		accessKey = pluginUser.access_key;
+		secretKey = pluginUser.secret_key;
 	}
+	
+	const sequenceToken = email in sequenceTokenConfig ? sequenceTokenConfig[email] : "";
+
 	if (isEmpty(cloudwatchlogs)) {
 		cloudwatchlogs = new AWS.CloudWatchLogs({
 			accessKeyId: accessKey,
 			secretAccessKey: secretKey,
-			region: AWS_REGION
+			region: LOGS_METADATA.AWS_REGION
 		});
 	}
+
+	const logGroupName = LOGS_METADATA.GROUP;
+	const logStreamName = email;
 
 	const CWEventMsg = {
 		msg: eventMsg,
@@ -108,6 +118,7 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail
 		source: DIFF_SOURCE,
 		version: VERSION,
 		platform: os.platform()
+		// TODO: Uniquly identify common user
 	};
 	const logEvents = [ /* required */
 		{
@@ -115,8 +126,6 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail
 			timestamp: new Date().getTime() /* required */
 		}
 	];
-	const logGroupName = CLIENT_LOGS_GROUP_NAME;
-	const logStreamName = email;
 
 	const params = <PutLogEventsRequest>{
 		logEvents,
@@ -149,10 +158,10 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail
 				if (retryCount) {
 					if (retryCount < 10) {
 						retryCount += 1;
-						putLogEvent(msg, eventType, email, additionalMsg, retryCount);
+						putLogEvent(msg, eventType, additionalMsg, email, retryCount);
 					}
 				} else {
-					putLogEvent(msg, eventType, email, additionalMsg, 1);
+					putLogEvent(msg, eventType, additionalMsg, email, 1);
 				}
 			} else {
 				console.log(err, err.stack);
