@@ -32,7 +32,8 @@ export const API_ROUTES = {
 	REPOS: `${API_BASE_URL}/repos`,
 	USERS: `${API_BASE_URL}/users`,
 	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription`,
-	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`
+	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`,
+	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity`
 };
 
 
@@ -69,6 +70,7 @@ export const NOTIFICATION = {
 	OK: "OK!",
 	CONTINUE: "Continue",
 	UPGRADE: "Upgrade",
+	VIEW_DASHBOARD: "View Dashboard",
 	TRACK_IT: "View repo on web",
 	TRACK_PARENT_REPO: "View parent repo on web",
 	OPEN_SYNCIGNORE: "Open .syncignore",
@@ -97,7 +99,8 @@ export const NOTIFICATION = {
 	REPO_DISCONNECT_FAILED: "Could not disconnect the repo",
 	REPO_DISCONNECT_CONFIRMATION: "Are you sure to continue? You won't be able to revert this!",
 	REPO_DISCONNECT_PARENT_CONFIRMATION: "Are you sure to disconnect parent repo? You won't be able to revert this!",
-	LOGGED_OUT_SUCCESSFULLY: "Successfully logged out!"
+	LOGGED_OUT_SUCCESSFULLY: "Successfully logged out!",
+	TEAM_ACTIVITY_ALERT: "Hey, check your team's activity!"
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {

@@ -47,7 +47,7 @@ export class LockUtils {
 
 	acquirePricingAlertLock () {
 		try {
-			lockFile.lockSync(this.settings.PRICING_ALERT_LOCK);
+			lockFile.lockSync(this.settings.UPGRADE_PLAN_ALERT);
 		} catch (e) {
 			// 
 		}
@@ -55,7 +55,7 @@ export class LockUtils {
 
 	checkPricingAlertLock () {
 		try {
-			return lockFile.checkSync(this.settings.PRICING_ALERT_LOCK);
+			return lockFile.checkSync(this.settings.UPGRADE_PLAN_ALERT);
 		} catch (e) {
 			return false;
 		}

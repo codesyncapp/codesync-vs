@@ -1,4 +1,4 @@
-import fs, { stat } from 'fs';
+import fs from 'fs';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
 import {
@@ -14,58 +14,59 @@ import { isRepoSynced } from '../events/utils';
 import { isPortAvailable, logout } from './auth_utils';
 import { showConnectRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
 import { checkSubDir, getActiveUsers, readYML } from './common';
-import { disconnectRepoHandler, openSyncIgnoreHandler, SignUpHandler, SyncHandler, trackFileHandler, trackRepoHandler, upgradePlanHandler, viewDashboardHandler } from '../handlers/commands_handler';
+import { 
+	disconnectRepoHandler, 
+	openSyncIgnoreHandler, 
+	SignUpHandler, 
+	SyncHandler, 
+	trackFileHandler, 
+	trackRepoHandler, 
+	upgradePlanHandler, 
+	viewDashboardHandler
+ } from '../handlers/commands_handler';
 import { generateSettings, PLUGIN_USER } from "../settings";
 import { initExpressServer } from "../server/server";
 import { getPluginUser } from './api_utils';
 import { pathUtils } from './path_utils';
-import { response } from 'express';
 
 
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
 	// Create system directories
-	const paths = [
+	[
 		settings.CODESYNC_ROOT,
 		settings.DIFFS_REPO,
 		settings.ORIGINALS_REPO,
 		settings.SHADOW_REPO,
 		settings.DELETED_REPO,
 		settings.LOCKS_REPO
-	];
-
-	paths.forEach((path) => {
-		if (!fs.existsSync(path)) {
-			// Add file in originals repo
-			fs.mkdirSync(path, { recursive: true });
-		}
+	].forEach(directoryPath => {
+		// Create directory if does not exist
+		if (!fs.existsSync(directoryPath)) fs.mkdirSync(directoryPath, { recursive: true });
 	});
-	const configPath = settings.CONFIG_PATH;
-	const userFilePath = settings.USER_PATH;
-	const sequenceTokenPath = settings.SEQUENCE_TOKEN_PATH;
-	// Create config.yml if does not exist
-	const configExists = fs.existsSync(configPath);
-	if (!configExists) {
-		fs.writeFileSync(configPath, yaml.safeDump({ repos: {} }));
-	}
-
-	// Create config.yml if does not exist
-	const userFileExists = fs.existsSync(userFilePath);
-	if (!userFileExists) {
-		fs.writeFileSync(userFilePath, yaml.safeDump({}));
-	}
-
-	// Create sequence_token.yml if does not exist
-	const sequenceTokenExists = fs.existsSync(sequenceTokenPath);
-	if (!sequenceTokenExists) {
-		fs.writeFileSync(sequenceTokenPath, yaml.safeDump({}));
-	}
-
-	// Create lock files
-	[settings.POPULATE_BUFFER_LOCK_FILE, settings.DIFFS_SEND_LOCK_FILE, settings.PRICING_ALERT_LOCK].forEach((lockFile) => {
-		if (!fs.existsSync(lockFile)) {
-			fs.writeFileSync(lockFile, "");
-		}
+	
+	// Default data for all system files
+	const defaultData = <any>{};
+	defaultData[settings.CONFIG_PATH] = yaml.safeDump({ repos: {} });
+	defaultData[settings.USER_PATH] = yaml.safeDump({});
+	defaultData[settings.SEQUENCE_TOKEN_PATH] = yaml.safeDump({});
+	defaultData[settings.ALERTS] = yaml.safeDump({ team_activity: ""});
+	defaultData[settings.POPULATE_BUFFER_LOCK_FILE] = "";
+	defaultData[settings.DIFFS_SEND_LOCK_FILE] = "";
+	defaultData[settings.UPGRADE_PLAN_ALERT] = "";
+	[
+		// System Files
+		settings.CONFIG_PATH,
+		settings.USER_PATH, 
+		settings.SEQUENCE_TOKEN_PATH, 
+		settings.ALERTS,
+		// Lock Files
+		settings.POPULATE_BUFFER_LOCK_FILE, 
+		settings.DIFFS_SEND_LOCK_FILE, 
+		settings.UPGRADE_PLAN_ALERT
+	].forEach(filePath => {
+		// Create file if does not exist
+		if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, defaultData[filePath]);
 	});
 	
 	return settings;
