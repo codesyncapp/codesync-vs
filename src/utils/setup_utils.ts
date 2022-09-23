@@ -75,7 +75,9 @@ export const createSystemDirectories = () => {
 export const addPluginUser = async () => {
 	const settings = generateSettings();
 	const users = readYML(settings.USER_PATH) || {};
-    if (!(PLUGIN_USER.logStream in users)) {
+	const pluginUser = users[PLUGIN_USER.logStream];
+    if (!pluginUser || !pluginUser.access_key || !pluginUser.secret_key) {
+		// Get fresh credentials 
 		const response = await getPluginUser();
 		if (response.error) return;
         users[PLUGIN_USER.logStream] = {
