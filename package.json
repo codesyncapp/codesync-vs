@@ -288,6 +288,7 @@
     "isbinaryfile": "^4.0.8",
     "jest-fetch-mock": "^3.0.3",
     "js-yaml": "^3.14.1",
+    "macaddress": "^0.5.3",
     "node-fetch": "^2.6.7",
     "proper-lockfile": "^4.1.2",
     "run-parallel": "^1.2.0",

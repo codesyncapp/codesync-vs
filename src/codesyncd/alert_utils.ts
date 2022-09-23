@@ -3,7 +3,7 @@ import yaml from 'js-yaml';
 import vscode from 'vscode';
 import { API_ROUTES, NOTIFICATION } from "../constants";
 import { viewDashboardHandler } from '../handlers/commands_handler';
-import { IRepoInfo } from "../interface";
+import { IRepoInfo, IUserProfile } from "../interface";
 import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { getTeamActivity } from "../utils/api_utils";
@@ -29,7 +29,7 @@ export class Alerts {
     nowMinutes: number;
 	nowTimestamp: number;
 	alertsData: any;
-	accessToken: string;
+	activeUser: IUserProfile;
 
 	constructor() {
 		const now = new Date();
@@ -39,11 +39,10 @@ export class Alerts {
 		this.settings = generateSettings();
 		this.alertsData = readYML(this.settings.ALERTS);
 
-		const activeUser = getActiveUsers()[0];
-		this.accessToken = activeUser.access_token;
+		this.activeUser = getActiveUsers()[0];
 	}
 
-	checkTeamAlert = async () => {
+	checkTeamAlert = async (accessToken: string) => {
 		/* 
 		Notify the user about recent activity within teams, daily at 4:30pm.
 		We need to check activity within past 24 hours i.e from 4:30PM yesterday to 4:30PM today.
@@ -62,7 +61,7 @@ export class Alerts {
 		const lastShownAT = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key];
 		if (lastShownAT && Math.abs(this.nowTimestamp - lastShownAT.getTime()) < this.CONFIG.TEAM_ACTIVITY.showAfter) return;
 		// Check if there has been some acitivty in past 24 hours
-		const response = await getTeamActivity(this.accessToken);
+		const response = await getTeamActivity(accessToken);
 		if (response.error) { 
 			CodeSyncLogger.error("Error getting team activity", response.error);
 			return;
@@ -95,6 +94,8 @@ export class Alerts {
 	};
 
 	checkActivityAlerts = async () => {
-		await this.checkTeamAlert();
+		if (!this.activeUser) return;
+		const accessToken = this.activeUser.access_token;
+		await this.checkTeamAlert(accessToken);
 	};
 }
