@@ -22,7 +22,7 @@ export const PLUGIN_USER = {
 // export const WEB_APP_URL = "http://localhost:3000";
 // export const LOGS_METADATA = {
 //     AWS_REGION: 'us-east-1',
-//     GROUP: 'client-logs-local'
+//     GROUP: 'client-logs-dev'
 // };
 // export const PLUGIN_USER = {
 //     logStream: "codesync-dev-common-logs",
