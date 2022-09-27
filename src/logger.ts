@@ -3,6 +3,7 @@ import os from 'os';
 import yaml from 'js-yaml';
 import AWS from 'aws-sdk';
 import vscode from "vscode";
+import macaddress from "macaddress";
 
 import { PutLogEventsRequest } from 'aws-sdk/clients/cloudwatchlogs';
 import {
@@ -17,6 +18,9 @@ import { generateSettings, LOGS_METADATA, PLUGIN_USER } from "./settings";
 const VERSION = vscode.extensions.getExtension('codesync.codesync').packageJSON.version;
 
 let cloudwatchlogs = <AWS.CloudWatchLogs>{};
+let macAddress = "";
+macaddress.one().then(mac => macAddress = mac);
+
 const logErrorMsgTypes = {
 	CRITICAL: "CRITICAL",
 	ERROR: "ERROR",
@@ -34,29 +38,29 @@ export class CodeSyncLogger {
 	  CRITICAL: Errors that are blocking for the normal operation of the plugin and should be fixed immediately.
 	*/
 
-	static debug (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.DEBUG, additionalMsg, userEmail, retryCount);
+	static debug (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.DEBUG, additionalMsg, logStream, retryCount);
 	}
 
-	static info (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.INFO, additionalMsg, userEmail, retryCount);
+	static info (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.INFO, additionalMsg, logStream, retryCount);
 	}
 
-	static warning (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.WARNING, additionalMsg, userEmail, retryCount);
+	static warning (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.WARNING, additionalMsg, logStream, retryCount);
 	}
 
-	static error (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.ERROR, additionalMsg, userEmail, retryCount);
+	static error (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.ERROR, additionalMsg, logStream, retryCount);
 	}
 
-	static critical (msg: string, additionalMsg="", userEmail?: string, retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.CRITICAL, additionalMsg, userEmail, retryCount);
+	static critical (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
+		putLogEvent(msg, logErrorMsgTypes.CRITICAL, additionalMsg, logStream, retryCount);
 	}
 
 }
 
-const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail?: string, retryCount=0) => {
+const putLogEvent = (msg: string, eventType: string, additionalMsg="", logStream?: string, retryCount=0) => {
 	let eventMsg = msg;
 	if (additionalMsg) {
 		eventMsg = `${msg}, ${additionalMsg}`;
@@ -74,10 +78,10 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail
 	const users = readYML(settings.USER_PATH);
 	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
 
-	if (userEmail) {
-		const user = users[userEmail];
+	if (logStream) {
+		const user = users[logStream];
 		if (user && user.is_active) {
-			email = userEmail;
+			email = logStream;
 			accessKey = user.access_key;
 			secretKey = user.secret_key;
 		}
@@ -117,8 +121,8 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail
 		type: eventType,
 		source: DIFF_SOURCE,
 		version: VERSION,
-		platform: os.platform()
-		// TODO: Uniquly identify common user
+		platform: os.platform(),
+		mac_address: macAddress
 	};
 	const logEvents = [ /* required */
 		{
@@ -150,7 +154,7 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail
 		The next batch can be sent with sequenceToken: 49615429905286623782064446503967477603282951356289123634
 		*/
 		const errString = err.toString();
-		if (errString.substr('DataAlreadyAcceptedException') || errString.substr('InvalidSequenceTokenException')) {
+		if (errString.includes('DataAlreadyAcceptedException') || errString.includes('InvalidSequenceTokenException')) {
 			const matches = errString.match(/(\d+)/);
 			if (matches[0]) {
 				sequenceTokenConfig[email] = matches[0];
@@ -164,10 +168,10 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", userEmail
 					putLogEvent(msg, eventType, additionalMsg, email, 1);
 				}
 			} else {
-				console.log(err, err.stack);
+				console.log(`Logging failed: ${errString}`, err.stack);
 			}
 		} else {
-			console.log(err, err.stack);
+			console.log(`Failed to log: ${errString}`);
 		}
 	});
 };
