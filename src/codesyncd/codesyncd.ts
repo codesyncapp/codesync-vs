@@ -6,6 +6,7 @@ import { populateBuffer } from "./populate_buffer";
 import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
 import { statusBarMsgs } from "./utils";
 import { LockUtils } from "../utils/lock_utils";
+import { Alerts } from "./alert_utils";
 
 
 
@@ -51,6 +52,9 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
             recallDaemon(statusBarItem);
         }, RESTART_DAEMON_AFTER);
     }
+
+    // Check if we need to show activity alerts
+    new Alerts().checkActivityAlerts();
 
     // Check permissions to run populateBuffer and bufferHandler
     const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);

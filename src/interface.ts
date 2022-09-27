@@ -59,3 +59,7 @@ export interface IDiffToSend {
 	'source': string;
 	'platform': string
 }
+
+export interface IRepoInfo {
+	date: string;
+}

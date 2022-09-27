@@ -21,6 +21,7 @@ export const IGNORABLE_DIRECTORIES = [
 	".idea",
 ];
 
+export const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
@@ -32,7 +33,8 @@ export const API_ROUTES = {
 	REPOS: `${API_BASE_URL}/repos`,
 	USERS: `${API_BASE_URL}/users`,
 	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription`,
-	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`
+	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`,
+	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity?tz=${TIMEZONE}`
 };
 
 
@@ -44,10 +46,6 @@ export const REQUIRED_FILE_RENAME_DIFF_KEYS = ['old_rel_path', 'new_rel_path'];
 export const REQUIRED_DIR_RENAME_DIFF_KEYS = ['old_path', 'new_path'];
 export const DIFF_SIZE_LIMIT = 16 * 1000 * 1000;
 export const SEQUENCE_MATCHER_RATIO = 0.8;
-
-// AWS constants
-export const AWS_REGION = 'us-east-1';
-export const CLIENT_LOGS_GROUP_NAME = 'client-logs';
 
 // Error msgs
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
@@ -73,6 +71,7 @@ export const NOTIFICATION = {
 	OK: "OK!",
 	CONTINUE: "Continue",
 	UPGRADE: "Upgrade",
+	VIEW_DASHBOARD: "View Dashboard",
 	TRACK_IT: "View repo on web",
 	TRACK_PARENT_REPO: "View parent repo on web",
 	OPEN_SYNCIGNORE: "Open .syncignore",
@@ -101,7 +100,8 @@ export const NOTIFICATION = {
 	REPO_DISCONNECT_FAILED: "Could not disconnect the repo",
 	REPO_DISCONNECT_CONFIRMATION: "Are you sure to continue? You won't be able to revert this!",
 	REPO_DISCONNECT_PARENT_CONFIRMATION: "Are you sure to disconnect parent repo? You won't be able to revert this!",
-	LOGGED_OUT_SUCCESSFULLY: "Successfully logged out!"
+	LOGGED_OUT_SUCCESSFULLY: "Successfully logged out!",
+	TEAM_ACTIVITY_ALERT: "Hey, check your team's activity!"
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {

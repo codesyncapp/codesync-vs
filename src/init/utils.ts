@@ -253,7 +253,7 @@ export class initUtils {
 		// Set key here that Branch is being synced
 		CodeSyncState.set(syncingBranchKey, new Date().getTime());
 
-		console.log(`Uploading new branch: ${branch} for repo: ${this.repoPath}`);
+		CodeSyncLogger.info(`Uploading new branch: ${branch} for repo: ${this.repoPath}`);
 
 		const data = {
 			name: repoName,

@@ -2,6 +2,7 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
 import {
+	COMMAND,
 	getDirectoryIsSyncedMsg,
 	getRepoInSyncMsg,
 	MAX_PORT,
@@ -10,53 +11,80 @@ import {
 	SYNCIGNORE
 } from "../constants";
 import { isRepoSynced } from '../events/utils';
-import { isPortAvailable } from './auth_utils';
+import { isPortAvailable, logout } from './auth_utils';
 import { showConnectRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
-import { checkSubDir, getActiveUsers } from './common';
-import { trackRepoHandler } from '../handlers/commands_handler';
-import { generateSettings } from "../settings";
+import { checkSubDir, getActiveUsers, readYML } from './common';
+import { 
+	disconnectRepoHandler, 
+	openSyncIgnoreHandler, 
+	SignUpHandler, 
+	SyncHandler, 
+	trackFileHandler, 
+	trackRepoHandler, 
+	upgradePlanHandler, 
+	viewDashboardHandler
+ } from '../handlers/commands_handler';
+import { generateSettings, PLUGIN_USER } from "../settings";
 import { initExpressServer } from "../server/server";
-
+import { getPluginUser } from './api_utils';
+import { pathUtils } from './path_utils';
 
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
 	// Create system directories
-	const paths = [
+	[
 		settings.CODESYNC_ROOT,
 		settings.DIFFS_REPO,
 		settings.ORIGINALS_REPO,
 		settings.SHADOW_REPO,
 		settings.DELETED_REPO,
 		settings.LOCKS_REPO
-	];
-
-	paths.forEach((path) => {
-		if (!fs.existsSync(path)) {
-			// Add file in originals repo
-			fs.mkdirSync(path, { recursive: true });
-		}
+	].forEach(directoryPath => {
+		// Create directory if does not exist
+		if (!fs.existsSync(directoryPath)) fs.mkdirSync(directoryPath, { recursive: true });
 	});
-	const configPath = settings.CONFIG_PATH;
-	const sequenceTokenPath = settings.SEQUENCE_TOKEN_PATH;
-	// Create config.yml if does not exist
-	const configExists = fs.existsSync(configPath);
-	if (!configExists) {
-		fs.writeFileSync(configPath, yaml.safeDump({ repos: {} }));
-	}
-
-	// Create sequence_token.yml if does not exist
-	const sequenceTokenExists = fs.existsSync(sequenceTokenPath);
-	if (!sequenceTokenExists) {
-		fs.writeFileSync(sequenceTokenPath, yaml.safeDump({}));
-	}
-
-	// Create lock files
-	[settings.POPULATE_BUFFER_LOCK_FILE, settings.DIFFS_SEND_LOCK_FILE, settings.PRICING_ALERT_LOCK].forEach((lockFile) => {
-		if (!fs.existsSync(lockFile)) {
-			fs.writeFileSync(lockFile, "");
-		}
+	
+	// Default data for all system files
+	const defaultData = <any>{};
+	defaultData[settings.CONFIG_PATH] = yaml.safeDump({ repos: {} });
+	defaultData[settings.USER_PATH] = yaml.safeDump({});
+	defaultData[settings.SEQUENCE_TOKEN_PATH] = yaml.safeDump({});
+	defaultData[settings.ALERTS] = yaml.safeDump({ team_activity: ""});
+	defaultData[settings.POPULATE_BUFFER_LOCK_FILE] = "";
+	defaultData[settings.DIFFS_SEND_LOCK_FILE] = "";
+	defaultData[settings.UPGRADE_PLAN_ALERT] = "";
+	[
+		// System Files
+		settings.CONFIG_PATH,
+		settings.USER_PATH, 
+		settings.SEQUENCE_TOKEN_PATH, 
+		settings.ALERTS,
+		// Lock Files
+		settings.POPULATE_BUFFER_LOCK_FILE, 
+		settings.DIFFS_SEND_LOCK_FILE, 
+		settings.UPGRADE_PLAN_ALERT
+	].forEach(filePath => {
+		// Create file if does not exist
+		if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, defaultData[filePath]);
 	});
+	
 	return settings;
+};
+
+export const addPluginUser = async () => {
+	const settings = generateSettings();
+	const users = readYML(settings.USER_PATH) || {};
+	const pluginUser = users[PLUGIN_USER.logStream];
+    if (!pluginUser || !pluginUser.access_key || !pluginUser.secret_key) {
+		// Get fresh credentials 
+		const response = await getPluginUser();
+		if (response.error) return;
+        users[PLUGIN_USER.logStream] = {
+            access_key: response.user.IAM_ACCESS_KEY,
+            secret_key: response.user.IAM_SECRET_KEY
+        };
+    }
+    fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
 };
 
 const generateRandom = (min = 0, max = 100)  => {
@@ -73,6 +101,7 @@ const generateRandom = (min = 0, max = 100)  => {
 
 export const setupCodeSync = async (repoPath: string) => {
 	const settings = createSystemDirectories();
+	await addPluginUser();
 	const userFilePath = settings.USER_PATH;
 	let port = 0;
 	while (!port) {
@@ -117,9 +146,6 @@ export const showRepoStatusMsg = (repoPath: string, port?: number) => {
 	if (!repoPath) { return; }
 
 	const subDirResult = checkSubDir(repoPath);
-
-	vscode.commands.executeCommand('setContext', 'isSubDir', subDirResult.isSubDir);
-	vscode.commands.executeCommand('setContext', 'isSyncIgnored', subDirResult.isSyncIgnored);
 
 	registerSyncIgnoreSaveEvent(repoPath);
 	
@@ -170,4 +196,34 @@ const registerSyncIgnoreSaveEvent = (repoPath: string) => {
 			showRepoStatusMsg(repoPath);
 		});
 	}
+};
+
+export const setInitialContext = () => {
+	const repoPath = pathUtils.getRootPath();
+	const subDirResult = checkSubDir(repoPath);
+	vscode.commands.executeCommand('setContext', 'showLogIn', showLogIn());
+	vscode.commands.executeCommand('setContext', 'showConnectRepoView', showConnectRepoView(repoPath));
+	vscode.commands.executeCommand('setContext', 'isSubDir', subDirResult.isSubDir);
+	vscode.commands.executeCommand('setContext', 'isSyncIgnored', subDirResult.isSyncIgnored);
+	vscode.commands.executeCommand('setContext', 'CodeSyncActivated', true);
+	vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
+};
+
+export const registerCommands = (context: vscode.ExtensionContext) => {
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, SignUpHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerLogout, logout));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSync, SyncHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerDisconnectRepo, disconnectRepoHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackRepo, trackRepoHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackFile, trackFileHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.openSyncIgnore, openSyncIgnoreHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.upgradePlan, upgradePlanHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.viewDashboard, viewDashboardHandler));
+};
+
+export const createStatusBarItem = (context: vscode.ExtensionContext) => {
+	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+	statusBarItem.command = COMMAND.triggerDisconnectRepo;
+	context.subscriptions.push(statusBarItem);
+	return statusBarItem;
 };
