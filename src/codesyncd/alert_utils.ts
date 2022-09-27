@@ -42,43 +42,11 @@ export class Alerts {
 		this.activeUser = getActiveUsers()[0];
 	}
 
-	showTeamActivityAlert = async (accessToken: string) => {
-		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
-		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
-
-		// Check if there has been some acitivty in past 24 hours
-		const json = await getTeamActivity(accessToken);
-		if (json.error) { 
-			CodeSyncLogger.error("Error getting team activity", json.error);
-			return;
-		}
-		// In case there is no activity
-		if (!json.activities.length) return;
-		// Check if there is some recent activity to show
-		const hasRecentActivty = json.activities.some((repoInfo: IRepoInfo) => {
-			const before = new Date();
-			// Checking only before 4:30PM
-			before.setHours(alertH);
-			before.setMinutes(alertM);
-			const lastSyncedAt = new Date(repoInfo.date);
-			// Ignore if there
-			if (lastSyncedAt > before) return false;
-			// Check if lastSyncedAt was within 24 hours
-			return ((before.getTime() - new Date(repoInfo.date).getTime())) <= this.CONFIG.TEAM_ACTIVITY.showAfter;
-		});
-		if (!hasRecentActivty) return;
-		// Show alert
-		const button = NOTIFICATION.VIEW_DASHBOARD;
-		vscode.window.showInformationMessage(NOTIFICATION.TEAM_ACTIVITY_ALERT, button).then(selection => {
-			if (!selection) { return; }
-			if (selection === NOTIFICATION.VIEW_DASHBOARD) {
-				viewDashboardHandler();
-			}
-		});
-		// Update time in alerts.yml
-		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] = new Date();
-		fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
-	}
+	checkActivityAlerts = async () => {
+		if (!this.activeUser) return;
+		const accessToken = this.activeUser.access_token;
+		await this.checkTeamAlert(accessToken);
+	};
 
 	checkTeamAlert = async (accessToken: string) => {
 		/* 
@@ -106,9 +74,42 @@ export class Alerts {
 		await this.showTeamActivityAlert(accessToken);
 	};
 
-	checkActivityAlerts = async () => {
-		if (!this.activeUser) return;
-		const accessToken = this.activeUser.access_token;
-		await this.checkTeamAlert(accessToken);
-	};
+	showTeamActivityAlert = async (accessToken: string) => {
+		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
+		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
+
+		// Check if there has been some acitivty in past 24 hours
+		const json = await getTeamActivity(accessToken);
+		if (json.error) { 
+			CodeSyncLogger.error("Error getting team activity", json.error);
+			return;
+		}
+		// In case there is no activity
+		if (!json.activities || !json.activities.length) return;
+		// Check if there is some recent activity to show
+		const hasRecentActivty = json.activities.some((repoInfo: IRepoInfo) => {
+			const before = new Date();
+			// Checking only before 4:30PM
+			before.setHours(alertH);
+			before.setMinutes(alertM);
+			const lastSyncedAt = new Date(repoInfo.date);
+			// Ignore if there
+			if (lastSyncedAt > before) return false;
+			// Check if lastSyncedAt was within 24 hours
+			return ((before.getTime() - new Date(repoInfo.date).getTime())) <= this.CONFIG.TEAM_ACTIVITY.showAfter;
+		});
+		if (!hasRecentActivty) return;
+		// Show alert
+		const button = NOTIFICATION.VIEW_DASHBOARD;
+		vscode.window.showInformationMessage(NOTIFICATION.TEAM_ACTIVITY_ALERT, button).then(selection => {
+			if (!selection) { return; }
+			if (selection === NOTIFICATION.VIEW_DASHBOARD) {
+				viewDashboardHandler();
+			}
+		});
+		// Update time in alerts.yml
+		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] = new Date();
+		fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
+	}
+
 }

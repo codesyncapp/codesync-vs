@@ -4,13 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.10.0] - 2022-09-22
-### Added
-- Notify at 4:30PM if there's been a team-activity within past 24 hours
-
-## [3.9.0] - 2022-09-22
+## [3.9.0] - 2022-09-27
 ### Added
 - Common user added for sending logs before any Login
+- Notify at 4:30PM if there's been a team-activity within past 24 hours
 
 ## [3.8.2] - 2022-09-06
 ### Updated
