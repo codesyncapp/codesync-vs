@@ -21,6 +21,7 @@ export const IGNORABLE_DIRECTORIES = [
 	".idea",
 ];
 
+export const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
@@ -33,7 +34,7 @@ export const API_ROUTES = {
 	USERS: `${API_BASE_URL}/users`,
 	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription`,
 	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`,
-	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity`
+	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity?tz=${TIMEZONE}`
 };
 
 

@@ -87,22 +87,25 @@ export const getPluginUser = async () => {
 
 export const getTeamActivity = async (accessToken: string) => {
 	let error = "";
-	const response = await fetch(API_ROUTES.TEAM_ACTIVITY, {
-		headers: {
-			'Content-Type': 'application/json',
-			'Authorization': `Basic ${accessToken}`
-		}
+	let activities = <any>[];
+	const response = await fetch(
+		API_ROUTES.TEAM_ACTIVITY, {
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Basic ${accessToken}`
+			}
 	})
 		.then(res => res.json())
 		.then(json => json)
 		.catch(err => error = err);
-
 	if (response.error) {
 		error = response.error.message;
-	} 
-	
+	} else {
+		activities = response.activities;
+	}
+
 	return {
-		repos: response.repos,
+		activities,
 		error
 	};
 };

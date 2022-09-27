@@ -29,7 +29,6 @@ import { initExpressServer } from "../server/server";
 import { getPluginUser } from './api_utils';
 import { pathUtils } from './path_utils';
 
-
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
 	// Create system directories

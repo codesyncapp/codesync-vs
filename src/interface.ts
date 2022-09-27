@@ -61,5 +61,5 @@ export interface IDiffToSend {
 }
 
 export interface IRepoInfo {
-	last_synced_at: string;
+	date: string;
 }

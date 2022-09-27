@@ -123,7 +123,6 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", logStream
 		version: VERSION,
 		platform: os.platform(),
 		mac_address: macAddress
-		// TODO: Uniquly identify common user
 	};
 	const logEvents = [ /* required */
 		{
@@ -169,10 +168,10 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", logStream
 					putLogEvent(msg, eventType, additionalMsg, email, 1);
 				}
 			} else {
-				console.log(err, err.stack);
+				console.log(`Logging failed: ${errString}`, err.stack);
 			}
 		} else {
-			console.log(err, err.stack);
+			console.log(`Failed to log: ${errString}`);
 		}
 	});
 };
