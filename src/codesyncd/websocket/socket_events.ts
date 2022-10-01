@@ -47,14 +47,12 @@ export class SocketEvents {
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN);
         CodeSyncLogger.error("Failed sending diff, Repo-Size Limit has been reached");
         await setPlanLimitReached(this.accessToken);
-        return recallDaemon(this.statusBarItem);
     }
 
     async onDiffsLimitReached() {
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN);
         CodeSyncLogger.error("Failed sending diff, Limit has been reached");
         await setPlanLimitReached(this.accessToken);
-        return recallDaemon(this.statusBarItem);
     }
 
     async onValidAuth() {
@@ -67,7 +65,6 @@ export class SocketEvents {
         const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
         if (!canSendDiffs) return recallDaemon(this.statusBarItem);
         // Send diffs
-        
         let validDiffs: IDiffToSend[] = [];
         errorCount = 0;
         for (const repoDiff of this.repoDiffs) {
