@@ -24,7 +24,9 @@ export const readYML = (filePath: string) => {
 	try {
 		return yaml.load(readFile(filePath));
 	} catch (e) {
-		CodeSyncLogger.error(`Exception reading yml file: ${filePath}}`);
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		CodeSyncLogger.error(`Exception reading yml file: ${filePath}}`, e);
 		return null;
 	}
 };
