@@ -7,7 +7,8 @@ export const CODESYNC_STATES = {
 	POPULATE_BUFFER_LOCK_ACQUIRED: "populateBufferLockAcquired",
     PRICING_URL: "pricingUrl",
     REQUEST_SENT_AT: "requestSentAt",
-    SYNCING_BRANCH: "syncingBranch"
+    SYNCING_BRANCH: "syncingBranch",
+    TEAM_ACTIVITY_REQUEST_SENT_AT: "teamActivtyRequestSentAt"
 };
 
 export class CodeSyncState {

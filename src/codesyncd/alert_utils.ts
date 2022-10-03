@@ -1,13 +1,14 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
-import { API_ROUTES, NOTIFICATION } from "../constants";
+import { API_ROUTES, NOTIFICATION, RETRY_TEAM_ACTIVITY_REQUEST_AFTER } from "../constants";
 import { viewDashboardHandler } from '../handlers/commands_handler';
 import { IRepoInfo, IUserProfile } from "../interface";
 import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { getTeamActivity } from "../utils/api_utils";
 import { getActiveUsers, readYML } from "../utils/common";
+import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 
 
 export class Alerts {
@@ -62,25 +63,32 @@ export class Alerts {
 		*/
 		// Check when last alert was shown to the user
 		const lastShownAT = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key];
-		const canShowAlert = Boolean(lastShownAT && Math.abs(this.nowTimestamp - lastShownAT.getTime()) > this.CONFIG.TEAM_ACTIVITY.showAfter);
-		if (!lastShownAT) {
-			// show alert 
-			return await this.showTeamActivityAlert(accessToken);
-		}
+		// show alert if it is first time
+		if (!lastShownAT) return await this.showTeamActivityAlert(accessToken);
+		// Check if can show alert
 		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
 		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
-		if (!canShowAlert && !(this.nowHour == alertH && this.nowMinutes >= alertM || this.nowHour > alertH)) return;
-		// show alert 
+		const canShowAlert = Boolean(lastShownAT && Math.abs(this.nowTimestamp - lastShownAT.getTime()) > this.CONFIG.TEAM_ACTIVITY.showAfter);
+		if (!canShowAlert || !(this.nowHour == alertH && this.nowMinutes >= alertM || this.nowHour > alertH)) return;
+		// show alert
 		await this.showTeamActivityAlert(accessToken);
 	};
 
 	showTeamActivityAlert = async (accessToken: string) => {
+		/*
+		Checks if there has been a team-activity past 24 hours
+		In case of error from API, retries after 5 minutes
+		*/
+		const requestSentAt = CodeSyncState.get(CODESYNC_STATES.TEAM_ACTIVITY_REQUEST_SENT_AT);
+		const canRetry = requestSentAt && (new Date().getTime() - requestSentAt) > RETRY_TEAM_ACTIVITY_REQUEST_AFTER;
+		if (requestSentAt && !canRetry) return;
 		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
 		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
-
 		// Check if there has been some acitivty in past 24 hours
 		const json = await getTeamActivity(accessToken);
-		if (json.error) { 
+		if (json.error) {
+			// Set time when request is sent
+			CodeSyncState.set(CODESYNC_STATES.TEAM_ACTIVITY_REQUEST_SENT_AT, new Date().getTime());
 			CodeSyncLogger.error("Error getting team activity", json.error);
 			return;
 		}
