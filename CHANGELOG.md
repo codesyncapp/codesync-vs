@@ -5,10 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [3.9.4] - 2022-10-05
-### Fixed
+### Added
+- Setting time when API request is sent to get team-activity to avoid multiple calls/notifications
+
+## [3.9.4] - 2022-10-05
+### Added
 - Improved logic of showing team-activity-alert at any time of day if didn't open IDE around 4:30pm
 - Keeping track of alert per user
-- Fixed a dependabot alert
+### Fixed
+- Fixed dependabot alerts
 
 ## [3.9.3] - 2022-10-03
 ### Fixed

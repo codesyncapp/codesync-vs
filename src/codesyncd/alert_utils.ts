@@ -110,11 +110,11 @@ export class Alerts {
 		if (requestSentAt && !canRetry) return;
 		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
 		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
+		// Set time when request is sent
+		CodeSyncState.set(CODESYNC_STATES.TEAM_ACTIVITY_REQUEST_SENT_AT, new Date().getTime());
 		// Check if there has been some acitivty in past 24 hours
 		const json = await getTeamActivity(accessToken);
 		if (json.error) {
-			// Set time when request is sent
-			CodeSyncState.set(CODESYNC_STATES.TEAM_ACTIVITY_REQUEST_SENT_AT, new Date().getTime());
 			CodeSyncLogger.error("Error getting team activity", json.error);
 			return;
 		}
