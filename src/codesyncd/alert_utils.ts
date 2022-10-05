@@ -3,7 +3,7 @@ import yaml from 'js-yaml';
 import vscode from 'vscode';
 import { API_ROUTES, NOTIFICATION, RETRY_TEAM_ACTIVITY_REQUEST_AFTER } from "../constants";
 import { viewDashboardHandler } from '../handlers/commands_handler';
-import { IRepoInfo, IUserProfile } from "../interface";
+import { IRepoInfo, IUser } from "../interface";
 import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { getTeamActivity } from "../utils/api_utils";
@@ -29,27 +29,33 @@ export class Alerts {
 	nowHour: number;
     nowMinutes: number;
 	nowTimestamp: number;
+	nowDate: string;
+	before: Date;
+	beforeDate: string;
 	alertsData: any;
-	activeUser: IUserProfile;
+	activeUser: IUser;
 
 	constructor() {
 		const now = new Date();
 		this.nowHour = now.getHours();
 		this.nowMinutes = now.getMinutes();
-		this.nowTimestamp = new Date().getTime();
+		this.nowTimestamp = now.getTime();
+		this.nowDate = now.toISOString().split('T')[0];
 		this.settings = generateSettings();
 		this.alertsData = readYML(this.settings.ALERTS);
-
+		this.before = new Date();
+		this.beforeDate = "";
 		this.activeUser = getActiveUsers()[0];
 	}
 
 	checkActivityAlerts = async () => {
 		if (!this.activeUser) return;
 		const accessToken = this.activeUser.access_token;
-		await this.checkTeamAlert(accessToken);
+		const userEmail = this.activeUser.email;
+		await this.checkTeamAlert(accessToken, userEmail);
 	};
 
-	checkTeamAlert = async (accessToken: string) => {
+	checkTeamAlert = async (accessToken: string, userEmail: string) => {
 		/* 
 		Notify the user about recent activity within teams, daily at 4:30pm.
 		We need to check activity within past 24 hours i.e from 4:30PM yesterday to 4:30PM today.
@@ -61,26 +67,46 @@ export class Alerts {
 
 		TODO: Show alert in all open instances of the IDE by keeping track in state variable. 
 		*/
-		// Check when last alert was shown to the user
-		const lastShownAT = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key];
-		// show alert if it is first time
-		if (!lastShownAT) return await this.showTeamActivityAlert(accessToken);
-		// Check if can show alert
+		// Update data in alerts.yml
+		if (this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] instanceof Date || this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] === "") {
+			// Reset value to empty object
+			this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] = {};
+		}
 		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
 		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
-		const canShowAlert = Boolean(lastShownAT && Math.abs(this.nowTimestamp - lastShownAT.getTime()) > this.CONFIG.TEAM_ACTIVITY.showAfter);
-		if (!canShowAlert || !(this.nowHour == alertH && this.nowMinutes >= alertM || this.nowHour > alertH)) return;
+		if (this.before.getHours() < alertH || (this.before.getHours() == alertH && this.before.getMinutes() < alertM)) {
+			// e.g. IDE is opened between 0am-16:29pm, it should check 16:30pm of yesterday till day before yesterday
+			// so subtracting 1 day here. If checking at any hour between 16-23 no need to subtract 1 day.
+			this.before.setDate(this.before.getDate()-1);
+		}
+		// Checking only before 4:30PM
+		this.before.setHours(alertH);
+		this.before.setMinutes(alertM);
+		// Set beforeDate
+		this.beforeDate = this.before.toISOString().split('T')[0];
+		// Check when last alert was shown to the user
+		const alertConfig = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail];
+		// show alert if it is first time
+		if (!alertConfig) return await this.showTeamActivityAlert(accessToken, userEmail);
+		// Can show alert if 
+		// 1- Haven't checked activity for "before"
+		// 2- Last alert was shown before 24 hours
+		const hasCheckedBefore = this.beforeDate === alertConfig.checked_date;
+		if (hasCheckedBefore) return;
+		const lastShownBefore24H = Boolean(!alertConfig.shown_at || this.nowTimestamp - alertConfig.shown_at.getTime() > this.CONFIG.TEAM_ACTIVITY.showAfter);
+		const canShowAlert = (this.nowHour == alertH && this.nowMinutes >= alertM || this.nowHour > alertH) || lastShownBefore24H;
+		if (!canShowAlert) return;
 		// show alert
-		await this.showTeamActivityAlert(accessToken);
+		await this.showTeamActivityAlert(accessToken, userEmail);
 	};
 
-	showTeamActivityAlert = async (accessToken: string) => {
+	showTeamActivityAlert = async (accessToken: string, userEmail: string) => {
 		/*
 		Checks if there has been a team-activity past 24 hours
 		In case of error from API, retries after 5 minutes
 		*/
 		const requestSentAt = CodeSyncState.get(CODESYNC_STATES.TEAM_ACTIVITY_REQUEST_SENT_AT);
-		const canRetry = requestSentAt && (new Date().getTime() - requestSentAt) > RETRY_TEAM_ACTIVITY_REQUEST_AFTER;
+		const canRetry = requestSentAt && (this.nowTimestamp - requestSentAt) > RETRY_TEAM_ACTIVITY_REQUEST_AFTER;
 		if (requestSentAt && !canRetry) return;
 		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
 		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
@@ -96,17 +122,20 @@ export class Alerts {
 		if (!json.activities || !json.activities.length) return;
 		// Check if there is some recent activity to show
 		const hasRecentActivty = json.activities.some((repoInfo: IRepoInfo) => {
-			const before = new Date();
-			// Checking only before 4:30PM
-			before.setHours(alertH);
-			before.setMinutes(alertM);
-			const lastSyncedAt = new Date(repoInfo.date);
-			// Ignore if there
-			if (lastSyncedAt > before) return false;
-			// Check if lastSyncedAt was within 24 hours
-			return ((before.getTime() - new Date(repoInfo.date).getTime())) <= this.CONFIG.TEAM_ACTIVITY.showAfter;
+			const lastSyncedAt = new Date(repoInfo.last_synced_at);
+			// Ignore activity after the "before"
+			if (lastSyncedAt > this.before) return false;
+			// Check if activity was within 24 hours
+			return ((this.before.getTime() - new Date(repoInfo.last_synced_at).getTime())) <= this.CONFIG.TEAM_ACTIVITY.showAfter;
 		});
-		if (!hasRecentActivty) return;
+		if (!hasRecentActivty) {
+			this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
+				checked_date: this.nowDate,
+			};
+			fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));	
+			return;
+		}
+		CodeSyncLogger.debug(`Team activity alert shown at ${new Date()}, user=${userEmail}`);
 		// Show alert
 		const button = NOTIFICATION.VIEW_DASHBOARD;
 		vscode.window.showInformationMessage(NOTIFICATION.TEAM_ACTIVITY_ALERT, button).then(selection => {
@@ -115,8 +144,11 @@ export class Alerts {
 				viewDashboardHandler();
 			}
 		});
-		// Update time in alerts.yml
-		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] = new Date();
+		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
+			checked_date: this.nowDate,
+			date: this.beforeDate,
+			shown_at: new Date()
+		};
 		fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
 	}
 

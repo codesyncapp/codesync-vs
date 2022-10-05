@@ -87,7 +87,11 @@ export const generateSettings = () => {
         2- last-shown-at as value
 
         We can have following data in alerts.yml 
-            team_activity: '2022-07-05 16:30:27.210'
+            team_activity: 
+                userEmail:
+                    checked_date: "2022-07-05"
+                    date: "2022-07-05"
+                    shown_at: 2022-07-05 16:30:27.210
             user_activity: '2022-07-05 16:30:27.210'
             upgrade_plan: '2022-07-05 21:51:27.210'
         */

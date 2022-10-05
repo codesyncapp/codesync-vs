@@ -49,7 +49,7 @@ export const createSystemDirectories = () => {
 	defaultData[settings.CONFIG_PATH] = yaml.safeDump({ repos: {} });
 	defaultData[settings.USER_PATH] = yaml.safeDump({});
 	defaultData[settings.SEQUENCE_TOKEN_PATH] = yaml.safeDump({});
-	defaultData[settings.ALERTS] = yaml.safeDump({ team_activity: ""});
+	defaultData[settings.ALERTS] = yaml.safeDump({ team_activity: {} });
 	defaultData[settings.POPULATE_BUFFER_LOCK_FILE] = "";
 	defaultData[settings.DIFFS_SEND_LOCK_FILE] = "";
 	defaultData[settings.UPGRADE_PLAN_ALERT] = "";

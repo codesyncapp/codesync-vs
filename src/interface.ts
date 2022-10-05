@@ -32,7 +32,8 @@ export interface IFileToUpload {
 }
 
 export interface IUser {
-	email: string
+	email: string;
+	access_token: string;
 }
 
 export interface IUserProfile {
@@ -61,5 +62,5 @@ export interface IDiffToSend {
 }
 
 export interface IRepoInfo {
-	date: string;
+	last_synced_at: string;
 }
