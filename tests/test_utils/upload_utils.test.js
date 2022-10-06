@@ -4,6 +4,7 @@ import fetchMock from "jest-fetch-mock";
 import {INVALID_TOKEN_JSON, PRE_SIGNED_URL, randomRepoPath, TEST_REPO_RESPONSE} from "../helpers/helpers";
 import {uploadFile, uploadFileTos3, uploadFileToServer, uploadRepoToServer} from "../../src/utils/upload_utils";
 import {API_ROUTES, DEFAULT_BRANCH} from "../../src/constants";
+import { formatDatetime } from "../../src/utils/common";
 
 
 describe('uploadRepoToServer', () => {
@@ -153,7 +154,7 @@ describe('uploadFileToServer', () => {
     test('Auth Error', async () => {
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
         const res = await uploadFileToServer("ACCESS_TOKEN", 12345, DEFAULT_BRANCH, filePath,
-            "file.txt", "");
+            "file.txt", formatDatetime());
         expect(res.error.endsWith(INVALID_TOKEN_JSON.error.message)).toBe(true);
         expect(assertAPICall()).toBe(true);
     });
@@ -162,7 +163,7 @@ describe('uploadFileToServer', () => {
         const response = {id: 1234, url: PRE_SIGNED_URL};
         fetchMock.mockResponseOnce(JSON.stringify(response));
         const res = await uploadFileToServer("ACCESS_TOKEN", 6789, DEFAULT_BRANCH, filePath,
-            "file.txt", "");
+            "file.txt", formatDatetime());
         expect(res.fileId).toStrictEqual(response.id);
         expect(res.error).toStrictEqual(null);
         expect(assertAPICall()).toBe(true);
@@ -174,7 +175,7 @@ describe('uploadFileToServer', () => {
         const response = {id: 1234, url: PRE_SIGNED_URL};
         fetchMock.mockResponseOnce(JSON.stringify(response));
         const res = await uploadFileToServer("ACCESS_TOKEN", 6789, DEFAULT_BRANCH, filePath,
-            "file.txt", "");
+            "file.txt", formatDatetime());
         expect(res.fileId).toStrictEqual(response.id);
         expect(res.error).toStrictEqual(null);
         expect(assertAPICall()).toBe(true);
@@ -186,7 +187,7 @@ describe('uploadFileToServer', () => {
         const response = {id: 1234, url: {url: "url", fields: {}}};
         fetchMock.mockResponseOnce(JSON.stringify(response));
         const res = await uploadFileToServer("ACCESS_TOKEN", 6789, DEFAULT_BRANCH, filePath,
-            "file.txt", "");
+            "file.txt", formatDatetime());
         expect(res.fileId).toStrictEqual(response.id);
         expect(res.error).toBeTruthy();
         expect(assertAPICall()).toBe(true);

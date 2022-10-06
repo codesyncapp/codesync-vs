@@ -20,6 +20,7 @@ export class DiffHandler {
     repoPath: string;
     branch: string;
     createdAt: string;
+    addedAt: string;
 
     configJSON: any;
     configRepo: any;
@@ -30,6 +31,7 @@ export class DiffHandler {
         this.repoPath = diffData.repo_path;
         this.branch = diffData.branch;
         this.createdAt = diffData.created_at;
+        this.addedAt = diffData.added_at;
         this.diffFilePath = diffFilePath;
         this.accessToken = accessToken;
 
@@ -43,8 +45,10 @@ export class DiffHandler {
             Uploads new file to server and adds it in config
             Ignores if file is not present in .originals repo
         */
-        const json = await handleNewFileUpload(this.accessToken, this.repoPath, this.branch, this.createdAt,
-            this.fileRelPath, this.configRepo.id, this.configJSON);
+        const json = await handleNewFileUpload(
+            this.accessToken, this.repoPath, this.branch, this.addedAt,
+            this.fileRelPath, this.configRepo.id, this.configJSON
+        );
 
         // Clean up diff file
         if (json.deleteDiff) this.cleanDiffFile();

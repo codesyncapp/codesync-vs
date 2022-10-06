@@ -3,6 +3,7 @@ export interface IDiff {
 	branch: string;
 	file_relative_path: string;
 	created_at: string;
+	added_at: string;
 	source: string;
 	diff: string;
 	is_binary?: boolean;

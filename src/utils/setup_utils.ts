@@ -67,6 +67,16 @@ export const createSystemDirectories = () => {
 		// Create file if does not exist
 		if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, defaultData[filePath]);
 	});
+	[
+		// YML files
+		settings.CONFIG_PATH,
+		settings.USER_PATH, 
+		settings.SEQUENCE_TOKEN_PATH, 
+		settings.ALERTS
+	].forEach(filePath => {
+		// Update file if it has no valid data
+		if (!readYML(filePath)) fs.writeFileSync(filePath, defaultData[filePath]);
+	});
 	
 	return settings;
 };

@@ -51,7 +51,7 @@ export const isValidDiff = (diffData: IDiff) => {
 	return true;
 };
 
-export const handleNewFileUpload = async (accessToken: string, repoPath: string, branch: string, createdAt: string,
+export const handleNewFileUpload = async (accessToken: string, repoPath: string, branch: string, addedAt: string,
 											relPath: string, repoId: number, configJSON: any) => {
 	/*
 		Uploads new file to server and adds it in config
@@ -75,7 +75,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		config: configJSON
 	};
 
-	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, createdAt);
+	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, addedAt);
 	if (response.error) {
 		CodeSyncLogger.error(`Error uploading file: ${response.error}`);
 		return {

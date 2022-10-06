@@ -5,11 +5,12 @@ import vscode from "vscode";
 import {isValidDiff} from '../utils';
 import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
-import {DIFF_FILES_PER_ITERATION} from "../../constants";
+import {DAY, DIFF_FILES_PER_ITERATION} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
 import {getActiveUsers, readYML} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
+import { getPlanLimitReached } from '../../utils/pricing_utils';
 
 
 
@@ -77,25 +78,45 @@ export class bufferHandler {
 			}
 			const diffData = readYML(filePath);
 			if (!diffData || !isValidDiff(diffData)) {
-				CodeSyncLogger.info(`Skipping invalid diff file: ${diffFile}`, "", diffData);
+				CodeSyncLogger.info(`Removing diff: Skipping invalid diff: ${diffFile}`, "", diffData);
 				fs.unlinkSync(filePath);
 				return false;
 			}
 			if (!(diffData.repo_path in this.configJSON.repos)) {
-				CodeSyncLogger.error(`Repo ${diffData.repo_path} is not in config.yml`);
+				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is not in config.yml`);
 				fs.unlinkSync(filePath);
 				return false;
 			}
 			if (this.configJSON.repos[diffData.repo_path].is_disconnected) {
-				CodeSyncLogger.error(`Repo ${diffData.repo_path} is disconnected`);
+				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is disconnected`);
 				fs.unlinkSync(filePath);
 				return false;
 			}
 			const configRepo = this.configJSON.repos[diffData.repo_path];
 
 			if (!(diffData.branch in configRepo.branches)) {
-				CodeSyncLogger.error(`Branch: ${diffData.branch} is not synced for Repo ${diffData.repo_path}`,
-					"", configRepo.email);
+				// TODO: Look into syncing offline branch
+				fs.lstatSync(filePath);
+				// Removing diffs of non-synced branch if diff was created 5 days ago and plan limit is not reached
+				// We want to keep data in case plan limit is reached so that user can access it when plan is upgraded
+				const fileInfo = fs.lstatSync(filePath);
+				if (new Date().getTime() - fileInfo.ctimeMs > (DAY * 5)) {
+					const { planLimitReached } = getPlanLimitReached();
+					if (planLimitReached) {
+						CodeSyncLogger.error(
+							`Keeping diff: Branch=${diffData.branch} is not synced. Repo=${diffData.repo_path}`,
+							"", 
+							configRepo.email
+						);
+					} else {
+						CodeSyncLogger.error(
+							`Removing diff: Branch=${diffData.branch} is not synced. Repo=${diffData.repo_path}`,
+							"", 
+							configRepo.email
+						);	
+						fs.unlinkSync(filePath);
+					}
+				}
 				return false;
 			}
 			return true;

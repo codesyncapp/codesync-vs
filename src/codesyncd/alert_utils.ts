@@ -119,7 +119,7 @@ export class Alerts {
 			return;
 		}
 		// In case there is no activity
-		if (!json.activities || !json.activities.length) return;
+		if (!json.activities) return;
 		// Check if there is some recent activity to show
 		const hasRecentActivty = json.activities.some((repoInfo: IRepoInfo) => {
 			const lastSyncedAt = new Date(repoInfo.last_synced_at);

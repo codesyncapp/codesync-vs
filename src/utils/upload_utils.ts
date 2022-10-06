@@ -5,6 +5,7 @@ import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
 import { API_ROUTES } from "../constants";
 import { setPlanLimitReached } from './pricing_utils';
+import { formatDatetime } from './common';
 
 
 export const uploadRepoToServer = async (token: string, data: any) => {
@@ -144,7 +145,7 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 };
 
 export const uploadFileToServer = async (accessToken: string, repoId: number, branch: string, filePath: string,
-										relPath: string, createdAt: string) => {
+										relPath: string, addedAt: string) => {
 	/*
 	Uploads new file to server returns its ID
 	*/
@@ -157,7 +158,8 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 		is_binary: isBinary,
 		size: fileInfo.size,
 		file_path: relPath,
-		created_at: createdAt,
+		created_at: formatDatetime(fileInfo.ctimeMs),
+		added_at: addedAt
 	};
 	const json = await uploadFile(accessToken, data);
 	if (json.error) {

@@ -172,3 +172,4 @@ export const SOCKET_CONNECT_ERROR_CODES = ["ECONNREFUSED", "ETIMEDOUT", "ECONNRE
 export const SOCKET_ERRORS = {
 	ERROR_MSG_RECEIVE: 'Error receiving socket msg'
 };
+export const DAY = 24 * 60 * 60 * 1000;

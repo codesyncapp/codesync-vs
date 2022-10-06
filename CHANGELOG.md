@@ -4,7 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.9.4] - 2022-10-05
+## [3.9.6] - 2022-10-06
+### Added
+- Keeping track when team-activity was last checked, even when it had no activity data
+- Recreating system-yml files if they have invalid data somehow
+- Sending added_at from diffs in case of new files
+- Removing diffs of non-synced branch if diff was created 5 days ago and plan limit is not reached. We want 
+	to keep data in case plan limit is reached so that user can access it when plan is upgraded
+
+## [3.9.5] - 2022-10-05
 ### Added
 - Setting time when API request is sent to get team-activity to avoid multiple calls/notifications
 

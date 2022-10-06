@@ -265,7 +265,7 @@ describe("bufferHandler", () => {
         expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
     });
 
-    test("Diff for non-synced branch", async () => {
+    test("Diff for non synced branch", async () => {
         // Diff file should not be removed. Wait for the branch to get synced first
         addRepo();
         addChangesDiff("RANDOM_BRANCH");

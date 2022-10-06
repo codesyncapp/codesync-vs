@@ -60,6 +60,9 @@ export class eventHandler {
 		newDiff.is_rename = this.isRename;
 		newDiff.is_deleted = this.isDelete;
 		newDiff.created_at = this.createdAt;
+		if (this.isNewFile) {
+			newDiff.added_at = formatDatetime();
+		}
 		// Append new diff in the buffer
 		const diffFileName = `${new Date().getTime()}.yml`;
 		const diffFilePath = path.join(this.settings.DIFFS_REPO, diffFileName);
