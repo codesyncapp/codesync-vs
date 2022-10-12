@@ -67,17 +67,19 @@ export const createSystemDirectories = () => {
 		// Create file if does not exist
 		if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, defaultData[filePath]);
 	});
+	// YML files
 	[
-		// YML files
 		settings.CONFIG_PATH,
-		settings.USER_PATH, 
+		settings.USER_PATH,
 		settings.SEQUENCE_TOKEN_PATH, 
 		settings.ALERTS
 	].forEach(filePath => {
 		// Update file if it has no valid data
 		if (!readYML(filePath)) fs.writeFileSync(filePath, defaultData[filePath]);
 	});
-	
+	// Clean content of config.yml
+	const config = readYML(settings.CONFIG_PATH);
+	if (!config.repos) fs.writeFileSync(settings.CONFIG_PATH, defaultData[settings.CONFIG_PATH]);
 	return settings;
 };
 

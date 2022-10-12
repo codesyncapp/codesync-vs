@@ -43,7 +43,11 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 	)
 	.then(res => {
 		statusCode = res.status;
-		return res.json();
+		try {
+			return res.json();
+		} catch (e) {
+			return {error: {message: res.text()}};
+		}
 	})
 	.then(json => json)
 	.catch(err => error = err);
@@ -90,7 +94,11 @@ export const uploadFile = async (token: string, data: any) => {
 	)
 	.then(res => {
 		statusCode = res.status;
-		return res.json();
+		try {
+			return res.json();
+		} catch (e) {
+			return {error: {message: res.text()}};
+		}
 	})
 	.then(json => json)
 	.catch(err => error = err);
