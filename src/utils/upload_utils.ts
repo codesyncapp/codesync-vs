@@ -43,13 +43,15 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 	)
 	.then(res => {
 		statusCode = res.status;
+		return res.text();
+	})
+	.then(text => {
 		try {
-			return res.json();
-		} catch (e) {
-			return {error: {message: res.text()}};
+			return JSON.parse(text); // Try to parse the response as JSON
+		} catch(err) {
+			return {error: {message: text}};
 		}
 	})
-	.then(json => json)
 	.catch(err => error = err);
 
 	if (statusCode === 402) {
@@ -94,13 +96,15 @@ export const uploadFile = async (token: string, data: any) => {
 	)
 	.then(res => {
 		statusCode = res.status;
+		return res.text();
+	})
+	.then(text => {
 		try {
-			return res.json();
-		} catch (e) {
-			return {error: {message: res.text()}};
+			return JSON.parse(text); // Try to parse the response as JSON
+		} catch(err) {
+			return {error: {message: text}};
 		}
 	})
-	.then(json => json)
 	.catch(err => error = err);
 
 	if (statusCode === 402) {
