@@ -60,12 +60,25 @@ export const getPlanLimitReached = () => {
 	/*
 		If pricingAlertlock is acquried by any IDE instance, means pricing limit has been reached. 
 	*/
-	const loctUtils = new LockUtils();
-	const planLimitReached = loctUtils.checkPricingAlertLock();
+	const lockUtils = new LockUtils();
+	const planLimitReached = lockUtils.checkPricingAlertLock();
 	const requestSentAt = CodeSyncState.get(CODESYNC_STATES.REQUEST_SENT_AT);
 	const canRetry = requestSentAt && (new Date().getTime() - requestSentAt) > RETRY_REQUEST_AFTER;
 	return {
 		planLimitReached,
 		canRetry
 	};
+};
+
+export const resetPlanLimitReached = () => {
+	/*
+		Checks from server if repo is a User's repo or an Organization's repo
+		- Sets alert msg and pricing URL accordingly
+		- Sets REQUEST_SENT_AT in CodeSyncState after which we retry syncing data
+	*/
+	const lockUtils = new LockUtils();
+	lockUtils.releasePricingAlertLock();
+	vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
+	// Set time to "" when request is sent
+	CodeSyncState.set(CODESYNC_STATES.REQUEST_SENT_AT, "");
 };

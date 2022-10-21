@@ -53,6 +53,14 @@ export class LockUtils {
 		}
 	}
 
+	releasePricingAlertLock () {
+		try {
+			lockFile.unlockSync(this.settings.UPGRADE_PLAN_ALERT);
+		} catch (e) {
+			// 
+		}
+	}
+
 	checkPricingAlertLock () {
 		try {
 			return lockFile.checkSync(this.settings.UPGRADE_PLAN_ALERT);

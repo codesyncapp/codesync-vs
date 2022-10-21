@@ -9,7 +9,7 @@ import {DiffsHandler} from "../handlers/diffs_handler";
 import {statusBarMsgs} from "../utils";
 import {markUsersInactive} from "../../utils/auth_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
-import { getPlanLimitReached, setPlanLimitReached } from "../../utils/pricing_utils";
+import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from "../../utils/pricing_utils";
 import { ErrorCodes } from "../../utils/common";
 
 
@@ -58,9 +58,6 @@ export class SocketEvents {
     async onValidAuth() {
         this.connection.send(JSON.stringify({"auth": 200}));
         const statusBarMsg =  this.statusBarMsgsHandler.getMsg();
-        // Check plan limits
-        const { planLimitReached } = getPlanLimitReached();
-        if (!planLimitReached) vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
         this.statusBarMsgsHandler.update(statusBarMsg);
         const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
         if (!canSendDiffs) return recallDaemon(this.statusBarItem);
@@ -80,6 +77,8 @@ export class SocketEvents {
     }
 
     onSyncSuccess(diffFilePath: string) {
+        const { planLimitReached } = getPlanLimitReached();
+        if (planLimitReached) resetPlanLimitReached();
         const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
         if (!canSendDiffs) return;
         DiffHandler.removeDiffFile(diffFilePath);

@@ -4,7 +4,7 @@ import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
 import { API_ROUTES } from "../constants";
-import { setPlanLimitReached } from './pricing_utils';
+import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from './pricing_utils';
 import { formatDatetime } from './common';
 
 
@@ -49,7 +49,7 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 		try {
 			return JSON.parse(text); // Try to parse the response as JSON
 		} catch(err) {
-			return {error: {message: text}};
+			return {error: {message: text ? text : "Failed to parse to JSON response"}};
 		}
 	})
 	.catch(err => error = err);
@@ -58,7 +58,8 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 		// Check if key is set or not
 		await setPlanLimitReached(token);
 	} else {
-		vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
+		const { planLimitReached } = getPlanLimitReached();
+		if (planLimitReached) resetPlanLimitReached();
 	}
 	if (response.error) {
 		error = response.error.message;
@@ -102,7 +103,7 @@ export const uploadFile = async (token: string, data: any) => {
 		try {
 			return JSON.parse(text); // Try to parse the response as JSON
 		} catch(err) {
-			return {error: {message: text}};
+			return {error: {message: text ? text : "Failed to parse to JSON response"}};
 		}
 	})
 	.catch(err => error = err);
@@ -111,7 +112,8 @@ export const uploadFile = async (token: string, data: any) => {
 		// Check if key is set or not
 		await setPlanLimitReached(token);
 	} else {
-		vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
+		const { planLimitReached } = getPlanLimitReached();
+		if (planLimitReached) resetPlanLimitReached();
 	}
 
 	if (response.error) {

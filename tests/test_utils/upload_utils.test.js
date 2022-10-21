@@ -1,7 +1,15 @@
 import fs from "fs";
+
 import path from "path";
+import untildify from "untildify";
 import fetchMock from "jest-fetch-mock";
-import {INVALID_TOKEN_JSON, PRE_SIGNED_URL, randomRepoPath, TEST_REPO_RESPONSE} from "../helpers/helpers";
+import {
+    INVALID_TOKEN_JSON, 
+    PRE_SIGNED_URL, 
+    randomRepoPath, 
+    randomBaseRepoPath, 
+    TEST_REPO_RESPONSE
+} from "../helpers/helpers";
 import {uploadFile, uploadFileTos3, uploadFileToServer, uploadRepoToServer} from "../../src/utils/upload_utils";
 import {API_ROUTES, DEFAULT_BRANCH} from "../../src/constants";
 import { formatDatetime } from "../../src/utils/common";
@@ -10,6 +18,8 @@ import { formatDatetime } from "../../src/utils/common";
 describe('uploadRepoToServer', () => {
     beforeEach(() => {
         fetch.resetMocks();
+        const baseRepoPath = randomBaseRepoPath();
+        untildify.mockReturnValue(baseRepoPath);
     });
 
     const assertAPICall = (token="ACCESS_TOKEN") => {
@@ -52,6 +62,8 @@ describe('uploadRepoToServer', () => {
 describe('uploadFile', () => {
     beforeEach(() => {
         fetch.resetMocks();
+        const baseRepoPath = randomBaseRepoPath();
+        untildify.mockReturnValue(baseRepoPath);
     });
 
     const assertAPICall = (token="ACCESS_TOKEN") => {
@@ -100,6 +112,8 @@ describe('uploadFileTos3', () => {
     beforeEach(() => {
         fetch.resetMocks();
         fs.mkdirSync(repoPath, {recursive: true});
+        const baseRepoPath = randomBaseRepoPath();
+        untildify.mockReturnValue(baseRepoPath);
     });
 
     afterEach(() => {
@@ -133,6 +147,8 @@ describe('uploadFileToServer', () => {
         fetch.resetMocks();
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(filePath, "");
+        const baseRepoPath = randomBaseRepoPath();
+        untildify.mockReturnValue(baseRepoPath);
     });
 
     afterEach(() => {
