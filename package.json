@@ -3,7 +3,7 @@
   "displayName": "CodeSync",
   "description": "Stream code to the cloud. Save it forever. Play it back later. No commits needed.",
   "icon": "images/icon.png",
-  "version": "3.9.7",
+  "version": "3.9.8",
   "publisher": "codesync",
   "engines": {
     "vscode": "^1.32.0",
