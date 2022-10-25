@@ -28,10 +28,11 @@ describe("isPortAvailable",  () => {
     test("random free port", async () => {
         expect(await isPortAvailable(59402)).toBe(true);
     });
-
-    test("server port", async () => {
-        expect(await isPortAvailable(8000)).toBe(false);
-    });
+    
+    // TODO: Won't run on Github
+    // test("server port", async () => {
+    //     expect(await isPortAvailable(8000)).toBe(false);
+    // });
 });
 
 describe("initExpressServer",  () => {
