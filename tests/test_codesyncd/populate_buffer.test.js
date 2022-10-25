@@ -28,28 +28,40 @@ import {
 
 
 describe("populateBuffer", () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const repoPath = randomRepoPath();
-    const configPath = getConfigFilePath(baseRepoPath);
-    const userData = {};
-    userData[TEST_EMAIL] = {access_token: "ABC"};
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-
-    untildify.mockReturnValue(baseRepoPath);
-
-    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-    const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-    const diffsRepo = pathUtilsObj.getDiffsRepo();
+    let baseRepoPath;
+    let repoPath;
+    let configPath;
+    let sequenceTokenFilePath;
+    let pathUtilsObj;
+    let shadowRepoBranchPath;
+    let diffsRepo;
+    let filePath;
+    let shadowFilePath;
+    let newFilePath;
 
     const fileRelPath = "file_1.js";
-    const filePath = path.join(repoPath, fileRelPath);
-    const shadowFilePath = path.join(shadowRepoBranchPath, fileRelPath);
-    const newFilePath = path.join(repoPath, "new.js");
+
 
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
         jest.spyOn(global.console, 'log');
+
+        baseRepoPath = randomBaseRepoPath();
+        repoPath = randomRepoPath();
+
+        untildify.mockReturnValue(baseRepoPath);
+
+        configPath = getConfigFilePath(baseRepoPath);
+        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
+    
+        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+        diffsRepo = pathUtilsObj.getDiffsRepo();
+        filePath = path.join(repoPath, fileRelPath);
+        shadowFilePath = path.join(shadowRepoBranchPath, fileRelPath);
+        newFilePath = path.join(repoPath, "new.js");
+    
         fs.mkdirSync(baseRepoPath, {recursive: true});
         createSystemDirectories();
         fs.mkdirSync(repoPath, {recursive: true});
