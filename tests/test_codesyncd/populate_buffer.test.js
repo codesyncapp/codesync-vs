@@ -50,7 +50,6 @@ describe("populateBuffer", () => {
         fetch.resetMocks();
         jest.clearAllMocks();
         jest.spyOn(global.console, 'log');
-        untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         createSystemDirectories();
         fs.mkdirSync(repoPath, {recursive: true});
