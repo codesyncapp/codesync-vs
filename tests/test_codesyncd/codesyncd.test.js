@@ -4,7 +4,7 @@ import lockFile from "proper-lockfile";
 import vscode from "vscode";
 import untildify from "untildify";
 import {generateSettings} from "../../src/settings";
-import {acquirePopulateBufferLock, acquireSendDiffsLock, recallDaemon} from "../../src/codesyncd/codesyncd";
+import {recallDaemon} from "../../src/codesyncd/codesyncd";
 import {CodeSyncState, CODESYNC_STATES} from "../../src/utils/state_utils";
 import {
     randomBaseRepoPath,
@@ -21,15 +21,16 @@ import {statusBarMsgs} from "../../src/codesyncd/utils";
 import { LockUtils } from "../../src/utils/lock_utils";
 
 describe("codesyncd: locks", () => {
-    const baseRepoPath = randomBaseRepoPath();
-    untildify.mockReturnValue(baseRepoPath);
-    const settings = generateSettings();
+    let baseRepoPath;
+    let settings;
 
     beforeEach(() => {
+        fetch.resetMocks();
         jest.clearAllMocks();
+        baseRepoPath = randomBaseRepoPath();
         untildify.mockReturnValue(baseRepoPath);
+        settings = generateSettings();
         createSystemDirectories();
-        const settings = generateSettings();
 		CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
 		CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
     });

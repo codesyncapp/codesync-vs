@@ -247,19 +247,30 @@ describe("saveFileIds",  () => {
 });
 
 describe("uploadRepo",  () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const repoPath = randomRepoPath();
-    const syncIgnorePath = getSyncIgnoreFilePath(repoPath);
-    const filePath = path.join(repoPath, "file.js");
-    const configPath = getConfigFilePath(baseRepoPath);
-    const userFilePath = getUserFilePath(baseRepoPath);
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
+    let baseRepoPath;
+    let repoPath;
+    let syncIgnorePath;
+    let filePath;
+    let configPath;
+    let userFilePath;
+    let sequenceTokenFilePath;
     const configData = {repos: {}};
 
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
+
+        baseRepoPath = randomBaseRepoPath();
+        repoPath = randomRepoPath();
+
         untildify.mockReturnValue(baseRepoPath);
+        configPath = getConfigFilePath(baseRepoPath);
+        userFilePath = getUserFilePath(baseRepoPath);
+        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
+
+        syncIgnorePath = getSyncIgnoreFilePath(repoPath);
+        filePath = path.join(repoPath, "file.js");
+    
         // Create directories
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});

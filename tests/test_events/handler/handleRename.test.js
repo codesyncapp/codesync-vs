@@ -35,37 +35,56 @@ describe("handleRenameFile",  () => {
         is_rename: true
       }
     */
-    const repoPath = randomRepoPath();
-    const baseRepoPath = randomBaseRepoPath();
-    const configPath = getConfigFilePath(baseRepoPath);
+    let baseRepoPath;
+    let configPath;
 
-    untildify.mockReturnValue(baseRepoPath);
-
-    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-    const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-    const diffsRepo = pathUtilsObj.getDiffsRepo();
+    let repoPath;
+    let pathUtilsObj;
+    let shadowRepoBranchPath;
+    let diffsRepo;
 
     const fileRelPath = "file_1.js";
     const newRelPath = "new.js";
     // For file rename
-    const oldFilePath = path.join(repoPath, fileRelPath);
-    const newFilePath = path.join(repoPath, newRelPath);
-    const oldShadowFilePath = path.join(shadowRepoBranchPath, fileRelPath);
-    const renamedShadowFilePath = path.join(shadowRepoBranchPath, newRelPath);
-
+    let oldFilePath;
+    let newFilePath;
+    let oldShadowFilePath;
+    let renamedShadowFilePath;
     // For directory rename
-    const oldDirectoryPath = path.join(repoPath, "old");
-    const oldShadowDirectoryPath = path.join(shadowRepoBranchPath, "old");
-    const oldShadowDirectoryFilePath = path.join(oldShadowDirectoryPath, fileRelPath);
+    let oldDirectoryPath;
+    let oldShadowDirectoryPath;
+    let oldShadowDirectoryFilePath;
 
-    const newDirectoryPath = path.join(repoPath, "new");
-    const newDirectoryFilePath = path.join(newDirectoryPath, fileRelPath);
+    let newDirectoryPath;
+    let newDirectoryFilePath;
 
     beforeEach(() => {
         jest.clearAllMocks();
+
+        repoPath = randomRepoPath();
+        baseRepoPath = randomBaseRepoPath();
+        configPath = getConfigFilePath(baseRepoPath);
+    
         untildify.mockReturnValue(baseRepoPath);
         setWorkspaceFolders(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
+
+        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+        diffsRepo = pathUtilsObj.getDiffsRepo();
+    
+        // For file rename
+        oldFilePath = path.join(repoPath, fileRelPath);
+        newFilePath = path.join(repoPath, newRelPath);
+        oldShadowFilePath = path.join(shadowRepoBranchPath, fileRelPath);
+        renamedShadowFilePath = path.join(shadowRepoBranchPath, newRelPath);
+        // For directory rename
+        oldDirectoryPath = path.join(repoPath, "old");
+        oldShadowDirectoryPath = path.join(shadowRepoBranchPath, "old");
+        oldShadowDirectoryFilePath = path.join(oldShadowDirectoryPath, fileRelPath);
+        newDirectoryPath = path.join(repoPath, "new");
+        newDirectoryFilePath = path.join(newDirectoryPath, fileRelPath);
+        
         // Create directories
         fs.mkdirSync(baseRepoPath, { recursive: true });
         const configUtil = new Config(repoPath, configPath);
@@ -87,7 +106,7 @@ describe("handleRenameFile",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("Event: Repo is not synced",  () => {
+    test.only("Event: Repo is not synced",  () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.removeRepo();
         const handler = new eventHandler();

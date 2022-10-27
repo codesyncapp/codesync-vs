@@ -115,31 +115,38 @@ describe("similarity",  () => {
 
 
 describe("handleNewFileUpload",  () => {
-    const repoPath = randomRepoPath();
-    const fileRelPath = "file.js";
-    const filePath = path.join(repoPath, "file.js");
+    let baseRepoPath;
     const configData = {repos: {}};
-    configData.repos[repoPath] = {branches: {}};
-    configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
+    let configPath;
+    let userFilePath;
+    let sequenceTokenFilePath;
 
-    const baseRepoPath = randomBaseRepoPath();
-    const configPath = getConfigFilePath(baseRepoPath);
-    const userFilePath = getUserFilePath(baseRepoPath);
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-
-    untildify.mockReturnValue(baseRepoPath);
-
-    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-    const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+    let repoPath;
+    let filePath;
+    let pathUtilsObj;
+    let originalsRepoBranchPath;
+    const fileRelPath = "file.js";
 
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
+        baseRepoPath = randomBaseRepoPath();
+        configPath = getConfigFilePath(baseRepoPath);
+        userFilePath = getUserFilePath(baseRepoPath);
+        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
         untildify.mockReturnValue(baseRepoPath);
+        
+        repoPath = randomRepoPath();
+        filePath = path.join(repoPath, "file.js");
+        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+
         fs.mkdirSync(baseRepoPath, {recursive: true});
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
         fs.writeFileSync(userFilePath, yaml.safeDump({}));
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
+        configData.repos[repoPath] = {branches: {}};
+        configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
         fs.mkdirSync(repoPath, {recursive: true});
     });
 
@@ -239,7 +246,6 @@ describe("cleanUpDeleteDiff",  () => {
     });
 
 });
-
 
 describe("getDIffForDeletedFile",  () => {
     const repoPath = randomRepoPath();

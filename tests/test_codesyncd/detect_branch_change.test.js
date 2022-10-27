@@ -27,16 +27,15 @@ import {
 describe("detectBranchChange", () => {
     let baseRepoPath;
     let repoPath;
-    const configData = {repos: {}};
-    const userData = {};    
     let configPath;
     let sequenceTokenFilePath;
     let userFilePath;
-    userData[TEST_EMAIL] = {access_token: "ABC"};
-
     let pathUtilsObj;
     let originalsRepoBranchPath;
     let shadowRepoBranchPath;
+
+    const configData = {repos: {}};
+    const userData = {};    
 
     beforeEach(() => {
         baseRepoPath = randomBaseRepoPath();
@@ -93,7 +92,7 @@ describe("detectBranchChange", () => {
         return true;
     };
 
-    test("No repo synced", async () => {
+    test.only("No repo synced", async () => {
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
     });
