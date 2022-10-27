@@ -14,7 +14,7 @@ export class LockUtils {
 	constructor() {
         this.settings = generateSettings();
 		// this.lockOptions = ((global as any).IS_CODESYNC_DEV) ? {onCompromised: onCompromised}: {};
-		this.lockOptions = {onCompromised: onCompromised};
+		this.lockOptions = {};
 	}
 
 	checkPopulateBufferLock () {
