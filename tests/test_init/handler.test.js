@@ -25,6 +25,7 @@ import {
 import { SYNC_IGNORE_FILE_DATA } from "../../src/constants";
 import { pathUtils } from "../../src/utils/path_utils";
 import { readYML } from "../../src/utils/common";
+import {createSystemDirectories} from "../../src/utils/setup_utils";
 
 describe("initHandler: connectRepo", () => {
     let baseRepoPath;
@@ -35,14 +36,16 @@ describe("initHandler: connectRepo", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         fetch.resetMocks();
-        baseRepoPath = randomBaseRepoPath();
+        baseRepoPath = randomBaseRepoPath("initHandler_connectRepo");
         repoPath = randomRepoPath();
-        untildify.mockReturnValue(baseRepoPath);
-
-        configPath = getConfigFilePath(baseRepoPath);
 
         fs.mkdirSync(baseRepoPath, { recursive: true });
         fs.mkdirSync(repoPath, { recursive: true });
+
+        untildify.mockReturnValue(baseRepoPath);
+        createSystemDirectories();
+        
+        configPath = getConfigFilePath(baseRepoPath);
         const configData = { repos: {} };
         fs.writeFileSync(configPath, yaml.safeDump(configData));
     });
@@ -52,7 +55,7 @@ describe("initHandler: connectRepo", () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test.only("Server is down", async () => {
+    test("Server is down", async () => {
         fetchMock.mockResponseOnce(null);
         const handler = new initHandler(repoPath, "ACCESS_TOKEN");
         await handler.connectRepo();
@@ -216,20 +219,20 @@ describe("initHandler: Syncing Branch", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         fetch.resetMocks();
-        baseRepoPath = randomBaseRepoPath();
-        untildify.mockReturnValue(baseRepoPath);
+        baseRepoPath = randomBaseRepoPath("initHandler_Syncing Branch");
         repoPath = randomRepoPath();
+        fs.mkdirSync(baseRepoPath, { recursive: true });
+        fs.mkdirSync(repoPath, { recursive: true });
+        untildify.mockReturnValue(baseRepoPath);
+        createSystemDirectories();
         filePath = path.join(repoPath, fileName);
         pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         shadowFilePath = path.join(pathUtilsObj.getShadowRepoBranchPath(), fileName);
         originalsFilePath = path.join(pathUtilsObj.getOriginalsRepoBranchPath(), fileName);
-        fs.mkdirSync(baseRepoPath, { recursive: true });
-        fs.mkdirSync(repoPath, { recursive: true });
         const configData = { repos: {} };
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
         sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-
         fs.writeFileSync(configPath, yaml.safeDump(configData));
     });
 
@@ -238,7 +241,7 @@ describe("initHandler: Syncing Branch", () => {
         fs.rmSync(repoPath, { recursive: true, force: true });
     });
 
-    test("Syncing Branch, Server down", async () => {
+    test.only("Syncing Branch, Server down", async () => {
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))

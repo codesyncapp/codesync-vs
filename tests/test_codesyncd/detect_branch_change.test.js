@@ -22,7 +22,7 @@ import {
     TEST_REPO_RESPONSE,
     TEST_USER
 } from "../helpers/helpers";
-
+import {createSystemDirectories} from "../../src/utils/setup_utils";
 
 describe("detectBranchChange", () => {
     let baseRepoPath;
@@ -38,29 +38,29 @@ describe("detectBranchChange", () => {
     const userData = {};    
 
     beforeEach(() => {
-        baseRepoPath = randomBaseRepoPath("detectBranchChange");
-        repoPath = randomRepoPath();
-    
-        configPath = getConfigFilePath(baseRepoPath);
-        userFilePath = getUserFilePath(baseRepoPath);
-        userData[TEST_EMAIL] = {access_token: "ABC"};
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-    
-        untildify.mockReturnValue(baseRepoPath);
-    
-        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-        originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-        shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-    
         fetch.resetMocks();
         jest.clearAllMocks();
         jest.spyOn(global.console, 'log');
-        untildify.mockReturnValue(baseRepoPath);
+
+        baseRepoPath = randomBaseRepoPath("detectBranchChange");
+        repoPath = randomRepoPath();
         fs.mkdirSync(baseRepoPath, {recursive: true});
+        fs.mkdirSync(repoPath, {recursive: true});
+
+        untildify.mockReturnValue(baseRepoPath);
+        createSystemDirectories();
+
+        configPath = getConfigFilePath(baseRepoPath);
+        userFilePath = getUserFilePath(baseRepoPath);
+        userData[TEST_EMAIL] = {access_token: "ABC"};
+        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);    
+        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+        shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+            
         fs.writeFileSync(configPath, yaml.safeDump(configData));
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
-        fs.mkdirSync(repoPath, {recursive: true});
     });
 
     afterEach(() => {
@@ -92,7 +92,7 @@ describe("detectBranchChange", () => {
         return true;
     };
 
-    test.only("No repo synced", async () => {
+    test("No repo synced", async () => {
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
     });
