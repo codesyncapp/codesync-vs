@@ -20,7 +20,7 @@ import {
 } from "../../helpers/helpers";
 import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
 
-describe.skip("handleDeletedEvent",  () => {
+describe("handleDeletedEvent",  () => {
     /*
      {
         source: 'vs-code',

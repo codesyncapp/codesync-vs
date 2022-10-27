@@ -33,7 +33,7 @@ import {DIFF_SOURCE} from "../../src/constants";
 import {LockUtils} from "../../src/utils/lock_utils";
 
 
-describe.skip("bufferHandler", () => {
+describe("bufferHandler", () => {
     let baseRepoPath;
     let repoPath;
     let configPath;
