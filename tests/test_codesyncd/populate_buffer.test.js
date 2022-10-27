@@ -93,7 +93,7 @@ describe("populateBuffer", () => {
         addUser(baseRepoPath, isActive);
     };
 
-    test.only("No repo synced", async () => {
+    test("No repo synced", async () => {
         await populateBuffer();
         // Verify correct diff file has been generated
         let diffFiles = fs.readdirSync(diffsRepo);
