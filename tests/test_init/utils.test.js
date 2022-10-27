@@ -21,6 +21,7 @@ import {readYML} from "../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {isBinaryFileSync} from "isbinaryfile";
 import {pathUtils} from "../../src/utils/path_utils";
+import { createSystemDirectories } from "../../src/utils/setup_utils";
 
 
 describe("getSyncablePaths",  () => {
@@ -262,18 +263,18 @@ describe("uploadRepo",  () => {
 
         baseRepoPath = randomBaseRepoPath();
         repoPath = randomRepoPath();
-
-        untildify.mockReturnValue(baseRepoPath);
-        configPath = getConfigFilePath(baseRepoPath);
-        userFilePath = getUserFilePath(baseRepoPath);
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-
-        syncIgnorePath = getSyncIgnoreFilePath(repoPath);
-        filePath = path.join(repoPath, "file.js");
-    
         // Create directories
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
+        untildify.mockReturnValue(baseRepoPath);
+        createSystemDirectories();
+
+        configPath = getConfigFilePath(baseRepoPath);
+        userFilePath = getUserFilePath(baseRepoPath);
+        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
+        syncIgnorePath = getSyncIgnoreFilePath(repoPath);
+        filePath = path.join(repoPath, "file.js");
+    
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fs.writeFileSync(configPath, yaml.safeDump(configData));

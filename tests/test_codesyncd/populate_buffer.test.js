@@ -47,7 +47,7 @@ describe("populateBuffer", () => {
         jest.clearAllMocks();
         jest.spyOn(global.console, 'log');
 
-        baseRepoPath = randomBaseRepoPath();
+        baseRepoPath = randomBaseRepoPath("populateBuffer");
         repoPath = randomRepoPath();
 
         untildify.mockReturnValue(baseRepoPath);

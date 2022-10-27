@@ -13,7 +13,7 @@ import {
 import {uploadFile, uploadFileTos3, uploadFileToServer, uploadRepoToServer} from "../../src/utils/upload_utils";
 import {API_ROUTES, DEFAULT_BRANCH} from "../../src/constants";
 import { formatDatetime } from "../../src/utils/common";
-
+import { createSystemDirectories } from "../../src/utils/setup_utils";
 
 describe('uploadRepoToServer', () => {
     beforeEach(() => {
@@ -106,18 +106,28 @@ describe('uploadFile', () => {
 });
 
 describe('uploadFileTos3', () => {
-    const repoPath = randomRepoPath();
-    const filePath = path.join(repoPath, "file.txt");
+    let repoPath;
+    let baseRepoPath;
+    let filePath;
 
     beforeEach(() => {
         fetch.resetMocks();
+        function FormDataMock() {
+            this.append = jest.fn();
+        }
+        global.FormData = FormDataMock;
+        repoPath = randomRepoPath();
+        baseRepoPath = randomBaseRepoPath();
         fs.mkdirSync(repoPath, {recursive: true});
-        const baseRepoPath = randomBaseRepoPath();
+        fs.mkdirSync(baseRepoPath, {recursive: true});
+        createSystemDirectories();
+        filePath = path.join(repoPath, "file.txt");
         untildify.mockReturnValue(baseRepoPath);
     });
 
     afterEach(() => {
         fs.rmSync(repoPath, { recursive: true, force: true });
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
     test('Non Existing File', async () => {

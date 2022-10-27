@@ -34,29 +34,25 @@ import {LockUtils} from "../../src/utils/lock_utils";
 
 
 describe("bufferHandler", () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const repoPath = randomRepoPath();
-    const configPath = getConfigFilePath(baseRepoPath);
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
+    let baseRepoPath;
+    let repoPath;
+    let configPath;
+    let sequenceTokenFilePath;
 
-    untildify.mockReturnValue(baseRepoPath);
+    let pathUtilsObj;
+    let shadowRepoBranchPath;
+    let originalsRepoBranchPath;
+    let diffsRepo;
 
-    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-    const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-    const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-    const diffsRepo = pathUtilsObj.getDiffsRepo();
+    let newFilePath;
+    let shadowFilePath;
+    let originalsFilePath;
+    let renameDiff;
 
+    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     const fileRelPath = "file_1.js";
     const newRelPath = "new.js";
-
     const newFileId = 5678;
-
-    const newFilePath = path.join(repoPath, newRelPath);
-    const shadowFilePath = path.join(shadowRepoBranchPath, fileRelPath);
-    const originalsFilePath = path.join(originalsRepoBranchPath, fileRelPath);
-    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-
-    const renameDiff = JSON.stringify({old_rel_path: fileRelPath, new_rel_path: newRelPath});
     const normalDiff = "diff";
 
     beforeEach(() => {
@@ -69,11 +65,32 @@ describe("bufferHandler", () => {
             send: jest.fn()
         };
         global.client = null;
+
+
+        baseRepoPath = randomBaseRepoPath("bufferHandler");
+        repoPath = randomRepoPath();
         untildify.mockReturnValue(baseRepoPath);
+
         fs.mkdirSync(baseRepoPath, {recursive: true});
-        createSystemDirectories();
         fs.mkdirSync(repoPath, {recursive: true});
+
+        createSystemDirectories();
         setWorkspaceFolders(repoPath);
+
+        configPath = getConfigFilePath(baseRepoPath);
+        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
+    
+    
+        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+        originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+        diffsRepo = pathUtilsObj.getDiffsRepo();
+    
+        newFilePath = path.join(repoPath, newRelPath);
+        shadowFilePath = path.join(shadowRepoBranchPath, fileRelPath);
+        originalsFilePath = path.join(originalsRepoBranchPath, fileRelPath);
+        renameDiff = JSON.stringify({old_rel_path: fileRelPath, new_rel_path: newRelPath});
+
         CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, true);
         CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, true);
     });
@@ -150,7 +167,7 @@ describe("bufferHandler", () => {
         return true;
     };
 
-    test("No config.yml", async () => {
+    test.only("No config.yml", async () => {
         fs.rmSync(configPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();

@@ -11,7 +11,7 @@ import {addPluginUser} from "../src/utils/setup_utils";
 
 
 describe("putLogEvent",  () => {
-    const baseRepoPath = randomBaseRepoPath();
+    const baseRepoPath = randomBaseRepoPath("putLogEvent");
     const userFilePath = getUserFilePath(baseRepoPath);
     const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
 

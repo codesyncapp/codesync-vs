@@ -27,10 +27,11 @@ describe("codesyncd: locks", () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
-        baseRepoPath = randomBaseRepoPath();
+        baseRepoPath = randomBaseRepoPath("codesyncd_locks");
+        fs.mkdirSync(baseRepoPath, { recursive: true });
         untildify.mockReturnValue(baseRepoPath);
-        settings = generateSettings();
         createSystemDirectories();
+        settings = generateSettings();
 		CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
 		CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
     });
@@ -59,20 +60,28 @@ describe("codesyncd: locks", () => {
 });
 
 describe("codesyncd: recallDaemon", () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const configPath = getConfigFilePath(baseRepoPath);
-    const repoPath = randomRepoPath();
-    const userFilePath = getUserFilePath(baseRepoPath);
-    untildify.mockReturnValue(baseRepoPath);
-    const settings = generateSettings();
+    let baseRepoPath;
+    let configPath;
+    let repoPath;
+    let userFilePath;
+    let settings;
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     
     beforeEach(() => {
         jest.clearAllMocks();
-        untildify.mockReturnValue(baseRepoPath);
-        global.IS_CODESYNC_DEV = true;
-        createSystemDirectories();
+
+        baseRepoPath = randomBaseRepoPath("codesyncd_recallDaemon");
+        repoPath = randomRepoPath();
+
+        fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
+        untildify.mockReturnValue(baseRepoPath);
+        createSystemDirectories();
+        configPath = getConfigFilePath(baseRepoPath);
+        userFilePath = getUserFilePath(baseRepoPath);
+        settings = generateSettings();
+
+        global.IS_CODESYNC_DEV = true;
         // Add repo in config and add user
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
@@ -200,7 +209,7 @@ describe("codesyncd: recallDaemon", () => {
 });
 
 describe("updateStatusBarItem", () => {
-    const baseRepoPath = randomBaseRepoPath();
+    const baseRepoPath = randomBaseRepoPath("codesyncd_updateStatusBarItem");
     untildify.mockReturnValue(baseRepoPath);
 
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);

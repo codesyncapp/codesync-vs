@@ -19,6 +19,7 @@ import {
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
 import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
+import { createSystemDirectories } from "../../../src/utils/setup_utils";
 
 
 describe("handleChangeEvent",  () => {
@@ -54,6 +55,7 @@ describe("handleChangeEvent",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
+        createSystemDirectories();        
         setWorkspaceFolders(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
         // Create directories

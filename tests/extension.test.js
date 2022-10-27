@@ -49,17 +49,18 @@ describe("Extension: activate",() => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        baseRepoPath = randomBaseRepoPath();
+        baseRepoPath = randomBaseRepoPath("activate");
         repoPath = randomRepoPath();
         configPath = getConfigFilePath(baseRepoPath);
         configData.repos[repoPath] = {branches: {}};
         setWorkspaceFolders(repoPath);
         untildify.mockReturnValue(baseRepoPath);
-        createSystemDirectories();
         global.IS_CODESYNC_DEV = true;
 
         fs.mkdirSync(repoPath, {recursive: true});
         fs.mkdirSync(baseRepoPath, {recursive: true});
+
+        createSystemDirectories();
     });
 
     afterEach(() => {

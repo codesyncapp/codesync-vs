@@ -38,7 +38,7 @@ describe("detectBranchChange", () => {
     const userData = {};    
 
     beforeEach(() => {
-        baseRepoPath = randomBaseRepoPath();
+        baseRepoPath = randomBaseRepoPath("detectBranchChange");
         repoPath = randomRepoPath();
     
         configPath = getConfigFilePath(baseRepoPath);

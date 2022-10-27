@@ -13,6 +13,7 @@ import {
     isValidDiff,
     similarity
 } from "../../src/codesyncd/utils";
+import { createSystemDirectories } from "../../src/utils/setup_utils";
 import {
     DIFF_DATA,
     DUMMY_FILE_CONTENT,
@@ -110,7 +111,6 @@ describe("similarity",  () => {
         const match = similarity('abc', 'abdef');
         expect(match).toBeTruthy();
     });
-
 });
 
 
@@ -130,24 +130,27 @@ describe("handleNewFileUpload",  () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
-        baseRepoPath = randomBaseRepoPath();
+        baseRepoPath = randomBaseRepoPath("handleNewFileUpload");
+        repoPath = randomRepoPath();
+
+        fs.mkdirSync(repoPath, {recursive: true});
+        fs.mkdirSync(baseRepoPath, {recursive: true});
+        
+        createSystemDirectories();
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
         sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
         untildify.mockReturnValue(baseRepoPath);
         
-        repoPath = randomRepoPath();
         filePath = path.join(repoPath, "file.js");
         pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 
-        fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.writeFileSync(userFilePath, yaml.safeDump({}));
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
         configData.repos[repoPath] = {branches: {}};
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
         fs.writeFileSync(configPath, yaml.safeDump(configData));
-        fs.mkdirSync(repoPath, {recursive: true});
     });
 
     afterEach(() => {
@@ -196,7 +199,7 @@ describe("handleNewFileUpload",  () => {
 
 describe("cleanUpDeleteDiff",  () => {
     const repoPath = randomRepoPath();
-    const baseRepoPath = randomBaseRepoPath();
+    const baseRepoPath = randomBaseRepoPath("cleanUpDeleteDiff");
     untildify.mockReturnValue(baseRepoPath);
 
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
@@ -249,7 +252,7 @@ describe("cleanUpDeleteDiff",  () => {
 
 describe("getDIffForDeletedFile",  () => {
     const repoPath = randomRepoPath();
-    const baseRepoPath = randomBaseRepoPath();
+    const baseRepoPath = randomBaseRepoPath("getDIffForDeletedFile");
 
     untildify.mockReturnValue(baseRepoPath);
 

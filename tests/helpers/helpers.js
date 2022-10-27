@@ -21,16 +21,17 @@ export function randomName() {
     return getRandomString(10);
 }
 
-function randomBaseRepoName() {
-    return `.codesync_${randomName()}`;
+function randomBaseRepoName(name) {
+    const _randomName = name ? `${name}_${randomName()}` : randomName();
+    return `.codesync_${_randomName}`;
 }
 
 function randomRepoName() {
     return `test_repo_${randomName()}`;
 }
 
-export function randomBaseRepoPath() {
-    return path.join(__dirname, "..", "tests_data", randomBaseRepoName());
+export function randomBaseRepoPath(name=null) {
+    return path.join(__dirname, "..", "tests_data", randomBaseRepoName(name));
 }
 
 export function randomRepoPath() {
