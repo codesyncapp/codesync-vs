@@ -33,7 +33,7 @@ import {DIFF_SOURCE} from "../../src/constants";
 import {LockUtils} from "../../src/utils/lock_utils";
 
 
-describe("bufferHandler", () => {
+describe.skip("bufferHandler", () => {
     let baseRepoPath;
     let repoPath;
     let configPath;
@@ -66,20 +66,16 @@ describe("bufferHandler", () => {
         };
         global.client = null;
 
-
         baseRepoPath = randomBaseRepoPath("bufferHandler");
         repoPath = randomRepoPath();
         untildify.mockReturnValue(baseRepoPath);
-
-        fs.mkdirSync(baseRepoPath, {recursive: true});
-        fs.mkdirSync(repoPath, {recursive: true});
-
         createSystemDirectories();
+
+        fs.mkdirSync(repoPath, {recursive: true});
         setWorkspaceFolders(repoPath);
 
         configPath = getConfigFilePath(baseRepoPath);
         sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-    
     
         pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
@@ -167,7 +163,7 @@ describe("bufferHandler", () => {
         return true;
     };
 
-    test.only("No config.yml", async () => {
+    test("No config.yml", async () => {
         fs.rmSync(configPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();

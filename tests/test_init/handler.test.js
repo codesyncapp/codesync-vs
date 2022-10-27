@@ -241,7 +241,7 @@ describe("initHandler: Syncing Branch", () => {
         fs.rmSync(repoPath, { recursive: true, force: true });
     });
 
-    test.only("Syncing Branch, Server down", async () => {
+    test("Syncing Branch, Server down", async () => {
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))

@@ -106,7 +106,7 @@ describe("handleRenameFile",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test.only("Event: Repo is not synced",  () => {
+    test("Event: Repo is not synced",  () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.removeRepo();
         const handler = new eventHandler();

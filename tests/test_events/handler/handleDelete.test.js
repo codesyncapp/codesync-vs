@@ -20,7 +20,7 @@ import {
 } from "../../helpers/helpers";
 import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
 
-describe("handleDeletedEvent",  () => {
+describe.skip("handleDeletedEvent",  () => {
     /*
      {
         source: 'vs-code',
@@ -86,7 +86,7 @@ describe("handleDeletedEvent",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test.only("Repo is not synced",  () => {
+    test("Repo is not synced",  () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.removeRepo();
         const event = {
