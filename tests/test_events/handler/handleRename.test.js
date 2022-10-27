@@ -60,7 +60,8 @@ describe("handleRenameFile",  () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-
+        global.IS_CODESYNC_DEV = true;
+        
         repoPath = randomRepoPath();
         baseRepoPath = randomBaseRepoPath();
         configPath = getConfigFilePath(baseRepoPath);

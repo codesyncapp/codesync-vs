@@ -58,6 +58,7 @@ describe("handleDeletedEvent",  () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        global.IS_CODESYNC_DEV = true;
         untildify.mockReturnValue(baseRepoPath);
         setWorkspaceFolders(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);

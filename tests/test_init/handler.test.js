@@ -36,6 +36,8 @@ describe("initHandler: connectRepo", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         fetch.resetMocks();
+        global.IS_CODESYNC_DEV = true;
+        
         baseRepoPath = randomBaseRepoPath("initHandler_connectRepo");
         repoPath = randomRepoPath();
 

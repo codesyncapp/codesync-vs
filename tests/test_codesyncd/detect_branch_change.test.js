@@ -41,7 +41,7 @@ describe("detectBranchChange", () => {
         fetch.resetMocks();
         jest.clearAllMocks();
         jest.spyOn(global.console, 'log');
-
+        global.IS_CODESYNC_DEV = true;
         baseRepoPath = randomBaseRepoPath("detectBranchChange");
         repoPath = randomRepoPath();
         fs.mkdirSync(baseRepoPath, {recursive: true});
