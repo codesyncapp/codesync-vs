@@ -59,7 +59,7 @@ describe("bufferHandler", () => {
         fetch.resetMocks();
         jest.clearAllMocks();
         jest.spyOn(global.console, 'log');
-        global.IS_CODESYNC_DEV = true;
+        global.IS_CODESYNC_TEST_MODE = true;
         global.socketConnection = {
             on: jest.fn(),
             send: jest.fn()

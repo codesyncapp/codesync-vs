@@ -27,6 +27,7 @@ describe("codesyncd: locks", () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
+        global.IS_CODESYNC_TEST_MODE = true;
         baseRepoPath = randomBaseRepoPath("codesyncd_locks");
         fs.mkdirSync(baseRepoPath, { recursive: true });
         untildify.mockReturnValue(baseRepoPath);
@@ -69,6 +70,7 @@ describe("codesyncd: recallDaemon", () => {
     
     beforeEach(() => {
         jest.clearAllMocks();
+        global.IS_CODESYNC_TEST_MODE = true;
 
         baseRepoPath = randomBaseRepoPath("codesyncd_recallDaemon");
         repoPath = randomRepoPath();
@@ -81,7 +83,6 @@ describe("codesyncd: recallDaemon", () => {
         userFilePath = getUserFilePath(baseRepoPath);
         settings = generateSettings();
 
-        global.IS_CODESYNC_DEV = true;
         // Add repo in config and add user
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();

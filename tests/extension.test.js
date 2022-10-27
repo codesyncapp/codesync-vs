@@ -55,7 +55,7 @@ describe("Extension: activate",() => {
         configData.repos[repoPath] = {branches: {}};
         setWorkspaceFolders(repoPath);
         untildify.mockReturnValue(baseRepoPath);
-        global.IS_CODESYNC_DEV = true;
+        global.IS_CODESYNC_TEST_MODE = true;
 
         fs.mkdirSync(repoPath, {recursive: true});
         fs.mkdirSync(baseRepoPath, {recursive: true});

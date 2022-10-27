@@ -32,7 +32,7 @@ describe("getSyncablePaths",  () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        global.IS_CODESYNC_DEV = true;
+        global.IS_CODESYNC_TEST_MODE = true;
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
