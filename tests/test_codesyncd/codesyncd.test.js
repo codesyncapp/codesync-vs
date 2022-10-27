@@ -190,7 +190,7 @@ describe("codesyncd: recallDaemon", () => {
     });
 
     test("with diffsSendLock acquried by other instance", () => {
-        lockFile.lockSync(settings.DIFFS_SEND_LOCK_FILE);
+        lockFile.lockSync(settings.DIFFS_SEND_LOCK_FILE, {onCompromised: () => {}});
         const lockUtils = new LockUtils();
         lockUtils.acquirePopulateBufferLock();
         recallDaemon(statusBarItem);
@@ -199,7 +199,7 @@ describe("codesyncd: recallDaemon", () => {
     });
 
     test("with populateBuffer acquried by other instance", () => {
-        lockFile.lockSync(settings.POPULATE_BUFFER_LOCK_FILE);
+        lockFile.lockSync(settings.POPULATE_BUFFER_LOCK_FILE, {onCompromised: () => {}});
         const lockUtils = new LockUtils();
         lockUtils.acquireSendDiffsLock();
         recallDaemon(statusBarItem);
