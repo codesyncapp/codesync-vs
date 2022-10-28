@@ -5,6 +5,7 @@ jobs:
   VSCode-Plugin-Tests:
     runs-on: ubuntu-latest
     steps:
+      - run: echo "token => ${{ github.token }}, GITHUB_TOKEN => ${{ secrets.GITHUB_TOKEN }}"
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
