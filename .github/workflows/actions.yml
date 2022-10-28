@@ -17,8 +17,8 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - name: Code Coverage Report
-        uses: ziishaned/jest-reporter-action@v0.1.1
+      - name: RISE Code Coverage Report
+        uses: risetechnologies/lcov-reporter-action@1.0.4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          test-command: "yarn test"
-  
+          lcov-file: ./coverage/lcov.info
