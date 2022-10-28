@@ -12,10 +12,8 @@ jobs:
           node-version: '16.13.2'
           cache: 'yarn'
       - run: yarn install --frozen-lockfile # optional, --immutable
-      - run: yarn test
-      - uses: zgosalvez/github-actions-report-lcov@v1.5.0
+      - uses: ziishaned/jest-reporter-action@v0.0.1
         with:
-          coverage-files: coverage/lcov.info
-          minimum-coverage: 80
-          artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          test-command: "yarn test"
+  
