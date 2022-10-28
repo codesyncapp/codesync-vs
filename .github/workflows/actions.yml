@@ -17,7 +17,7 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - name: Code Coverage Report
-        uses: ziishaned/jest-reporter-action@v0.0.1
+        uses: ziishaned/jest-reporter-action@v0.1.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-command: "yarn test"
