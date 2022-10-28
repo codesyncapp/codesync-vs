@@ -12,7 +12,12 @@ jobs:
           node-version: '16.13.2'
           cache: 'yarn'
       - run: yarn install --frozen-lockfile # optional, --immutable
-      - uses: ziishaned/jest-reporter-action@v0.0.1
+      - run: yarn test
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+      - name: Code Coverage Report
+        uses: ziishaned/jest-reporter-action@v0.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-command: "yarn test"
