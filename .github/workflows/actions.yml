@@ -17,7 +17,6 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - name: Code Coverage Report
-        uses: romeovs/lcov-reporter-action@v0.2.16
+        uses: ziishaned/jest-reporter-action@0.1.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          lcov-file: ./coverage/lcov.info
