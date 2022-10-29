@@ -12,15 +12,12 @@ jobs:
           node-version: '16.13.2'
           cache: 'yarn'
       - run: yarn install --frozen-lockfile # optional, --immutable
-      - run: yarn test
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
+      - name: Find PR number 
+        uses: jwalton/gh-find-current-pr@v1
+        id: findPr
       - name: Code Coverage Report
         uses: ArtiomTr/jest-coverage-report-action@v2
         id: coverage
         with:
-            output: report-markdown
-      - uses: marocchino/sticky-pull-request-comment@v2
-        with:
-            message: ${{ steps.coverage.outputs.report }}
+            output: comment
+            prnumber: ${{ steps.findPr.outputs.number }}
