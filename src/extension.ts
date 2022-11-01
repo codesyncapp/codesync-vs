@@ -82,7 +82,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		});
 
 		// Do not run daemon in case of tests
-		if ((global as any).IS_CODESYNC_DEV) return;
+		if ((global as any).IS_CODESYNC_TEST_MODE) return;
 		recallDaemon(statusBarItem, false);
 	} catch (e) {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment

@@ -13,6 +13,7 @@ import {
     isValidDiff,
     similarity
 } from "../../src/codesyncd/utils";
+import { createSystemDirectories } from "../../src/utils/setup_utils";
 import {
     DIFF_DATA,
     DUMMY_FILE_CONTENT,
@@ -110,37 +111,46 @@ describe("similarity",  () => {
         const match = similarity('abc', 'abdef');
         expect(match).toBeTruthy();
     });
-
 });
 
 
 describe("handleNewFileUpload",  () => {
-    const repoPath = randomRepoPath();
-    const fileRelPath = "file.js";
-    const filePath = path.join(repoPath, "file.js");
+    let baseRepoPath;
     const configData = {repos: {}};
-    configData.repos[repoPath] = {branches: {}};
-    configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
+    let configPath;
+    let userFilePath;
+    let sequenceTokenFilePath;
 
-    const baseRepoPath = randomBaseRepoPath();
-    const configPath = getConfigFilePath(baseRepoPath);
-    const userFilePath = getUserFilePath(baseRepoPath);
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-
-    untildify.mockReturnValue(baseRepoPath);
-
-    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-    const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+    let repoPath;
+    let filePath;
+    let pathUtilsObj;
+    let originalsRepoBranchPath;
+    const fileRelPath = "file.js";
 
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
-        untildify.mockReturnValue(baseRepoPath);
+        baseRepoPath = randomBaseRepoPath("handleNewFileUpload");
+        repoPath = randomRepoPath();
+
+        fs.mkdirSync(repoPath, {recursive: true});
         fs.mkdirSync(baseRepoPath, {recursive: true});
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        
+        createSystemDirectories();
+        configPath = getConfigFilePath(baseRepoPath);
+        userFilePath = getUserFilePath(baseRepoPath);
+        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
+        untildify.mockReturnValue(baseRepoPath);
+        
+        filePath = path.join(repoPath, "file.js");
+        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+
         fs.writeFileSync(userFilePath, yaml.safeDump({}));
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
-        fs.mkdirSync(repoPath, {recursive: true});
+        configData.repos[repoPath] = {branches: {}};
+        configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
+        fs.writeFileSync(configPath, yaml.safeDump(configData));
     });
 
     afterEach(() => {
@@ -189,7 +199,7 @@ describe("handleNewFileUpload",  () => {
 
 describe("cleanUpDeleteDiff",  () => {
     const repoPath = randomRepoPath();
-    const baseRepoPath = randomBaseRepoPath();
+    const baseRepoPath = randomBaseRepoPath("cleanUpDeleteDiff");
     untildify.mockReturnValue(baseRepoPath);
 
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
@@ -240,10 +250,9 @@ describe("cleanUpDeleteDiff",  () => {
 
 });
 
-
 describe("getDIffForDeletedFile",  () => {
     const repoPath = randomRepoPath();
-    const baseRepoPath = randomBaseRepoPath();
+    const baseRepoPath = randomBaseRepoPath("getDIffForDeletedFile");
 
     untildify.mockReturnValue(baseRepoPath);
 

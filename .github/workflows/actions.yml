@@ -1,0 +1,23 @@
+name: CodeSync VSCode Plugin Tests
+run-name: ${{ github.actor }} is testing CodeSync VSCode Plugin 🚀
+on: [push]
+jobs:
+  VSCode-Plugin-Tests:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "token => ${{ github.token }}, GITHUB_TOKEN => ${{ secrets.GITHUB_TOKEN }}"
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.13.2'
+          cache: 'yarn'
+      - run: yarn install --frozen-lockfile # optional, --immutable
+      - name: Find PR number 
+        uses: jwalton/gh-find-current-pr@v1
+        id: findPr
+      - name: Code Coverage Report
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        id: coverage
+        with:
+            output: comment
+            prnumber: ${{ steps.findPr.outputs.number }}

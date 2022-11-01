@@ -21,6 +21,7 @@ import {readYML} from "../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {isBinaryFileSync} from "isbinaryfile";
 import {pathUtils} from "../../src/utils/path_utils";
+import { createSystemDirectories } from "../../src/utils/setup_utils";
 
 
 describe("getSyncablePaths",  () => {
@@ -31,6 +32,7 @@ describe("getSyncablePaths",  () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        global.IS_CODESYNC_TEST_MODE = true;
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
@@ -247,22 +249,33 @@ describe("saveFileIds",  () => {
 });
 
 describe("uploadRepo",  () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const repoPath = randomRepoPath();
-    const syncIgnorePath = getSyncIgnoreFilePath(repoPath);
-    const filePath = path.join(repoPath, "file.js");
-    const configPath = getConfigFilePath(baseRepoPath);
-    const userFilePath = getUserFilePath(baseRepoPath);
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
+    let baseRepoPath;
+    let repoPath;
+    let syncIgnorePath;
+    let filePath;
+    let configPath;
+    let userFilePath;
+    let sequenceTokenFilePath;
     const configData = {repos: {}};
 
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
-        untildify.mockReturnValue(baseRepoPath);
+
+        baseRepoPath = randomBaseRepoPath();
+        repoPath = randomRepoPath();
         // Create directories
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
+        untildify.mockReturnValue(baseRepoPath);
+        createSystemDirectories();
+
+        configPath = getConfigFilePath(baseRepoPath);
+        userFilePath = getUserFilePath(baseRepoPath);
+        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
+        syncIgnorePath = getSyncIgnoreFilePath(repoPath);
+        filePath = path.join(repoPath, "file.js");
+    
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fs.writeFileSync(configPath, yaml.safeDump(configData));

@@ -47,7 +47,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
     // Do not proceed if no active user is found OR no config is found
     if ([STATUS_BAR_MSGS.AUTHENTICATION_FAILED, STATUS_BAR_MSGS.NO_CONFIG].includes(statusBarMsg)) {
         // Do not re-run daemon in case of tests
-        if ((global as any).IS_CODESYNC_DEV) return;
+        if ((global as any).IS_CODESYNC_TEST_MODE) return;
         return setTimeout(() => {
             recallDaemon(statusBarItem);
         }, RESTART_DAEMON_AFTER);
@@ -82,7 +82,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
     }
 
     // Do not re-run daemon in case of tests
-    if ((global as any).IS_CODESYNC_DEV) return;
+    if ((global as any).IS_CODESYNC_TEST_MODE) return;
     return setTimeout(() => {
         const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
         if (canPopulateBuffer) populateBuffer();

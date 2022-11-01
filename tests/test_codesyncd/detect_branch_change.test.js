@@ -22,46 +22,45 @@ import {
     TEST_REPO_RESPONSE,
     TEST_USER
 } from "../helpers/helpers";
-
+import {createSystemDirectories} from "../../src/utils/setup_utils";
 
 describe("detectBranchChange", () => {
     let baseRepoPath;
     let repoPath;
-    const configData = {repos: {}};
-    const userData = {};    
     let configPath;
     let sequenceTokenFilePath;
     let userFilePath;
-    userData[TEST_EMAIL] = {access_token: "ABC"};
-
     let pathUtilsObj;
     let originalsRepoBranchPath;
     let shadowRepoBranchPath;
 
+    const configData = {repos: {}};
+    const userData = {};    
+
     beforeEach(() => {
-        baseRepoPath = randomBaseRepoPath();
-        repoPath = randomRepoPath();
-    
-        configPath = getConfigFilePath(baseRepoPath);
-        userFilePath = getUserFilePath(baseRepoPath);
-        userData[TEST_EMAIL] = {access_token: "ABC"};
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-    
-        untildify.mockReturnValue(baseRepoPath);
-    
-        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-        originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-        shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-    
         fetch.resetMocks();
         jest.clearAllMocks();
         jest.spyOn(global.console, 'log');
-        untildify.mockReturnValue(baseRepoPath);
+        global.IS_CODESYNC_TEST_MODE = true;
+        baseRepoPath = randomBaseRepoPath("detectBranchChange");
+        repoPath = randomRepoPath();
         fs.mkdirSync(baseRepoPath, {recursive: true});
+        fs.mkdirSync(repoPath, {recursive: true});
+
+        untildify.mockReturnValue(baseRepoPath);
+        createSystemDirectories();
+
+        configPath = getConfigFilePath(baseRepoPath);
+        userFilePath = getUserFilePath(baseRepoPath);
+        userData[TEST_EMAIL] = {access_token: "ABC"};
+        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);    
+        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
+        shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+            
         fs.writeFileSync(configPath, yaml.safeDump(configData));
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
-        fs.mkdirSync(repoPath, {recursive: true});
     });
 
     afterEach(() => {

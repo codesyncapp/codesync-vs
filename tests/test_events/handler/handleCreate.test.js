@@ -18,6 +18,7 @@ import {
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
 import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
+import { createSystemDirectories } from "../../../src/utils/setup_utils";
 
 
 describe("handleNewFile",  () => {
@@ -34,10 +35,9 @@ describe("handleNewFile",  () => {
       }
     */
     const repoPath = randomRepoPath();
-    const baseRepoPath = randomBaseRepoPath();
+    const baseRepoPath = randomBaseRepoPath("events/handler/handleCreate");
     const configPath = getConfigFilePath(baseRepoPath);
     untildify.mockReturnValue(baseRepoPath);
-
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
     const diffsRepo = pathUtilsObj.getDiffsRepo();
     const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
@@ -57,6 +57,7 @@ describe("handleNewFile",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
+        createSystemDirectories();
         setWorkspaceFolders(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
         // Create directories

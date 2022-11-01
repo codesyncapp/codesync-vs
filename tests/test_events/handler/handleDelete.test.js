@@ -58,6 +58,7 @@ describe("handleDeletedEvent",  () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        global.IS_CODESYNC_TEST_MODE = true;
         untildify.mockReturnValue(baseRepoPath);
         setWorkspaceFolders(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
@@ -285,25 +286,35 @@ describe("handleDirectoryDeleteDiffs", () => {
       }
     * */
 
-    const repoPath = randomRepoPath();
-    const baseRepoPath = randomBaseRepoPath();
-    const fileRelPath = "file_1.js";
-
-    untildify.mockReturnValue(baseRepoPath);
-
-    const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-    const diffsRepo = pathUtilsObj.getDiffsRepo();
-    const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-    const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
-
-    const shadowDirectoryPath = path.join(shadowRepoBranchPath, "directory");
-    const shadowFilePath = path.join(shadowDirectoryPath, fileRelPath);
-    const relFilePath = path.join("directory", fileRelPath);
-    const cacheFilePath = path.join(cacheRepoBranchPath, relFilePath);
+    let baseRepoPath;
+    let repoPath;
+    let pathUtilsObj;
+    let diffsRepo;
+    let shadowRepoBranchPath;
+    let cacheRepoBranchPath;
+    let shadowDirectoryPath;
+    let shadowFilePath;
+    let relFilePath;
+    let cacheFilePath;
 
     beforeEach(() => {
         jest.clearAllMocks();
+        const fileRelPath = "file_1.js";
+
+        baseRepoPath = randomBaseRepoPath();
+        repoPath = randomRepoPath();
         untildify.mockReturnValue(baseRepoPath);
+        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        diffsRepo = pathUtilsObj.getDiffsRepo();
+        shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
+        cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
+    
+        shadowDirectoryPath = path.join(shadowRepoBranchPath, "directory");
+        shadowFilePath = path.join(shadowDirectoryPath, fileRelPath);
+        relFilePath = path.join("directory", fileRelPath);
+        cacheFilePath = path.join(cacheRepoBranchPath, relFilePath);
+    
+
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
         fs.mkdirSync(shadowDirectoryPath, { recursive: true });
@@ -334,4 +345,3 @@ describe("handleDirectoryDeleteDiffs", () => {
     });
 
 });
-

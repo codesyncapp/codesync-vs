@@ -4,7 +4,7 @@ import lockFile from "proper-lockfile";
 import vscode from "vscode";
 import untildify from "untildify";
 import {generateSettings} from "../../src/settings";
-import {acquirePopulateBufferLock, acquireSendDiffsLock, recallDaemon} from "../../src/codesyncd/codesyncd";
+import {recallDaemon} from "../../src/codesyncd/codesyncd";
 import {CodeSyncState, CODESYNC_STATES} from "../../src/utils/state_utils";
 import {
     randomBaseRepoPath,
@@ -21,15 +21,18 @@ import {statusBarMsgs} from "../../src/codesyncd/utils";
 import { LockUtils } from "../../src/utils/lock_utils";
 
 describe("codesyncd: locks", () => {
-    const baseRepoPath = randomBaseRepoPath();
-    untildify.mockReturnValue(baseRepoPath);
-    const settings = generateSettings();
+    let baseRepoPath;
+    let settings;
 
     beforeEach(() => {
+        fetch.resetMocks();
         jest.clearAllMocks();
+        global.IS_CODESYNC_TEST_MODE = true;
+        baseRepoPath = randomBaseRepoPath("codesyncd_locks");
+        fs.mkdirSync(baseRepoPath, { recursive: true });
         untildify.mockReturnValue(baseRepoPath);
         createSystemDirectories();
-        const settings = generateSettings();
+        settings = generateSettings();
 		CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
 		CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
     });
@@ -58,20 +61,28 @@ describe("codesyncd: locks", () => {
 });
 
 describe("codesyncd: recallDaemon", () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const configPath = getConfigFilePath(baseRepoPath);
-    const repoPath = randomRepoPath();
-    const userFilePath = getUserFilePath(baseRepoPath);
-    untildify.mockReturnValue(baseRepoPath);
-    const settings = generateSettings();
+    let baseRepoPath;
+    let configPath;
+    let repoPath;
+    let userFilePath;
+    let settings;
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     
     beforeEach(() => {
         jest.clearAllMocks();
-        untildify.mockReturnValue(baseRepoPath);
-        global.IS_CODESYNC_DEV = true;
-        createSystemDirectories();
+        global.IS_CODESYNC_TEST_MODE = true;
+
+        baseRepoPath = randomBaseRepoPath("codesyncd_recallDaemon");
+        repoPath = randomRepoPath();
+
+        fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
+        untildify.mockReturnValue(baseRepoPath);
+        createSystemDirectories();
+        configPath = getConfigFilePath(baseRepoPath);
+        userFilePath = getUserFilePath(baseRepoPath);
+        settings = generateSettings();
+
         // Add repo in config and add user
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
@@ -180,7 +191,7 @@ describe("codesyncd: recallDaemon", () => {
     });
 
     test("with diffsSendLock acquried by other instance", () => {
-        lockFile.lockSync(settings.DIFFS_SEND_LOCK_FILE);
+        lockFile.lockSync(settings.DIFFS_SEND_LOCK_FILE, {onCompromised: () => {}});
         const lockUtils = new LockUtils();
         lockUtils.acquirePopulateBufferLock();
         recallDaemon(statusBarItem);
@@ -189,7 +200,7 @@ describe("codesyncd: recallDaemon", () => {
     });
 
     test("with populateBuffer acquried by other instance", () => {
-        lockFile.lockSync(settings.POPULATE_BUFFER_LOCK_FILE);
+        lockFile.lockSync(settings.POPULATE_BUFFER_LOCK_FILE, {onCompromised: () => {}});
         const lockUtils = new LockUtils();
         lockUtils.acquireSendDiffsLock();
         recallDaemon(statusBarItem);
@@ -199,7 +210,7 @@ describe("codesyncd: recallDaemon", () => {
 });
 
 describe("updateStatusBarItem", () => {
-    const baseRepoPath = randomBaseRepoPath();
+    const baseRepoPath = randomBaseRepoPath("codesyncd_updateStatusBarItem");
     untildify.mockReturnValue(baseRepoPath);
 
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
