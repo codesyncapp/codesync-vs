@@ -284,7 +284,7 @@
     "esbuild": "^0.12.28",
     "express": "^4.17.1",
     "form-data": "^4.0.0",
-    "ignore": "^5.1.8",
+    "ignore": "^5.2.0",
     "isbinaryfile": "^4.0.8",
     "jest-fetch-mock": "^3.0.3",
     "js-yaml": "^3.14.1",
