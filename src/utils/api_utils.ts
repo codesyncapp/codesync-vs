@@ -87,6 +87,7 @@ export const getPluginUser = async () => {
 
 export const getTeamActivity = async (accessToken: string) => {
 	let error = "";
+	let is_team_activity = false;
 	let activities = <any>[];
 	const response = await fetch(
 		API_ROUTES.TEAM_ACTIVITY, {
@@ -102,10 +103,12 @@ export const getTeamActivity = async (accessToken: string) => {
 		error = response.error.message;
 	} else {
 		activities = response.activities;
+		is_team_activity = response.is_team_activity;
 	}
 
 	return {
 		activities,
+		is_team_activity,
 		error
 	};
 };
