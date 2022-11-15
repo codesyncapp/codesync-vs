@@ -72,6 +72,8 @@ export const NOTIFICATION = {
 	CONTINUE: "Continue",
 	UPGRADE: "Upgrade",
 	VIEW_DASHBOARD: "View Dashboard",
+	REVIEW_TEAM_PLAYBACK: "Review Team Playback",
+	REVIEW_PLAYBACK: "Review Playback",
 	TRACK_IT: "View repo on web",
 	TRACK_PARENT_REPO: "View parent repo on web",
 	OPEN_SYNCIGNORE: "Open .syncignore",
@@ -101,7 +103,8 @@ export const NOTIFICATION = {
 	REPO_DISCONNECT_CONFIRMATION: "Are you sure to continue? You won't be able to revert this!",
 	REPO_DISCONNECT_PARENT_CONFIRMATION: "Are you sure to disconnect parent repo? You won't be able to revert this!",
 	LOGGED_OUT_SUCCESSFULLY: "Successfully logged out!",
-	TEAM_ACTIVITY_ALERT: "Hey, check your team's activity!"
+	TEAM_ACTIVITY_ALERT: "Hope you had a great day! It's time to get in sync with your team's code.",
+	USER_ACTIVITY_ALERT: "Hope you had a great day! Shall we review today's code playback?"
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {

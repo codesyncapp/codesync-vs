@@ -137,10 +137,15 @@ export class Alerts {
 		}
 		CodeSyncLogger.debug(`Team activity alert shown at ${new Date()}, user=${userEmail}`);
 		// Show alert
-		const button = NOTIFICATION.VIEW_DASHBOARD;
-		vscode.window.showInformationMessage(NOTIFICATION.TEAM_ACTIVITY_ALERT, button).then(selection => {
+		let msg = NOTIFICATION.USER_ACTIVITY_ALERT;
+		let button = NOTIFICATION.REVIEW_PLAYBACK;
+		if (json.is_team_activity) {
+			msg = NOTIFICATION.TEAM_ACTIVITY_ALERT;
+			button = NOTIFICATION.REVIEW_TEAM_PLAYBACK;
+		}
+		vscode.window.showInformationMessage(msg, button).then(selection => {
 			if (!selection) { return; }
-			if (selection === NOTIFICATION.VIEW_DASHBOARD) {
+			if (selection === NOTIFICATION.REVIEW_TEAM_PLAYBACK || selection === NOTIFICATION.REVIEW_PLAYBACK) {
 				viewDashboardHandler();
 			}
 		});
