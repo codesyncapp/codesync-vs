@@ -87,20 +87,19 @@ export class Alerts {
 		// Check when last alert was shown to the user
 		const alertConfig = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail];
 		// show alert if it is first time
-		if (!alertConfig) return await this.showTeamActivityAlert(accessToken, userEmail);
-		// Can show alert if 
-		// 1- Haven't checked activity for "checkFor"
-		// 2- Last alert was shown before 24 hours
-		const hasCheckedBefore = this.checkForDate === alertConfig.checked_for;
-		if (hasCheckedBefore) return;
-		const lastShownBefore24H = Boolean(!alertConfig.shown_at || this.nowTimestamp - alertConfig.shown_at.getTime() > this.CONFIG.TEAM_ACTIVITY.showAfter);
-		const canShowAlert = (this.nowHour == alertH && this.nowMinutes >= alertM || this.nowHour > alertH) || lastShownBefore24H;
-		if (!canShowAlert) return;
+		if (!alertConfig) return await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
+		const hasChecked = this.checkForDate === alertConfig.checked_for;
+		if (hasChecked) return;
+		// If checking on same day, should check @4:30pm
+		if (this.checkForDate === this.nowDate) {
+			const canShowAlert = (this.nowHour == alertH && this.nowMinutes >= alertM || this.nowHour > alertH);
+			if (!canShowAlert) return;
+		}
 		// show alert
-		await this.showTeamActivityAlert(accessToken, userEmail);
+		await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
 	};
 
-	showTeamActivityAlert = async (accessToken: string, userEmail: string) => {
+	shouldCheckTeamActivityAlert = async (accessToken: string, userEmail: string) => {
 		/*
 		Checks if there has been a team-activity past 24 hours
 		In case of error from API, retries after 5 minutes
