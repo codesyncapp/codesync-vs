@@ -30,8 +30,8 @@ export class Alerts {
     nowMinutes: number;
 	nowTimestamp: number;
 	nowDate: string;
-	before: Date;
-	beforeDate: string;
+	checkFor: Date;
+	checkForDate: string;
 	alertsData: any;
 	activeUser: IUser;
 
@@ -43,8 +43,8 @@ export class Alerts {
 		this.nowDate = now.toISOString().split('T')[0];
 		this.settings = generateSettings();
 		this.alertsData = readYML(this.settings.ALERTS);
-		this.before = new Date();
-		this.beforeDate = "";
+		this.checkFor = new Date();
+		this.checkForDate = "";
 		this.activeUser = getActiveUsers()[0];
 	}
 
@@ -74,24 +74,24 @@ export class Alerts {
 		}
 		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
 		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
-		if (this.before.getHours() < alertH || (this.before.getHours() == alertH && this.before.getMinutes() < alertM)) {
+		if (this.checkFor.getHours() < alertH || (this.checkFor.getHours() == alertH && this.checkFor.getMinutes() < alertM)) {
 			// e.g. IDE is opened between 0am-16:29pm, it should check 16:30pm of yesterday till day before yesterday
 			// so subtracting 1 day here. If checking at any hour between 16-23 no need to subtract 1 day.
-			this.before.setDate(this.before.getDate()-1);
+			this.checkFor.setDate(this.checkFor.getDate()-1);
 		}
 		// Checking only before 4:30PM
-		this.before.setHours(alertH);
-		this.before.setMinutes(alertM);
-		// Set beforeDate
-		this.beforeDate = this.before.toISOString().split('T')[0];
+		this.checkFor.setHours(alertH);
+		this.checkFor.setMinutes(alertM);
+		// Set checkForDate
+		this.checkForDate = this.checkFor.toISOString().split('T')[0];
 		// Check when last alert was shown to the user
 		const alertConfig = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail];
 		// show alert if it is first time
 		if (!alertConfig) return await this.showTeamActivityAlert(accessToken, userEmail);
 		// Can show alert if 
-		// 1- Haven't checked activity for "before"
+		// 1- Haven't checked activity for "checkFor"
 		// 2- Last alert was shown before 24 hours
-		const hasCheckedBefore = this.beforeDate === alertConfig.checked_date;
+		const hasCheckedBefore = this.checkForDate === alertConfig.checked_for;
 		if (hasCheckedBefore) return;
 		const lastShownBefore24H = Boolean(!alertConfig.shown_at || this.nowTimestamp - alertConfig.shown_at.getTime() > this.CONFIG.TEAM_ACTIVITY.showAfter);
 		const canShowAlert = (this.nowHour == alertH && this.nowMinutes >= alertM || this.nowHour > alertH) || lastShownBefore24H;
@@ -108,8 +108,6 @@ export class Alerts {
 		const requestSentAt = CodeSyncState.get(CODESYNC_STATES.TEAM_ACTIVITY_REQUEST_SENT_AT);
 		const canRetry = requestSentAt && (this.nowTimestamp - requestSentAt) > RETRY_TEAM_ACTIVITY_REQUEST_AFTER;
 		if (requestSentAt && !canRetry) return;
-		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
-		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
 		// Set time when request is sent
 		CodeSyncState.set(CODESYNC_STATES.TEAM_ACTIVITY_REQUEST_SENT_AT, new Date().getTime());
 		// Check if there has been some acitivty in past 24 hours
@@ -124,13 +122,14 @@ export class Alerts {
 		const hasRecentActivty = json.activities.some((repoInfo: IRepoInfo) => {
 			const lastSyncedAt = new Date(repoInfo.last_synced_at);
 			// Ignore activity after the "before"
-			if (lastSyncedAt > this.before) return false;
+			if (lastSyncedAt > this.checkFor) return false;
 			// Check if activity was within 24 hours
-			return ((this.before.getTime() - new Date(repoInfo.last_synced_at).getTime())) <= this.CONFIG.TEAM_ACTIVITY.showAfter;
+			return ((this.checkFor.getTime() - new Date(repoInfo.last_synced_at).getTime())) <= this.CONFIG.TEAM_ACTIVITY.showAfter;
 		});
 		if (!hasRecentActivty) {
 			this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
-				checked_date: this.nowDate,
+				checked_at: this.nowDate,
+				checked_for: this.checkForDate
 			};
 			fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));	
 			return;
@@ -150,8 +149,8 @@ export class Alerts {
 			}
 		});
 		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
-			checked_date: this.nowDate,
-			date: this.beforeDate,
+			checked_at: this.nowDate,
+			checked_for: this.checkForDate,
 			shown_at: new Date()
 		};
 		fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
