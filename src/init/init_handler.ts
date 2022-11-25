@@ -45,7 +45,7 @@ export class initHandler {
 
 		if (!isServerDown) {
 			// Validate access token
-			const userJSON = await getUserForToken(this.accessToken);
+			const userJSON = <any> await getUserForToken(this.accessToken);
 			if (!userJSON.isTokenValid) {
 				askAndTriggerSignUp();
 				return false;
