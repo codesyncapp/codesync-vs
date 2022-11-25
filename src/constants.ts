@@ -38,7 +38,6 @@ export const API_ROUTES = {
 };
 
 
-export const PRICING_URL = `${WEB_APP_URL}/pricing`;
 // Diff utils
 export const DIFF_FILES_PER_ITERATION = 50;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
@@ -176,3 +175,7 @@ export const SOCKET_ERRORS = {
 	ERROR_MSG_RECEIVE: 'Error receiving socket msg'
 };
 export const DAY = 24 * 60 * 60 * 1000;
+// GA-4 Parameters
+export const GA4_PARAMS = `utm_medium=plugin&utm_source=${DIFF_SOURCE}`;
+export const GA4_PARAMS_DAILY_POPUP_FIRST = `${GA4_PARAMS}&utm_campaign=daily_popup_first`;
+export const PRICING_URL = `${WEB_APP_URL}/pricing?${GA4_PARAMS}`;

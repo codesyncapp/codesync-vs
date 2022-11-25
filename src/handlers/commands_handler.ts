@@ -4,6 +4,7 @@ import vscode from 'vscode';
 import yaml from "js-yaml";
 
 import {
+	GA4_PARAMS,
 	getRepoInSyncMsg,
 	NOTIFICATION,
 	SYNCIGNORE
@@ -85,7 +86,7 @@ export const trackRepoHandler = () => {
 	}
 	const configRepo = config.repos[repoPath];
 	// Show notification that repo is in sync
-	const playbackLink = `${WEB_APP_URL}/repos/${configRepo.id}/playback`;
+	const playbackLink = `${WEB_APP_URL}/repos/${configRepo.id}/playback?${GA4_PARAMS}`;
 	vscode.env.openExternal(vscode.Uri.parse(playbackLink));
 	return playbackLink;
 };
@@ -112,7 +113,7 @@ export const trackFileHandler = () => {
 	if (!(relPath in configFiles)) { return; }
 	const fileId = configFiles[relPath];
 	// Show notification that repo is in sync
-	const playbackLink = `${WEB_APP_URL}/files/${fileId}/history`;
+	const playbackLink = `${WEB_APP_URL}/files/${fileId}/history?${GA4_PARAMS}`;
 	vscode.env.openExternal(vscode.Uri.parse(playbackLink));
 };
 
@@ -136,5 +137,6 @@ export const upgradePlanHandler = () => {
 };
 
 export const viewDashboardHandler = () => {
-	vscode.env.openExternal(vscode.Uri.parse(WEB_APP_URL));
+	const url = `${WEB_APP_URL}?${GA4_PARAMS}`;
+	vscode.env.openExternal(vscode.Uri.parse(url));
 };
