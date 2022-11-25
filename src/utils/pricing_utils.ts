@@ -35,7 +35,7 @@ export const setPlanLimitReached = async (accessToken: string) => {
 		}
 		const configRepo = config.repos[repoPath];
 		if (configRepo) {
-			const json = await getRepoPlanInfo(accessToken, configRepo.id);
+			const json = <any> await getRepoPlanInfo(accessToken, configRepo.id);
 			if (!json.error) {
 				pricingUrl = json.response.url;
 				isOrgRepo = json.response.is_org_repo;

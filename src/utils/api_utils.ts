@@ -5,7 +5,7 @@ import { PLUGIN_USER } from "../settings";
 
 export const checkServerDown = async () => {
 	let isDown = false;
-	const response = await fetch(API_ROUTES.HEALTHCHECK)
+	const response = <any> await fetch(API_ROUTES.HEALTHCHECK)
 	.then(res => res.json())
     .then(json => json)
 	.catch(err => {
@@ -17,7 +17,7 @@ export const checkServerDown = async () => {
 
 export const getUserForToken = async (accessToken: string) => {
 	let isTokenValid = false;
-	const response = await fetch(
+	const response = <any> await fetch(
 		API_ROUTES.USERS, {
 		headers: {
 			'Content-Type': 'application/json',
@@ -41,7 +41,7 @@ export const getUserForToken = async (accessToken: string) => {
 export const createUserWithApi = async (accessToken: string) => {
 	let error = "";
 	let email = "";
-	const response = await fetch(API_ROUTES.USERS, {
+	const response = <any> await fetch(API_ROUTES.USERS, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ export const createUserWithApi = async (accessToken: string) => {
 
 export const getPluginUser = async () => {
 	let error = "";
-	const response = await fetch(PLUGIN_USER.url)
+	const response = <any> await fetch(PLUGIN_USER.url)
 		.then(res => res.json())
 		.then(json => json)
 		.catch(err => error = err);
@@ -89,7 +89,7 @@ export const getTeamActivity = async (accessToken: string) => {
 	let error = "";
 	let is_team_activity = false;
 	let activities = <any>[];
-	const response = await fetch(
+	const response = <any> await fetch(
 		API_ROUTES.TEAM_ACTIVITY, {
 			headers: {
 				'Content-Type': 'application/json',
