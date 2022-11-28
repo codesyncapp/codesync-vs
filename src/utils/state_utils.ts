@@ -8,7 +8,8 @@ export const CODESYNC_STATES = {
     PRICING_URL: "pricingUrl",
     REQUEST_SENT_AT: "requestSentAt",
     SYNCING_BRANCH: "syncingBranch",
-    TEAM_ACTIVITY_REQUEST_SENT_AT: "teamActivtyRequestSentAt"
+    TEAM_ACTIVITY_REQUEST_SENT_AT: "teamActivtyRequestSentAt",
+    CAN_AVAIL_TRIAL: "canAvailTrial"
 };
 
 export class CodeSyncState {

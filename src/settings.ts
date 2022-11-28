@@ -1,33 +1,23 @@
 import path from "path";
 import untildify from "untildify";
 
-const ROOT_REPO_NAME = '~/.codesync';
-export const CODESYNC_WEBSOCKET_HOST = "wss://api.codesync.com";
-export const CODESYNC_HOST = "https://api.codesync.com";
-export const WEB_APP_URL = "https://www.codesync.com";
-// AWS constants
+// Set this to true for Development
+const DEBUG = false;
+
+const ROOT_REPO_NAME = DEBUG ? '~/.codesync-local' : '~/.codesync';
+export const CODESYNC_WEBSOCKET_HOST = DEBUG ? "ws://127.0.0.1:8000" : "wss://api.codesync.com";
+export const CODESYNC_HOST = DEBUG ? 'http://127.0.0.1:8000': "https://api.codesync.com";
+export const WEB_APP_URL = DEBUG ? "http://localhost:3000" : "https://www.codesync.com";
 export const LOGS_METADATA = {
     AWS_REGION: 'us-east-1',
-    GROUP: 'client-logs',
+    GROUP: DEBUG ? 'client-logs-dev' : 'client-logs'
 };
-export const PLUGIN_USER = {
-    logStream: "codesync-common-logs",
-    url: "https://codesync-public.s3.amazonaws.com/plugin-user.json",
+const LOG_STREAM = DEBUG ? "codesync-dev-common-logs" : "codesync-common-logs";
+const PLUGIN_USER_URL = DEBUG ? "https://codesync-public.s3.amazonaws.com/plugin-dev-user.json" : "https://codesync-public.s3.amazonaws.com/plugin-user.json";
+export const PLUGIN_USER = { 
+    logStream: LOG_STREAM,
+    url: PLUGIN_USER_URL
 };
-
-// TODO: Figure out better way to use dev values
-// const ROOT_REPO_NAME = '~/.codesync-local';
-// export const CODESYNC_WEBSOCKET_HOST = "ws://127.0.0.1:8000";
-// export const CODESYNC_HOST = 'http://127.0.0.1:8000';
-// export const WEB_APP_URL = "http://localhost:3000";
-// export const LOGS_METADATA = {
-//     AWS_REGION: 'us-east-1',
-//     GROUP: 'client-logs-dev'
-// };
-// export const PLUGIN_USER = {
-//     logStream: "codesync-dev-common-logs",
-//     url: "https://codesync-public.s3.amazonaws.com/plugin-dev-user.json"
-// };
 
 export const generateSettings = () => {
     /*
