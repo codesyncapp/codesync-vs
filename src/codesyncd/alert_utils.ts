@@ -21,6 +21,7 @@ export class Alerts {
 				minutes: 30
 			},
 			showAfter: 24 * 60 * 60 * 1000, // 24 hours
+			repeatAfter: 20 * 1000, // 15 min
 			api: API_ROUTES.TEAM_ACTIVITY
 		}
 	} 
@@ -34,6 +35,7 @@ export class Alerts {
 	checkForDate: string;
 	alertsData: any;
 	activeUser: IUser;
+	alertConfig: any;
 
 	constructor() {
 		const now = new Date();
@@ -46,6 +48,7 @@ export class Alerts {
 		this.checkFor = new Date();
 		this.checkForDate = "";
 		this.activeUser = getActiveUsers()[0];
+		this.alertConfig = {};
 	}
 
 	checkActivityAlerts = async () => {
@@ -85,16 +88,26 @@ export class Alerts {
 		// Set checkForDate
 		this.checkForDate = this.checkFor.toISOString().split('T')[0];
 		// Check when last alert was shown to the user
-		const alertConfig = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail];
+		this.alertConfig = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail];
 		// show alert if it is first time
-		if (!alertConfig) return await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
-		const hasChecked = this.checkForDate === alertConfig.checked_for;
-		if (hasChecked) return;
-		// If checking on same day, should check @4:30pm
-		if (this.checkForDate === this.nowDate) {
-			const canShowAlert = (this.nowHour == alertH && this.nowMinutes >= alertM || this.nowHour > alertH);
-			if (!canShowAlert) return;
+		if (!this.alertConfig) return await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
+		const hasCheckedForDate = this.checkForDate === this.alertConfig.checked_for;
+		console.log("hasCheckedForDate ", hasCheckedForDate);
+		if (!hasCheckedForDate) {
+			// If checking on same day, should check @4:30pm
+			if (this.checkForDate === this.nowDate) {
+				const canShowAlert = (this.nowHour == alertH && this.nowMinutes >= alertM || this.nowHour > alertH);
+				if (!canShowAlert) return;
+			}
+			// show alert
+			await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
+			return;
 		}
+		console.log("alertConfig.has_seen", this.alertConfig.has_seen);
+		if (this.alertConfig.has_seen) return;
+		const canRepeatAlert = this.alertConfig.shown_at && (this.nowTimestamp - this.alertConfig.shown_at.getTime() >= this.CONFIG.TEAM_ACTIVITY.repeatAfter);
+		console.log("canRepeatAlert", canRepeatAlert);
+		if (!canRepeatAlert) return;
 		// show alert
 		await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
 	};
@@ -118,17 +131,18 @@ export class Alerts {
 		// In case there is no activity
 		if (!json.activities) return;
 		// Check if there is some recent activity to show
-		const hasRecentActivty = json.activities.some((repoInfo: IRepoInfo) => {
-			const lastSyncedAt = new Date(repoInfo.last_synced_at);
-			// Ignore activity after the "before"
-			if (lastSyncedAt > this.checkFor) return false;
-			// Check if activity was within 24 hours
-			return ((this.checkFor.getTime() - new Date(repoInfo.last_synced_at).getTime())) <= this.CONFIG.TEAM_ACTIVITY.showAfter;
-		});
+		const hasRecentActivty = true;
+		// const hasRecentActivty = json.activities.some((repoInfo: IRepoInfo) => {
+		// 	const lastSyncedAt = new Date(repoInfo.last_synced_at);
+		// 	// Ignore activity after the "before"
+		// 	if (lastSyncedAt > this.checkFor) return false;
+		// 	// Check if activity was within 24 hours
+		// 	return ((this.checkFor.getTime() - new Date(repoInfo.last_synced_at).getTime())) <= this.CONFIG.TEAM_ACTIVITY.showAfter;
+		// });
 		if (!hasRecentActivty) {
 			this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
-				checked_at: this.nowDate,
-				checked_for: this.checkForDate
+				checked_for: this.checkForDate,
+				has_seen: false
 			};
 			fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));	
 			return;
@@ -142,17 +156,23 @@ export class Alerts {
 			button = NOTIFICATION.REVIEW_TEAM_PLAYBACK;
 		}
 		vscode.window.showInformationMessage(msg, button).then(selection => {
-			if (!selection) { return; }
-			if (selection === NOTIFICATION.REVIEW_TEAM_PLAYBACK || selection === NOTIFICATION.REVIEW_PLAYBACK) {
-				viewDashboardHandler();
-			}
+			console.log("Selection", selection);
+			// Tracking has_seen if user has clicked on the notification, even on the close icon
+			this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
+				checked_for: this.checkForDate,
+				shown_at: this.alertConfig.shown_at,
+				has_seen: true
+			};
+			fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
+
+			if (!selection) return;
+			viewDashboardHandler();
 		});
 		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
-			checked_at: this.nowDate,
 			checked_for: this.checkForDate,
-			shown_at: new Date()
+			shown_at: new Date(),
+			has_seen: false
 		};
 		fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
 	}
-
 }

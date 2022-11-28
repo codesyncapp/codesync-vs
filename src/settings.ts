@@ -2,7 +2,7 @@ import path from "path";
 import untildify from "untildify";
 
 // Set this to true for Development
-const DEBUG = false;
+const DEBUG = true;
 
 const ROOT_REPO_NAME = DEBUG ? '~/.codesync-local' : '~/.codesync';
 export const CODESYNC_WEBSOCKET_HOST = DEBUG ? "ws://127.0.0.1:8000" : "wss://api.codesync.com";
