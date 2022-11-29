@@ -70,6 +70,8 @@ export const NOTIFICATION = {
 	OK: "OK!",
 	CONTINUE: "Continue",
 	UPGRADE: "Upgrade",
+	TRY_PRO_FOR_FREE: "Try Pro plan for free",
+	TRY_TEAM_FOR_FREE: "Try Team plan for free ",
 	VIEW_DASHBOARD: "View Dashboard",
 	REVIEW_TEAM_PLAYBACK: "Review Team Playback",
 	REVIEW_PLAYBACK: "Review Playback",
@@ -138,6 +140,7 @@ export const STATUS_BAR_MSGS = {
 	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
 	NO_CONFIG: ' CodeSync ❌, Reload required!',
 	UPGRADE_PRICING_PLAN: ' CodeSync ❌, Click to upgrade pricing plan!',
+	UPGRADE_PRICING_PLAN_FOR_FREE: ' CodeSync ❌, Click to upgrade pricing plan for free!',
 };
 
 export const COMMAND = {

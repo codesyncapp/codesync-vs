@@ -20,6 +20,7 @@ import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { checkSubDir, getActiveUsers, isRepoActive, readYML } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
+import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -221,7 +222,10 @@ export class statusBarMsgs {
 		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
 		// Check plan limits
 		const { planLimitReached } = getPlanLimitReached();
-		if (planLimitReached) return STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
+		if (planLimitReached) {
+			const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
+			return canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
+		}
 		// No repo is opened
 		if (!repoPath) return STATUS_BAR_MSGS.NO_REPO_OPEN;
 

@@ -3,7 +3,7 @@
   "displayName": "CodeSync",
   "description": "Stream code to the cloud. Save it forever. Play it back later. No commits needed.",
   "icon": "images/icon.png",
-  "version": "3.11.0",
+  "version": "3.12.0",
   "publisher": "codesync",
   "engines": {
     "vscode": "^1.32.0",
@@ -105,7 +105,12 @@
         {
           "id": "codesync-signed-up-and-synced-and-pricing-plan-limit-reached",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSubDir && CodeSyncActivated && upgradePricingPlan"
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSubDir && CodeSyncActivated && upgradePricingPlan && !canAvailTrial"
+        },
+        {
+          "id": "codesync-signed-up-and-synced-and-upgrade-plan-for-free",
+          "name": "CodeSync",
+          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSubDir && CodeSyncActivated && upgradePricingPlan && canAvailTrial"
         },
         {
           "id": "codesync-signed-up-is-sub-dir",
@@ -143,7 +148,11 @@
       },
       {
         "view": "codesync-signed-up-and-synced-and-pricing-plan-limit-reached",
-        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.disconnectRepo)\n[Upgrade Plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.disconnectRepo)\n[Upgrade plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+      },
+      {
+        "view": "codesync-signed-up-and-synced-and-upgrade-plan-for-free",
+        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.disconnectRepo)\n[Upgrade plan for free](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-is-sub-dir",
