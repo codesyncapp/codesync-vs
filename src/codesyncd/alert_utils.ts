@@ -1,14 +1,15 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
-import { API_ROUTES, NOTIFICATION, RETRY_TEAM_ACTIVITY_REQUEST_AFTER } from "../constants";
-import { viewDashboardHandler } from '../handlers/commands_handler';
+import { API_ROUTES, NOTIFICATION, RETRY_TEAM_ACTIVITY_REQUEST_AFTER, STATUS_BAR_MSGS } from "../constants";
+import { viewActivityHandler } from '../handlers/commands_handler';
 import { IRepoInfo, IUser } from "../interface";
 import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { getTeamActivity } from "../utils/api_utils";
 import { getActiveUsers, readYML } from "../utils/common";
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
+import { statusBarMsgs } from './utils';
 
 
 export class Alerts {
@@ -21,10 +22,10 @@ export class Alerts {
 				minutes: 30
 			},
 			showAfter: 24 * 60 * 60 * 1000, // 24 hours
-			repeatAfter: 20 * 1000, // 15 min
+			hideAfter: 30 * 60 * 1000, // 15 min
 			api: API_ROUTES.TEAM_ACTIVITY
 		}
-	} 
+	}
 
 	settings: any;
 	nowHour: number;
@@ -36,8 +37,9 @@ export class Alerts {
 	alertsData: any;
 	activeUser: IUser;
 	alertConfig: any;
+	statusBarMsgsHandler: any;
 
-	constructor() {
+	constructor(statusBarItem: vscode.StatusBarItem) {
 		const now = new Date();
 		this.nowHour = now.getHours();
 		this.nowMinutes = now.getMinutes();
@@ -49,6 +51,7 @@ export class Alerts {
 		this.checkForDate = "";
 		this.activeUser = getActiveUsers()[0];
 		this.alertConfig = {};
+		this.statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
 	}
 
 	checkActivityAlerts = async () => {
@@ -89,25 +92,20 @@ export class Alerts {
 		this.checkForDate = this.checkFor.toISOString().split('T')[0];
 		// Check when last alert was shown to the user
 		this.alertConfig = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail];
+		const activityAlertMsg = CodeSyncState.get(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG);
+		if (activityAlertMsg && this.alertConfig.shown_at && (this.nowTimestamp - this.alertConfig.shown_at.getTime() >= this.CONFIG.TEAM_ACTIVITY.hideAfter)) {
+			// Hide alert from status bar
+			CodeSyncState.set(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG, "");
+		}
 		// show alert if it is first time
 		if (!this.alertConfig) return await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
 		const hasCheckedForDate = this.checkForDate === this.alertConfig.checked_for;
-		console.log("hasCheckedForDate ", hasCheckedForDate);
-		if (!hasCheckedForDate) {
-			// If checking on same day, should check @4:30pm
-			if (this.checkForDate === this.nowDate) {
-				const canShowAlert = (this.nowHour == alertH && this.nowMinutes >= alertM || this.nowHour > alertH);
-				if (!canShowAlert) return;
-			}
-			// show alert
-			await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
-			return;
+		if (hasCheckedForDate) return;
+		// If checking on same day, should check @4:30pm
+		if (this.checkForDate === this.nowDate) {
+			const canShowAlert = (this.nowHour == alertH && this.nowMinutes >= alertM || this.nowHour > alertH);
+			if (!canShowAlert) return;
 		}
-		console.log("alertConfig.has_seen", this.alertConfig.has_seen);
-		if (this.alertConfig.has_seen) return;
-		const canRepeatAlert = this.alertConfig.shown_at && (this.nowTimestamp - this.alertConfig.shown_at.getTime() >= this.CONFIG.TEAM_ACTIVITY.repeatAfter);
-		console.log("canRepeatAlert", canRepeatAlert);
-		if (!canRepeatAlert) return;
 		// show alert
 		await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
 	};
@@ -131,18 +129,16 @@ export class Alerts {
 		// In case there is no activity
 		if (!json.activities) return;
 		// Check if there is some recent activity to show
-		const hasRecentActivty = true;
-		// const hasRecentActivty = json.activities.some((repoInfo: IRepoInfo) => {
-		// 	const lastSyncedAt = new Date(repoInfo.last_synced_at);
-		// 	// Ignore activity after the "before"
-		// 	if (lastSyncedAt > this.checkFor) return false;
-		// 	// Check if activity was within 24 hours
-		// 	return ((this.checkFor.getTime() - new Date(repoInfo.last_synced_at).getTime())) <= this.CONFIG.TEAM_ACTIVITY.showAfter;
-		// });
+		const hasRecentActivty = json.activities.some((repoInfo: IRepoInfo) => {
+			const lastSyncedAt = new Date(repoInfo.last_synced_at);
+			// Ignore activity after the "before"
+			if (lastSyncedAt > this.checkFor) return false;
+			// Check if activity was within 24 hours
+			return ((this.checkFor.getTime() - new Date(repoInfo.last_synced_at).getTime())) <= this.CONFIG.TEAM_ACTIVITY.showAfter;
+		});
 		if (!hasRecentActivty) {
 			this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
-				checked_for: this.checkForDate,
-				has_seen: false
+				checked_for: this.checkForDate
 			};
 			fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));	
 			return;
@@ -158,22 +154,16 @@ export class Alerts {
 		}
 		CodeSyncLogger.debug(logMsg);
 		vscode.window.showInformationMessage(msg, button).then(selection => {
-			console.log("Selection", selection);
-			// Tracking has_seen if user has clicked on the notification, even on the close icon
-			this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
-				checked_for: this.checkForDate,
-				shown_at: this.alertConfig.shown_at,
-				has_seen: true
-			};
-			fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
-
-			if (!selection) return;
-			viewDashboardHandler();
+			if (selection) return viewActivityHandler();
 		});
+		// Showing activity alert msg in the status bar as well
+		const statusBarMsg = json.is_team_activity ? STATUS_BAR_MSGS.TEAM_ACTIVITY_ALERT : STATUS_BAR_MSGS.USER_ACTIVITY_ALERT;
+		CodeSyncState.set(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG, statusBarMsg);
+		this.statusBarMsgsHandler.update(statusBarMsg);
+		// Update alert config for shown_at
 		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
 			checked_for: this.checkForDate,
-			shown_at: new Date(),
-			has_seen: false
+			shown_at: new Date()
 		};
 		fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
 	}

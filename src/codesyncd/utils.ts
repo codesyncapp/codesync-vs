@@ -202,6 +202,8 @@ export class statusBarMsgs {
 				this.statusBarItem.command = COMMAND.triggerSync;
 			} else if (text === STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN) {
 				this.statusBarItem.command = COMMAND.upgradePlan;
+			} else if ([STATUS_BAR_MSGS.USER_ACTIVITY_ALERT, STATUS_BAR_MSGS.TEAM_ACTIVITY_ALERT].includes(text)) {
+				this.statusBarItem.command = COMMAND.viewActivity;
 			} else {
 				this.statusBarItem.command = undefined;
 			}
@@ -226,18 +228,22 @@ export class statusBarMsgs {
 			const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
 			return canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
 		}
+		const activityAlertMsg = CodeSyncState.get(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG);
+
 		// No repo is opened
-		if (!repoPath) return STATUS_BAR_MSGS.NO_REPO_OPEN;
+		if (!repoPath) return activityAlertMsg || STATUS_BAR_MSGS.NO_REPO_OPEN;
+
+		const defaultMsg = activityAlertMsg || STATUS_BAR_MSGS.DEFAULT;
 
 		const subDirResult = checkSubDir(repoPath);
 		if (subDirResult.isSubDir) {
 			if (subDirResult.isSyncIgnored) {
 				return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
 			}
-			return STATUS_BAR_MSGS.DEFAULT;	
+			return defaultMsg;	
 		}
 		// Repo is not synced
 		if (!isRepoActive(this.configJSON, repoPath)) return STATUS_BAR_MSGS.CONNECT_REPO;
-		return STATUS_BAR_MSGS.DEFAULT;
+		return defaultMsg;
 	}
 }
