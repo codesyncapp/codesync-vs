@@ -84,7 +84,7 @@ export const uploadFile = async (token: string, data: any) => {
 		}
 	*/
 	let error = "";
-	let statusCode = null;
+	let statusCode = 200;
 	let response = await fetch(
 		API_ROUTES.FILES, {
 			method: 'POST',
@@ -101,9 +101,9 @@ export const uploadFile = async (token: string, data: any) => {
 	})
 	.then(text => {
 		try {
-			return JSON.parse(text); // Try to parse the response as JSON
+			return {...JSON.parse(text), statusCode}; // Try to parse the response as JSON
 		} catch(err) {
-			return {error: {message: text ? text : "Failed to parse to JSON response"}};
+			return {error: {message: text ? text : "Failed to parse to JSON response", statusCode}};
 		}
 	})
 	.catch(err => error = err);
@@ -124,7 +124,8 @@ export const uploadFile = async (token: string, data: any) => {
 	}
 	return {
 		response,
-		error
+		error,
+		statusCode
 	};
 };
 
@@ -178,7 +179,8 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 	const json = await uploadFile(accessToken, data);
 	if (json.error) {
 		return {
-			error: `serverError: ${json.error}`
+			error: `serverError: ${json.error}`,
+			statusCode: json.statusCode
 		};
 	}
 	if (fileInfo.size && json.response.url) {
@@ -187,12 +189,14 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 		if (error) {
 			return {
 				error: `s3Error: ${error}`,
-				fileId: json.response.id
+				fileId: json.response.id,
+				statusCode: json.statusCode
 			};
 		}
 	}
 	return {
 		error: null,
-		fileId: json.response.id
+		fileId: json.response.id,
+		statusCode: json.statusCode
 	};
 };

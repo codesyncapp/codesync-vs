@@ -147,14 +147,16 @@ export class Alerts {
 			fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));	
 			return;
 		}
-		CodeSyncLogger.debug(`Team activity alert shown at ${new Date()}, user=${userEmail}`);
 		// Show alert
 		let msg = NOTIFICATION.USER_ACTIVITY_ALERT;
 		let button = NOTIFICATION.REVIEW_PLAYBACK;
+		let logMsg = `User activity alert shown at ${new Date()}, user=${userEmail}`;
 		if (json.is_team_activity) {
 			msg = NOTIFICATION.TEAM_ACTIVITY_ALERT;
 			button = NOTIFICATION.REVIEW_TEAM_PLAYBACK;
+			logMsg = `Team activity alert shown at ${new Date()}, user=${userEmail}`;
 		}
+		CodeSyncLogger.debug(logMsg);
 		vscode.window.showInformationMessage(msg, button).then(selection => {
 			console.log("Selection", selection);
 			// Tracking has_seen if user has clicked on the notification, even on the close icon

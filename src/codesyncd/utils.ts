@@ -81,7 +81,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		CodeSyncLogger.error(`Error uploading file: ${response.error}`);
 		return {
 			uploaded: false,
-			deleteDiff: false,
+			deleteDiff: response.statusCode === 404 ? true : false,
 			config: configJSON
 		};
 	}
