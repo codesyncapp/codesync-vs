@@ -22,7 +22,7 @@ export class Alerts {
 				minutes: 30
 			},
 			showAfter: 24 * 60 * 60 * 1000, // 24 hours
-			hideAfter: 30 * 60 * 1000, // 15 min
+			hideAfter: 30 * 60 * 1000, // 30 min
 			api: API_ROUTES.TEAM_ACTIVITY
 		}
 	}

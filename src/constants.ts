@@ -141,8 +141,8 @@ export const STATUS_BAR_MSGS = {
 	NO_CONFIG: ' CodeSync ❌, Reload required!',
 	UPGRADE_PRICING_PLAN: ' CodeSync ❌, Click to upgrade pricing plan!',
 	UPGRADE_PRICING_PLAN_FOR_FREE: ' CodeSync ❌, Click to upgrade pricing plan for free!',
-	USER_ACTIVITY_ALERT: "CodeSync 🔁 Click to review today!",
-	TEAM_ACTIVITY_ALERT: "CodeSync 🔁 Click to get in sync with your team!"
+	USER_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your activity today!",
+	TEAM_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your team's activity today!"
 };
 
 export const COMMAND = {
