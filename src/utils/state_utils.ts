@@ -9,7 +9,8 @@ export const CODESYNC_STATES = {
     REQUEST_SENT_AT: "requestSentAt",
     SYNCING_BRANCH: "syncingBranch",
     TEAM_ACTIVITY_REQUEST_SENT_AT: "teamActivtyRequestSentAt",
-    CAN_AVAIL_TRIAL: "canAvailTrial"
+    CAN_AVAIL_TRIAL: "canAvailTrial",
+    STATUS_BAR_ACTIVITY_ALERT_MSG: "statusBarActivityAlertMsg"
 };
 
 export class CodeSyncState {

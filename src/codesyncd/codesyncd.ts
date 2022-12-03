@@ -44,6 +44,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
         statusBarMsg = viaDaemon ? statusBarMsgsHandler.getMsg() : STATUS_BAR_MSGS.GETTING_READY;
     }
     statusBarMsgsHandler.update(statusBarMsg);
+
     // Do not proceed if no active user is found OR no config is found
     if ([STATUS_BAR_MSGS.AUTHENTICATION_FAILED, STATUS_BAR_MSGS.NO_CONFIG].includes(statusBarMsg)) {
         // Do not re-run daemon in case of tests
@@ -54,7 +55,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
     }
 
     // Check if we need to show activity alerts
-    new Alerts().checkActivityAlerts();
+    new Alerts(statusBarItem).checkActivityAlerts();
 
     // Check permissions to run populateBuffer and bufferHandler
     const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
