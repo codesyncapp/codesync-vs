@@ -22,6 +22,7 @@ import {
 	trackFileHandler, 
 	trackRepoHandler, 
 	upgradePlanHandler, 
+	viewActivityHandler, 
 	viewDashboardHandler
  } from '../handlers/commands_handler';
 import { generateSettings, PLUGIN_USER } from "../settings";
@@ -231,6 +232,7 @@ export const registerCommands = (context: vscode.ExtensionContext) => {
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.openSyncIgnore, openSyncIgnoreHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.upgradePlan, upgradePlanHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.viewDashboard, viewDashboardHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.viewActivity, viewActivityHandler));
 };
 
 export const createStatusBarItem = (context: vscode.ExtensionContext) => {

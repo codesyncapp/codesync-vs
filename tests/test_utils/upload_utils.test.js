@@ -178,10 +178,20 @@ describe('uploadFileToServer', () => {
     };
 
     test('Auth Error', async () => {
-        fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
+        fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON), { status: 401 });
         const res = await uploadFileToServer("ACCESS_TOKEN", 12345, DEFAULT_BRANCH, filePath,
             "file.txt", formatDatetime());
         expect(res.error.endsWith(INVALID_TOKEN_JSON.error.message)).toBe(true);
+        expect(res.statusCode).toStrictEqual(401);
+        expect(assertAPICall()).toBe(true);
+    });
+
+    test('Branch not found', async () => {
+        const error = {"error": {"message": "Branch not found"}};
+        fetchMock.mockResponseOnce(JSON.stringify(error), { status: 404 });
+        const res = await uploadFileToServer("ACCESS_TOKEN", 12345, DEFAULT_BRANCH, filePath,
+            "file.txt", formatDatetime());
+        expect(res.statusCode).toStrictEqual(404);
         expect(assertAPICall()).toBe(true);
     });
 
@@ -193,6 +203,20 @@ describe('uploadFileToServer', () => {
         expect(res.fileId).toStrictEqual(response.id);
         expect(res.error).toStrictEqual(null);
         expect(assertAPICall()).toBe(true);
+        expect(res.statusCode).toStrictEqual(200);
+    });
+
+    test('InValid response', async () => {
+        fs.rmSync(filePath);
+        fs.writeFileSync(filePath, "Dummy Content Is In The File");
+        const response = {id: 1234, url: {url: "url", fields: {}}};
+        fetchMock.mockResponseOnce(JSON.stringify(response), { status: 500 });
+        const res = await uploadFileToServer("ACCESS_TOKEN", 6789, DEFAULT_BRANCH, filePath,
+            "file.txt", formatDatetime());
+        expect(res.fileId).toStrictEqual(response.id);
+        expect(res.error).toBeTruthy();
+        expect(assertAPICall()).toBe(true);
+        expect(res.statusCode).toStrictEqual(500);
     });
 
     test('Valid file', async () => {
@@ -205,18 +229,6 @@ describe('uploadFileToServer', () => {
         expect(res.fileId).toStrictEqual(response.id);
         expect(res.error).toStrictEqual(null);
         expect(assertAPICall()).toBe(true);
+        expect(res.statusCode).toStrictEqual(200);
     });
-
-    test('InValid response', async () => {
-        fs.rmSync(filePath);
-        fs.writeFileSync(filePath, "Dummy Content Is In The File");
-        const response = {id: 1234, url: {url: "url", fields: {}}};
-        fetchMock.mockResponseOnce(JSON.stringify(response));
-        const res = await uploadFileToServer("ACCESS_TOKEN", 6789, DEFAULT_BRANCH, filePath,
-            "file.txt", formatDatetime());
-        expect(res.fileId).toStrictEqual(response.id);
-        expect(res.error).toBeTruthy();
-        expect(assertAPICall()).toBe(true);
-    });
-
 });
