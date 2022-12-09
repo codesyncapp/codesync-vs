@@ -39,7 +39,7 @@ export const API_ROUTES = {
 
 
 // Diff utils
-export const DIFF_FILES_PER_ITERATION = 50;
+export const DIFF_FILES_PER_ITERATION = 25;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
 export const REQUIRED_FILE_RENAME_DIFF_KEYS = ['old_rel_path', 'new_rel_path'];
 export const REQUIRED_DIR_RENAME_DIFF_KEYS = ['old_path', 'new_path'];
