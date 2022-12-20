@@ -4,12 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.13.1] - 2022-12-09
+### Updated
+- Using DIFF_FILES_PER_ITERATION = 25 instead of 50
+
+## [3.13.0] - 2022-12-01
+### Added
+- Show activity alert msg in the status bar if user does not click on the View Review Activity button
+- Removing diff file if 404 is received from server during file upload
+### Fixed
+- Separate log messages for user/team activity
+
+## [3.12.0] - 2022-11-28
+### Added
+- Upgrade Plan msg checks if user can avail trial period
+
 ## [3.11.0] - 2022-11-25
 ### Updated
 - Updated npm packages to latest
 
 ## [3.10.0] - 2022-11-25
-### Updated
+### Added
 - Added GA4 Parameters to track stats for Web URLs
 
 ## [3.9.12] - 2022-11-19
@@ -17,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README updated for Teams Collaboration 
 
 ## [3.9.11] - 2022-11-19
-### Updated
+### Added
 - Added another improvement in team-activity alert logic
 
 ## [3.9.10] - 2022-11-19

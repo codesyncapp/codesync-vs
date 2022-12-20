@@ -19,9 +19,8 @@ export const setPlanLimitReached = async (accessToken: string) => {
 
 	let pricingUrl = PRICING_URL;
 	let isOrgRepo = false;
+	let canAvailTrial = false;
 
-	// Mark upgradePricingPlan to show button in left panel
-	vscode.commands.executeCommand('setContext', 'upgradePricingPlan', true);
 	// Set time when request is sent
 	CodeSyncState.set(CODESYNC_STATES.REQUEST_SENT_AT, new Date().getTime());
 
@@ -39,19 +38,26 @@ export const setPlanLimitReached = async (accessToken: string) => {
 			if (!json.error) {
 				pricingUrl = json.response.url;
 				isOrgRepo = json.response.is_org_repo;
+				canAvailTrial = json.response.can_avail_trial;
 			}	
 		}
 	}
 
+	// Mark upgradePricingPlan to show button in left panel
+	vscode.commands.executeCommand('setContext', 'upgradePricingPlan', true);
+	vscode.commands.executeCommand('setContext', 'canAvailTrial', canAvailTrial);
+
 	const msg = isOrgRepo ? NOTIFICATION.UPGRADE_ORG_PLAN : NOTIFICATION.UPGRADE_PRICING_PLAN;
+	let button = NOTIFICATION.UPGRADE;
+	if (canAvailTrial) {
+		button = isOrgRepo ? NOTIFICATION.TRY_TEAM_FOR_FREE : NOTIFICATION.TRY_PRO_FOR_FREE;
+	}
 	CodeSyncState.set(CODESYNC_STATES.PRICING_URL, pricingUrl);
+	CodeSyncState.set(CODESYNC_STATES.CAN_AVAIL_TRIAL, canAvailTrial);
 	// Show alert msg
-	vscode.window.showErrorMessage(msg, ...[
-		NOTIFICATION.UPGRADE
-	]).then(async selection => {
-		if (selection === NOTIFICATION.UPGRADE) {
-			vscode.env.openExternal(vscode.Uri.parse(pricingUrl));
-		}
+	vscode.window.showErrorMessage(msg, button).then(async selection => {
+		if (!selection) return;
+		vscode.env.openExternal(vscode.Uri.parse(pricingUrl));
 	});	
 };
 

@@ -21,7 +21,8 @@ import {
     disconnectRepoHandler,
     openSyncIgnoreHandler,
     upgradePlanHandler,
-    viewDashboardHandler
+    viewDashboardHandler,
+    viewActivityHandler
 } from "../src/handlers/commands_handler";
 import {
     createSystemDirectories, 
@@ -101,7 +102,7 @@ describe("Extension: activate",() => {
         expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
         
         // Output of registerCommands
-        expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(9);
+        expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(10);
         expect(vscode.commands.registerCommand.mock.calls[0][0]).toStrictEqual(COMMAND.triggerSignUp);
         expect(vscode.commands.registerCommand.mock.calls[0][1]).toStrictEqual(SignUpHandler);
         expect(vscode.commands.registerCommand.mock.calls[1][0]).toStrictEqual(COMMAND.triggerLogout);
@@ -120,6 +121,8 @@ describe("Extension: activate",() => {
         expect(vscode.commands.registerCommand.mock.calls[7][1]).toStrictEqual(upgradePlanHandler);
         expect(vscode.commands.registerCommand.mock.calls[8][0]).toStrictEqual(COMMAND.viewDashboard);
         expect(vscode.commands.registerCommand.mock.calls[8][1]).toStrictEqual(viewDashboardHandler);
+        expect(vscode.commands.registerCommand.mock.calls[9][0]).toStrictEqual(COMMAND.viewActivity);
+        expect(vscode.commands.registerCommand.mock.calls[9][1]).toStrictEqual(viewActivityHandler);
 
         // createStatusBarItem
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
@@ -173,7 +176,7 @@ describe("Extension: activate",() => {
         setWorkspaceFolders("");
         // Register commands
         registerCommands(vscode.ExtensionContext);
-        expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(9);
+        expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(10);
         expect(vscode.commands.registerCommand.mock.calls[0][0]).toStrictEqual(COMMAND.triggerSignUp);
         expect(vscode.commands.registerCommand.mock.calls[0][1]).toStrictEqual(SignUpHandler);
         expect(vscode.commands.registerCommand.mock.calls[1][0]).toStrictEqual(COMMAND.triggerLogout);
@@ -192,6 +195,8 @@ describe("Extension: activate",() => {
         expect(vscode.commands.registerCommand.mock.calls[7][1]).toStrictEqual(upgradePlanHandler);
         expect(vscode.commands.registerCommand.mock.calls[8][0]).toStrictEqual(COMMAND.viewDashboard);
         expect(vscode.commands.registerCommand.mock.calls[8][1]).toStrictEqual(viewDashboardHandler);
+        expect(vscode.commands.registerCommand.mock.calls[9][0]).toStrictEqual(COMMAND.viewActivity);
+        expect(vscode.commands.registerCommand.mock.calls[9][1]).toStrictEqual(viewActivityHandler);
     });
 
     test("createStatusBarItem: Fresh Setup, no user, no repo opened", async () => {
