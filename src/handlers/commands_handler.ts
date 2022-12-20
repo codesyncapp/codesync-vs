@@ -140,3 +140,9 @@ export const viewDashboardHandler = () => {
 	const url = `${WEB_APP_URL}?${GA4_PARAMS}`;
 	vscode.env.openExternal(vscode.Uri.parse(url));
 };
+
+export const viewActivityHandler = () => {
+	// Hide alert from status bar
+	CodeSyncState.set(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG, "");
+	viewDashboardHandler();
+};

@@ -39,7 +39,7 @@ export const API_ROUTES = {
 
 
 // Diff utils
-export const DIFF_FILES_PER_ITERATION = 50;
+export const DIFF_FILES_PER_ITERATION = 25;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
 export const REQUIRED_FILE_RENAME_DIFF_KEYS = ['old_rel_path', 'new_rel_path'];
 export const REQUIRED_DIR_RENAME_DIFF_KEYS = ['old_path', 'new_path'];
@@ -70,6 +70,8 @@ export const NOTIFICATION = {
 	OK: "OK!",
 	CONTINUE: "Continue",
 	UPGRADE: "Upgrade",
+	TRY_PRO_FOR_FREE: "Try Pro plan for free",
+	TRY_TEAM_FOR_FREE: "Try Team plan for free ",
 	VIEW_DASHBOARD: "View Dashboard",
 	REVIEW_TEAM_PLAYBACK: "Review Team Playback",
 	REVIEW_PLAYBACK: "Review Playback",
@@ -138,6 +140,9 @@ export const STATUS_BAR_MSGS = {
 	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
 	NO_CONFIG: ' CodeSync ❌, Reload required!',
 	UPGRADE_PRICING_PLAN: ' CodeSync ❌, Click to upgrade pricing plan!',
+	UPGRADE_PRICING_PLAN_FOR_FREE: ' CodeSync ❌, Click to upgrade pricing plan for free!',
+	USER_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your activity today!",
+	TEAM_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your team's activity today!"
 };
 
 export const COMMAND = {
@@ -149,7 +154,8 @@ export const COMMAND = {
 	trackFile: 'codesync.trackFile',
 	openSyncIgnore: 'codesync.openSyncIgnore',
 	upgradePlan: 'codesync.upgradePlan',
-	viewDashboard: 'codesync.viewDashboard'
+	viewDashboard: 'codesync.viewDashboard',
+	viewActivity: 'codesync.viewActivity',
 };
 
 export class staticFiles {
