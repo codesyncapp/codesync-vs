@@ -294,7 +294,7 @@
     "express": "^4.18.2",
     "form-data": "^4.0.0",
     "ignore": "^5.2.0",
-    "isbinaryfile": "^4.0.8",
+    "isbinaryfile": "^5.0.0",
     "jest-fetch-mock": "^3.0.3",
     "js-yaml": "^3.14.1",
     "macaddress": "^0.5.3",
