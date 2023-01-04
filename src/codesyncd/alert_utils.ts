@@ -152,6 +152,7 @@ export class Alerts {
 			button = NOTIFICATION.REVIEW_TEAM_PLAYBACK;
 			logMsg = `Team activity alert shown at ${new Date()}, user=${userEmail}`;
 		}
+		CodeSyncLogger.debug(logMsg);
 		vscode.window.showInformationMessage(msg, button).then(selection => {
 			if (selection) return viewActivityHandler();
 		});
