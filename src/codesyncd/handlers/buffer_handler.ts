@@ -64,12 +64,23 @@ export class bufferHandler {
 		this.settings = generateSettings();
 		this.configJSON = readYML(this.settings.CONFIG_PATH);
 	}
+	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
 
 	getDiffFiles = () => {
-		let diffFiles = fs.readdirSync(this.settings.DIFFS_REPO);
-		diffFiles = diffFiles.slice(0, DIFF_FILES_PER_ITERATION);
+		const diffsDir = fs.readdirSync(this.settings.DIFFS_REPO);
+		let randomDiffFiles = [];
+		const usedIndices = <any>[];
+		let randomIndex = undefined;
+		for (let index = 0; index < Math.min(DIFF_FILES_PER_ITERATION, diffsDir.length); index++) {
+			do {
+				randomIndex = this.getRandomIndex( diffsDir.length );
+			}
+			while ( usedIndices.includes( randomIndex ) );
+			usedIndices.push(randomIndex);
+			randomDiffFiles.push(diffsDir[randomIndex]);
+		}
 		// Filter valid diff files
-		diffFiles = diffFiles.filter((diffFile) => {
+		randomDiffFiles = randomDiffFiles.filter((diffFile) => {
 			const filePath = path.join(this.settings.DIFFS_REPO, diffFile);
 			// Pick only yml files
 			if (!diffFile.endsWith('.yml')) {
@@ -122,7 +133,7 @@ export class bufferHandler {
 			return true;
 		});
 
-		return diffFiles;
+		return randomDiffFiles;
 	}
 
 	groupRepoDiffs = (diffFiles: string[]) => {
