@@ -19,5 +19,6 @@ jobs:
         uses: ArtiomTr/jest-coverage-report-action@v2.1.2
         id: coverage
         with:
+            package-manager: yarn
             output: comment
             prnumber: ${{ steps.findPr.outputs.number }}
