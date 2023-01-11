@@ -73,10 +73,10 @@ export const generateSettings = () => {
     const alerts = {
         /*
         For now, we have following data in alerts.yml
-            team_activity: 
+            team_activity:
                 userEmail:
-                    checked_for: "2022-07-05"
-                    shown_at: 2022-07-05 16:30:27.210
+                    checked_for: '2023-01-11'
+                    shown_at: 2023-01-11T14:31:33.086Z
         */
         ALERTS: path.join(rootRepo, "alerts.yml")
     };
