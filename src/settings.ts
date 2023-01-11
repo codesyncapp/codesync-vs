@@ -72,10 +72,6 @@ export const generateSettings = () => {
     };
     const alerts = {
         /*
-        Keeping 
-        1- alert name as key 
-        2- last-shown-at as value
-
         For now, we have following data in alerts.yml
             team_activity: 
                 userEmail:
