@@ -85,10 +85,11 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
     // Do not re-run daemon in case of tests
     if ((global as any).IS_CODESYNC_TEST_MODE) return;
     return setTimeout(() => {
+        // Populate Buffer
         const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
-        if (canPopulateBuffer) populateBuffer();
-        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+        if (canPopulateBuffer) populateBuffer(viaDaemon);
         // Buffer Handler
+        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
         const handler = new bufferHandler(statusBarItem);
         handler.run(canSendDiffs);
     }, RESTART_DAEMON_AFTER);
