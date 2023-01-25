@@ -92,13 +92,13 @@ export class Alerts {
 		this.checkForDate = this.checkFor.toISOString().split('T')[0];
 		// Check when last alert was shown to the user
 		this.alertConfig = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail];
+		// show alert if it is first time
+		if (!this.alertConfig) return await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
 		const activityAlertMsg = CodeSyncState.get(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG);
 		if (activityAlertMsg && this.alertConfig.shown_at && (this.nowTimestamp - this.alertConfig.shown_at.getTime() >= this.CONFIG.TEAM_ACTIVITY.hideAfter)) {
 			// Hide alert from status bar
 			CodeSyncState.set(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG, "");
 		}
-		// show alert if it is first time
-		if (!this.alertConfig) return await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
 		const hasCheckedForDate = this.checkForDate === this.alertConfig.checked_for;
 		if (hasCheckedForDate) return;
 		// If checking on same day, should check @4:30pm
@@ -138,6 +138,7 @@ export class Alerts {
 		});
 		if (!hasRecentActivty) {
 			this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
+				...this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail],
 				checked_for: this.checkForDate
 			};
 			fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));	

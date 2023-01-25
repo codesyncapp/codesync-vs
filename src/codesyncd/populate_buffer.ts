@@ -23,7 +23,8 @@ import { SEQUENCE_MATCHER_RATIO } from "../constants";
 import {eventHandler} from "../events/event_handler";
 
 
-export const populateBuffer = async () => {
+export const populateBuffer = async (viaDaemon=true) => {
+    if (!viaDaemon) return;
     const readyRepos = await detectBranchChange();
     await populateBufferForMissedEvents(readyRepos);
 };
@@ -115,7 +116,6 @@ class PopulateBuffer {
 
     async populateBufferForRepo() {
         console.log(`Watching Repo: ${this.repoPath}`);
-        
         const handler = new eventHandler(this.repoPath, "", true);
 
         for (const itemPath of this.itemPaths) {
