@@ -39,7 +39,7 @@ export const API_ROUTES = {
 
 
 // Diff utils
-export const DIFF_FILES_PER_ITERATION = 25;
+export const DIFF_FILES_PER_ITERATION = 50;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
 export const REQUIRED_FILE_RENAME_DIFF_KEYS = ['old_rel_path', 'new_rel_path'];
 export const REQUIRED_DIR_RENAME_DIFF_KEYS = ['old_path', 'new_path'];
@@ -134,7 +134,7 @@ export const STATUS_BAR_MSGS = {
 	DEFAULT: ' CodeSync ✅',
 	AUTHENTICATION_FAILED: ' CodeSync ❌, Click to authenticate!',
 	SERVER_DOWN: ' CodeSync ❌, Offline',
-	GETTING_READY: ' CodeSync => Getting ready',
+	GETTING_READY: ' CodeSync $(loading~spin) Getting ready',
 	NO_REPO_OPEN: ' CodeSync => No project is open',
 	CONNECT_REPO: ' CodeSync ❌, Click to connect repo!',
 	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
