@@ -73,11 +73,13 @@ export class Alerts {
 
 		TODO: Show alert in all open instances of the IDE by keeping track in state variable. 
 		*/
+		let teamActivityConfig = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key];
 		// Update data in alerts.yml
-		if (this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] instanceof Date || this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] === "") {
+		if (!teamActivityConfig || teamActivityConfig instanceof Date || teamActivityConfig === "") {
 			// Reset value to empty object
-			this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] = {};
+			teamActivityConfig = {};
 		}
+		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] = teamActivityConfig;
 		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
 		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
 		if (this.checkFor.getHours() < alertH || (this.checkFor.getHours() == alertH && this.checkFor.getMinutes() < alertM)) {
