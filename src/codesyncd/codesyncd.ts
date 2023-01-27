@@ -7,6 +7,7 @@ import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
 import { statusBarMsgs } from "./utils";
 import { LockUtils } from "../utils/lock_utils";
 import { Alerts } from "./alert_utils";
+import { CodeSyncLogger } from "../logger";
 
 
 
@@ -53,9 +54,16 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
             recallDaemon(statusBarItem);
         }, RESTART_DAEMON_AFTER);
     }
-
-    // Check if we need to show activity alerts
-    new Alerts(statusBarItem).checkActivityAlerts();
+    
+    try {
+        // Check if we need to show activity alerts
+        new Alerts(statusBarItem).checkActivityAlerts();
+    }
+    catch (e) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        CodeSyncLogger.error("Activity alert failed", e.stack);    
+    }
 
     // Check permissions to run populateBuffer and bufferHandler
     const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
