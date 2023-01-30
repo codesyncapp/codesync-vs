@@ -78,7 +78,7 @@ export class SocketClient {
             that.registerConnectionEvents(connection);
         });
 
-        let url = `${API_ROUTES.DIFFS_WEBSOCKET}?token=${this.accessToken}&source=${DIFF_SOURCE}`;
+        let url = `${API_ROUTES.DIFFS_WEBSOCKET}&token=${this.accessToken}`;
         if (!canSendDiffs) {
             url += '&auth_only=1';
         }

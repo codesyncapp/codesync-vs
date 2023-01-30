@@ -27,14 +27,14 @@ export const RESTART_DAEMON_AFTER = 5000;
 
 export const API_BASE_URL = `${CODESYNC_HOST}/v1`;
 export const API_ROUTES = {
-	HEALTHCHECK: `${CODESYNC_HOST}/healthcheck`,
-	FILES: `${API_BASE_URL}/files`,
-	REPO_INIT: `${API_BASE_URL}/init`,
-	REPOS: `${API_BASE_URL}/repos`,
-	USERS: `${API_BASE_URL}/users`,
-	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription`,
-	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`,
-	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity?tz=${TIMEZONE}`
+	HEALTHCHECK: `${CODESYNC_HOST}/healthcheck?source=${DIFF_SOURCE}`,
+	FILES: `${API_BASE_URL}/files?source=${DIFF_SOURCE}`,
+	REPO_INIT: `${API_BASE_URL}/init?source=${DIFF_SOURCE}`,
+	REPOS: `${API_BASE_URL}/repos?source=${DIFF_SOURCE}`,
+	USERS: `${API_BASE_URL}/users?source=${DIFF_SOURCE}`,
+	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription?source=${DIFF_SOURCE}`,
+	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket?source=${DIFF_SOURCE}`,
+	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity?tz=${TIMEZONE}&source=${DIFF_SOURCE}`
 };
 
 
@@ -134,7 +134,7 @@ export const STATUS_BAR_MSGS = {
 	DEFAULT: ' CodeSync ✅',
 	AUTHENTICATION_FAILED: ' CodeSync ❌, Click to authenticate!',
 	SERVER_DOWN: ' CodeSync ❌, Offline',
-	GETTING_READY: ' CodeSync $(loading~spin) Getting ready',
+	GETTING_READY: ' CodeSync $(loading~spin)',
 	NO_REPO_OPEN: ' CodeSync => No project is open',
 	CONNECT_REPO: ' CodeSync ❌, Click to connect repo!',
 	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
