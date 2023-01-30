@@ -82,6 +82,7 @@ export class Alerts {
 		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] = teamActivityConfig;
 		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
 		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
+		const lastShownAt = this.alertConfig.shown_at_vscode;
 		if (this.checkFor.getHours() < alertH || (this.checkFor.getHours() == alertH && this.checkFor.getMinutes() < alertM)) {
 			// e.g. IDE is opened between 0am-16:29pm, it should check 16:30pm of yesterday till day before yesterday
 			// so subtracting 1 day here. If checking at any hour between 16-23 no need to subtract 1 day.
@@ -97,7 +98,7 @@ export class Alerts {
 		// show alert if it is first time
 		if (!this.alertConfig) return await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
 		const activityAlertMsg = CodeSyncState.get(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG);
-		if (activityAlertMsg && this.alertConfig.shown_at && (this.nowTimestamp - this.alertConfig.shown_at.getTime() >= this.CONFIG.TEAM_ACTIVITY.hideAfter)) {
+		if (activityAlertMsg && lastShownAt && (this.nowTimestamp - lastShownAt.getTime() >= this.CONFIG.TEAM_ACTIVITY.hideAfter)) {
 			// Hide alert from status bar
 			CodeSyncState.set(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG, "");
 		}
@@ -163,10 +164,10 @@ export class Alerts {
 		const statusBarMsg = json.is_team_activity ? STATUS_BAR_MSGS.TEAM_ACTIVITY_ALERT : STATUS_BAR_MSGS.USER_ACTIVITY_ALERT;
 		CodeSyncState.set(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG, statusBarMsg);
 		this.statusBarMsgsHandler.update(statusBarMsg);
-		// Update alert config for shown_at
+		// Update alert config for shown_at_vscode
 		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
 			checked_for: this.checkForDate,
-			shown_at: new Date()
+			shown_at_vscode: new Date()
 		};
 		fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
 	}
