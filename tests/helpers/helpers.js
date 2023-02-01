@@ -5,7 +5,7 @@ import yaml from "js-yaml";
 import {readYML} from "../../src/utils/common";
 import {diff_match_patch} from "diff-match-patch";
 import {pathUtils} from "../../src/utils/path_utils";
-import {DEFAULT_BRANCH, DIFF_SOURCE} from "../../src/constants";
+import {DEFAULT_BRANCH, VSCODE} from "../../src/constants";
 import vscode from "vscode";
 
 export function getRandomString(length) {
@@ -103,7 +103,7 @@ export const DIFF_DATA = {
     file_relative_path: "",
     created_at: "",
     diff: null,
-    source: DIFF_SOURCE
+    source: VSCODE
 };
 
 export class Config {
@@ -143,7 +143,7 @@ export const assertChangeEvent = (repoPath, diffsRepo, oldText, updatedText,
     expect(diffFiles).toHaveLength(diffsCount);
     const diffFilePath = path.join(diffsRepo, diffFiles[diffsCount-1]);
     const diffData = readYML(diffFilePath);
-    expect(diffData.source).toEqual(DIFF_SOURCE);
+    expect(diffData.source).toEqual(VSCODE);
     expect(diffData.is_new_file).toBeFalsy();
     expect(diffData.is_rename).toBeFalsy();
     expect(diffData.is_deleted).toBeFalsy();
@@ -176,7 +176,7 @@ export const assertRenameEvent = (repoPath, configPath, oldRelPath, newRelPath,
     expect(diffFiles).toHaveLength(diffsCount);
     const diffFilePath = path.join(diffsRepo, diffFiles[diffsCount-1]);
     const diffData = readYML(diffFilePath);
-    expect(diffData.source).toEqual(DIFF_SOURCE);
+    expect(diffData.source).toEqual(VSCODE);
     expect(diffData.is_rename).toBe(true);
     expect(diffData.is_new_file).toBeFalsy();
     expect(diffData.is_deleted).toBeFalsy();
@@ -208,7 +208,7 @@ export const assertNewFileEvent = (repoPath, newRelPath, diffsCount = 1) => {
     expect(diffFiles).toHaveLength(diffsCount);
     const diffFilePath = path.join(diffsRepo, diffFiles[diffsCount-1]);
     const diffData = readYML(diffFilePath);
-    expect(diffData.source).toEqual(DIFF_SOURCE);
+    expect(diffData.source).toEqual(VSCODE);
     expect(diffData.is_new_file).toBe(true);
     expect(diffData.is_rename).toBeFalsy();
     expect(diffData.is_deleted).toBeFalsy();
@@ -236,7 +236,7 @@ export const assertFileDeleteEvent = (repoPath, fileRelPath, isDirectory=false) 
     expect(diffFiles).toHaveLength(1);
     const diffFilePath = path.join(diffsRepo, diffFiles[0]);
     const diffData = readYML(diffFilePath);
-    expect(diffData.source).toEqual(DIFF_SOURCE);
+    expect(diffData.source).toEqual(VSCODE);
     expect(diffData.is_deleted).toBe(true);
     expect(diffData.is_rename).toBeFalsy();
     expect(diffData.is_new_file).toBeFalsy();

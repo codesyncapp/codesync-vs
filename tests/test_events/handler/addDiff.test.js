@@ -5,7 +5,7 @@ import {DATETIME_FORMAT, DEFAULT_BRANCH} from "../../../src/constants";
 import {randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
 import dateFormat from "dateformat";
 import {readYML} from "../../../src/utils/common";
-import {DIFF_SOURCE} from "../../../src/constants";
+import {VSCODE} from "../../../src/constants";
 import {pathUtils} from "../../../src/utils/path_utils";
 import {eventHandler} from "../../../src/events/event_handler";
 
@@ -51,7 +51,7 @@ describe("addDiff", () => {
         expect(diffFiles).toHaveLength(1);
         const diffFilePath = path.join(diffsRepo, diffFiles[0]);
         const diffData = readYML(diffFilePath);
-        expect(diffData.source).toEqual(DIFF_SOURCE);
+        expect(diffData.source).toEqual(VSCODE);
         expect(diffData.created_at).toEqual(createdAt);
     });
 });

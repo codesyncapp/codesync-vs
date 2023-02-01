@@ -96,8 +96,9 @@ export class Alerts {
 		this.alertConfig = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail];
 		// show alert if it is first time
 		if (!this.alertConfig) return await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
+		const lastShownAt = this.alertConfig.shown_at_vscode;
 		const activityAlertMsg = CodeSyncState.get(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG);
-		if (activityAlertMsg && this.alertConfig.shown_at && (this.nowTimestamp - this.alertConfig.shown_at.getTime() >= this.CONFIG.TEAM_ACTIVITY.hideAfter)) {
+		if (activityAlertMsg && lastShownAt && (this.nowTimestamp - lastShownAt.getTime() >= this.CONFIG.TEAM_ACTIVITY.hideAfter)) {
 			// Hide alert from status bar
 			CodeSyncState.set(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG, "");
 		}
@@ -163,10 +164,10 @@ export class Alerts {
 		const statusBarMsg = json.is_team_activity ? STATUS_BAR_MSGS.TEAM_ACTIVITY_ALERT : STATUS_BAR_MSGS.USER_ACTIVITY_ALERT;
 		CodeSyncState.set(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG, statusBarMsg);
 		this.statusBarMsgsHandler.update(statusBarMsg);
-		// Update alert config for shown_at
+		// Update alert config for shown_at_vscode
 		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
 			checked_for: this.checkForDate,
-			shown_at: new Date()
+			shown_at_vscode: new Date()
 		};
 		fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
 	}

@@ -16,7 +16,7 @@ import {
     randomBaseRepoPath,
     randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, getSeqTokenFilePath, Config, addUser, waitFor
 } from "../helpers/helpers";
-import {API_ROUTES, DEFAULT_BRANCH, DIFF_SOURCE, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
+import {API_ROUTES, DEFAULT_BRANCH, VSCODE, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {isBinaryFileSync} from "isbinaryfile";
@@ -399,7 +399,7 @@ describe("uploadRepo",  () => {
         expect(body.name).toStrictEqual(path.basename(repoPath));
         expect(body.is_public).toBe(false);
         expect(body.branch).toStrictEqual(DEFAULT_BRANCH);
-        expect(body.source).toStrictEqual(DIFF_SOURCE);
+        expect(body.source).toStrictEqual(VSCODE);
         expect(body.platform).toStrictEqual(os.platform());
         const files_data = JSON.parse(body.files_data);
         [".syncignore", "file.js"].forEach(key => {

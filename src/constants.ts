@@ -1,16 +1,22 @@
 "use strict";
 
 import path from "path";
+import vscode from 'vscode';
+
 import {
 	CODESYNC_WEBSOCKET_HOST,
 	CODESYNC_HOST,
 	WEB_APP_URL
 } from "./settings";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+export const VERSION = vscode.extensions.getExtension('codesync.codesync').packageJSON.version;
+
 export const SYNCIGNORE = ".syncignore";
 export const GITIGNORE = ".gitignore";
 
-export const DIFF_SOURCE = 'vscode';
+export const VSCODE = 'vscode';
 export const DEFAULT_BRANCH = 'default';
 
 // TODO: Use standard .gitignore
@@ -27,14 +33,14 @@ export const RESTART_DAEMON_AFTER = 5000;
 
 export const API_BASE_URL = `${CODESYNC_HOST}/v1`;
 export const API_ROUTES = {
-	HEALTHCHECK: `${CODESYNC_HOST}/healthcheck`,
-	FILES: `${API_BASE_URL}/files`,
-	REPO_INIT: `${API_BASE_URL}/init`,
-	REPOS: `${API_BASE_URL}/repos`,
-	USERS: `${API_BASE_URL}/users`,
-	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription`,
-	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`,
-	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity?tz=${TIMEZONE}`
+	HEALTHCHECK: `${CODESYNC_HOST}/healthcheck?source=${VSCODE}&v=${VERSION}`,
+	FILES: `${API_BASE_URL}/files?source=${VSCODE}&v=${VERSION}`,
+	REPO_INIT: `${API_BASE_URL}/init?source=${VSCODE}&v=${VERSION}`,
+	REPOS: `${API_BASE_URL}/repos?source=${VSCODE}&v=${VERSION}`,
+	USERS: `${API_BASE_URL}/users?source=${VSCODE}&v=${VERSION}`,
+	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription?source=${VSCODE}&v=${VERSION}`,
+	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket?source=${VSCODE}&v=${VERSION}`,
+	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity?tz=${TIMEZONE}&source=${VSCODE}&v=${VERSION}`
 };
 
 
@@ -134,7 +140,7 @@ export const STATUS_BAR_MSGS = {
 	DEFAULT: ' CodeSync ✅',
 	AUTHENTICATION_FAILED: ' CodeSync ❌, Click to authenticate!',
 	SERVER_DOWN: ' CodeSync ❌, Offline',
-	GETTING_READY: ' CodeSync $(loading~spin) Getting ready',
+	GETTING_READY: ' CodeSync $(loading~spin)',
 	NO_REPO_OPEN: ' CodeSync => No project is open',
 	CONNECT_REPO: ' CodeSync ❌, Click to connect repo!',
 	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
@@ -182,6 +188,6 @@ export const SOCKET_ERRORS = {
 };
 export const DAY = 24 * 60 * 60 * 1000;
 // GA-4 Parameters
-export const GA4_PARAMS = `utm_medium=plugin&utm_source=${DIFF_SOURCE}`;
+export const GA4_PARAMS = `utm_medium=plugin&utm_source=${VSCODE}`;
 export const GA4_PARAMS_DAILY_POPUP_FIRST = `${GA4_PARAMS}&utm_campaign=daily_popup_first`;
 export const PRICING_URL = `${WEB_APP_URL}/pricing?${GA4_PARAMS}`;

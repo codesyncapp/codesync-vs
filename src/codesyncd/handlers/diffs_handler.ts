@@ -30,8 +30,12 @@ export class DiffsHandler {
 
     async run() {
         const validDiffs: IDiffToSend[] = [];
+        // order by is_new_file, will upload new files first and then will go for diffs upload
+        const newFilesDiffs = this.diffsList.filter(diffFile => diffFile.diff.is_new_file);
+        const otherDiffs = this.diffsList.filter(x => !newFilesDiffs.includes(x));
+        const orderedDiffFiles = [...newFilesDiffs, ...otherDiffs];
         // Iterate diffs
-        for (const fileToDiff of this.diffsList) {
+        for (const fileToDiff of orderedDiffFiles) {
             try {
                 const diffData = fileToDiff.diff;
                 const diffFilePath = fileToDiff.file_path;

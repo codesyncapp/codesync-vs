@@ -7,7 +7,6 @@ import {recallDaemon} from "../codesyncd";
 import {SocketEvents} from "./socket_events";
 import {
     CONNECTION_ERROR_MESSAGE,
-    DIFF_SOURCE,
     SOCKET_CONNECT_ERROR_CODES,
     SOCKET_ERRORS,
     API_ROUTES
@@ -78,7 +77,7 @@ export class SocketClient {
             that.registerConnectionEvents(connection);
         });
 
-        let url = `${API_ROUTES.DIFFS_WEBSOCKET}?token=${this.accessToken}&source=${DIFF_SOURCE}`;
+        let url = `${API_ROUTES.DIFFS_WEBSOCKET}&token=${this.accessToken}`;
         if (!canSendDiffs) {
             url += '&auth_only=1';
         }
