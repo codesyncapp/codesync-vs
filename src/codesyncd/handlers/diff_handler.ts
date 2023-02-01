@@ -9,7 +9,7 @@ import {readYML} from "../../utils/common";
 import {CodeSyncLogger} from "../../logger";
 import {pathUtils} from "../../utils/path_utils";
 import {initUtils} from "../../init/utils";
-import {DIFF_SOURCE} from "../../constants";
+import {VSCODE} from "../../constants";
 
 export class DiffHandler {
     fileRelPath: string;
@@ -98,7 +98,7 @@ export class DiffHandler {
             'is_binary': this.diffData.is_binary,
             'created_at': this.createdAt,
             'diff_file_path': this.diffFilePath,
-            'source': DIFF_SOURCE,
+            'source': VSCODE,
             'platform': os.platform()
         };
     }

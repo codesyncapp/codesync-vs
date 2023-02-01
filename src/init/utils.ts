@@ -15,7 +15,7 @@ import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload } from '../interface';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
-import { CONNECTION_ERROR_MESSAGE, DIFF_SOURCE, NOTIFICATION, RETRY_BRANCH_SYNC_AFTER } from '../constants';
+import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, RETRY_BRANCH_SYNC_AFTER } from '../constants';
 import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
@@ -260,7 +260,7 @@ export class initUtils {
 			is_public: isPublic,
 			branch,
 			files_data: JSON.stringify(filesData),
-			source: DIFF_SOURCE,
+			source: VSCODE,
 			platform: os.platform()
 		};
 

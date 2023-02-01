@@ -2,20 +2,16 @@ import fs from 'fs';
 import os from 'os';
 import yaml from 'js-yaml';
 import AWS from 'aws-sdk';
-import vscode from "vscode";
 import macaddress from "macaddress";
 
 import { PutLogEventsRequest } from 'aws-sdk/clients/cloudwatchlogs';
 import {
-	DIFF_SOURCE,
-	LOG_AFTER_X_TIMES
+	VSCODE,
+	LOG_AFTER_X_TIMES,
+	VERSION
 } from './constants';
 import { readYML, isEmpty } from './utils/common';
 import { generateSettings, LOGS_METADATA, PLUGIN_USER } from "./settings";
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-const VERSION = vscode.extensions.getExtension('codesync.codesync').packageJSON.version;
 
 let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 let macAddress = "";
@@ -119,7 +115,7 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", logStream
 	const CWEventMsg = {
 		msg: eventMsg,
 		type: eventType,
-		source: DIFF_SOURCE,
+		source: VSCODE,
 		version: VERSION,
 		platform: os.platform(),
 		mac_address: macAddress
