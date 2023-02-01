@@ -40,14 +40,14 @@ export class DiffHandler {
         this.configRepo = this.configJSON.repos[this.repoPath];
     }
 
-    async handleNewFile() {
+    async handleNewFile(deleteDiff=true) {
         /*
             Uploads new file to server and adds it in config
             Ignores if file is not present in .originals repo
         */
         const json = await handleNewFileUpload(
             this.accessToken, this.repoPath, this.branch, this.addedAt,
-            this.fileRelPath, this.configRepo.id, this.configJSON
+            this.fileRelPath, this.configRepo.id, this.configJSON, deleteDiff
         );
 
         // Clean up diff file
@@ -68,7 +68,7 @@ export class DiffHandler {
             const filePath = path.join(this.repoPath, this.fileRelPath);
             initUtilsObj.copyFilesTo([filePath], originalsRepoBranchPath);
         }
-        return await this.handleNewFile();
+        return await this.handleNewFile(false);
     }
 
     handleDeletedFile() {

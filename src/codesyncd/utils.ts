@@ -53,7 +53,7 @@ export const isValidDiff = (diffData: IDiff) => {
 };
 
 export const handleNewFileUpload = async (accessToken: string, repoPath: string, branch: string, addedAt: string,
-											relPath: string, repoId: number, configJSON: any) => {
+											relPath: string, repoId: number, configJSON: any, deleteDiff=true) => {
 	/*
 		Uploads new file to server and adds it in config
 		Ignores if file is not present in .originals repo
@@ -81,7 +81,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		CodeSyncLogger.error(`Error uploading file: ${response.error}`);
 		return {
 			uploaded: false,
-			deleteDiff: response.statusCode === 404 ? true : false,
+			deleteDiff: response.statusCode === 404,
 			config: configJSON
 		};
 	}
@@ -96,7 +96,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 
 	return {
 		uploaded: true,
-		deleteDiff: true,
+		deleteDiff: deleteDiff,
 		config: configJSON
 	};
 };
