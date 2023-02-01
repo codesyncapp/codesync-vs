@@ -383,8 +383,7 @@ describe("bufferHandler", () => {
             type: 'utf8',
             utf8Data: JSON.stringify({
                 type: "auth",
-                status: 400,
-                diff_file_path: diffFilePath
+                status: 400
             })
         };
         const handled = await webSocketEvents.onMessage(msg);
@@ -404,8 +403,7 @@ describe("bufferHandler", () => {
             type: 'utf8',
             utf8Data: JSON.stringify({
                 type: "auth",
-                status: 200,
-                diff_file_path: diffFilePath
+                status: 200
             })
         };
         const handled = await webSocketEvents.onMessage(msg);
@@ -421,7 +419,7 @@ describe("bufferHandler", () => {
     });
 
     test("SocketEvents: onMessage, New File Diff along with changes diff", async () => {
-        // Should upload file only in 1 iteration
+        // Should upload file only in 1st iteration
         addRepo();
         const diffFilePathForNewFile = addNewFileDiff();
         await waitFor(1);
@@ -434,8 +432,7 @@ describe("bufferHandler", () => {
             type: 'utf8',
             utf8Data: JSON.stringify({
                 type: "auth",
-                status: 200,
-                diff_file_path: diffFilePathForNewFile
+                status: 200
             })
         };
         let handled = await webSocketEvents.onMessage(msg);
@@ -455,15 +452,13 @@ describe("bufferHandler", () => {
             type: 'utf8',
             utf8Data: JSON.stringify({
                 type: "auth",
-                status: 200,
-                diff_file_path: diffFilePathForChanges
+                status: 200
             })
         };
         handler = new bufferHandler(statusBarItem);
         diffFiles = handler.getDiffFiles();
         repoDiffs = handler.groupRepoDiffs(diffFiles);
         webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
-
         handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
         expect(fs.existsSync(diffFilePathForChanges)).toBe(true);
@@ -505,8 +500,7 @@ describe("bufferHandler", () => {
             type: 'utf8',
             utf8Data: JSON.stringify({
                 type: "auth",
-                status: 200,
-                diff_file_path: diffFilePath
+                status: 200
             })
         };
         const handled = await webSocketEvents.onMessage(msg);
@@ -536,8 +530,7 @@ describe("bufferHandler", () => {
             type: 'utf8',
             utf8Data: JSON.stringify({
                 type: "auth",
-                status: 200,
-                diff_file_path: diffFilePath
+                status: 200
             })
         };
         const handled = await webSocketEvents.onMessage(msg);
@@ -558,8 +551,7 @@ describe("bufferHandler", () => {
             type: 'utf8',
             utf8Data: JSON.stringify({
                 type: "auth",
-                status: 200,
-                diff_file_path: diffFilePath
+                status: 200
             })
         };
         const handled = await webSocketEvents.onMessage(msg);
@@ -578,6 +570,8 @@ describe("bufferHandler", () => {
     });
 
     test("SocketEvents: onMessage, Changes for non synced file", async () => {
+        // file_id is missing from config file, so the bufferHandler should upload the file first and the sync 
+        // the diff in next iteration
         const lockUtils = new LockUtils();
         lockUtils.acquireSendDiffsLock();
         lockUtils.acquirePopulateBufferLock();    
@@ -594,19 +588,44 @@ describe("bufferHandler", () => {
             type: 'utf8',
             utf8Data: JSON.stringify({
                 type: "auth",
-                status: 200,
-                diff_file_path: diffFilePath
+                status: 200
             })
         };
-        const handled = await webSocketEvents.onMessage(msg);
+        let handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
-        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.SYNCING)).toBe(true);
-        expect(fs.existsSync(diffFilePath)).toBe(false);
+        expect(assertDiffsCount(1, undefined, STATUS_BAR_MSGS.SYNCING)).toBe(true);
+        expect(fs.existsSync(diffFilePath)).toBe(true);
         const config = readYML(configPath);
         // As diff was for new file, verify that file has been uploaded to server
         expect(newRelPath in config.repos[repoPath].branches[DEFAULT_BRANCH]).toBe(true);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH][newRelPath]).toStrictEqual(newFileId);
         // File should be deleted from .originals
         expect(fs.existsSync(originalsFilePath)).toBe(false);
+        // Second iteraton
+        const secondMsg = {
+            type: 'utf8',
+            utf8Data: JSON.stringify({
+                type: "auth",
+                status: 200
+            })
+        };
+        handled = await webSocketEvents.onMessage(secondMsg);
+        expect(handled).toBe(true);
+        expect(assertDiffsCount(1, undefined, STATUS_BAR_MSGS.SYNCING)).toBe(true);
+        expect(fs.existsSync(diffFilePath)).toBe(true);
+
+        // Diff synced successfullt 
+        const syncMsg = {
+            type: 'utf8',
+            utf8Data: JSON.stringify({
+                type: "sync",
+                status: 200,
+                diff_file_path: diffFilePath
+            })
+        };
+        handled = await webSocketEvents.onMessage(syncMsg);
+        expect(handled).toBe(true);
+        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.SYNCING)).toBe(true);
+        expect(fs.existsSync(diffFilePath)).toBe(false);
     });
 });

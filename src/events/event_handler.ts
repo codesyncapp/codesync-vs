@@ -120,8 +120,8 @@ export class eventHandler {
 			// If populating buffer via daemon, check if shadow was modified after the file was written to disk
 			const shadowHasBeenUpdated = lstatShadow.mtimeMs >= lstatFile.mtimeMs;
 			if (shadowHasBeenUpdated) {
-				this.createdAt = formatDatetime(lstatShadow.mtimeMs);
 				if (this.viaDaemon) return;
+				this.createdAt = formatDatetime(lstatShadow.mtimeMs);
 			}
 			// Read shadow file
 			shadowText = fs.readFileSync(shadowPath, "utf8");
@@ -133,7 +133,7 @@ export class eventHandler {
 		// Compute diffs
 		const dmp = new diff_match_patch();
 		const patches = dmp.patch_make(shadowText, currentText);
-		//  Create text representation of patches objects
+		// Create text representation of patches objects
 		const diffs = dmp.patch_toText(patches);
 		// Add new diff in the buffer
 		this.addDiff(relPath, diffs);
