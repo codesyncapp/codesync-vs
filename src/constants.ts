@@ -1,16 +1,22 @@
 "use strict";
 
 import path from "path";
+import vscode from 'vscode';
+
 import {
 	CODESYNC_WEBSOCKET_HOST,
 	CODESYNC_HOST,
 	WEB_APP_URL
 } from "./settings";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+export const VERSION = vscode.extensions.getExtension('codesync.codesync').packageJSON.version;
+
 export const SYNCIGNORE = ".syncignore";
 export const GITIGNORE = ".gitignore";
 
-export const DIFF_SOURCE = 'vscode';
+export const VSCODE = 'vscode';
 export const DEFAULT_BRANCH = 'default';
 
 // TODO: Use standard .gitignore
@@ -27,14 +33,14 @@ export const RESTART_DAEMON_AFTER = 5000;
 
 export const API_BASE_URL = `${CODESYNC_HOST}/v1`;
 export const API_ROUTES = {
-	HEALTHCHECK: `${CODESYNC_HOST}/healthcheck?source=${DIFF_SOURCE}`,
-	FILES: `${API_BASE_URL}/files?source=${DIFF_SOURCE}`,
-	REPO_INIT: `${API_BASE_URL}/init?source=${DIFF_SOURCE}`,
-	REPOS: `${API_BASE_URL}/repos?source=${DIFF_SOURCE}`,
-	USERS: `${API_BASE_URL}/users?source=${DIFF_SOURCE}`,
-	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription?source=${DIFF_SOURCE}`,
-	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket?source=${DIFF_SOURCE}`,
-	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity?tz=${TIMEZONE}&source=${DIFF_SOURCE}`
+	HEALTHCHECK: `${CODESYNC_HOST}/healthcheck?source=${VSCODE}&v=${VERSION}`,
+	FILES: `${API_BASE_URL}/files?source=${VSCODE}&v=${VERSION}`,
+	REPO_INIT: `${API_BASE_URL}/init?source=${VSCODE}&v=${VERSION}`,
+	REPOS: `${API_BASE_URL}/repos?source=${VSCODE}&v=${VERSION}`,
+	USERS: `${API_BASE_URL}/users?source=${VSCODE}&v=${VERSION}`,
+	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription?source=${VSCODE}&v=${VERSION}`,
+	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket?source=${VSCODE}&v=${VERSION}`,
+	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity?tz=${TIMEZONE}&source=${VSCODE}&v=${VERSION}`
 };
 
 
@@ -182,6 +188,6 @@ export const SOCKET_ERRORS = {
 };
 export const DAY = 24 * 60 * 60 * 1000;
 // GA-4 Parameters
-export const GA4_PARAMS = `utm_medium=plugin&utm_source=${DIFF_SOURCE}`;
+export const GA4_PARAMS = `utm_medium=plugin&utm_source=${VSCODE}`;
 export const GA4_PARAMS_DAILY_POPUP_FIRST = `${GA4_PARAMS}&utm_campaign=daily_popup_first`;
 export const PRICING_URL = `${WEB_APP_URL}/pricing?${GA4_PARAMS}`;

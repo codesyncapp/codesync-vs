@@ -10,7 +10,7 @@ import { formatDatetime, getBranch, readYML } from "../utils/common";
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
-import { DIFF_SOURCE } from "../constants";
+import { VSCODE } from "../constants";
 import { isRepoSynced, shouldIgnorePath } from './utils';
 
 
@@ -51,7 +51,7 @@ export class eventHandler {
 		}
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
-		newDiff.source = DIFF_SOURCE;
+		newDiff.source = VSCODE;
 		newDiff.repo_path = this.repoPath;
 		newDiff.branch = this.branch;
 		newDiff.file_relative_path = relPath;

@@ -29,7 +29,7 @@ import {eventHandler} from "../../src/events/event_handler";
 import {SocketClient} from "../../src/codesyncd/websocket/socket_client";
 import {SocketEvents} from "../../src/codesyncd/websocket/socket_events";
 import {readYML} from "../../src/utils/common";
-import {DIFF_SOURCE} from "../../src/constants";
+import {VSCODE} from "../../src/constants";
 import {LockUtils} from "../../src/utils/lock_utils";
 
 
@@ -472,7 +472,7 @@ describe("bufferHandler", () => {
         expect(diffJSON.is_rename).toBeFalsy();
         expect(diffJSON.diff).toStrictEqual(normalDiff);
         expect(diffJSON.diff_file_path).toStrictEqual(diffFilePathForChanges);
-        expect(diffJSON.source).toStrictEqual(DIFF_SOURCE);
+        expect(diffJSON.source).toStrictEqual(VSCODE);
         expect(diffJSON.platform).toStrictEqual(os.platform());
         // Successfully sent the diff
         msg = {
@@ -515,7 +515,7 @@ describe("bufferHandler", () => {
         expect(diffJSON.is_rename).toBeTruthy();
         expect(diffJSON.diff).toStrictEqual(renameDiff);
         expect(diffJSON.diff_file_path).toStrictEqual(diffFilePath);
-        expect(diffJSON.source).toStrictEqual(DIFF_SOURCE);
+        expect(diffJSON.source).toStrictEqual(VSCODE);
         expect(diffJSON.platform).toStrictEqual(os.platform());
     });
 
@@ -565,7 +565,7 @@ describe("bufferHandler", () => {
         expect(diffJSON.is_deleted).toBeTruthy();
         expect(diffJSON.is_rename).toBeFalsy();
         expect(diffJSON.diff_file_path).toStrictEqual(diffFilePath);
-        expect(diffJSON.source).toStrictEqual(DIFF_SOURCE);
+        expect(diffJSON.source).toStrictEqual(VSCODE);
         expect(diffJSON.platform).toStrictEqual(os.platform());
     });
 
