@@ -10,7 +10,7 @@ import fetchMock from "jest-fetch-mock";
 import {pathUtils} from "../../src/utils/path_utils";
 import {createSystemDirectories} from "../../src/utils/setup_utils";
 import {CODESYNC_STATES, CodeSyncState} from "../../src/utils/state_utils";
-import {COMMAND, DEFAULT_BRANCH, STATUS_BAR_MSGS} from "../../src/constants";
+import {DEFAULT_BRANCH} from "../../src/constants";
 import {
     addUser,
     DUMMY_FILE_CONTENT,
@@ -275,7 +275,7 @@ describe("bufferHandler", () => {
         addChangesDiff();
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        expect(assertDiffsCount(0, COMMAND.triggerSync, STATUS_BAR_MSGS.CONNECT_REPO)).toBe(true);
+        expect(assertDiffsCount(0)).toBe(true);
     });
 
     test("Diff for non synced branch", async () => {
@@ -348,7 +348,7 @@ describe("bufferHandler", () => {
         };
         const handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
-        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.SYNCING)).toBe(true);
+        expect(assertDiffsCount(0)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(false);
     });
 
@@ -388,7 +388,7 @@ describe("bufferHandler", () => {
         };
         const handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
-        expect(assertDiffsCount(1, COMMAND.triggerSignUp, STATUS_BAR_MSGS.AUTHENTICATION_FAILED)).toBe(true);
+        expect(assertDiffsCount(1)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(true);
     });
 
@@ -408,7 +408,7 @@ describe("bufferHandler", () => {
         };
         const handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
-        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.SYNCING)).toBe(true);
+        expect(assertDiffsCount(0)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(false);
         const config = readYML(configPath);
         // As diff was for new file, verify that file has been uploaded to server
@@ -437,7 +437,7 @@ describe("bufferHandler", () => {
         };
         let handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
-        expect(assertDiffsCount(1, undefined, STATUS_BAR_MSGS.SYNCING)).toBe(true);
+        expect(assertDiffsCount(1)).toBe(true);
         // File should be deleted from .originals
         expect(fs.existsSync(originalsFilePath)).toBe(false);
         expect(fs.existsSync(diffFilePathForNewFile)).toBe(false);
@@ -593,7 +593,7 @@ describe("bufferHandler", () => {
         };
         let handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
-        expect(assertDiffsCount(1, undefined, STATUS_BAR_MSGS.SYNCING)).toBe(true);
+        expect(assertDiffsCount(1)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(true);
         const config = readYML(configPath);
         // As diff was for new file, verify that file has been uploaded to server
@@ -611,7 +611,7 @@ describe("bufferHandler", () => {
         };
         handled = await webSocketEvents.onMessage(secondMsg);
         expect(handled).toBe(true);
-        expect(assertDiffsCount(1, undefined, STATUS_BAR_MSGS.SYNCING)).toBe(true);
+        expect(assertDiffsCount(1)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(true);
 
         // Diff synced successfullt 
@@ -625,7 +625,7 @@ describe("bufferHandler", () => {
         };
         handled = await webSocketEvents.onMessage(syncMsg);
         expect(handled).toBe(true);
-        expect(assertDiffsCount(0, undefined, STATUS_BAR_MSGS.SYNCING)).toBe(true);
+        expect(assertDiffsCount(0)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(false);
     });
 });

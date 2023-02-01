@@ -7,7 +7,6 @@ import {recallDaemon} from "../codesyncd";
 import {SocketEvents} from "./socket_events";
 import {
     CONNECTION_ERROR_MESSAGE,
-    DIFF_SOURCE,
     SOCKET_CONNECT_ERROR_CODES,
     SOCKET_ERRORS,
     API_ROUTES
