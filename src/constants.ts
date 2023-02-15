@@ -31,16 +31,26 @@ export const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
+export const generateAPIUrl = (url: string, addTimezone=false) => {
+	const _url = new URL(url);
+	_url.searchParams.append("source", VSCODE);
+	_url.searchParams.append("v", VERSION);
+	if (addTimezone) {
+		_url.searchParams.append("tz", TIMEZONE);
+	}
+	return _url.href;
+};
+
 export const API_BASE_URL = `${CODESYNC_HOST}/v1`;
 export const API_ROUTES = {
-	HEALTHCHECK: `${CODESYNC_HOST}/healthcheck?source=${VSCODE}&v=${VERSION}`,
-	FILES: `${API_BASE_URL}/files?source=${VSCODE}&v=${VERSION}`,
-	REPO_INIT: `${API_BASE_URL}/init?source=${VSCODE}&v=${VERSION}`,
-	REPOS: `${API_BASE_URL}/repos?source=${VSCODE}&v=${VERSION}`,
-	USERS: `${API_BASE_URL}/users?source=${VSCODE}&v=${VERSION}`,
-	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription?source=${VSCODE}&v=${VERSION}`,
-	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket?source=${VSCODE}&v=${VERSION}`,
-	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity?tz=${TIMEZONE}&source=${VSCODE}&v=${VERSION}`
+	HEALTHCHECK: generateAPIUrl(`${CODESYNC_HOST}/healthcheck`),
+	FILES: generateAPIUrl(`${API_BASE_URL}/files`),
+	REPO_INIT: generateAPIUrl(`${API_BASE_URL}/init`),
+	REPOS: generateAPIUrl(`${API_BASE_URL}/repos`),
+	USERS: generateAPIUrl(`${API_BASE_URL}/users`),
+	USER_SUBSCRIPTION: generateAPIUrl(`${API_BASE_URL}/users/subscription`),
+	DIFFS_WEBSOCKET: generateAPIUrl(`${CODESYNC_WEBSOCKET_HOST}/v2/websocket`),
+	TEAM_ACTIVITY: generateAPIUrl(`${API_BASE_URL}/team_activity`, true)
 };
 
 
@@ -59,8 +69,8 @@ export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Pleas
 export const MIN_PORT = 49152;
 export const MAX_PORT = 65535;
 export const Auth0URLs = {
-	AUTHORIZE: `${CODESYNC_HOST}/authorize`,
-    LOGOUT: `${CODESYNC_HOST}/auth-logout`,
+	AUTHORIZE: generateAPIUrl(`${CODESYNC_HOST}/authorize`),
+    LOGOUT: generateAPIUrl(`${CODESYNC_HOST}/auth-logout`),
 	LOGIN_CALLBACK_PATH: "/login-callback"
 };
 

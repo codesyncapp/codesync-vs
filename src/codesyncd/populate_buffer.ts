@@ -145,7 +145,7 @@ class PopulateBuffer {
                 handler.handleChanges(itemPath.file_path, currentContent);
                 continue;
             }
-            // If rel_path is not in configFiles and shadow does not exists, can be a rename OR deleted file
+            // If rel_path is not in configFiles and shadow does not exist, can be a new file OR a rename
             if (!shadowExists) {
                 const renameResult = this.checkForRename(itemPath.file_path);
                 if (renameResult.isRename) {
