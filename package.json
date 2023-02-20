@@ -266,7 +266,7 @@
     "@types/dateformat": "^3.0.1",
     "@types/diff-match-patch": "^1.0.32",
     "@types/js-yaml": "^3.12.5",
-    "@types/node": "^18.11.17",
+    "@types/node": "^18.14.0",
     "@types/vscode": "^1.32.0",
     "@types/websocket": "^1.0.4",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
