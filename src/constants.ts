@@ -5,9 +5,9 @@ import vscode from 'vscode';
 
 import {
 	CODESYNC_WEBSOCKET_HOST,
-	CODESYNC_HOST,
-	WEB_APP_URL
+	CODESYNC_HOST
 } from "./settings";
+import { generateServerUrl } from "./utils/url_utils";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -31,28 +31,29 @@ export const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
-export const generateAPIUrl = (url: string, addTimezone=false) => {
-	const _url = new URL(url);
-	_url.searchParams.append("source", VSCODE);
-	_url.searchParams.append("v", VERSION);
-	if (addTimezone) {
-		_url.searchParams.append("tz", TIMEZONE);
-	}
-	return _url.href;
-};
-
 export const API_BASE_URL = `${CODESYNC_HOST}/v1`;
+export const API_PATH = {
+	REPOS: "/repos"
+};
 export const API_ROUTES = {
-	HEALTHCHECK: generateAPIUrl(`${CODESYNC_HOST}/healthcheck`),
-	FILES: generateAPIUrl(`${API_BASE_URL}/files`),
-	REPO_INIT: generateAPIUrl(`${API_BASE_URL}/init`),
-	REPOS: generateAPIUrl(`${API_BASE_URL}/repos`),
-	USERS: generateAPIUrl(`${API_BASE_URL}/users`),
-	USER_SUBSCRIPTION: generateAPIUrl(`${API_BASE_URL}/users/subscription`),
-	DIFFS_WEBSOCKET: generateAPIUrl(`${CODESYNC_WEBSOCKET_HOST}/v2/websocket`),
-	TEAM_ACTIVITY: generateAPIUrl(`${API_BASE_URL}/team_activity`, true)
+	HEALTHCHECK: generateServerUrl("/healthcheck", CODESYNC_HOST),
+	FILES: generateServerUrl("/files"),
+	REPO_INIT: generateServerUrl("/init"),
+	REPOS: generateServerUrl(API_PATH.REPOS),
+	USERS: generateServerUrl("/users"),
+	USER_SUBSCRIPTION: generateServerUrl("/users/subscription"),
+	DIFFS_WEBSOCKET: generateServerUrl("/v2/websocket", CODESYNC_WEBSOCKET_HOST),
+	TEAM_ACTIVITY: generateServerUrl("/team_activity", API_BASE_URL, true)
 };
 
+// Auth0
+export const MIN_PORT = 49152;
+export const MAX_PORT = 65535;
+export const Auth0URLs = {
+	AUTHORIZE: `${CODESYNC_HOST}/authorize`,
+    LOGOUT: `${CODESYNC_HOST}/auth-logout`,
+	LOGIN_CALLBACK_PATH: "/login-callback"
+};
 
 // Diff utils
 export const DIFF_FILES_PER_ITERATION = 50;
@@ -64,15 +65,6 @@ export const SEQUENCE_MATCHER_RATIO = 0.8;
 
 // Error msgs
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
-
-// Auth0
-export const MIN_PORT = 49152;
-export const MAX_PORT = 65535;
-export const Auth0URLs = {
-	AUTHORIZE: generateAPIUrl(`${CODESYNC_HOST}/authorize`),
-    LOGOUT: generateAPIUrl(`${CODESYNC_HOST}/auth-logout`),
-	LOGIN_CALLBACK_PATH: "/login-callback"
-};
 
 // Notification Messages
 export const NOTIFICATION = {
@@ -197,7 +189,4 @@ export const SOCKET_ERRORS = {
 	ERROR_MSG_RECEIVE: 'Error receiving socket msg'
 };
 export const DAY = 24 * 60 * 60 * 1000;
-// GA-4 Parameters
-export const GA4_PARAMS = `utm_medium=plugin&utm_source=${VSCODE}`;
-export const GA4_PARAMS_DAILY_POPUP_FIRST = `${GA4_PARAMS}&utm_campaign=daily_popup_first`;
-export const PRICING_URL = `${WEB_APP_URL}/pricing?${GA4_PARAMS}`;
+export const PRICING_URL_PATH = "/pricing";

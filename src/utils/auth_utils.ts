@@ -11,8 +11,9 @@ import {showConnectRepo} from "./notifications";
 import {createUserWithApi} from "./api_utils";
 import {generateSettings} from "../settings";
 import {trackRepoHandler} from "../handlers/commands_handler";
-import {Auth0URLs, getRepoInSyncMsg, NOTIFICATION} from "../constants";
+import {Auth0URLs, getRepoInSyncMsg, NOTIFICATION, VERSION, VSCODE} from "../constants";
 import { CodeSyncLogger } from "../logger";
+import { generateAuthUrl } from "./url_utils";
 
 
 export const isPortAvailable = async (port: number) => {
@@ -26,15 +27,9 @@ export const isPortAvailable = async (port: number) => {
         });
 };
 
-export const createRedirectUri = () => {
-    const port = (global as any).port;
-    return `http://localhost:${port}${Auth0URLs.LOGIN_CALLBACK_PATH}`;
-};
-
 export const redirectToBrowser = (skipAskConnect=false) => {
     (global as any).skipAskConnect = skipAskConnect;
-    const redirectUri = createRedirectUri();
-    const authorizeUrl = `${Auth0URLs.AUTHORIZE}?redirect_uri=${redirectUri}`;
+    const authorizeUrl = generateAuthUrl(Auth0URLs.AUTHORIZE);
     vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
 };
 
@@ -83,12 +78,7 @@ export const createUser = async (accessToken: string, repoPath: string) => {
 };
 
 export const logout = () => {
-    const redirectUri = createRedirectUri();
-    const params = new URLSearchParams({
-        redirect_uri: redirectUri
-    });
-    const logoutUrl = `${Auth0URLs.LOGOUT}?${params}`;
-    vscode.env.openExternal(vscode.Uri.parse(logoutUrl));
+    const logoutUrl = generateAuthUrl(Auth0URLs.LOGOUT);
     markUsersInactive();
     return logoutUrl;
 };

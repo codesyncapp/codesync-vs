@@ -1,11 +1,12 @@
 import vscode from 'vscode';
-import { NOTIFICATION, PRICING_URL, RETRY_REQUEST_AFTER } from '../constants';
+import { NOTIFICATION, PRICING_URL_PATH, RETRY_REQUEST_AFTER } from '../constants';
 import { generateSettings } from '../settings';
 import { checkSubDir, readYML } from './common';
 import { LockUtils } from './lock_utils';
 import { pathUtils } from './path_utils';
 import { CodeSyncState, CODESYNC_STATES } from "./state_utils";
 import { getRepoPlanInfo } from './sync_repo_utils';
+import { generateWebUrl } from './url_utils';
 
 
 export const setPlanLimitReached = async (accessToken: string) => {
@@ -17,7 +18,7 @@ export const setPlanLimitReached = async (accessToken: string) => {
 	const loctUtils = new LockUtils();
 	loctUtils.acquirePricingAlertLock();
 
-	let pricingUrl = PRICING_URL;
+	let pricingUrl = generateWebUrl(PRICING_URL_PATH);
 	let isOrgRepo = false;
 	let canAvailTrial = false;
 
@@ -36,7 +37,7 @@ export const setPlanLimitReached = async (accessToken: string) => {
 		if (configRepo) {
 			const json = <any> await getRepoPlanInfo(accessToken, configRepo.id);
 			if (!json.error) {
-				pricingUrl = json.response.url;
+				pricingUrl = generateWebUrl("", json.response.url);
 				isOrgRepo = json.response.is_org_repo;
 				canAvailTrial = json.response.can_avail_trial;
 			}	
