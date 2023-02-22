@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.17.3] - 2023-02-22
+### Fixed
+- Fixed query params for Login/Logout functionalities
+- Using URL builder to generate Web URLs including GA4 params
+- Fixed sync-repo-utils URLs
+
+## [3.17.2] - 2023-02-15
+### Fixed
+- source=VSCODE&v=VERSION added in remaining 2 API requests
+- Improved building URL using query params
+
 ## [3.17.1] - 2023-02-01
 ### Fixed
 - Fixed a bug in hiding team-activity alert
