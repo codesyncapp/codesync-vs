@@ -133,7 +133,6 @@ export const openSyncIgnoreHandler = async () => {
 };
 
 export const upgradePlanHandler = () => {
-	console.log(CodeSyncState.get(CODESYNC_STATES.PRICING_URL));
 	vscode.env.openExternal(vscode.Uri.parse(CodeSyncState.get(CODESYNC_STATES.PRICING_URL)));
 };
 
