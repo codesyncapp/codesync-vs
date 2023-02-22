@@ -1,10 +1,11 @@
 import fetch from "node-fetch";
 
-import { API_ROUTES, generateAPIUrl } from "../constants";
+import { API_PATH } from "../constants";
+import { generateServerUrl } from "./url_utils";
 
 export const updateRepo = async (accessToken: string, repoId: number, data: any) => {
 	let error = "";
-	const url = generateAPIUrl(`${API_ROUTES.REPOS}/${repoId}`);
+	const url = generateServerUrl(`${API_PATH.REPOS}/${repoId}`);
 	let response = <any> await fetch(url, {
 		method: 'PATCH',
 		body: JSON.stringify(data),
@@ -31,7 +32,7 @@ export const updateRepo = async (accessToken: string, repoId: number, data: any)
 
 export const getRepoPlanInfo = async (accessToken: string, repoId: number) => {
 	let error = "";
-	const url = generateAPIUrl(`${API_ROUTES.REPOS}/${repoId}/upgrade_plan`);
+	const url = generateServerUrl(`${API_PATH.REPOS}/${repoId}/upgrade_plan`);
 	let response = <any> await fetch(url, {
 		headers: {
 			'Authorization': `Basic ${accessToken}`

@@ -5,13 +5,13 @@ import untildify from "untildify";
 import fetchMock from "jest-fetch-mock";
 import {
     askAndTriggerSignUp,
-    createRedirectUri,
     createUser,
     isPortAvailable,
     logout,
     redirectToBrowser
 } from "../../src/utils/auth_utils";
 import { Auth0URLs, NOTIFICATION } from "../../src/constants";
+import { createRedirectUri } from "../../src/utils/url_utils";
 import {
     addUser,
     getUserFilePath,
