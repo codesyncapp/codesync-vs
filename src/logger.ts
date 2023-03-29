@@ -10,7 +10,7 @@ import {
 	LOG_AFTER_X_TIMES,
 	VERSION
 } from './constants';
-import { readYML, isEmpty } from './utils/common';
+import { readYML, isEmpty, getActiveUsers } from './utils/common';
 import { generateSettings, LOGS_METADATA, PLUGIN_USER } from "./settings";
 
 let cloudwatchlogs = <AWS.CloudWatchLogs>{};
@@ -82,11 +82,11 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", logStream
 			secretKey = user.secret_key;
 		}
 	} else {
-		const activeUserEmail = Object.keys(users).filter(_email => users[_email].is_active)[0];
-		if (activeUserEmail) {
-			email = activeUserEmail;
-			accessKey = users[activeUserEmail].access_key;
-			secretKey = users[activeUserEmail].secret_key;
+		const activeUser = getActiveUsers()[0];
+		if (activeUser) {
+			email = activeUser.email;
+			accessKey = users[email].access_key;
+			secretKey = users[email].secret_key;
 		}
 	}
 
