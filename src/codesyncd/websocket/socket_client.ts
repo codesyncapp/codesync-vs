@@ -9,9 +9,11 @@ import {
     CONNECTION_ERROR_MESSAGE,
     SOCKET_CONNECT_ERROR_CODES,
     SOCKET_ERRORS,
-    API_ROUTES
+    API_ROUTES,
+    RETRY_WEBSOCKET_CONNECTION_AFTER
 } from "../../constants";
 import { getPlanLimitReached } from "../../utils/pricing_utils";
+import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
 
 let errorCount = 0;
 
@@ -30,6 +32,8 @@ export class SocketClient {
     }
 
     resetGlobals = () => {
+        // Set time when connection is errored out
+        CodeSyncState.set(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT, new Date().getTime());
         try {
             this.client.abort();
         } catch (e) {
@@ -45,6 +49,9 @@ export class SocketClient {
         const { planLimitReached, canRetry } = getPlanLimitReached();
 		if (planLimitReached && !canRetry) return recallDaemon(this.statusBarItem);
 
+        const errorOccurredAt = CodeSyncState.get(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT);
+		const canConnect = !errorOccurredAt || (new Date().getTime() - errorOccurredAt) > RETRY_WEBSOCKET_CONNECTION_AFTER;
+		if (!canConnect) return recallDaemon(this.statusBarItem);
         if (!this.client) {
             this.client = new client();
             (global as any).client = this.client;
