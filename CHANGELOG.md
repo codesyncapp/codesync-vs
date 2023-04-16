@@ -5,10 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [3.19.0] - 2023-04-17
-### Updated
-- Optimized logic to checkForRename using package string-similarity
-- Optimized logic to traverse over a repo using "glob" instead of "walk"
+- Optimized logic to checkForRename using [string-similarity](https://www.npmjs.com/package/string-similarity)
+    - Earlier logic was taking ~15s for comparing text of files of ~50KB. With "string-similarity" it is in miliseconds
+- Fixed a bug in getting `PotentialMatchingFiles` for rename
+    - Earlier it was checking against every file of the repo. Now it considers only those files from shadow repo that possess following properties:
+        - Shadow file should not be ignorable from .syncignore
+        - Actual file is not present for the shadow file
+        - Relative path of shadow file should be present in config file
+        - Shadow file should not be a binary file since we are going to match the text of files
+        - Shadow file should not be empty
+    - Also getting `PotentialMatchingFiles` only once per repo instead of once per file
 - Improved logic of ignoring a path from .syncignore
+    - Using common function everywhere for "[ignores](https://www.npmjs.com/package/ignore)" which ignores path depending on content of .syncignore
+    - Improved logic to ignore DEFAULT-SKIP-DIRECTORIES wherever they are present in the project e.g. `node_modules` etc
 
 ## [3.18.0] - 2023-03-29
 ### Fixed

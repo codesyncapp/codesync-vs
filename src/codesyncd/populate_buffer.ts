@@ -176,6 +176,7 @@ class PopulateBuffer {
         /*
         If a file is renamed in actual repo, it will be present in the shadow repo with pervious name.
         So potential renamed files in the shadow repo should possess following properties
+        - Shadow file should not be ignorable from .syncignore
         - Actual file should not be present for the shadow file
         - Relative path of shadow file should be present in config file
         - Shadow file should not be a binary file since we are going to match the text of files
