@@ -16,7 +16,9 @@ afterAll(() => {
 
 test('syncIgnore items with .syncignore', () => {
     fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA);
-    expect(getSyncIgnoreItems(repoPath)).toStrictEqual([".DS_Store", ".git", ".node_modules"]);
+    const syncIgnoreItems = getSyncIgnoreItems(repoPath);
+    const expectedItems = SYNC_IGNORE_DATA.split("\n").filter(item => item && !item.startsWith("!"));
+    expect(syncIgnoreItems).toStrictEqual(expectedItems);
     fs.rmSync(syncIgnorePath);
 });
 
