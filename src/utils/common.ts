@@ -108,7 +108,7 @@ export const getSkipPaths = (repoPath: string, syncignoreItems: string[]) => {
 		const _pattern = `${repoPath}/${pattern}/**`;
 		// Make sure there are no duplicates
 		if (skipPaths.includes(_pattern )) return;
-		skipPaths.push(_pattern );
+		skipPaths.push(_pattern);
 	});
 	return skipPaths;
 };

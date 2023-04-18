@@ -12,7 +12,7 @@ export function shouldIgnorePath(repoPath: string, relPath: string) {
 	const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
 	if (!fs.existsSync(syncIgnorePath)) return false;
 	const syncIgnoreItems = getSyncIgnoreItems(repoPath);
-	// Allow file sync if there .syncignore is empty
+	// Allow file sync if .syncignore is empty
 	if (!syncIgnoreItems.length) return false;
 	const shouldIgnore = isIgnoreAblePath(relPath, syncIgnoreItems);
 	return shouldIgnore;

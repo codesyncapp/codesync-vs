@@ -42,12 +42,17 @@ describe("shouldIgnorePath",  () => {
         expect(shouldIgnorePath(repoPath, "12345.js")).toBe(false);
     });
 
-    test("with normal file and with .syncignore",  () => {
+    test("with empty .syncignore",  () => {
+        fs.writeFileSync(syncIgnorePath, "");
+        expect(shouldIgnorePath(repoPath, "12345.js")).toBe(false);
+    });
+
+    test("with file not in .syncignore",  () => {
         fs.writeFileSync(syncIgnorePath, syncIgnoreData);
         expect(shouldIgnorePath(repoPath, "12345.js")).toBe(false);
     });
 
-    test("with file name in .syncignore",  () => {
+    test("with file in .syncignore",  () => {
         fs.writeFileSync(syncIgnorePath, syncIgnoreData);
         expect(shouldIgnorePath(repoPath, "ignore.js")).toBe(true);
     });
