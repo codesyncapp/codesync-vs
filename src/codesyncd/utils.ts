@@ -23,13 +23,13 @@ import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 
 
-export const isValidDiff = (diffData: IDiff, diffSize: number) => {
+export const isValidDiff = (diffData: IDiff) => {
 	const missingKeys = REQUIRED_DIFF_KEYS.filter(key => !(key in diffData));
 	if (missingKeys.length) return false;
 	const isRename = diffData.is_rename;
 	const isDirRename = diffData.is_dir_rename;
 	const diff = diffData.diff;
-	if (diff && diffSize > DIFF_SIZE_LIMIT) { return false; }
+	if (diff && diff.length > DIFF_SIZE_LIMIT) return false;
 	if (isRename || isDirRename) {
 		if (!diff) return false;
 		let diffJSON = {};

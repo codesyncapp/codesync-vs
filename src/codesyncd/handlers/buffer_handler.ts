@@ -91,13 +91,15 @@ export class bufferHandler {
 				return false;
 			}
 			const diffData = readYML(filePath);
-			const diffSize = diffData.diff.length;
-			diffsSize += diffSize;
-			if (!diffData || !isValidDiff(diffData, diffSize)) {
+			if (!diffData || !isValidDiff(diffData)) {
 				CodeSyncLogger.info(`Removing diff: Skipping invalid diff: ${diffFile}`, "", diffData);
 				fs.unlinkSync(filePath);
 				return false;
 			}
+			
+			const diffSize = diffData.diff.length;
+			diffsSize += diffSize;
+
 			if (!(diffData.repo_path in this.configJSON.repos)) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is not in config.yml`);
 				fs.unlinkSync(filePath);
