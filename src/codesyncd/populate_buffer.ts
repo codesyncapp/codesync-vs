@@ -183,11 +183,17 @@ class PopulateBuffer {
         - Shadow file should not be empty
          */
         const skipPaths = getSkipPaths(this.shadowRepoBranchPath, this.syncIgnoreItems);
-        const shadowFiles = globSync(`${this.shadowRepoBranchPath}/**`, { ignore: skipPaths, nodir: true, dot: true });
+        // Skip following shadow files since there actual files are present in the repo
+        const skipShadowFiles = this.itemPaths.map(itemPath => path.join(this.shadowRepoBranchPath, itemPath.rel_path));
+        const ignorePaths = skipPaths.concat(skipShadowFiles);
+        const t0 = new Date().getTime();
+        const shadowFiles = globSync(`${this.shadowRepoBranchPath}/**`, { ignore: ignorePaths, nodir: true, dot: true });
         const filteredFiles = shadowFiles.filter(shadowFilePath => {
             const relPath = shadowFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
             const isInConfig = relPath in this.configFiles;
-            if (!isInConfig) {
+            const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);
+            // If file is not in config OR is is present in .syncignore, remove the file from .shadow
+            if (!isInConfig || shouldIgnorePath) {
                 fs.unlink(shadowFilePath, err => {
                     if (!err) return false;
                     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -196,11 +202,6 @@ class PopulateBuffer {
                 });
                 return false;
             }
-            const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);
-			if (shouldIgnorePath) return false;
-            // Skip the shadow files that have corresponding files in the project repo
-            const actualFilePath = path.join(this.repoPath, relPath);
-            if (fs.existsSync(actualFilePath)) return false;
             // Skip binary files
             const isBinary = isBinaryFileSync(shadowFilePath);
             if (isBinary) return false;
@@ -209,6 +210,7 @@ class PopulateBuffer {
             if (!content) return false;
             return true;
         });
+        CodeSyncLogger.debug(`getPotentialRenamedFiles: glob took=${(new Date().getTime() - t0)/1000}s, Repo Files Count ${this.itemPaths.length}`);
         return filteredFiles;
     }
 
