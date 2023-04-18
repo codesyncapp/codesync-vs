@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved logic of ignoring a path from .syncignore
     - Using common function everywhere for "[ignores](https://www.npmjs.com/package/ignore)" which ignores path depending on content of .syncignore
     - Improved logic to ignore DEFAULT-SKIP-DIRECTORIES wherever they are present in the project e.g. `node_modules` etc
+- Taking care of data size being sent to server, shouldn’t exceed 16MB
+- Slowed down generateDiffForDeletedFiles() in populateBuffer as rename event takes some time and before that populateBuffer marks those files as deleted
 
 ## [3.18.0] - 2023-03-29
 ### Fixed

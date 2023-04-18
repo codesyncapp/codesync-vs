@@ -21,9 +21,10 @@ import {
     readFile,
     readYML
 } from "../utils/common";
-import { SEQUENCE_MATCHER_RATIO } from "../constants";
+import { RUN_DELETE_HANDLER_AFTER, SEQUENCE_MATCHER_RATIO } from "../constants";
 import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
+import { CodeSyncState } from "../utils/state_utils";
 
 
 export const populateBuffer = async (viaDaemon=true) => {
@@ -40,9 +41,12 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
             // Go for content diffs if repo was modified after lastSyncedAt
             await obj.populateBufferForRepo();
         }
-        obj.generateDiffForDeletedFiles();
-        // Update lastSyncedAt in global
-        (global as any).lastSyncedAt[repoPath] = obj.repoModifiedAt;
+        const generateDiffForDeletedFilesKey = `${repoPath}:${branch}:generateDiffForDeletedFiles`;
+        const deletedFilesLastRun = CodeSyncState.get(generateDiffForDeletedFilesKey);
+        if (!deletedFilesLastRun || (new Date().getTime() - deletedFilesLastRun) > RUN_DELETE_HANDLER_AFTER) {
+            obj.generateDiffForDeletedFiles();
+            CodeSyncState.set(generateDiffForDeletedFilesKey, new Date().getTime());
+        }
     }
 };
 
@@ -71,6 +75,7 @@ class PopulateBuffer {
 
     repoPath: string;
     branch: string;
+    lastSyncedAtKey: string;
     repoBranchPath: string;
     repoModifiedAt: number;
     modifiedInPast: boolean;
@@ -85,10 +90,13 @@ class PopulateBuffer {
     deletedRepoBranchPath: string;
     originalsRepoBranchPath: string;
     syncIgnoreItems: string[];
+    potentialMatchFiles: string[];
+    gotPotentialMatchFiles: boolean;
 
     constructor(repoPath: string, branch: string) {
         this.repoPath = repoPath;
         this.branch = branch;
+        this.lastSyncedAtKey = `${this.repoPath}:lastSyncedAt`;
         this.repoModifiedAt = -1;
         this.settings = generateSettings();
         this.repoBranchPath = path.join(this.repoPath, this.branch);
@@ -104,25 +112,23 @@ class PopulateBuffer {
         this.deletedRepoBranchPath = this.pathUtils.getDeletedRepoBranchPath();
         this.originalsRepoBranchPath = this.pathUtils.getOriginalsRepoBranchPath();
         this.syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
+        this.potentialMatchFiles = [];
+        this.gotPotentialMatchFiles = false;
     }
 
     getModifiedInPast() {
         const maxModifiedAt = Math.max(...this.itemPaths.map(itemPath => itemPath.modified_at || 0));
         const maxCreatedAt = Math.max(...this.itemPaths.map(itemPath => itemPath.created_at || 0));
         this.repoModifiedAt = Math.max(maxModifiedAt, maxCreatedAt);
-        let lastSyncedAt;
-        if (!(global as any).lastSyncedAt) {
-            (global as any).lastSyncedAt = <any>{};
-        } else {
-            lastSyncedAt = (global as any).lastSyncedAt[this.repoPath];
-        }
+        const lastSyncedAt = CodeSyncState.get(this.lastSyncedAtKey);
+        // Set the value for next iteration
+        CodeSyncState.set(this.lastSyncedAtKey, this.repoModifiedAt);
         return lastSyncedAt && lastSyncedAt >= this.repoModifiedAt;
     }
 
     async populateBufferForRepo() {
         console.log(`Watching Repo: ${this.repoPath}`);
         const handler = new eventHandler(this.repoPath, "", true);
-        const potentialMatchFiles = this.getPotentialRenamedFiles();
         for (const itemPath of this.itemPaths) {
             let isRename = false;
             const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
@@ -151,8 +157,12 @@ class PopulateBuffer {
                 continue;
             }
             // If rel_path is not in configFiles and shadow does not exist, can be a new file OR a rename
-            if (!shadowExists && potentialMatchFiles.length) {
-                const renameResult = this.checkForRename(itemPath.file_path, potentialMatchFiles);
+            if (!shadowExists) {
+                if (!this.gotPotentialMatchFiles) {
+                    this.potentialMatchFiles = this.getPotentialRenamedFiles();
+                    this.gotPotentialMatchFiles = true;
+                }
+                const renameResult = this.checkForRename(itemPath.file_path);
                 if (renameResult.isRename) {
                     const oldRelPath = renameResult.matchingFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
                     isRename = oldRelPath !== itemPath.rel_path;
@@ -161,8 +171,8 @@ class PopulateBuffer {
                         handler.handleRename(oldFilePath, itemPath.file_path);
                         this.renamedFiles.push(oldRelPath);
                         // Remove matched file from potential matched files
-                        const index = potentialMatchFiles.indexOf(renameResult.matchingFilePath);
-                        if (index > -1) potentialMatchFiles.splice(index, 1);
+                        const index = this.potentialMatchFiles.indexOf(renameResult.matchingFilePath);
+                        if (index > -1) this.potentialMatchFiles.splice(index, 1);
                         continue;
                     }
                 }
@@ -183,7 +193,7 @@ class PopulateBuffer {
         - Shadow file should not be empty
          */
         const skipPaths = getSkipPaths(this.shadowRepoBranchPath, this.syncIgnoreItems);
-        // Skip following shadow files since there actual files are present in the repo
+        // Skip those shadow files whose actual files are present in the repo
         const skipShadowFiles = this.itemPaths.map(itemPath => path.join(this.shadowRepoBranchPath, itemPath.rel_path));
         const ignorePaths = skipPaths.concat(skipShadowFiles);
         const t0 = new Date().getTime();
@@ -214,16 +224,20 @@ class PopulateBuffer {
         return filteredFiles;
     }
 
-    checkForRename(filePath: string, potentialMatchingFiles: string[]) {
+    checkForRename(filePath: string) {
         let matchingFilePath = '';
         let matchingFilesCount = 0;
+        if (!this.potentialMatchFiles.length) return {
+            isRename: false,
+            matchingFilePath
+        };
         const content = readFile(filePath);
         if (!content) return {
                 isRename: false,
                 matchingFilePath
             };
 
-        potentialMatchingFiles.forEach(potentialMatchingFile => {
+        this.potentialMatchFiles.forEach(potentialMatchingFile => {
             const shadowContent = readFile(potentialMatchingFile);
             const ratio = stringSimilarity.compareTwoStrings(content, shadowContent);
             if (ratio > SEQUENCE_MATCHER_RATIO) {
@@ -289,7 +303,6 @@ export const detectBranchChange = async () => {
         const accessToken = user.access_token;
         const branch = getBranch(repoPath);
         const pathUtilsObj = new pathUtils(repoPath, branch);
-
         const shadowRepo = pathUtilsObj.getShadowRepoPath();
 
         if (!fs.existsSync(repoPath) || !fs.existsSync(shadowRepo)) {
