@@ -296,7 +296,7 @@ export class eventHandler {
 		const newRelPath = newAbsPath.split(path.join(this.repoPath, path.sep))[1];
 
 		if (!newAbsPath.startsWith(this.repoPath)) return;
-		if (shouldIgnorePath(this.repoPath, newRelPath)) { return; }
+		if (shouldIgnorePath(this.repoPath, newRelPath)) return;
 
 		const isDirectory = fs.lstatSync(newAbsPath).isDirectory();
 		if (isDirectory) {

@@ -23,30 +23,26 @@ import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 
 
-export const isValidDiff = (diffData: IDiff) => {
+export const isValidDiff = (diffData: IDiff, diffSize: number) => {
 	const missingKeys = REQUIRED_DIFF_KEYS.filter(key => !(key in diffData));
-	if (missingKeys.length) { return false; }
+	if (missingKeys.length) return false;
 	const isRename = diffData.is_rename;
 	const isDirRename = diffData.is_dir_rename;
 	const diff = diffData.diff;
-	if (diff && diff.length > DIFF_SIZE_LIMIT) { return false; }
+	if (diff && diffSize > DIFF_SIZE_LIMIT) { return false; }
 	if (isRename || isDirRename) {
-		if (!diff) { return false; }
+		if (!diff) return false;
 		let diffJSON = {};
 		diffJSON = yaml.load(diff);
-		if (typeof diffJSON !== "object") {
-			return false;
-		}
-		if (isRename && isDirRename) {
-			return false;
-		}
+		if (typeof diffJSON !== "object") return false;
+		if (isRename && isDirRename) return false;
 		if (isRename) {
 			const missingRenameKeys = REQUIRED_FILE_RENAME_DIFF_KEYS.filter(key => !(key in diffJSON));
-			if (missingRenameKeys.length) { return false; }
+			if (missingRenameKeys.length) return false;
 		}
 		if (isDirRename) {
 			const missingDirRenameKeys = REQUIRED_DIR_RENAME_DIFF_KEYS.filter(key => !(key in diffJSON));
-			if (missingDirRenameKeys.length) { return false; }
+			if (missingDirRenameKeys.length) return false;
 		}
 	}
 	return true;
