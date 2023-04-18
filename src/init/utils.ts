@@ -193,7 +193,6 @@ export class initUtils {
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
 					userEmail: string, isPublic=false) {
-		// TODO: Add checks and tests if .originals/.shadow repos do not exist
 		// Check plan limits
 		const { planLimitReached, canRetry } = getPlanLimitReached();
 		if (planLimitReached && !canRetry) return false;
