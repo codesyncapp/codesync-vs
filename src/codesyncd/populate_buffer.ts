@@ -186,17 +186,18 @@ class PopulateBuffer {
         const shadowFiles = globSync(`${this.shadowRepoBranchPath}/**`, { ignore: skipPaths, nodir: true, dot: true });
         const filteredFiles = shadowFiles.filter(shadowFilePath => {
             const relPath = shadowFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
-            const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);
-			if (shouldIgnorePath) return;
-            if (!(relPath in this.configFiles)) {
+            const isInConfig = relPath in this.configFiles;
+            if (!isInConfig) {
                 fs.unlink(shadowFilePath, err => {
-                    if (!err) return;
+                    if (!err) return false;
                     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                     // @ts-ignore
                     CodeSyncLogger.error("getPotentialRenamedFiles: Error deleting shadow file", shadowFilePath, err);
                 });
                 return false;
             }
+            const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);
+			if (shouldIgnorePath) return false;
             // Skip the shadow files that have corresponding files in the project repo
             const actualFilePath = path.join(this.repoPath, relPath);
             if (fs.existsSync(actualFilePath)) return false;
