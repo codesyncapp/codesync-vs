@@ -6,6 +6,7 @@ import getBranchName from "current-git-branch";
 import {isBinaryFileSync} from "isbinaryfile";
 
 import {pathUtils} from "../../src/utils/path_utils";
+import {CodeSyncState} from "../../src/utils/state_utils";
 import {readYML} from "../../src/utils/common";
 import {populateBuffer} from "../../src/codesyncd/populate_buffer";
 import {createSystemDirectories} from "../../src/utils/setup_utils";
@@ -212,16 +213,19 @@ describe("populateBuffer", () => {
     });
 
     test("New File -> Edit -> Rename -> Edit", async () => {
+        const populateBufferKey = `${repoPath}:default:populateBuffer`;
         addRepo(true);
         // New File
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         await populateBuffer();
+        CodeSyncState.set(populateBufferKey, null);
         await waitFor(0.1);
         expect(assertNewFileEvent(repoPath, fileRelPath)).toBe(true);
         // Edit
         let updatedText = `${DUMMY_FILE_CONTENT} Changed data`;
         fs.writeFileSync(filePath, updatedText);
         await populateBuffer();
+        CodeSyncState.set(populateBufferKey, null);
         await waitFor(0.1);
         expect(assertChangeEvent(repoPath, diffsRepo, DUMMY_FILE_CONTENT, updatedText,
             fileRelPath, shadowFilePath, 2)).toBe(true);
@@ -231,6 +235,7 @@ describe("populateBuffer", () => {
         const renamedShadowPath = path.join(shadowRepoBranchPath, newRelPath);
         fs.renameSync(filePath, renamedPath);
         await populateBuffer();
+        CodeSyncState.set(populateBufferKey, null);
         await waitFor(0.1);
         expect(assertRenameEvent(repoPath, configPath, fileRelPath, newRelPath, 3, false)).toBe(true);
         const configJSON = readYML(configPath);
