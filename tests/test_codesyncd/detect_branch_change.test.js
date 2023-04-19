@@ -9,6 +9,7 @@ import fetchMock from "jest-fetch-mock";
 import {DEFAULT_BRANCH} from "../../src/constants";
 import {pathUtils} from "../../src/utils/path_utils";
 import {readYML} from "../../src/utils/common";
+import {initUtils} from "../../src/init/utils";
 import {detectBranchChange} from "../../src/codesyncd/populate_buffer";
 
 import {
@@ -20,7 +21,8 @@ import {
     randomRepoPath,
     TEST_EMAIL,
     TEST_REPO_RESPONSE,
-    TEST_USER
+    TEST_USER,
+    writeTestRepoFiles
 } from "../helpers/helpers";
 import {createSystemDirectories} from "../../src/utils/setup_utils";
 
@@ -49,6 +51,7 @@ describe("detectBranchChange", () => {
 
         untildify.mockReturnValue(baseRepoPath);
         createSystemDirectories();
+        writeTestRepoFiles(repoPath);
 
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
@@ -61,6 +64,13 @@ describe("detectBranchChange", () => {
         fs.writeFileSync(configPath, yaml.safeDump(configData));
         fs.writeFileSync(userFilePath, yaml.safeDump(userData));
         fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
+        const initUtilsObj = new initUtils(repoPath);
+        const itemPaths = initUtilsObj.getSyncablePaths();
+        const filePaths = itemPaths.map(itemPath => itemPath.file_path);
+        // copy files to .originals repo
+        initUtilsObj.copyFilesTo(filePaths, originalsRepoBranchPath);
+        // copy files to .shadow repo
+        initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
     });
 
     afterEach(() => {
@@ -235,15 +245,7 @@ describe("detectBranchChange", () => {
             email: TEST_EMAIL
         };
         fs.writeFileSync(configPath, yaml.safeDump(_configData));
-        const user = {
-            "email": "dummy@email.cpm",
-            "plan": {},
-            "repo_count": 0
-        };
-
         fetchMock
-            .mockResponseOnce(JSON.stringify({status: true}))
-            .mockResponseOnce(JSON.stringify(user))
             .mockResponseOnce(JSON.stringify({status: true}))
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
@@ -275,6 +277,7 @@ describe("detectBranchChange", () => {
         fs.writeFileSync(newFilePath, "");
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         fs.mkdirSync(originalsRepoBranchPath, {recursive: true});
+
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const _configData = {repos: {}};
         _configData.repos[repoPath] = {

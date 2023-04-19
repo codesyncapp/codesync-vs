@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.19.0] - 2023-04-19
+- Upgraded node to v16.20.0
+- Fixed a bug in showing _Diconnect Parent Repo_ button in left panel
+- Optimized logic to checkForRename using [string-similarity](https://www.npmjs.com/package/string-similarity)
+    - Earlier logic was taking ~15s for comparing text of files of ~50KB. With "string-similarity" it is in miliseconds
+- Fixed a bug in getting `PotentialMatchingFiles` for rename
+    - Earlier it was checking against every file of the repo. Now it considers only those files from shadow repo that possess following properties:
+        - Shadow file should not be ignorable from .syncignore
+        - Actual file is not present for the shadow file
+        - Relative path of shadow file should be present in config file
+        - Shadow file should not be a binary file since we are going to match the text of files
+        - Shadow file should not be empty
+    - Also getting `PotentialMatchingFiles` only once per repo instead of once per file
+- Improved logic of ignoring a path from .syncignore
+    - Using common function everywhere for "[ignores](https://www.npmjs.com/package/ignore)" which ignores path depending on content of .syncignore
+    - Improved logic to ignore DEFAULT-SKIP-DIRECTORIES wherever they are present in the project e.g. `node_modules` etc
+- Taking care of data size being sent to server, shouldn’t exceed 16MB
+- Slowed down generateDiffForDeletedFiles() in populateBuffer as rename event takes some time and before that populateBuffer marks those files as deleted
+
 ## [3.18.0] - 2023-03-29
 ### Fixed
 - Waiting before retrying socket connection if error occurs

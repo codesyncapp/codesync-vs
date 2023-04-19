@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from "path";
 import yaml from 'js-yaml';
+import ignore from 'ignore';
 import dateFormat from "dateformat";
 import getBranchName from "current-git-branch";
 
@@ -81,26 +82,40 @@ export const checkSubDir = (currentRepoPath: string) => {
 export const getSyncIgnoreItems = (repoPath: string) => {
 	const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
 	const syncIgnoreExists = fs.existsSync(syncIgnorePath);
-	if (!syncIgnoreExists) {
-		return [];
-	}
-	let syncIgnoreData = "";
-	syncIgnoreData = readFile(syncIgnorePath);
+	if (!syncIgnoreExists) return [];
+	const syncIgnoreData = readFile(syncIgnorePath);
 	const syncIgnoreItems = syncIgnoreData.split("\n");
-	return syncIgnoreItems.filter(item =>  item);
+	return syncIgnoreItems.filter(item => item && !item.startsWith("!"));
 };
 
-export const getSkipRepos = (repoPath: string, syncignoreItems: string[]) => {
-	const skipRepos = [...IGNORABLE_DIRECTORIES];
+export const getSkipPaths = (repoPath: string, syncignoreItems: string[]) => {
+	/*
+	Output of this is used by globSync to ignore given directories
+	That's why appending /**  at the end of each directory path
+	*/
+	const skipPaths = [...IGNORABLE_DIRECTORIES.map(ignoreDir => `${repoPath}/**/${ignoreDir}/**`)];
 	syncignoreItems.forEach((pattern) => {
-		const itemPath = path.join(repoPath, pattern);
-		if (!fs.existsSync(itemPath)) { return; }
-		const lstat = fs.lstatSync(itemPath);
-		if (lstat.isDirectory()) {
-			skipRepos.push(pattern);
+		for (const terminator of ["/", "/*", "/**"]) {
+			if (pattern.endsWith(terminator)) {
+				const splitPath = pattern.split(terminator);
+				pattern = splitPath.slice(0, splitPath.length-1).join("");
+				break;				
+			}
 		}
+		const itemPath = path.join(repoPath, pattern);
+		// Only need to append /** for directories
+		if (!fs.existsSync(itemPath) || !fs.lstatSync(itemPath).isDirectory()) return;
+		const _pattern = `${repoPath}/${pattern}/**`;
+		// Make sure there are no duplicates
+		if (skipPaths.includes(_pattern )) return;
+		skipPaths.push(_pattern);
 	});
-	return skipRepos;
+	return skipPaths;
+};
+
+export const isIgnoreAblePath = (relPath: string, paths: string[]) => {
+	const ig = ignore().add(paths);
+	return ig.ignores(relPath);
 };
 
 export const isEmpty = (obj: any) => {
