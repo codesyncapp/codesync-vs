@@ -1,10 +1,9 @@
 import fs from 'fs';
 import os from "os";
 import path from 'path';
-import walk from 'walk';
+import { globSync } from 'glob';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
-import ignore from 'ignore';
 import parallel from "run-parallel";
 import { isBinaryFileSync } from 'isbinaryfile';
 
@@ -16,7 +15,7 @@ import { IFileToUpload } from '../interface';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, RETRY_BRANCH_SYNC_AFTER } from '../constants';
-import { getSkipRepos, isRepoActive, readYML, getSyncIgnoreItems } from '../utils/common';
+import { getSkipPaths, isRepoActive, readYML, getSyncIgnoreItems, isIgnoreAblePath } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 
@@ -24,11 +23,13 @@ export class initUtils {
 	repoPath: string;
 	viaDaemon: boolean;
 	settings: any;
+	syncIgnoreItems: string[];
 
-	constructor(repoPath: string, viaDaemon= false) {
+	constructor(repoPath: string, viaDaemon=false) {
 		this.repoPath = repoPath;
 		this.viaDaemon = viaDaemon;
 		this.settings = generateSettings();
+		this.syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
 	}
 
 	isBranchSyncInProcess (syncingBranchKey: string) {
@@ -37,43 +38,24 @@ export class initUtils {
 		return isSyncInProcess;
 	}
 
-	isSyncAble(relPath: string) {
-		const syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
-		const ig = ignore().add(syncIgnoreItems);
-		return !ig.ignores(relPath);
-	}
-
 	getSyncablePaths () {
 		const itemPaths: IFileToUpload[] = [];
-		const repoPath = this.repoPath;
-		const viaDaemon = this.viaDaemon;
-		const syncIgnoreItems = getSyncIgnoreItems(repoPath);
-
-		const skipRepos = getSkipRepos(repoPath, syncIgnoreItems);
-
-		const options = {
-			filters: skipRepos,
-			listeners: {
-				file: function (root: string, fileStats: any, next: any) {
-					const filePath = path.join(root, fileStats.name);
-					const relPath = filePath.split(path.join(repoPath, path.sep))[1];
-					const self = new initUtils(repoPath, viaDaemon);
-					const isSyncAbleFile = self.isSyncAble(relPath);
-					if (isSyncAbleFile) {
-						itemPaths.push({
-							file_path: filePath,
-							rel_path: relPath,
-							is_binary: isBinaryFileSync(filePath),
-							size: fileStats.size,
-							created_at: fileStats.ctime,
-							modified_at: fileStats.mtime
-						});
-					}
-					next();
-				}
-			}
-		};
-		walk.walkSync(repoPath, options);
+		const skipPaths = getSkipPaths(this.repoPath, this.syncIgnoreItems);
+		const globFiles = globSync(`${this.repoPath}/**`, { ignore: skipPaths, nodir: true, dot: true, stat: true, withFileTypes: true });
+		globFiles.forEach(globFile => {
+			const filePath = globFile.fullpath();
+			const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
+			const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);
+			if (shouldIgnorePath) return;
+			itemPaths.push({
+				file_path: filePath,
+				rel_path: relPath,
+				is_binary: isBinaryFileSync(filePath),
+				size: globFile.size,
+				created_at: globFile.ctimeMs,
+				modified_at: globFile.mtimeMs
+			});
+		});
 		return itemPaths;
 	}
 
@@ -156,7 +138,7 @@ export class initUtils {
 		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
 	}
 
-	async uploadRepoToS3(branch: string, token: string, uploadResponse: any, syncingBranchKey: string) {
+	async uploadRepoToS3(branch: string, uploadResponse: any, syncingBranchKey: string) {
 		const viaDaemon = this.viaDaemon;
 		const s3Urls =  uploadResponse.urls;
 		const tasks: any[] = [];
@@ -168,8 +150,8 @@ export class initUtils {
 			const absPath = path.join(originalsRepoBranchPath, relPath);
 			if (presignedUrl) {
 				tasks.push(async function (callback: any) {
-					await uploadFileTos3(absPath, presignedUrl);
-					callback(null, true);
+					const json = <any> await uploadFileTos3(absPath, presignedUrl);
+					callback(json.error, true);
 				});
 			}
 		});
@@ -181,12 +163,15 @@ export class initUtils {
 				// the results array will equal ['one','two'] even though
 				// the second function had a shorter timeout.
 				if (err) {
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-ignore
+					CodeSyncLogger.error("uploadRepoToS3 failed: ", err);
 					CodeSyncState.set(syncingBranchKey, false);
 					return;
 				}
 				// delete .originals repo
 				if (fs.existsSync(originalsRepoBranchPath)) {
-					fs.rmdirSync(originalsRepoBranchPath, { recursive: true });
+					fs.rmSync(originalsRepoBranchPath, { recursive: true });
 				}
 				// Hide Connect Repo
 				vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
@@ -208,6 +193,7 @@ export class initUtils {
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
 					userEmail: string, isPublic=false) {
+		// TODO: Add checks and tests if .originals/.shadow repos do not exist
 		// Check plan limits
 		const { planLimitReached, canRetry } = getPlanLimitReached();
 		if (planLimitReached && !canRetry) return false;
@@ -223,7 +209,7 @@ export class initUtils {
 			filesData[fileToUpload.rel_path] = {
 				is_binary: fileToUpload.is_binary,
 				size: fileToUpload.size,
-				created_at: new Date(fileToUpload.created_at).getTime() / 1000
+				created_at: fileToUpload.created_at ? fileToUpload.created_at / 1000 : ""
 			};
 		});
 		
@@ -302,7 +288,7 @@ export class initUtils {
 		this.saveFileIds(branch, token, user.email, json.response);
 
 		// Upload to s3
-		await this.uploadRepoToS3(branch, token, json.response, syncingBranchKey);
+		await this.uploadRepoToS3(branch, json.response, syncingBranchKey);
 
 		return true;
 	}

@@ -25,6 +25,8 @@ export const IGNORABLE_DIRECTORIES = [
 	"node_modules",
 	".DS_Store",
 	".idea",
+	"coverage",
+	"bower_components"
 ];
 
 export const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;

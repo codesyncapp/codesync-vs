@@ -1,34 +1,20 @@
 import fs from 'fs';
 import path from "path";
-import ignore from 'ignore';
 import { IGNORABLE_DIRECTORIES, SYNCIGNORE } from "../constants";
-import { checkSubDir, getBranch, isRepoActive, isUserActive, readYML } from '../utils/common';
+import { checkSubDir, getBranch, isRepoActive, isIgnoreAblePath, isUserActive, readYML, getSyncIgnoreItems } from '../utils/common';
 import { generateSettings } from "../settings";
 import { CodeSyncLogger } from '../logger';
 
 export function shouldIgnorePath(repoPath: string, relPath: string) {
-	// Allow file sync if it is not there is no .syncignore
-	const ignorableDirs = ignore().add(IGNORABLE_DIRECTORIES);
-	const isIgnorableDir = ignorableDirs.ignores(relPath);
+	const isIgnorableDir = isIgnoreAblePath(relPath, IGNORABLE_DIRECTORIES);
 	if (isIgnorableDir) return true;
+	// Allow file sync if there is no .syncignore
 	const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
 	if (!fs.existsSync(syncIgnorePath)) return false;
-	const syncignorePaths = fs.readFileSync(syncIgnorePath, "utf8");
-	const splitLines = syncignorePaths.split("\n").map(item => {
-		if (!item) return item;
-		if (item.endsWith("/*")) {
-			const splitPath = item.split("/*");
-			return splitPath.slice(0, splitPath.length-1).join("");
-		} 
-		else if (item.endsWith("/")) {
-			const splitPath = item.split("/");
-			return splitPath.slice(0, splitPath.length-1).join("");
-		} 
-		return item;
-	});
-	const ig = ignore().add(splitLines);
-	const shouldIgnore = ig.ignores(relPath);
-	if (shouldIgnore) { console.log(`Skipping syncignored path: ${relPath}`); }
+	const syncIgnoreItems = getSyncIgnoreItems(repoPath);
+	// Allow file sync if there .syncignore is empty
+	if (!syncIgnoreItems.length) return false;
+	const shouldIgnore = isIgnoreAblePath(relPath, syncIgnoreItems);
 	return shouldIgnore;
 }
 

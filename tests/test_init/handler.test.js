@@ -20,11 +20,12 @@ import {
     TEST_REPO_RESPONSE,
     TEST_USER,
     waitFor,
-    addUser
+    addUser,
+    writeTestRepoFiles
 } from "../helpers/helpers";
 import { SYNC_IGNORE_FILE_DATA } from "../../src/constants";
 import { pathUtils } from "../../src/utils/path_utils";
-import { readYML } from "../../src/utils/common";
+import { readYML, readFile } from "../../src/utils/common";
 import {createSystemDirectories} from "../../src/utils/setup_utils";
 
 describe("initHandler: connectRepo", () => {
@@ -129,7 +130,7 @@ describe("initHandler: connectRepo", () => {
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(fs.existsSync(syncIgnorePath)).toBe(true);
-        const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
+        const _syncIgnoreData = readFile(syncIgnorePath);
         expect(_syncIgnoreData).toStrictEqual(SYNC_IGNORE_FILE_DATA);
         expect(vscode.workspace.openTextDocument).toHaveBeenCalledTimes(1);
     });
@@ -143,7 +144,7 @@ describe("initHandler: connectRepo", () => {
         // Verify error msg
         const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
         expect(fs.existsSync(syncIgnorePath)).toBe(true);
-        const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
+        const _syncIgnoreData = readFile(syncIgnorePath);
         expect(_syncIgnoreData).toStrictEqual(SYNC_IGNORE_FILE_DATA);
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
@@ -162,7 +163,7 @@ describe("initHandler: connectRepo", () => {
         // Verify error msg
         const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
         expect(fs.existsSync(syncIgnorePath)).toBe(true);
-        const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
+        const _syncIgnoreData = readFile(syncIgnorePath);
         expect(_syncIgnoreData).toStrictEqual(gitignoreData);
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
@@ -179,7 +180,7 @@ describe("initHandler: connectRepo", () => {
         const handler = new initHandler(repoPath, "ACCESS_TOKEN");
         await handler.connectRepo();
         expect(fs.existsSync(syncIgnorePath)).toBe(true);
-        const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
+        const _syncIgnoreData = readFile(syncIgnorePath);
         expect(_syncIgnoreData).toStrictEqual(syncIgnoreData);
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
@@ -197,7 +198,7 @@ describe("initHandler: connectRepo", () => {
         await handler.connectRepo();
         // Verify .syncignore has been created
         expect(fs.existsSync(syncIgnorePath)).toBe(true);
-        const _syncIgnoreData = fs.readFileSync(syncIgnorePath, "utf8");
+        const _syncIgnoreData = readFile(syncIgnorePath);
         expect(_syncIgnoreData).toStrictEqual(syncIgnoreData);
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
@@ -236,6 +237,7 @@ describe("initHandler: Syncing Branch", () => {
         userFilePath = getUserFilePath(baseRepoPath);
         sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
         fs.writeFileSync(configPath, yaml.safeDump(configData));
+        writeTestRepoFiles(repoPath);
     });
 
     afterEach(() => {

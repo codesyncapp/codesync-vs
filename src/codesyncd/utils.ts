@@ -18,7 +18,7 @@ import { uploadFileToServer } from '../utils/upload_utils';
 import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
-import { checkSubDir, getActiveUsers, isRepoActive, readYML } from '../utils/common';
+import { checkSubDir, getActiveUsers, isRepoActive, readFile, readYML } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 
@@ -131,7 +131,7 @@ export const getDIffForDeletedFile = (repoPath: string, branch: string, relPath:
 		cleanUpDeleteDiff(repoPath, branch, relPath, configJSON);
 		return diff;
 	}
-	const shadowText = fs.readFileSync(shadowPath, "utf8");
+	const shadowText = readFile(shadowPath);
 	const dmp = new diff_match_patch();
 	const patches = dmp.patch_make(shadowText, "");
 	diff = dmp.patch_toText(patches);
@@ -139,46 +139,6 @@ export const getDIffForDeletedFile = (repoPath: string, branch: string, relPath:
 	return diff;
 };
 
-export const similarity = (s1: string, s2: string) => {
-	let longer = s1;
-	let shorter = s2;
-	if (s1.length < s2.length) {
-		longer = s2;
-		shorter = s1;
-	}
-	const longerLength = longer.length;
-	if (longerLength == 0) {
-		return 1.0;
-	}
-	return (longerLength - editDistance(longer, shorter)) / longerLength;
-};
-
-const editDistance = (s1: string, s2: string) => {
-	s1 = s1.toLowerCase();
-	s2 = s2.toLowerCase();
-
-	const costs: number[] = [];
-	for (let i = 0; i <= s1.length; i++) {
-		let lastValue = i;
-		for (let j = 0; j <= s2.length; j++) {
-			if (i == 0)
-				costs[j] = j;
-			else {
-				if (j > 0) {
-					let newValue = costs[j - 1];
-					if (s1.charAt(i - 1) != s2.charAt(j - 1))
-						newValue = Math.min(Math.min(newValue, lastValue),
-							costs[j]) + 1;
-					costs[j - 1] = lastValue;
-					lastValue = newValue;
-				}
-			}
-		}
-		if (i > 0)
-			costs[s2.length] = lastValue;
-	}
-	return costs[s2.length];
-};
 
 export class statusBarMsgs {
 	/*
