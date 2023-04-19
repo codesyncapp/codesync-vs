@@ -1,29 +1,34 @@
 import fs from "fs";
 import path from "path";
-import walk from "walk";
-import ignore from "ignore";
+
+import { globSync } from 'glob';
 import {isBinaryFileSync} from "isbinaryfile";
+import stringSimilarity from "string-similarity";
 
 import {initUtils} from "../init/utils";
 import {IFileToUpload} from "../interface";
 import {initHandler} from "../init/init_handler";
-import {similarity} from "./utils";
 import {generateSettings} from "../settings";
 import {pathUtils} from "../utils/path_utils";
 import {
     formatDatetime,
     getBranch,
-    getSkipRepos,
+    getSkipPaths,
     getSyncIgnoreItems,
     isEmpty,
+    isIgnoreAblePath,
     isUserActive,
+    readFile,
     readYML
 } from "../utils/common";
-import { SEQUENCE_MATCHER_RATIO } from "../constants";
+import { RUN_DELETE_HANDLER_AFTER, SEQUENCE_MATCHER_RATIO } from "../constants";
 import {eventHandler} from "../events/event_handler";
+import { CodeSyncLogger } from "../logger";
+import { CodeSyncState } from "../utils/state_utils";
 
 
-export const populateBuffer = async () => {
+export const populateBuffer = async (viaDaemon=true) => {
+    if (!viaDaemon) return;
     const readyRepos = await detectBranchChange();
     await populateBufferForMissedEvents(readyRepos);
 };
@@ -36,9 +41,12 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
             // Go for content diffs if repo was modified after lastSyncedAt
             await obj.populateBufferForRepo();
         }
-        obj.generateDiffForDeletedFiles();
-        // Update lastSyncedAt in global
-        (global as any).lastSyncedAt[repoPath] = obj.repoModifiedAt;
+        const generateDiffForDeletedFilesKey = `${repoPath}:${branch}:generateDiffForDeletedFiles`;
+        const deletedFilesLastRun = CodeSyncState.get(generateDiffForDeletedFilesKey);
+        if (!deletedFilesLastRun || (new Date().getTime() - deletedFilesLastRun) > RUN_DELETE_HANDLER_AFTER) {
+            obj.generateDiffForDeletedFiles();
+            CodeSyncState.set(generateDiffForDeletedFilesKey, new Date().getTime());
+        }
     }
 };
 
@@ -67,6 +75,7 @@ class PopulateBuffer {
 
     repoPath: string;
     branch: string;
+    lastSyncedAtKey: string;
     repoBranchPath: string;
     repoModifiedAt: number;
     modifiedInPast: boolean;
@@ -80,10 +89,14 @@ class PopulateBuffer {
     shadowRepoBranchPath: string;
     deletedRepoBranchPath: string;
     originalsRepoBranchPath: string;
+    syncIgnoreItems: string[];
+    potentialMatchFiles: string[];
+    gotPotentialMatchFiles: boolean;
 
     constructor(repoPath: string, branch: string) {
         this.repoPath = repoPath;
         this.branch = branch;
+        this.lastSyncedAtKey = `${this.repoPath}:lastSyncedAt`;
         this.repoModifiedAt = -1;
         this.settings = generateSettings();
         this.repoBranchPath = path.join(this.repoPath, this.branch);
@@ -98,26 +111,24 @@ class PopulateBuffer {
         this.shadowRepoBranchPath = this.pathUtils.getShadowRepoBranchPath();
         this.deletedRepoBranchPath = this.pathUtils.getDeletedRepoBranchPath();
         this.originalsRepoBranchPath = this.pathUtils.getOriginalsRepoBranchPath();
+        this.syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
+        this.potentialMatchFiles = [];
+        this.gotPotentialMatchFiles = false;
     }
 
     getModifiedInPast() {
-        const maxModifiedAt = Math.max(...this.itemPaths.map(itemPath => itemPath.modified_at));
-        const maxCreatedAt = Math.max(...this.itemPaths.map(itemPath => itemPath.created_at));
+        const maxModifiedAt = Math.max(...this.itemPaths.map(itemPath => itemPath.modified_at || 0));
+        const maxCreatedAt = Math.max(...this.itemPaths.map(itemPath => itemPath.created_at || 0));
         this.repoModifiedAt = Math.max(maxModifiedAt, maxCreatedAt);
-        let lastSyncedAt;
-        if (!(global as any).lastSyncedAt) {
-            (global as any).lastSyncedAt = <any>{};
-        } else {
-            lastSyncedAt = (global as any).lastSyncedAt[this.repoPath];
-        }
+        const lastSyncedAt = CodeSyncState.get(this.lastSyncedAtKey);
+        // Set the value for next iteration
+        CodeSyncState.set(this.lastSyncedAtKey, this.repoModifiedAt);
         return lastSyncedAt && lastSyncedAt >= this.repoModifiedAt;
     }
 
     async populateBufferForRepo() {
         console.log(`Watching Repo: ${this.repoPath}`);
-        
         const handler = new eventHandler(this.repoPath, "", true);
-
         for (const itemPath of this.itemPaths) {
             let isRename = false;
             const shadowFilePath = path.join(this.shadowRepoBranchPath, itemPath.rel_path);
@@ -141,20 +152,27 @@ class PopulateBuffer {
             if (fileInConfig) {
                 handler.createdAt = formatDatetime(itemPath.modified_at);
                 // Read latest content of the file
-                const currentContent = fs.readFileSync(itemPath.file_path, "utf8");
+                const currentContent = readFile(itemPath.file_path);
                 handler.handleChanges(itemPath.file_path, currentContent);
                 continue;
             }
-            // If rel_path is not in configFiles and shadow does not exists, can be a rename OR deleted file
+            // If rel_path is not in configFiles and shadow does not exist, can be a new file OR a rename
             if (!shadowExists) {
+                if (!this.gotPotentialMatchFiles) {
+                    this.potentialMatchFiles = this.getPotentialRenamedFiles();
+                    this.gotPotentialMatchFiles = true;
+                }
                 const renameResult = this.checkForRename(itemPath.file_path);
                 if (renameResult.isRename) {
-                    const oldRelPath = renameResult.shadowFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
+                    const oldRelPath = renameResult.matchingFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
                     isRename = oldRelPath !== itemPath.rel_path;
                     if (isRename) {
                         const oldFilePath = path.join(this.repoPath, oldRelPath);
                         handler.handleRename(oldFilePath, itemPath.file_path);
                         this.renamedFiles.push(oldRelPath);
+                        // Remove matched file from potential matched files
+                        const index = this.potentialMatchFiles.indexOf(renameResult.matchingFilePath);
+                        if (index > -1) this.potentialMatchFiles.splice(index, 1);
                         continue;
                     }
                 }
@@ -164,67 +182,81 @@ class PopulateBuffer {
         }
     }
 
-    checkForRename(filePath: string) {
-        // Check for rename only for non-empty files
-        const repoPath = this.repoPath;
-        const shadowRepoBranchPath = this.shadowRepoBranchPath;
-        let shadowFilePath = '';
-        let matchingFilesCount = 0;
-        const content = fs.readFileSync(filePath, "utf8");
-        if (!content) {
-            return {
-                isRename: false,
-                shadowFilePath
-            };
-        }
-        const syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
-        const ig = ignore().add(syncIgnoreItems);
-        const skipRepos = getSkipRepos(repoPath, syncIgnoreItems);
-
-        const options = {
-            filters: skipRepos,
-            listeners: {
-                file: function (root: string, fileStats: any, next: any) {
-                    const oldFilePath = path.join(root, fileStats.name);
-                    const relPath = oldFilePath.split(path.join(shadowRepoBranchPath, path.sep))[1];
-                    const isBinary = isBinaryFileSync(oldFilePath);
-                    // skip syncIgnored files
-                    const shouldIgnore = ig.ignores(relPath);
-                    if (shouldIgnore) {
-                        return next();
-                    }
-                    // Skip binary files
-                    if (isBinary) {
-                        return next();
-                    }
-                    // Ignore shadow files whose actual files exist in the repo
-                    const actualFilePath = path.join(repoPath, relPath);
-                    if (fs.existsSync(actualFilePath)) {
-                        return next();
-                    }
-                    const shadowContent = fs.readFileSync(oldFilePath, "utf8");
-                    const ratio = similarity(content, shadowContent);
-                    if (ratio > SEQUENCE_MATCHER_RATIO) {
-                        shadowFilePath = oldFilePath;
-                        matchingFilesCount += 1;
-                    }
-                    return next();
-                }
+    getPotentialRenamedFiles() {
+        /*
+        If a file is renamed in actual repo, it will be present in the shadow repo with pervious name.
+        So potential renamed files in the shadow repo should possess following properties
+        - Shadow file should not be ignorable from .syncignore
+        - Actual file should not be present for the shadow file
+        - Relative path of shadow file should be present in config file
+        - Shadow file should not be a binary file since we are going to match the text of files
+        - Shadow file should not be empty
+         */
+        const skipPaths = getSkipPaths(this.shadowRepoBranchPath, this.syncIgnoreItems);
+        // Skip those shadow files whose actual files are present in the repo
+        const skipShadowFiles = this.itemPaths.map(itemPath => path.join(this.shadowRepoBranchPath, itemPath.rel_path));
+        const ignorePaths = skipPaths.concat(skipShadowFiles);
+        const t0 = new Date().getTime();
+        const shadowFiles = globSync(`${this.shadowRepoBranchPath}/**`, { ignore: ignorePaths, nodir: true, dot: true });
+        const filteredFiles = shadowFiles.filter(shadowFilePath => {
+            const relPath = shadowFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
+            const isInConfig = relPath in this.configFiles;
+            const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);
+            // If file is not in config OR is is present in .syncignore, remove the file from .shadow
+            if (!isInConfig || shouldIgnorePath) {
+                fs.unlink(shadowFilePath, err => {
+                    if (!err) return false;
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    CodeSyncLogger.error("getPotentialRenamedFiles: Error deleting shadow file", shadowFilePath, err);
+                });
+                return false;
             }
-        };
+            // Skip binary files
+            const isBinary = isBinaryFileSync(shadowFilePath);
+            if (isBinary) return false;
+            // Skip empty shadow files
+            const content = readFile(shadowFilePath);
+            if (!content) return false;
+            return true;
+        });
+        CodeSyncLogger.debug(`getPotentialRenamedFiles: glob took=${(new Date().getTime() - t0)/1000}s, Repo Files Count ${this.itemPaths.length}`);
+        return filteredFiles;
+    }
 
-        walk.walkSync(shadowRepoBranchPath, options);
+    checkForRename(filePath: string) {
+        let matchingFilePath = '';
+        let matchingFilesCount = 0;
+        if (!this.potentialMatchFiles.length) return {
+            isRename: false,
+            matchingFilePath
+        };
+        const content = readFile(filePath);
+        if (!content) return {
+                isRename: false,
+                matchingFilePath
+            };
+
+        this.potentialMatchFiles.forEach(potentialMatchingFile => {
+            const shadowContent = readFile(potentialMatchingFile);
+            const ratio = stringSimilarity.compareTwoStrings(content, shadowContent);
+            if (ratio > SEQUENCE_MATCHER_RATIO) {
+                matchingFilePath = potentialMatchingFile;
+                matchingFilesCount += 1;
+            }
+        });
+
         return {
             isRename: matchingFilesCount === 1,
-            shadowFilePath
+            matchingFilePath
         };
     }
 
     generateDiffForDeletedFiles() {
         /*
-         Pick files that are present in config.yml but
+         Pick files that are present in config.yml and
          - is sync able file
-         - not present in actual repo
+         - is not present in actual repo
          - is not in renamed files
          - not present in .deleted repo
          - present in .shadow repo
@@ -236,7 +268,7 @@ class PopulateBuffer {
             const cacheFilePath = path.join(this.deletedRepoBranchPath, relPath);
             const shadowFilePath = path.join(this.shadowRepoBranchPath, relPath);
             // See if should discard this file
-            if (!this.initUtilsObj.isSyncAble(relPath) ||
+            if (isIgnoreAblePath(relPath, this.syncIgnoreItems) ||
                 activeRelPaths.includes(relPath) ||
                 this.renamedFiles.includes(relPath) ||
                 fs.existsSync(cacheFilePath) ||
@@ -271,7 +303,6 @@ export const detectBranchChange = async () => {
         const accessToken = user.access_token;
         const branch = getBranch(repoPath);
         const pathUtilsObj = new pathUtils(repoPath, branch);
-
         const shadowRepo = pathUtilsObj.getShadowRepoPath();
 
         if (!fs.existsSync(repoPath) || !fs.existsSync(shadowRepo)) {

@@ -1,16 +1,22 @@
 "use strict";
 
 import path from "path";
+import vscode from 'vscode';
+
 import {
 	CODESYNC_WEBSOCKET_HOST,
-	CODESYNC_HOST,
-	WEB_APP_URL
+	CODESYNC_HOST
 } from "./settings";
+import { generateServerUrl } from "./utils/url_utils";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+export const VERSION = vscode.extensions.getExtension('codesync.codesync').packageJSON.version;
 
 export const SYNCIGNORE = ".syncignore";
 export const GITIGNORE = ".gitignore";
 
-export const DIFF_SOURCE = 'vscode';
+export const VSCODE = 'vscode';
 export const DEFAULT_BRANCH = 'default';
 
 // TODO: Use standard .gitignore
@@ -19,6 +25,8 @@ export const IGNORABLE_DIRECTORIES = [
 	"node_modules",
 	".DS_Store",
 	".idea",
+	"coverage",
+	"bower_components"
 ];
 
 export const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -26,28 +34,19 @@ export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
 
 export const API_BASE_URL = `${CODESYNC_HOST}/v1`;
-export const API_ROUTES = {
-	HEALTHCHECK: `${CODESYNC_HOST}/healthcheck`,
-	FILES: `${API_BASE_URL}/files`,
-	REPO_INIT: `${API_BASE_URL}/init`,
-	REPOS: `${API_BASE_URL}/repos`,
-	USERS: `${API_BASE_URL}/users`,
-	USER_SUBSCRIPTION: `${API_BASE_URL}/users/subscription`,
-	DIFFS_WEBSOCKET: `${CODESYNC_WEBSOCKET_HOST}/v2/websocket`,
-	TEAM_ACTIVITY: `${API_BASE_URL}/team_activity?tz=${TIMEZONE}`
+export const API_PATH = {
+	REPOS: "/repos"
 };
-
-
-// Diff utils
-export const DIFF_FILES_PER_ITERATION = 25;
-export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
-export const REQUIRED_FILE_RENAME_DIFF_KEYS = ['old_rel_path', 'new_rel_path'];
-export const REQUIRED_DIR_RENAME_DIFF_KEYS = ['old_path', 'new_path'];
-export const DIFF_SIZE_LIMIT = 16 * 1000 * 1000;
-export const SEQUENCE_MATCHER_RATIO = 0.8;
-
-// Error msgs
-export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
+export const API_ROUTES = {
+	HEALTHCHECK: generateServerUrl("/healthcheck", CODESYNC_HOST),
+	FILES: generateServerUrl("/files"),
+	REPO_INIT: generateServerUrl("/init"),
+	REPOS: generateServerUrl(API_PATH.REPOS),
+	USERS: generateServerUrl("/users"),
+	USER_SUBSCRIPTION: generateServerUrl("/users/subscription"),
+	DIFFS_WEBSOCKET: generateServerUrl("/v2/websocket", CODESYNC_WEBSOCKET_HOST),
+	TEAM_ACTIVITY: generateServerUrl("/team_activity", API_BASE_URL, true)
+};
 
 // Auth0
 export const MIN_PORT = 49152;
@@ -57,6 +56,17 @@ export const Auth0URLs = {
     LOGOUT: `${CODESYNC_HOST}/auth-logout`,
 	LOGIN_CALLBACK_PATH: "/login-callback"
 };
+
+// Diff utils
+export const DIFF_FILES_PER_ITERATION = 50;
+export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
+export const REQUIRED_FILE_RENAME_DIFF_KEYS = ['old_rel_path', 'new_rel_path'];
+export const REQUIRED_DIR_RENAME_DIFF_KEYS = ['old_path', 'new_path'];
+export const DIFF_SIZE_LIMIT = 16 * 1000 * 1000;
+export const SEQUENCE_MATCHER_RATIO = 0.8;
+
+// Error msgs
+export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
 
 // Notification Messages
 export const NOTIFICATION = {
@@ -134,7 +144,7 @@ export const STATUS_BAR_MSGS = {
 	DEFAULT: ' CodeSync ✅',
 	AUTHENTICATION_FAILED: ' CodeSync ❌, Click to authenticate!',
 	SERVER_DOWN: ' CodeSync ❌, Offline',
-	GETTING_READY: ' CodeSync => Getting ready',
+	GETTING_READY: ' CodeSync $(loading~spin)',
 	NO_REPO_OPEN: ' CodeSync => No project is open',
 	CONNECT_REPO: ' CodeSync ❌, Click to connect repo!',
 	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
@@ -175,13 +185,12 @@ export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .sy
 export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
 export const RETRY_REQUEST_AFTER = 3 * 60 * 1000; // 1000 is for ms;
 export const RETRY_TEAM_ACTIVITY_REQUEST_AFTER = 5 * 60 * 1000; // 1000 is for ms;
-export const RETRY_BRANCH_SYNC_AFTER = 1 * 60 * 1000; // 1 minute, 1000 is for ms
+export const RETRY_BRANCH_SYNC_AFTER = 3 * 60 * 1000; // 3 minute, 1000 is for ms
+export const RUN_DELETE_HANDLER_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const SOCKET_CONNECT_ERROR_CODES = ["ECONNREFUSED", "ETIMEDOUT", "ECONNRESET"];
 export const SOCKET_ERRORS = {
 	ERROR_MSG_RECEIVE: 'Error receiving socket msg'
 };
 export const DAY = 24 * 60 * 60 * 1000;
-// GA-4 Parameters
-export const GA4_PARAMS = `utm_medium=plugin&utm_source=${DIFF_SOURCE}`;
-export const GA4_PARAMS_DAILY_POPUP_FIRST = `${GA4_PARAMS}&utm_campaign=daily_popup_first`;
-export const PRICING_URL = `${WEB_APP_URL}/pricing?${GA4_PARAMS}`;
+export const PRICING_URL_PATH = "/pricing";
+export const RETRY_WEBSOCKET_CONNECTION_AFTER = 5 * 60 * 1000; // 1000 is for ms;

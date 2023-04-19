@@ -4,6 +4,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.19.0] - 2023-04-19
+- Upgraded node to v16.20.0
+- Fixed a bug in showing _Diconnect Parent Repo_ button in left panel
+- Optimized logic to checkForRename using [string-similarity](https://www.npmjs.com/package/string-similarity)
+    - Earlier logic was taking ~15s for comparing text of files of ~50KB. With "string-similarity" it is in miliseconds
+- Fixed a bug in getting `PotentialMatchingFiles` for rename
+    - Earlier it was checking against every file of the repo. Now it considers only those files from shadow repo that possess following properties:
+        - Shadow file should not be ignorable from .syncignore
+        - Actual file is not present for the shadow file
+        - Relative path of shadow file should be present in config file
+        - Shadow file should not be a binary file since we are going to match the text of files
+        - Shadow file should not be empty
+    - Also getting `PotentialMatchingFiles` only once per repo instead of once per file
+- Improved logic of ignoring a path from .syncignore
+    - Using common function everywhere for "[ignores](https://www.npmjs.com/package/ignore)" which ignores path depending on content of .syncignore
+    - Improved logic to ignore DEFAULT-SKIP-DIRECTORIES wherever they are present in the project e.g. `node_modules` etc
+- Taking care of data size being sent to server, shouldn’t exceed 16MB
+- Slowed down generateDiffForDeletedFiles() in populateBuffer as rename event takes some time and before that populateBuffer marks those files as deleted
+
+## [3.18.0] - 2023-03-29
+### Fixed
+- Waiting before retrying socket connection if error occurs
+
+## [3.17.3] - 2023-02-22
+### Fixed
+- Fixed query params for Login/Logout functionalities
+- Using URL builder to generate Web URLs including GA4 params
+- Fixed sync-repo-utils URLs
+
+## [3.17.2] - 2023-02-15
+### Fixed
+- source=VSCODE&v=VERSION added in remaining 2 API requests
+- Improved building URL using query params
+
+## [3.17.1] - 2023-02-01
+### Fixed
+- Fixed a bug in hiding team-activity alert
+- v=VERSION added in all API requests
+
+## [3.17.0] - 2023-02-01
+### Fixed
+- Fixed an edge case of missing very first change in a file from bufferHandler
+- bufferHandler updated to iterate new_files first before normal diffs
+
+## [3.16.0] - 2023-01-30
+### Updated
+- Added source=vscode as query parameters in API calls
+
+## [3.15.2] - 2023-01-27
+### Updated
+- Fixed a bug in reading alerts.yml with empty object
+
+## [3.15.1] - 2023-01-25
+### Updated
+- Not running populateBuffer in first iteration to speed up extension startup
+- Sending 50 diffs per iteration
+- Using loading icon for Getting Ready
+
 ## [3.15.0] - 2023-01-04
 ### Updated
 - Packages upgraded

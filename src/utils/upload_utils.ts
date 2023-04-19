@@ -1,11 +1,10 @@
 import fs from 'fs';
-import vscode from 'vscode';
 import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
 import { API_ROUTES } from "../constants";
 import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from './pricing_utils';
-import { formatDatetime } from './common';
+import { formatDatetime, readFile } from './common';
 
 
 export const uploadRepoToServer = async (token: string, data: any) => {
@@ -140,7 +139,7 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 		// reject raises an expcetion so not using it
 		let content;
 		try {
-			content = fs.readFileSync(filePath, "utf8");
+			content = readFile(filePath);
 		} catch (e) {
 			resolve({error: `Could not read file: ${filePath}`});
 		}

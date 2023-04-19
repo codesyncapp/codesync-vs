@@ -10,8 +10,7 @@ import {
     cleanUpDeleteDiff,
     getDIffForDeletedFile,
     handleNewFileUpload,
-    isValidDiff,
-    similarity
+    isValidDiff
 } from "../../src/codesyncd/utils";
 import { createSystemDirectories } from "../../src/utils/setup_utils";
 import {
@@ -86,30 +85,6 @@ describe("isValidDiff",  () => {
         diffData.diff = "THIS IS DIFF";
         const isValid = isValidDiff(diffData);
         expect(isValid).toBe(true);
-    });
-});
-
-
-describe("similarity",  () => {
-
-    test("Empty strings",  () => {
-        const match = similarity("", "");
-        expect(match).toBe(1.0);
-    });
-
-    test("100%  Match",  () => {
-        const match = similarity('abc', 'abc');
-        expect(match).toBe(1);
-    });
-
-    test("No Match",  () => {
-        const match = similarity('abc', 'def');
-        expect(match).toBe(0);
-    });
-
-    test("Partial Match",  () => {
-        const match = similarity('abc', 'abdef');
-        expect(match).toBeTruthy();
     });
 });
 

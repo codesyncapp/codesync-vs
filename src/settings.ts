@@ -72,18 +72,11 @@ export const generateSettings = () => {
     };
     const alerts = {
         /*
-        Keeping 
-        1- alert name as key 
-        2- last-shown-at as value
-
-        We can have following data in alerts.yml 
-            team_activity: 
+        For now, we have following data in alerts.yml
+            team_activity:
                 userEmail:
-                    checked_at: "2022-07-05"
-                    checked_for: "2022-07-05"
-                    shown_at: 2022-07-05 16:30:27.210
-            user_activity: '2022-07-05 16:30:27.210'
-            upgrade_plan: '2022-07-05 21:51:27.210'
+                    checked_for: '2023-01-11'
+                    shown_at: 2023-01-11T14:31:33.086Z
         */
         ALERTS: path.join(rootRepo, "alerts.yml")
     };

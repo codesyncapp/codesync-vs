@@ -1,16 +1,16 @@
 import fs from 'fs';
 import path from 'path';
-import walk from "walk";
 import yaml from "js-yaml";
 import vscode from 'vscode';
+import { globSync } from 'glob';
 
 import { IDiff } from "../interface";
 import { initUtils } from "../init/utils";
-import { formatDatetime, getBranch, readYML } from "../utils/common";
+import { formatDatetime, getBranch, readFile, readYML } from "../utils/common";
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
-import { DIFF_SOURCE } from "../constants";
+import { VSCODE } from "../constants";
 import { isRepoSynced, shouldIgnorePath } from './utils';
 
 
@@ -51,7 +51,7 @@ export class eventHandler {
 		}
 		// Add new diff in the buffer
 		const newDiff = <IDiff>{};
-		newDiff.source = DIFF_SOURCE;
+		newDiff.source = VSCODE;
 		newDiff.repo_path = this.repoPath;
 		newDiff.branch = this.branch;
 		newDiff.file_relative_path = relPath;
@@ -120,11 +120,11 @@ export class eventHandler {
 			// If populating buffer via daemon, check if shadow was modified after the file was written to disk
 			const shadowHasBeenUpdated = lstatShadow.mtimeMs >= lstatFile.mtimeMs;
 			if (shadowHasBeenUpdated) {
-				this.createdAt = formatDatetime(lstatShadow.mtimeMs);
 				if (this.viaDaemon) return;
+				this.createdAt = formatDatetime(lstatShadow.mtimeMs);
 			}
 			// Read shadow file
-			shadowText = fs.readFileSync(shadowPath, "utf8");
+			shadowText = readFile(shadowPath);
 		}
 		// If shadow text is same as current content, no need to compute diffs
 		if (shadowText === currentText) return;
@@ -133,7 +133,7 @@ export class eventHandler {
 		// Compute diffs
 		const dmp = new diff_match_patch();
 		const patches = dmp.patch_make(shadowText, currentText);
-		//  Create text representation of patches objects
+		// Create text representation of patches objects
 		const diffs = dmp.patch_toText(patches);
 		// Add new diff in the buffer
 		this.addDiff(relPath, diffs);
@@ -250,23 +250,17 @@ export class eventHandler {
 		const repoPath = this.repoPath;
 		const branch = this.branch;
 		this.isDelete = true;
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const that = this;
-		// No need to skip repos here as it is for specific repo
-		const walker = walk.walk(shadowDirPath);
-		walker.on("file", function (root, fileStats, next) {
-			const filePath = path.join(root, fileStats.name);
-			const relPath = filePath.split(path.join(pathUtilsObj.formattedRepoPath, branch, path.sep))[1];
+		// No need to skip repos here as it is for specific directory
+		const shadowFiles = globSync(`${shadowDirPath}/**`, { nodir: true, dot: true });
+		shadowFiles.forEach(shadowFilePath => {
+			const relPath = shadowFilePath.split(path.join(pathUtilsObj.formattedRepoPath, branch, path.sep))[1];
 			const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
 			const cacheFilePath = path.join(cacheRepoBranchPath, relPath);
-			if (fs.existsSync(cacheFilePath)) {
-				return next();
-			}
+			if (fs.existsSync(cacheFilePath)) return;
 			// Create directories
 			const initUtilsObj = new initUtils(repoPath);
-			initUtilsObj.copyFilesTo([filePath], pathUtilsObj.getDeletedRepoPath(), true);
-			that.addDiff(relPath, "");
-			next();
+			initUtilsObj.copyFilesTo([shadowFilePath], pathUtilsObj.getDeletedRepoPath(), true);
+			this.addDiff(relPath, "");
 		});
 	};
 
@@ -302,7 +296,7 @@ export class eventHandler {
 		const newRelPath = newAbsPath.split(path.join(this.repoPath, path.sep))[1];
 
 		if (!newAbsPath.startsWith(this.repoPath)) return;
-		if (shouldIgnorePath(this.repoPath, newRelPath)) { return; }
+		if (shouldIgnorePath(this.repoPath, newRelPath)) return;
 
 		const isDirectory = fs.lstatSync(newAbsPath).isDirectory();
 		if (isDirectory) {
@@ -334,29 +328,26 @@ export class eventHandler {
 		// No need to skip repos here as it is for specific repo
 		this.isRename = true;
 		const repoPath = this.repoPath;
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const that = this;
-		const walker = walk.walk(newPath);
-		walker.on("file", function (root, fileStats, next) {
-			const newFilePath = path.join(root, fileStats.name);
-			const oldFilePath = newFilePath.replace(newPath, oldPath);
+		// No need to skip repos here as it is for specific directory
+		const renamedFiles = globSync(`${newPath}/**`, { nodir: true, dot: true });
+		renamedFiles.forEach(renamedFilePath => {
+			const oldFilePath = renamedFilePath.replace(newPath, oldPath);
 			const oldRelPath = oldFilePath.split(path.join(repoPath, path.sep))[1];
-			const newRelPath = newFilePath.split(path.join(repoPath, path.sep))[1];
+			const newRelPath = renamedFilePath.split(path.join(repoPath, path.sep))[1];
 			const diff = JSON.stringify({
 				'old_rel_path': oldRelPath,
 				'new_rel_path': newRelPath
 			});
 			// // Rename shadow file
-			const oldShadowPath = path.join(that.shadowRepoBranchPath, oldRelPath);
-			const newShadowPath = path.join(that.shadowRepoBranchPath, newRelPath);
+			const oldShadowPath = path.join(this.shadowRepoBranchPath, oldRelPath);
+			const newShadowPath = path.join(this.shadowRepoBranchPath, newRelPath);
 			if (fs.existsSync(oldShadowPath)) {
 				const initUtilsObj = new initUtils(repoPath);
 				initUtilsObj.copyForRename(oldShadowPath, newShadowPath);
 				fs.unlinkSync(oldShadowPath);
 			}
-			that.addPathToConfig(newRelPath, oldRelPath);
-			that.addDiff(newRelPath, diff);
-			next();
+			this.addPathToConfig(newRelPath, oldRelPath);
+			this.addDiff(newRelPath, diff);
 		});
 	};
 

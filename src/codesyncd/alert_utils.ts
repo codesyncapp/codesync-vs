@@ -73,11 +73,13 @@ export class Alerts {
 
 		TODO: Show alert in all open instances of the IDE by keeping track in state variable. 
 		*/
+		let teamActivityConfig = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key];
 		// Update data in alerts.yml
-		if (this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] instanceof Date || this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] === "") {
+		if (!teamActivityConfig || teamActivityConfig instanceof Date || teamActivityConfig === "") {
 			// Reset value to empty object
-			this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] = {};
+			teamActivityConfig = {};
 		}
+		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key] = teamActivityConfig;
 		const alertH = this.CONFIG.TEAM_ACTIVITY.showAt.hour;
 		const alertM = this.CONFIG.TEAM_ACTIVITY.showAt.minutes;
 		if (this.checkFor.getHours() < alertH || (this.checkFor.getHours() == alertH && this.checkFor.getMinutes() < alertM)) {
@@ -92,13 +94,14 @@ export class Alerts {
 		this.checkForDate = this.checkFor.toISOString().split('T')[0];
 		// Check when last alert was shown to the user
 		this.alertConfig = this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail];
+		// show alert if it is first time
+		if (!this.alertConfig) return await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
+		const lastShownAt = this.alertConfig.shown_at_vscode;
 		const activityAlertMsg = CodeSyncState.get(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG);
-		if (activityAlertMsg && this.alertConfig.shown_at && (this.nowTimestamp - this.alertConfig.shown_at.getTime() >= this.CONFIG.TEAM_ACTIVITY.hideAfter)) {
+		if (activityAlertMsg && lastShownAt && (this.nowTimestamp - lastShownAt.getTime() >= this.CONFIG.TEAM_ACTIVITY.hideAfter)) {
 			// Hide alert from status bar
 			CodeSyncState.set(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG, "");
 		}
-		// show alert if it is first time
-		if (!this.alertConfig) return await this.shouldCheckTeamActivityAlert(accessToken, userEmail);
 		const hasCheckedForDate = this.checkForDate === this.alertConfig.checked_for;
 		if (hasCheckedForDate) return;
 		// If checking on same day, should check @4:30pm
@@ -138,6 +141,7 @@ export class Alerts {
 		});
 		if (!hasRecentActivty) {
 			this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
+				...this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail],
 				checked_for: this.checkForDate
 			};
 			fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));	
@@ -160,10 +164,10 @@ export class Alerts {
 		const statusBarMsg = json.is_team_activity ? STATUS_BAR_MSGS.TEAM_ACTIVITY_ALERT : STATUS_BAR_MSGS.USER_ACTIVITY_ALERT;
 		CodeSyncState.set(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG, statusBarMsg);
 		this.statusBarMsgsHandler.update(statusBarMsg);
-		// Update alert config for shown_at
+		// Update alert config for shown_at_vscode
 		this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail] = {
 			checked_for: this.checkForDate,
-			shown_at: new Date()
+			shown_at_vscode: new Date()
 		};
 		fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
 	}
