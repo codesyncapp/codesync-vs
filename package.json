@@ -297,7 +297,7 @@
     "ignore": "^5.2.0",
     "isbinaryfile": "^5.0.0",
     "jest-fetch-mock": "^3.0.3",
-    "js-yaml": "^3.14.1",
+    "js-yaml": "^4.1.0",
     "macaddress": "^0.5.3",
     "node-fetch": "^3.3.0",
     "proper-lockfile": "^4.1.2",
