@@ -21,7 +21,7 @@ import {
     readFile,
     readYML
 } from "../utils/common";
-import { RUN_DELETE_HANDLER_AFTER, SEQUENCE_MATCHER_RATIO } from "../constants";
+import { RUN_DELETE_HANDLER_AFTER, RUN_POPULATE_BUFFER_AFTER, SEQUENCE_MATCHER_RATIO } from "../constants";
 import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
 import { CodeSyncState } from "../utils/state_utils";
@@ -36,17 +36,21 @@ export const populateBuffer = async (viaDaemon=true) => {
 export const populateBufferForMissedEvents = async (readyRepos: any) => {
     for (const repoPath of Object.keys(readyRepos)) {
         const branch = readyRepos[repoPath];
+        const populateBufferKey = `${repoPath}:${branch}:populateBuffer`;
+        const populateBufferLastRan = CodeSyncState.get(populateBufferKey);
+        const skipRun = (populateBufferLastRan && (new Date().getTime() - populateBufferLastRan) < RUN_POPULATE_BUFFER_AFTER);
+        if (skipRun) continue;
         const obj = new PopulateBuffer(repoPath, branch);
         if (!obj.modifiedInPast) {
             // Go for content diffs if repo was modified after lastSyncedAt
             await obj.populateBufferForRepo();
         }
+        CodeSyncState.set(populateBufferKey, new Date().getTime());
         const generateDiffForDeletedFilesKey = `${repoPath}:${branch}:generateDiffForDeletedFiles`;
-        const deletedFilesLastRun = CodeSyncState.get(generateDiffForDeletedFilesKey);
-        if (!deletedFilesLastRun || (new Date().getTime() - deletedFilesLastRun) > RUN_DELETE_HANDLER_AFTER) {
-            obj.generateDiffForDeletedFiles();
-            CodeSyncState.set(generateDiffForDeletedFilesKey, new Date().getTime());
-        }
+        const deletedFilesLastRan = CodeSyncState.get(generateDiffForDeletedFilesKey);
+        if (deletedFilesLastRan && (new Date().getTime() - deletedFilesLastRan) < RUN_DELETE_HANDLER_AFTER) continue;
+        obj.generateDiffForDeletedFiles();
+        CodeSyncState.set(generateDiffForDeletedFilesKey, new Date().getTime());
     }
 };
 
@@ -193,11 +197,12 @@ class PopulateBuffer {
         - Shadow file should not be empty
          */
         const skipPaths = getSkipPaths(this.shadowRepoBranchPath, this.syncIgnoreItems);
-        // Skip those shadow files whose actual files are present in the repo
+        // These are shadow files whose actual files are present in the repo
         const skipShadowFiles = this.itemPaths.map(itemPath => path.join(this.shadowRepoBranchPath, itemPath.rel_path));
-        const ignorePaths = skipPaths.concat(skipShadowFiles);
         const t0 = new Date().getTime();
-        const shadowFiles = globSync(`${this.shadowRepoBranchPath}/**`, { ignore: ignorePaths, nodir: true, dot: true });
+        let shadowFiles = globSync(`${this.shadowRepoBranchPath}/**`, { ignore: skipPaths, nodir: true, dot: true });
+        // Skip those shadow files whose actual files are present in the repo
+        shadowFiles = shadowFiles.filter(x => !skipShadowFiles.includes(x));
         const filteredFiles = shadowFiles.filter(shadowFilePath => {
             const relPath = shadowFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
             const isInConfig = relPath in this.configFiles;
@@ -220,7 +225,7 @@ class PopulateBuffer {
             if (!content) return false;
             return true;
         });
-        CodeSyncLogger.debug(`getPotentialRenamedFiles: glob took=${(new Date().getTime() - t0)/1000}s, Repo Files Count ${this.itemPaths.length}`);
+        CodeSyncLogger.debug(`getPotentialRenamedFiles: glob took=${(new Date().getTime() - t0)/1000}s, Files Count=${this.itemPaths.length}, repoPath=${this.repoPath}`);
         return filteredFiles;
     }
 
