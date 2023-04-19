@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.19.1] - 2023-04-19
 - Upgraded few packages
+- Skipping shadow files manually instead of using glob ignores
+- Slowed down populateBuffer i.e. It now runs after 1 minute now instead of 5s
 
 ## [3.19.0] - 2023-04-19
 - Upgraded node to v16.20.0

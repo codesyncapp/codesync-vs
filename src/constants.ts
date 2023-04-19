@@ -186,6 +186,7 @@ export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
 export const RETRY_REQUEST_AFTER = 3 * 60 * 1000; // 1000 is for ms;
 export const RETRY_TEAM_ACTIVITY_REQUEST_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const RETRY_BRANCH_SYNC_AFTER = 3 * 60 * 1000; // 3 minute, 1000 is for ms
+export const RUN_POPULATE_BUFFER_AFTER = 1 * 60 * 1000; // 1000 is for ms;
 export const RUN_DELETE_HANDLER_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const SOCKET_CONNECT_ERROR_CODES = ["ECONNREFUSED", "ETIMEDOUT", "ECONNRESET"];
 export const SOCKET_ERRORS = {
