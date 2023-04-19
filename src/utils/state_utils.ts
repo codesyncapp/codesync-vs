@@ -10,7 +10,8 @@ export const CODESYNC_STATES = {
     SYNCING_BRANCH: "syncingBranch",
     TEAM_ACTIVITY_REQUEST_SENT_AT: "teamActivtyRequestSentAt",
     CAN_AVAIL_TRIAL: "canAvailTrial",
-    STATUS_BAR_ACTIVITY_ALERT_MSG: "statusBarActivityAlertMsg"
+    STATUS_BAR_ACTIVITY_ALERT_MSG: "statusBarActivityAlertMsg",
+    WEBSOCKET_ERROR_OCCURRED_AT: "websocketErrorOccurredAt"
 };
 
 export class CodeSyncState {

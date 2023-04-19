@@ -5,7 +5,7 @@ import vscode from "vscode";
 import {isValidDiff} from '../utils';
 import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
-import {DAY, DIFF_FILES_PER_ITERATION} from "../../constants";
+import {DAY, DIFF_FILES_PER_ITERATION, DIFF_SIZE_LIMIT} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
 import {getActiveUsers, readYML} from '../../utils/common';
@@ -79,9 +79,12 @@ export class bufferHandler {
 			usedIndices.push(randomIndex);
 			randomDiffFiles.push(diffsDir[randomIndex]);
 		}
+		let diffsSize = 0;
 		// Filter valid diff files
 		randomDiffFiles = randomDiffFiles.filter((diffFile) => {
 			const filePath = path.join(this.settings.DIFFS_REPO, diffFile);
+			// Websocket can only accept data upto 16MB, for above than that, we are reducing number of diffs per iteration to remain under limit.
+			if (diffsSize > DIFF_SIZE_LIMIT) return false;
 			// Pick only yml files
 			if (!diffFile.endsWith('.yml')) {
 				fs.unlinkSync(filePath);
@@ -93,6 +96,10 @@ export class bufferHandler {
 				fs.unlinkSync(filePath);
 				return false;
 			}
+			
+			const diffSize = diffData.diff.length;
+			diffsSize += diffSize;
+
 			if (!(diffData.repo_path in this.configJSON.repos)) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is not in config.yml`);
 				fs.unlinkSync(filePath);
@@ -133,6 +140,9 @@ export class bufferHandler {
 			return true;
 		});
 
+		if (diffsSize > DIFF_SIZE_LIMIT) {
+			CodeSyncLogger.error("Diffs size increasing limit");
+		} 
 		return randomDiffFiles;
 	}
 

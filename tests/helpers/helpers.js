@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 
-import {readYML} from "../../src/utils/common";
+import {readYML, readFile} from "../../src/utils/common";
 import {diff_match_patch} from "diff-match-patch";
 import {pathUtils} from "../../src/utils/path_utils";
 import {DEFAULT_BRANCH, VSCODE} from "../../src/constants";
@@ -58,6 +58,19 @@ export async function waitFor(seconds) {
     return await new Promise((r) => setTimeout(r, seconds*1000));
 }
 
+export function writeTestRepoFiles(repoPath) {
+    fs.mkdirSync(`${repoPath}/directory`);
+    Object.keys(TEST_REPO_RESPONSE).forEach(key => {
+        if (key === "urls") {
+            Object.keys(TEST_REPO_RESPONSE[key]).forEach(fileName => {
+                const repoFilePath = path.join(repoPath, fileName);
+                if (fs.existsSync(repoFilePath)) return;
+                fs.writeFileSync(repoFilePath, DUMMY_FILE_CONTENT);
+            });
+        }
+    });
+}
+
 export const PRE_SIGNED_URL = {
     'url': 'https://codesync.s3.amazonaws.com/',
     'fields': {
@@ -71,7 +84,7 @@ export const PRE_SIGNED_URL = {
 export const TEST_EMAIL = 'test@codesync.com';
 export const ANOTHER_TEST_EMAIL = 'anotherTest@codesync.com';
 export const INVALID_TOKEN_JSON = {"error": {"message": "Invalid token"}};
-export const SYNC_IGNORE_DATA = ".DS_Store\n.git\n\n\n.node_modules\n";
+export const SYNC_IGNORE_DATA = ".DS_Store\n.git\n\n\n.node_modules\n!tests";
 export const DUMMY_FILE_CONTENT = "DUMMY FILE CONTENT";
 
 export const TEST_USER = {
@@ -136,7 +149,7 @@ export const assertChangeEvent = (repoPath, diffsRepo, oldText, updatedText,
                                   fileRelPath, shadowFilePath,
                                   diffsCount = 1) => {
     // Read shadow file
-    const shadowText = fs.readFileSync(shadowFilePath, "utf8");
+    const shadowText = readFile(shadowFilePath);
     expect(shadowText).toStrictEqual(updatedText);
     // Verify correct diff file has been generated
     const diffFiles = fs.readdirSync(diffsRepo);

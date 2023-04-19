@@ -25,6 +25,8 @@ export const IGNORABLE_DIRECTORIES = [
 	"node_modules",
 	".DS_Store",
 	".idea",
+	"coverage",
+	"bower_components"
 ];
 
 export const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -183,10 +185,12 @@ export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .sy
 export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
 export const RETRY_REQUEST_AFTER = 3 * 60 * 1000; // 1000 is for ms;
 export const RETRY_TEAM_ACTIVITY_REQUEST_AFTER = 5 * 60 * 1000; // 1000 is for ms;
-export const RETRY_BRANCH_SYNC_AFTER = 1 * 60 * 1000; // 1 minute, 1000 is for ms
+export const RETRY_BRANCH_SYNC_AFTER = 3 * 60 * 1000; // 3 minute, 1000 is for ms
+export const RUN_DELETE_HANDLER_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const SOCKET_CONNECT_ERROR_CODES = ["ECONNREFUSED", "ETIMEDOUT", "ECONNRESET"];
 export const SOCKET_ERRORS = {
 	ERROR_MSG_RECEIVE: 'Error receiving socket msg'
 };
 export const DAY = 24 * 60 * 60 * 1000;
 export const PRICING_URL_PATH = "/pricing";
+export const RETRY_WEBSOCKET_CONNECTION_AFTER = 5 * 60 * 1000; // 1000 is for ms;
