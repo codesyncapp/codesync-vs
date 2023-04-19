@@ -66,7 +66,7 @@ export class eventHandler {
 		// Append new diff in the buffer
 		const diffFileName = `${new Date().getTime()}.yml`;
 		const diffFilePath = path.join(this.settings.DIFFS_REPO, diffFileName);
-		fs.writeFileSync(diffFilePath, yaml.safeDump(newDiff));
+		fs.writeFileSync(diffFilePath, yaml.dump(newDiff));
 		return diffFilePath;
 	};
 
@@ -84,7 +84,7 @@ export class eventHandler {
 			delete configFiles[oldRelPath];
 		}
 		// write file id to config.yml
-		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
+		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(configJSON));
 	}
 
 	handleChangeEvent = (changeEvent: vscode.TextDocumentChangeEvent) => {

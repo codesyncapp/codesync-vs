@@ -136,12 +136,12 @@ export class Config {
         if (isDisconnected) {
             config.repos[this.repoPath].is_disconnected = true;
         }
-        fs.writeFileSync(this.configPath, yaml.safeDump(config));
+        fs.writeFileSync(this.configPath, yaml.dump(config));
     }
 
     removeRepo = () => {
         const config = {repos: {}};
-        fs.writeFileSync(this.configPath, yaml.safeDump(config));
+        fs.writeFileSync(this.configPath, yaml.dump(config));
     }
 }
 
@@ -272,7 +272,7 @@ export const addUser = (baseRepoPath, isActive=true) => {
         access_token: "ACCESS_TOKEN",
         is_active: isActive
     };
-    fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
+    fs.writeFileSync(userFilePath, yaml.dump(userFileData));
     return userFilePath;
 };
 

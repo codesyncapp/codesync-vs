@@ -159,7 +159,7 @@ describe("saveIamUser",  () => {
     });
 
     test("User not in user.yml",  () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
+        fs.writeFileSync(userFilePath, yaml.dump(userFileData));
         const testUser = Object.assign({}, TEST_USER);
         testUser.email = ANOTHER_TEST_EMAIL;
         const initUtilsObj = new initUtils(repoPath);
@@ -174,7 +174,7 @@ describe("saveIamUser",  () => {
         userFileData[TEST_USER.email] = {
             access_token: "TOKEN ABC"
         };
-        fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
+        fs.writeFileSync(userFilePath, yaml.dump(userFileData));
         const testUser = Object.assign({}, TEST_USER);
         testUser.email = TEST_EMAIL;
         const initUtilsObj = new initUtils(repoPath);
@@ -214,7 +214,7 @@ describe("saveSequenceTokenFile",  () => {
 
     test("User not in user.yml",  () => {
         const initUtilsObj = new initUtils(repoPath);
-        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(sequenceTokenFileData));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(sequenceTokenFileData));
         initUtilsObj.saveSequenceTokenFile(ANOTHER_TEST_EMAIL);
         expect(fs.existsSync(sequenceTokenFilePath)).toBe(true);
         const users = readYML(sequenceTokenFilePath);
@@ -234,7 +234,7 @@ describe("saveFileIds",  () => {
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
     });
 
     afterEach(() => {
@@ -278,7 +278,7 @@ describe("uploadRepo",  () => {
         syncIgnorePath = getSyncIgnoreFilePath(repoPath);
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
         fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
         fs.writeFileSync(path.join(repoPath, "ignore.js"), DUMMY_FILE_CONTENT);
     });
@@ -419,8 +419,8 @@ describe("uploadRepo",  () => {
 
     test("Error in uploadRepoToServer",  async () => {
         // Write these files as putLogEvent is called when error occurs
-        fs.writeFileSync(userFilePath, yaml.safeDump({}));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
+        fs.writeFileSync(userFilePath, yaml.dump({}));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
 
         const initUtilsObj = new initUtils(repoPath);
         const itemPaths = initUtilsObj.getSyncablePaths();

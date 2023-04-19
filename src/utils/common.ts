@@ -2,8 +2,9 @@ import fs from 'fs';
 import path from "path";
 import yaml from 'js-yaml';
 import ignore from 'ignore';
-import dateFormat from "dateformat";
+
 import getBranchName from "current-git-branch";
+import dateFormat from 'dateformat';
 
 import {
 	DATETIME_FORMAT,

@@ -120,7 +120,7 @@ describe("createUser",  () => {
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
     });
 
     afterEach(() => {
@@ -154,7 +154,7 @@ describe("createUser",  () => {
     test("with user in user.yml", async () => {
         let users = {};
         users[TEST_EMAIL] = {access_token: "abc"};
-        fs.writeFileSync(userFilePath, yaml.safeDump(users));
+        fs.writeFileSync(userFilePath, yaml.dump(users));
         const user = {"user": {"id": 1}};
         fetchMock.mockResponseOnce(JSON.stringify(user));
         await createUser("TOKEN", repoPath);

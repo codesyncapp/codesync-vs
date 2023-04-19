@@ -343,7 +343,7 @@ describe("handleRenameFile",  () => {
         };
         config.repos[repoPath].branches[DEFAULT_BRANCH] = {};
         config.repos[repoPath].branches[DEFAULT_BRANCH][directoryOldRelPath] = FILE_ID;
-        fs.writeFileSync(configPath, yaml.safeDump(config));
+        fs.writeFileSync(configPath, yaml.dump(config));
 
         // Write data to new file
         fs.writeFileSync(renamedFilePath, "use babel;");
@@ -367,7 +367,7 @@ describe("handleRenameFile",  () => {
         };
         config.repos[repoPath].branches[DEFAULT_BRANCH] = {};
         config.repos[repoPath].branches[DEFAULT_BRANCH][oldRelPath] = FILE_ID;
-        fs.writeFileSync(configPath, yaml.safeDump(config));
+        fs.writeFileSync(configPath, yaml.dump(config));
 
         // Write data to new file
         fs.mkdirSync(path.dirname(renamedFilePath), { recursive: true });

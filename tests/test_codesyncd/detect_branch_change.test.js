@@ -61,9 +61,9 @@ describe("detectBranchChange", () => {
         originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
             
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
+        fs.writeFileSync(configPath, yaml.dump(configData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
         const initUtilsObj = new initUtils(repoPath);
         const itemPaths = initUtilsObj.getSyncablePaths();
         const filePaths = itemPaths.map(itemPath => itemPath.file_path);
@@ -114,7 +114,7 @@ describe("detectBranchChange", () => {
             email: TEST_EMAIL,
             is_disconnected: true
         };
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
     });
@@ -125,7 +125,7 @@ describe("detectBranchChange", () => {
             branches: {},
             email: `another-${TEST_EMAIL}`
         };
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
     });
@@ -138,7 +138,7 @@ describe("detectBranchChange", () => {
             branches: {},
             email: TEST_EMAIL
         };
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
     });
@@ -150,7 +150,7 @@ describe("detectBranchChange", () => {
             branches: {},
             email: TEST_EMAIL
         };
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
         expect(console.log).toHaveBeenCalledTimes(0);
@@ -164,7 +164,7 @@ describe("detectBranchChange", () => {
             branches: {},
             email: TEST_EMAIL
         };
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
         fs.rmSync(repoPath, {recursive: true, force: true});
 
         const readyRepos = await detectBranchChange();
@@ -181,7 +181,7 @@ describe("detectBranchChange", () => {
             email: TEST_EMAIL
         };
         _configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
         expect(console.log).toHaveBeenCalledTimes(0);
@@ -196,18 +196,18 @@ describe("detectBranchChange", () => {
             email: TEST_EMAIL
         };
         _configData.repos[repoPath].branches[DEFAULT_BRANCH] = TEST_REPO_RESPONSE.file_path_and_id;
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
         // Update sequence_token.yml
         const users = {};
         users[TEST_EMAIL] = "";
-        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(users));
         const userData = {};
         userData[TEST_EMAIL] = {
             access_token: "ABC",
             access_key: TEST_USER.iam_access_key,
             secret_key: TEST_USER.iam_secret_key
         };
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
         const readyRepos = await detectBranchChange();
         expect(assertValidUpload(readyRepos)).toBe(true);
     });
@@ -225,7 +225,7 @@ describe("detectBranchChange", () => {
             "directory/file_2.js": null
         };
 
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
 
         // Mock response for checkServerDown and uploadRepo
         fetchMock
@@ -244,7 +244,7 @@ describe("detectBranchChange", () => {
             branches: {},
             email: TEST_EMAIL
         };
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
         fetchMock
             .mockResponseOnce(JSON.stringify({status: true}))
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
@@ -262,7 +262,7 @@ describe("detectBranchChange", () => {
             branches: {},
             email: TEST_EMAIL
         };
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
 
         fetchMock
             .mockResponseOnce(JSON.stringify({status: true}))
@@ -284,7 +284,7 @@ describe("detectBranchChange", () => {
             branches: {},
             email: TEST_EMAIL
         };
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
         
         fetchMock
             .mockResponseOnce(JSON.stringify({status: true}))

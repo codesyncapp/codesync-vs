@@ -10,7 +10,7 @@ const fileData = {"repos": {"path1": {}, "path2": {is_disconnected: true}}};
 
 beforeAll(() => {
     fs.mkdirSync(baseRepoPath, { recursive: true });
-    fs.writeFileSync(configPath, yaml.safeDump(fileData));
+    fs.writeFileSync(configPath, yaml.dump(fileData));
 });
 
 afterAll(() => {

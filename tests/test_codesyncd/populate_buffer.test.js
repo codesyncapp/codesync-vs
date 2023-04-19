@@ -86,11 +86,11 @@ describe("populateBuffer", () => {
         if (deleteFile1) {
             delete configData.repos[repoPath].branches[DEFAULT_BRANCH][fileRelPath];
         }
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
         // Update sequence_token.yml
         const users = {};
         users[TEST_EMAIL] = "";
-        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(users));
         addUser(baseRepoPath, isActive);
     };
 

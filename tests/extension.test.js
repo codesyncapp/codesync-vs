@@ -270,7 +270,7 @@ describe("Extension: activate",() => {
         addUser(baseRepoPath);
         const _configData = {...configData};
         _configData.repos[repoPath].is_disconnected = true;
-        fs.writeFileSync(configPath, yaml.safeDump(_configData));
+        fs.writeFileSync(configPath, yaml.dump(_configData));
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
         // showLogin should be true

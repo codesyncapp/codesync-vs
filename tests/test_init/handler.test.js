@@ -50,7 +50,7 @@ describe("initHandler: connectRepo", () => {
         
         configPath = getConfigFilePath(baseRepoPath);
         const configData = { repos: {} };
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
     });
 
     afterEach(() => {
@@ -236,7 +236,7 @@ describe("initHandler: Syncing Branch", () => {
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
         sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
         writeTestRepoFiles(repoPath);
     });
 

@@ -144,7 +144,7 @@ export class Alerts {
 				...this.alertsData[this.CONFIG.TEAM_ACTIVITY.key][userEmail],
 				checked_for: this.checkForDate
 			};
-			fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));	
+			fs.writeFileSync(this.settings.ALERTS, yaml.dump(this.alertsData));	
 			return;
 		}
 		// Show alert
@@ -169,6 +169,6 @@ export class Alerts {
 			checked_for: this.checkForDate,
 			shown_at_vscode: new Date()
 		};
-		fs.writeFileSync(this.settings.ALERTS, yaml.safeDump(this.alertsData));
+		fs.writeFileSync(this.settings.ALERTS, yaml.dump(this.alertsData));
 	}
 }

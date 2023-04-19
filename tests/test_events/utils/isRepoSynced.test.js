@@ -41,13 +41,13 @@ describe("isRepoSynced", () => {
     });
 
     test("with repo not in config.yml", () => {
-        fs.writeFileSync(configPath, yaml.safeDump({'repos': {}}));
+        fs.writeFileSync(configPath, yaml.dump({'repos': {}}));
         expect(isRepoSynced(repoPath)).toBe(false);
     });
 
     test("Non Synced Branch",  () => {
         configData.repos[repoPath] = {branches: {}};
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
         expect(isRepoSynced(repoPath)).toBe(false);
     });
 
@@ -64,7 +64,7 @@ describe("isRepoSynced", () => {
             file_1: null,
             file_2: null,
         };
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
         addUser(baseRepoPath);
         expect(isRepoSynced(repoPath)).toBe(false);
     });

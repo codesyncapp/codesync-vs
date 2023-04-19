@@ -107,7 +107,7 @@ export class initUtils {
 				users[user.email] = iamUser;
 			}
 		}
-		fs.writeFileSync(this.settings.USER_PATH, yaml.safeDump(users));
+		fs.writeFileSync(this.settings.USER_PATH, yaml.dump(users));
 	}
 
 	saveSequenceTokenFile (email: string) {
@@ -115,12 +115,12 @@ export class initUtils {
 		if (!fs.existsSync(this.settings.SEQUENCE_TOKEN_PATH)) {
 			const users = <any>{};
 			users[email] = "";
-			fs.writeFileSync(this.settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(users));
+			fs.writeFileSync(this.settings.SEQUENCE_TOKEN_PATH, yaml.dump(users));
 		} else {
 			const users = readYML(this.settings.SEQUENCE_TOKEN_PATH) || {};
 			if (!(email in users)) {
 				users[email] = "";
-				fs.writeFileSync(this.settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(users));
+				fs.writeFileSync(this.settings.SEQUENCE_TOKEN_PATH, yaml.dump(users));
 			}
 		}
 	}
@@ -135,7 +135,7 @@ export class initUtils {
 		configRepo.branches[branch] = filePathAndId;
 		configRepo.id = repoId;
 		configRepo.email = userEmail;
-		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
+		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(configJSON));
 	}
 
 	async uploadRepoToS3(branch: string, uploadResponse: any, syncingBranchKey: string) {
@@ -218,10 +218,10 @@ export class initUtils {
 				email: userEmail
 			};
 			configJSON.repos[this.repoPath].branches[branch] = branchFiles;
-			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
+			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(configJSON));
 		} else if (!(branch in configJSON.repos[this.repoPath].branches)) {
 			configJSON.repos[this.repoPath].branches[branch] = branchFiles;
-			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
+			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(configJSON));
 		}
 
 		const isServerDown = await checkServerDown();

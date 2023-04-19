@@ -29,8 +29,8 @@ describe('checkServerDown', () => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
-        fs.writeFileSync(userFilePath, yaml.safeDump({}));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
+        fs.writeFileSync(userFilePath, yaml.dump({}));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
     });
 
     afterEach(() => {

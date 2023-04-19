@@ -1546,10 +1546,10 @@
   resolved "https://registry.yarnpkg.com/@types/current-git-branch/-/current-git-branch-1.1.3.tgz#21f6aa4875d1410e0e1513720db9b17c0e9cf3d4"
   integrity sha512-4/q4F/2T3HZP/sqIiATlnOSYAWCXjQUHcUzIy63SWi0KOJd+kjCiL3NO/JgyeKqP/98N4e9vF017v2HPyKirrQ==
 
-"@types/dateformat@^5.0.0":
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/@types/dateformat/-/dateformat-5.0.0.tgz#17ce64b0318f3f36d1c830c58a7a915445f1f93d"
-  integrity sha512-SZg4JdHIWHQGEokbYGZSDvo5wA4TLYPXaqhigs/wH+REDOejcJzgH+qyY+HtEUtWOZxEUkbhbdYPqQDiEgrXeA==
+"@types/dateformat@3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@types/dateformat/-/dateformat-3.0.1.tgz#98d747a2e5e9a56070c6bf14e27bff56204e34cc"
+  integrity sha512-KlPPdikagvL6ELjWsljbyDIPzNCeliYkqRpI+zea99vBBbCIA5JNshZAwQKTON139c87y9qvTFVgkFd14rtS4g==
 
 "@types/detect-port@^1.3.0":
   version "1.3.2"
@@ -1606,10 +1606,10 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
-"@types/js-yaml@^4.0.5":
-  version "4.0.5"
-  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-4.0.5.tgz#738dd390a6ecc5442f35e7f03fa1431353f7e138"
-  integrity sha512-FhpRzf927MNQdRZP0J5DLIdTXhjLYzeUTmLAu69mnVksLH9CJY3IuSeEgbKUki7GQZm0WqDkGzyxju2EZGD2wA==
+"@types/js-yaml@^3.12.5":
+  version "3.12.7"
+  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.12.7.tgz#330c5d97a3500e9c903210d6e49f02964af04a0e"
+  integrity sha512-S6+8JAYTE1qdsc9HMVsfY7+SgSuUU/Tp6TYTmITW0PZxiyIMvol3Gy//y69Wkhs0ti4py5qgR3uZH6uz/DNzJQ==
 
 "@types/json-schema@^7.0.7", "@types/json-schema@^7.0.9":
   version "7.0.11"
@@ -2361,10 +2361,10 @@ data-uri-to-buffer@^4.0.0:
   resolved "https://registry.yarnpkg.com/data-uri-to-buffer/-/data-uri-to-buffer-4.0.0.tgz#b5db46aea50f6176428ac05b73be39a57701a64b"
   integrity sha512-Vr3mLBA8qWmcuschSLAOogKgQ/Jwxulv3RNE4FXnYWRGujzrRWQI4m12fQqRkwX06C0KanhLr4hK+GydchZsaA==
 
-dateformat@^5.0.3:
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/dateformat/-/dateformat-5.0.3.tgz#fe2223eff3cc70ce716931cb3038b59a9280696e"
-  integrity sha512-Kvr6HmPXUMerlLcLF+Pwq3K7apHpYmGDVqrxcDasBg86UcKeTSNWbEzU8bwdXnxnR44FtMhJAxI4Bov6Y/KUfA==
+dateformat@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/dateformat/-/dateformat-3.0.1.tgz#96f54d7e81b0c971334b385b0711abf23842cf6e"
+  integrity sha512-5A3vHUrlITbxD/rz7VmkWJptiL8eguRHYaK1533pH/HJKh8nyrJv3XJCYkLEcyiQG9tjr7ABh7MyEE3YY3/f0w==
 
 debug@2.6.9, debug@^2.2.0:
   version "2.6.9"

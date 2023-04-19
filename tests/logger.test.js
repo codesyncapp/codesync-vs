@@ -20,8 +20,8 @@ describe("putLogEvent",  () => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
-        fs.writeFileSync(userFilePath, yaml.safeDump({}));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
+        fs.writeFileSync(userFilePath, yaml.dump({}));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
     });
 
     afterEach(() => {
@@ -58,7 +58,7 @@ describe("putLogEvent",  () => {
             secret_key: TEST_USER.iam_secret_key,
             is_active: true
         };
-        fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
+        fs.writeFileSync(userFilePath, yaml.dump(userFileData));
 
         CodeSyncLogger.error("Error message");
 
@@ -72,7 +72,7 @@ describe("putLogEvent",  () => {
             access_key: TEST_USER.iam_access_key,
             secret_key: TEST_USER.iam_secret_key,
         };
-        fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
+        fs.writeFileSync(userFilePath, yaml.dump(userFileData));
 
         CodeSyncLogger.error("Error message", "", TEST_EMAIL);
 
@@ -86,11 +86,11 @@ describe("putLogEvent",  () => {
             access_key: TEST_USER.iam_access_key,
             secret_key: TEST_USER.iam_secret_key,
         };
-        fs.writeFileSync(userFilePath, yaml.safeDump(userFileData));
+        fs.writeFileSync(userFilePath, yaml.dump(userFileData));
 
         const users = {};
         users[TEST_EMAIL] = "Sequence Token";
-        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(users));
 
         CodeSyncLogger.error("Error message", "", TEST_USER.email);
 
@@ -102,7 +102,7 @@ describe("putLogEvent",  () => {
         const nextSequenceToken = "NEXT SEQUENCE TOKEN";
         const users = {};
         users[TEST_EMAIL] = "Sequence Token";
-        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(users));
 
         updateSequenceToken(TEST_EMAIL, nextSequenceToken);
 

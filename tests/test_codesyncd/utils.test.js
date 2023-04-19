@@ -121,11 +121,11 @@ describe("handleNewFileUpload",  () => {
         pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 
-        fs.writeFileSync(userFilePath, yaml.safeDump({}));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump({}));
+        fs.writeFileSync(userFilePath, yaml.dump({}));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
         configData.repos[repoPath] = {branches: {}};
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
     });
 
     afterEach(() => {
@@ -203,7 +203,7 @@ describe("cleanUpDeleteDiff",  () => {
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         fs.writeFileSync(originalsFilePath, DUMMY_FILE_CONTENT);
         fs.writeFileSync(cacheFilePath, DUMMY_FILE_CONTENT);
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
     });
 
     afterEach(() => {
@@ -257,7 +257,7 @@ describe("getDIffForDeletedFile",  () => {
         fs.writeFileSync(shadowFilePath, DUMMY_FILE_CONTENT);
         fs.writeFileSync(originalsFilePath, DUMMY_FILE_CONTENT);
         fs.writeFileSync(cacheFilePath, DUMMY_FILE_CONTENT);
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
     });
 
     afterEach(() => {
