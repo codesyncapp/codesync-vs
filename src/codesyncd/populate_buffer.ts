@@ -47,6 +47,7 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
         // Adding more wait for currently opened repo
         const compareWith = repoPath === currentRepoPath ? RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER : RUN_POPULATE_BUFFER_AFTER;
         const skipRunForRepo = CodeSyncState.canSkipRun(populateBufferKey, compareWith);
+
         if (skipRunForRepo) continue;
         CodeSyncState.set(populateBufferKey, new Date().getTime());
         const t0 = new Date().getTime();
@@ -54,7 +55,7 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
         try {
             const obj = new PopulateBuffer(repoPath, branch);
             if (!obj.modifiedInPast) {
-                // Go for content diffs if repo was modified after lastSyncedAt
+                await obj.populateBufferForRepo();
                 const t1 = new Date().getTime();
                 const timeTook = (t1 - t0) / 1000;
                 if (timeTook > GLOB_TIME_TAKEN_THRESHOLD) {
@@ -71,7 +72,7 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
         } catch (e) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            CodeSyncLogger.error(`populateBuffer exited for ${repoPath}`, e.stack);
+            CodeSyncLogger.critical(`populateBuffer exited for ${repoPath}`, e.stack);
         }
     }
 };
