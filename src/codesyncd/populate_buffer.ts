@@ -21,9 +21,6 @@ import {
     readFile,
     readYML
 } from "../utils/common";
-<<<<<<< HEAD
-import { RUN_DELETE_HANDLER_AFTER, RUN_POPULATE_BUFFER_AFTER, SEQUENCE_MATCHER_RATIO } from "../constants";
-=======
 import {
     GLOB_TIME_TAKEN_THRESHOLD, 
     RUN_DELETE_HANDLER_AFTER, 
@@ -31,7 +28,6 @@ import {
     RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER, 
     SEQUENCE_MATCHER_RATIO
  } from "../constants";
->>>>>>> 67eccd26a6b4179e8d2245eeb7000c5df93c5800
 import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
 import { CodeSyncState } from "../utils/state_utils";
