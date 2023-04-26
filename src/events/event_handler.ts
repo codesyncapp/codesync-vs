@@ -165,7 +165,7 @@ export class eventHandler {
 		// Ignore directories, symlinks etc
 		const lstat = fs.lstatSync(filePath);
 		if (!lstat.isFile()) return;
-		// Skip if it not from current repo
+		// Skip if it is not from current repo
 		if (!filePath.startsWith(this.repoPath)) return;
 
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
