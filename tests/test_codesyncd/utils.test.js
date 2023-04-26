@@ -4,7 +4,6 @@ import yaml from "js-yaml";
 import fetchMock from "jest-fetch-mock";
 
 import untildify from "untildify";
-import { isBinaryFileSync } from 'isbinaryfile';
 
 import {
     cleanUpDeleteDiff,
@@ -274,8 +273,18 @@ describe("getDIffForDeletedFile",  () => {
         expect(fs.existsSync(cacheFilePath)).toBe(false);
     });
 
-    test("with Binary File",  () => {
-        isBinaryFileSync.mockReturnValue(true);
+    
+    test("with Binary File (image.png)",  () => {
+        const fileRelPath = "image.png";
+        const shadowFilePath = path.join(shadowBranchPath, fileRelPath);
+        const originalsFilePath = path.join(originalsBranchPath, fileRelPath);
+        const cacheFilePath = path.join(cacheBranchPath, fileRelPath);
+        const imagePath = path.join(__dirname, "..", "..", "images", "icon.png");
+        fs.copyFileSync(imagePath, shadowFilePath);
+        fs.copyFileSync(imagePath, originalsFilePath);
+        fs.copyFileSync(imagePath, cacheFilePath);
+        configData.repos[repoPath].branches[DEFAULT_BRANCH][fileRelPath] = 12345;
+        fs.writeFileSync(configPath, yaml.dump(configData));
         const diff = getDIffForDeletedFile(repoPath, DEFAULT_BRANCH, fileRelPath, configData);
         expect(diff).toStrictEqual("");
         expect(fs.existsSync(shadowFilePath)).toBe(false);
@@ -284,7 +293,6 @@ describe("getDIffForDeletedFile",  () => {
     });
 
     test("Should get non-empty diff",  () => {
-        isBinaryFileSync.mockReturnValue(false);
         const diff = getDIffForDeletedFile(repoPath, DEFAULT_BRANCH, fileRelPath, configData);
         expect(diff).toBeTruthy();
         expect(fs.existsSync(shadowFilePath)).toBe(false);

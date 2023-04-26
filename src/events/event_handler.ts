@@ -162,9 +162,10 @@ export class eventHandler {
 		const filePath = pathUtils.normalizePath(_filePath);
 		// Do not continue if file does not exist
 		if (!fs.existsSync(filePath)) return;
-		// Skip directory
+		// Ignore directories, symlinks etc
 		const lstat = fs.lstatSync(filePath);
-		if (lstat.isDirectory()) return;
+		if (!lstat.isFile()) return;
+		// Skip if it is not from current repo
 		if (!filePath.startsWith(this.repoPath)) return;
 
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];

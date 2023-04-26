@@ -22,10 +22,17 @@ export class CodeSyncState {
         }    
         (global as any).codeSyncState[key] = value;
     }
+
     static get = (key: string) => {
         if (!(global as any).codeSyncState || !(global as any).codeSyncState[key]) {
             return false;
         }
         return (global as any).codeSyncState[key];
+    }
+
+    static canSkipRun = (key: string, compareWith: number) => {
+        const lastRanAt = CodeSyncState.get(key);
+        const skipRun = lastRanAt && (new Date().getTime() - lastRanAt) < compareWith;
+        return skipRun;
     }
 }
