@@ -50,23 +50,29 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
         if (skipRunForRepo) continue;
         CodeSyncState.set(populateBufferKey, new Date().getTime());
         const t0 = new Date().getTime();
-        const obj = new PopulateBuffer(repoPath, branch);
-        if (!obj.modifiedInPast) {
-            // Go for content diffs if repo was modified after lastSyncedAt
-            await obj.populateBufferForRepo();
-            const t1 = new Date().getTime();
-            const timeTook = (t1 - t0) / 1000;
-            if (timeTook > GLOB_TIME_TAKEN_THRESHOLD) {
-                CodeSyncLogger.warning(`populateBuffer took=${timeTook}s for ${repoPath}, files=${obj.itemPaths.length}`);
-            }
+        
+        try {
+            const obj = new PopulateBuffer(repoPath, branch);
+            if (!obj.modifiedInPast) {
+                // Go for content diffs if repo was modified after lastSyncedAt
+                const t1 = new Date().getTime();
+                const timeTook = (t1 - t0) / 1000;
+                if (timeTook > GLOB_TIME_TAKEN_THRESHOLD) {
+                    CodeSyncLogger.warning(`populateBuffer took=${timeTook}s for ${repoPath}, files=${obj.itemPaths.length}`);
+                }
+            }    
+            const generateDiffForDeletedFilesKey = `${repoPath}:${branch}:generateDiffForDeletedFiles`;
+            const canSkipDeleteHandler = CodeSyncState.canSkipRun(generateDiffForDeletedFilesKey, RUN_DELETE_HANDLER_AFTER);
+            if (canSkipDeleteHandler) continue;
+            obj.generateDiffForDeletedFiles();
+            CodeSyncState.set(generateDiffForDeletedFilesKey, new Date().getTime());
+            // Itereating only 1 repo in 1 iteration
+            if (!obj.modifiedInPast) break;
+        } catch (e) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            CodeSyncLogger.error(`populateBuffer exited for ${repoPath}`, e.stack);
         }
-        const generateDiffForDeletedFilesKey = `${repoPath}:${branch}:generateDiffForDeletedFiles`;
-        const canSkipDeleteHandler = CodeSyncState.canSkipRun(generateDiffForDeletedFilesKey, RUN_DELETE_HANDLER_AFTER);
-        if (canSkipDeleteHandler) continue;
-        obj.generateDiffForDeletedFiles();
-        CodeSyncState.set(generateDiffForDeletedFilesKey, new Date().getTime());
-        // Itereating only 1 repo in 1 iteration
-        if (!obj.modifiedInPast) break;
     }
 };
 
