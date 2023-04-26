@@ -57,8 +57,8 @@ describe("SyncHandler",  () => {
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
     });
 
     afterEach(() => {
@@ -117,8 +117,8 @@ describe("disconnectRepoHandler",  () => {
         setWorkspaceFolders(repoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
     });
 
     afterEach(() => {
@@ -168,8 +168,8 @@ describe("postSelectionDisconnectRepo",  () => {
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
     });
 
     afterEach(() => {
@@ -196,7 +196,7 @@ describe("postSelectionDisconnectRepo",  () => {
             is_disconnected: true,
             branches: {}
         };
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
         await postSelectionDisconnectRepo(repoPath, NOTIFICATION.YES);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
@@ -256,8 +256,8 @@ describe("trackRepoHandler",  () => {
 
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
     });
 
     afterEach(() => {
@@ -277,7 +277,7 @@ describe("trackRepoHandler",  () => {
             id: 1234,
             branches: {},
         };
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
         const playbackLink = trackRepoHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
         expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
@@ -291,7 +291,7 @@ describe("trackRepoHandler",  () => {
             id: 1234,
             branches: {},
         };
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
         const playbackLink = trackRepoHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
         expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
@@ -312,8 +312,8 @@ describe("trackFileHandler",  () => {
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
     });
 
     afterEach(() => {
@@ -362,7 +362,7 @@ describe("trackFileHandler",  () => {
             branches: {},
         };
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
 
         trackFileHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(0);
@@ -383,7 +383,7 @@ describe("trackFileHandler",  () => {
             branches: {}
         };
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = {"file.js": 1234};
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
 
         trackFileHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
@@ -406,7 +406,7 @@ describe("trackFileHandler",  () => {
             branches: {}
         };
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = {"file.js": 1234};
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
 
         trackFileHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);

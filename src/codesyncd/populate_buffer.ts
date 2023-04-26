@@ -21,7 +21,17 @@ import {
     readFile,
     readYML
 } from "../utils/common";
+<<<<<<< HEAD
 import { RUN_DELETE_HANDLER_AFTER, RUN_POPULATE_BUFFER_AFTER, SEQUENCE_MATCHER_RATIO } from "../constants";
+=======
+import {
+    GLOB_TIME_TAKEN_THRESHOLD, 
+    RUN_DELETE_HANDLER_AFTER, 
+    RUN_POPULATE_BUFFER_AFTER, 
+    RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER, 
+    SEQUENCE_MATCHER_RATIO
+ } from "../constants";
+>>>>>>> 67eccd26a6b4179e8d2245eeb7000c5df93c5800
 import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
 import { CodeSyncState } from "../utils/state_utils";
@@ -34,23 +44,40 @@ export const populateBuffer = async (viaDaemon=true) => {
 };
 
 export const populateBufferForMissedEvents = async (readyRepos: any) => {
+    const currentRepoPath = pathUtils.getRootPath();
     for (const repoPath of Object.keys(readyRepos)) {
         const branch = readyRepos[repoPath];
         const populateBufferKey = `${repoPath}:${branch}:populateBuffer`;
-        const populateBufferLastRan = CodeSyncState.get(populateBufferKey);
-        const skipRun = (populateBufferLastRan && (new Date().getTime() - populateBufferLastRan) < RUN_POPULATE_BUFFER_AFTER);
-        if (skipRun) continue;
-        const obj = new PopulateBuffer(repoPath, branch);
-        if (!obj.modifiedInPast) {
-            // Go for content diffs if repo was modified after lastSyncedAt
-            await obj.populateBufferForRepo();
-        }
+        // Adding more wait for currently opened repo
+        const compareWith = repoPath === currentRepoPath ? RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER : RUN_POPULATE_BUFFER_AFTER;
+        const skipRunForRepo = CodeSyncState.canSkipRun(populateBufferKey, compareWith);
+
+        if (skipRunForRepo) continue;
         CodeSyncState.set(populateBufferKey, new Date().getTime());
-        const generateDiffForDeletedFilesKey = `${repoPath}:${branch}:generateDiffForDeletedFiles`;
-        const deletedFilesLastRan = CodeSyncState.get(generateDiffForDeletedFilesKey);
-        if (deletedFilesLastRan && (new Date().getTime() - deletedFilesLastRan) < RUN_DELETE_HANDLER_AFTER) continue;
-        obj.generateDiffForDeletedFiles();
-        CodeSyncState.set(generateDiffForDeletedFilesKey, new Date().getTime());
+        const t0 = new Date().getTime();
+        
+        try {
+            const obj = new PopulateBuffer(repoPath, branch);
+            if (!obj.modifiedInPast) {
+                await obj.populateBufferForRepo();
+                const t1 = new Date().getTime();
+                const timeTook = (t1 - t0) / 1000;
+                if (timeTook > GLOB_TIME_TAKEN_THRESHOLD) {
+                    CodeSyncLogger.warning(`populateBuffer took=${timeTook}s for ${repoPath}, files=${obj.itemPaths.length}`);
+                }
+            }    
+            const generateDiffForDeletedFilesKey = `${repoPath}:${branch}:generateDiffForDeletedFiles`;
+            const canSkipDeleteHandler = CodeSyncState.canSkipRun(generateDiffForDeletedFilesKey, RUN_DELETE_HANDLER_AFTER);
+            if (canSkipDeleteHandler) continue;
+            obj.generateDiffForDeletedFiles();
+            CodeSyncState.set(generateDiffForDeletedFilesKey, new Date().getTime());
+            // Itereating only 1 repo in 1 iteration
+            if (!obj.modifiedInPast) break;
+        } catch (e) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            CodeSyncLogger.critical(`populateBuffer exited for ${repoPath}`, e.stack);
+        }
     }
 };
 
@@ -217,8 +244,13 @@ class PopulateBuffer {
                 });
                 return false;
             }
+            let isBinary = false;
             // Skip binary files
-            const isBinary = isBinaryFileSync(shadowFilePath);
+            try {
+                isBinary = isBinaryFileSync(shadowFilePath);
+            } catch (e) {
+                CodeSyncLogger.error(`getPotentialRenamedFiles: isBinaryFileSync failed on ${shadowFilePath}`);
+            }
             if (isBinary) return false;
             // Skip empty shadow files
             const content = readFile(shadowFilePath);

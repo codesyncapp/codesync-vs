@@ -111,11 +111,11 @@ describe("bufferHandler", () => {
         }
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = TEST_REPO_RESPONSE.file_path_and_id;
         configData.repos[repoPath].branches[DEFAULT_BRANCH]["ignore.js"] = 12345;
-        fs.writeFileSync(configPath, yaml.safeDump(configData));
+        fs.writeFileSync(configPath, yaml.dump(configData));
         // Update sequence_token.yml
         const users = {};
         users[TEST_EMAIL] = "";
-        fs.writeFileSync(sequenceTokenFilePath, yaml.safeDump(users));
+        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(users));
         addUser(baseRepoPath, true);
     };
 
@@ -243,7 +243,7 @@ describe("bufferHandler", () => {
         // Add invalid data in  in .diffs directory
         const diffFileName = `${new Date().getTime()}.yml`;
         const diffFilePath = path.join(diffsRepo, diffFileName);
-        fs.writeFileSync(diffFilePath, yaml.safeDump({user: 12345}));
+        fs.writeFileSync(diffFilePath, yaml.dump({user: 12345}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
         expect(assertDiffsCount()).toBe(true);

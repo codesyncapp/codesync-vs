@@ -67,7 +67,7 @@ export const postSelectionDisconnectRepo = async (repoPath: string, selection?: 
 	}
 	// Show notification that repo is not in sync
 	configRepo.is_disconnected = true;
-	fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(config));
+	fs.writeFileSync(settings.CONFIG_PATH, yaml.dump(config));
 	// TODO: Maybe should delete repo from .shadow and .originals,
 	vscode.commands.executeCommand('setContext', 'showConnectRepoView', true);
 	vscode.commands.executeCommand('setContext', 'isSubDir', false);

@@ -83,7 +83,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 	}
 	configJSON.repos[repoPath].branches[branch][relPath] = response.fileId;
 	// write file id to config.yml
-	fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
+	fs.writeFileSync(settings.CONFIG_PATH, yaml.dump(configJSON));
 
 	// Delete file from .originals
 	if (fs.existsSync(originalsFilePath)) {
@@ -110,7 +110,7 @@ export const cleanUpDeleteDiff = (repoPath: string, branch: string, relPath: str
 	});
 	delete configJSON.repos[repoPath].branches[branch][relPath];
 	// write file id to config.yml
-	fs.writeFileSync(settings.CONFIG_PATH, yaml.safeDump(configJSON));
+	fs.writeFileSync(settings.CONFIG_PATH, yaml.dump(configJSON));
 };
 
 export const getDIffForDeletedFile = (repoPath: string, branch: string, relPath: string, configJSON: any) => {
@@ -121,8 +121,13 @@ export const getDIffForDeletedFile = (repoPath: string, branch: string, relPath:
 		cleanUpDeleteDiff(repoPath, branch, relPath, configJSON);
 		return diff;
 	}
+	let isBinary = false;
 	// See if shadow file can be read
-	const isBinary = isBinaryFileSync(shadowPath);
+	try {
+		isBinary = isBinaryFileSync(shadowPath);
+	} catch (e) {
+		CodeSyncLogger.error(`getDIffForDeletedFile: isBinaryFileSync failed on ${shadowPath}`);
+	}
 	if (isBinary) {
 		cleanUpDeleteDiff(repoPath, branch, relPath, configJSON);
 		return diff;

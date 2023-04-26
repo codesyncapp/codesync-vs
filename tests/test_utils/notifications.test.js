@@ -27,7 +27,7 @@ describe("showChooseAccount",  () => {
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
-        fs.writeFileSync(configPath, yaml.safeDump({repos: {}}));
+        fs.writeFileSync(configPath, yaml.dump({repos: {}}));
     });
 
     afterEach(() => {

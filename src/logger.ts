@@ -154,7 +154,7 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", logStream
 			const matches = errString.match(/(\d+)/);
 			if (matches[0]) {
 				sequenceTokenConfig[email] = matches[0];
-				fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
+				fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.dump(sequenceTokenConfig));
 				if (retryCount) {
 					if (retryCount < 10) {
 						retryCount += 1;
@@ -176,7 +176,7 @@ export const updateSequenceToken = (email: string, nextSequenceToken: string) =>
 	const settings = generateSettings();
 	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
 	sequenceTokenConfig[email] = nextSequenceToken;
-	fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.safeDump(sequenceTokenConfig));
+	fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.dump(sequenceTokenConfig));
 };
 
 

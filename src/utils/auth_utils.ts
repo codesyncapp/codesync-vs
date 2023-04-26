@@ -53,7 +53,7 @@ export const createUser = async (accessToken: string, repoPath: string) => {
             is_active: true
         };
     }
-    fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
+    fs.writeFileSync(settings.USER_PATH, yaml.dump(users));
 
     vscode.commands.executeCommand('setContext', 'showLogIn', false);
     
@@ -91,7 +91,7 @@ export const markUsersInactive = (notify=true) => {
     Object.keys(users).forEach((email) => {
         users[email].is_active = false;
     });
-    fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
+    fs.writeFileSync(settings.USER_PATH, yaml.dump(users));
     if (!notify) return;
     setTimeout(() => {
         vscode.window.showInformationMessage(NOTIFICATION.LOGGED_OUT_SUCCESSFULLY);

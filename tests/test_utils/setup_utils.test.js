@@ -88,7 +88,7 @@ describe("setupCodeSync",  () => {
     });
 
     test('with empty user.yml', async () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump({}));
+        fs.writeFileSync(userFilePath, yaml.dump({}));
         const port = await setupCodeSync(undefined);
         // should return port number
         expect(port).toBeTruthy();
@@ -110,13 +110,13 @@ describe("setupCodeSync",  () => {
     });
 
     test('with user no repo opened', async () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
         await setupCodeSync("");
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
     test('with user and repo not synced', async () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
         const port = await setupCodeSync(repoPath);
         // should return port number
         expect(port).toBeTruthy();
@@ -127,7 +127,7 @@ describe("setupCodeSync",  () => {
     });
 
     test('with synced repo',  async () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
@@ -142,19 +142,19 @@ describe("setupCodeSync",  () => {
     });
 
     test('showConnectRepoView',  async () => {
-        fs.writeFileSync(configPath, yaml.safeDump({repos: {}}));
+        fs.writeFileSync(configPath, yaml.dump({repos: {}}));
         const shouldShowConnectRepoView = showConnectRepoView(repoPath);
         expect(shouldShowConnectRepoView).toBe(true);
     });
 
     test('showRepoIsSyncIgnoredView',  async () => {
-        fs.writeFileSync(configPath, yaml.safeDump({repos: {}}));
+        fs.writeFileSync(configPath, yaml.dump({repos: {}}));
         const shouldShow = showRepoIsSyncIgnoredView(repoPath);
         expect(shouldShow).toBe(false);
     });
 
     test('with sub directory',  async () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
@@ -171,7 +171,7 @@ describe("setupCodeSync",  () => {
 
     test('with sub directory syncignored',  async () => {
         const subDirName = "directory";
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
@@ -192,7 +192,7 @@ describe("setupCodeSync",  () => {
     });
 
     test('with sub directory whose parent is_disconnected',  async () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo(true);
         addUser(baseRepoPath);
@@ -230,7 +230,7 @@ describe("showLogin",  () => {
     });
 
     test('with empty user.yml',  async () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump({}));
+        fs.writeFileSync(userFilePath, yaml.dump({}));
         const shouldShowLogin = showLogIn();
         expect(shouldShowLogin).toBe(true);
         fs.rmSync(userFilePath);
@@ -244,7 +244,7 @@ describe("showLogin",  () => {
     });
 
     test('with user',  async () => {
-        fs.writeFileSync(userFilePath, yaml.safeDump(userData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
         const shouldShowLogin = showLogIn();
         expect(shouldShowLogin).toBe(false);
         fs.rmSync(userFilePath);

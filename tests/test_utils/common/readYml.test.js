@@ -19,7 +19,7 @@ beforeEach(() => {
     // Create directories
     fs.mkdirSync(baseRepoPath, { recursive: true });
     fs.mkdirSync(repoPath, { recursive: true });
-    fs.writeFileSync(filePath, yaml.safeDump(fileData));
+    fs.writeFileSync(filePath, yaml.dump(fileData));
 });
 
 afterEach(() => {

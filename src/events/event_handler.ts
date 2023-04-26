@@ -66,7 +66,7 @@ export class eventHandler {
 		// Append new diff in the buffer
 		const diffFileName = `${new Date().getTime()}.yml`;
 		const diffFilePath = path.join(this.settings.DIFFS_REPO, diffFileName);
-		fs.writeFileSync(diffFilePath, yaml.safeDump(newDiff));
+		fs.writeFileSync(diffFilePath, yaml.dump(newDiff));
 		return diffFilePath;
 	};
 
@@ -84,7 +84,7 @@ export class eventHandler {
 			delete configFiles[oldRelPath];
 		}
 		// write file id to config.yml
-		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.safeDump(configJSON));
+		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(configJSON));
 	}
 
 	handleChangeEvent = (changeEvent: vscode.TextDocumentChangeEvent) => {
@@ -162,9 +162,10 @@ export class eventHandler {
 		const filePath = pathUtils.normalizePath(_filePath);
 		// Do not continue if file does not exist
 		if (!fs.existsSync(filePath)) return;
-		// Skip directory
+		// Ignore directories, symlinks etc
 		const lstat = fs.lstatSync(filePath);
-		if (lstat.isDirectory()) return;
+		if (!lstat.isFile()) return;
+		// Skip if it is not from current repo
 		if (!filePath.startsWith(this.repoPath)) return;
 
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];

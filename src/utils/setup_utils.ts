@@ -47,10 +47,10 @@ export const createSystemDirectories = () => {
 	
 	// Default data for all system files
 	const defaultData = <any>{};
-	defaultData[settings.CONFIG_PATH] = yaml.safeDump({ repos: {} });
-	defaultData[settings.USER_PATH] = yaml.safeDump({});
-	defaultData[settings.SEQUENCE_TOKEN_PATH] = yaml.safeDump({});
-	defaultData[settings.ALERTS] = yaml.safeDump({ team_activity: {} });
+	defaultData[settings.CONFIG_PATH] = yaml.dump({ repos: {} });
+	defaultData[settings.USER_PATH] = yaml.dump({});
+	defaultData[settings.SEQUENCE_TOKEN_PATH] = yaml.dump({});
+	defaultData[settings.ALERTS] = yaml.dump({ team_activity: {} });
 	defaultData[settings.POPULATE_BUFFER_LOCK_FILE] = "";
 	defaultData[settings.DIFFS_SEND_LOCK_FILE] = "";
 	defaultData[settings.UPGRADE_PLAN_ALERT] = "";
@@ -97,7 +97,7 @@ export const addPluginUser = async () => {
             secret_key: response.user.IAM_SECRET_KEY
         };
     }
-    fs.writeFileSync(settings.USER_PATH, yaml.safeDump(users));
+    fs.writeFileSync(settings.USER_PATH, yaml.dump(users));
 };
 
 const generateRandom = (min = 0, max = 100)  => {
