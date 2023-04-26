@@ -3,7 +3,6 @@ import path from "path";
 import yaml from "js-yaml";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
-import {isBinaryFileSync} from "isbinaryfile";
 
 import {pathUtils} from "../../src/utils/path_utils";
 import {CodeSyncState} from "../../src/utils/state_utils";
@@ -148,7 +147,6 @@ describe("populateBuffer", () => {
     });
 
     test("New Binary File", async () => {
-        isBinaryFileSync.mockReturnValueOnce(true);
         addRepo();
         const newRelPath = 'image.png';
         const newFilePath = path.join(repoPath, newRelPath);

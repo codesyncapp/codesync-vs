@@ -43,6 +43,8 @@ export class initUtils {
 		const skipPaths = getSkipPaths(this.repoPath, this.syncIgnoreItems);
 		const globFiles = globSync(`${this.repoPath}/**`, { ignore: skipPaths, nodir: true, dot: true, stat: true, withFileTypes: true });
 		globFiles.forEach(globFile => {
+			// Ignore symlinks, blockDevices, characterDevices, FIFO, sockets
+			if (!globFile.isFile()) return;
 			const filePath = globFile.fullpath();
 			const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
 			const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);

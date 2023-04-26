@@ -121,8 +121,13 @@ export const getDIffForDeletedFile = (repoPath: string, branch: string, relPath:
 		cleanUpDeleteDiff(repoPath, branch, relPath, configJSON);
 		return diff;
 	}
+	let isBinary = false;
 	// See if shadow file can be read
-	const isBinary = isBinaryFileSync(shadowPath);
+	try {
+		isBinary = isBinaryFileSync(shadowPath);
+	} catch (e) {
+		CodeSyncLogger.error(`getDIffForDeletedFile: isBinaryFileSync failed on ${shadowPath}`);
+	}
 	if (isBinary) {
 		cleanUpDeleteDiff(repoPath, branch, relPath, configJSON);
 		return diff;
