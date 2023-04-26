@@ -4,7 +4,6 @@ import yaml from "js-yaml";
 import fetchMock from "jest-fetch-mock";
 
 import untildify from "untildify";
-import { isBinaryFileSync } from "isbinaryfile";
 
 import {
     cleanUpDeleteDiff,
