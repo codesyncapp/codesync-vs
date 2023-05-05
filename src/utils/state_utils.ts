@@ -11,12 +11,13 @@ export const CODESYNC_STATES = {
     TEAM_ACTIVITY_REQUEST_SENT_AT: "teamActivtyRequestSentAt",
     CAN_AVAIL_TRIAL: "canAvailTrial",
     STATUS_BAR_ACTIVITY_ALERT_MSG: "statusBarActivityAlertMsg",
-    WEBSOCKET_ERROR_OCCURRED_AT: "websocketErrorOccurredAt"
+    WEBSOCKET_ERROR_OCCURRED_AT: "websocketErrorOccurredAt",
+    DIFFS_BEING_PROCESSED: "diffsBeingProcessed"
 };
 
 export class CodeSyncState {
 
-    static set = (key: string, value: string|boolean|number) => {
+    static set = (key: string, value: string|boolean|number|Set<string>) => {
         if (!(global as any).codeSyncState) {
             (global as any).codeSyncState = {};
         }    

@@ -2,10 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import vscode from "vscode";
 
-import {isValidDiff} from '../utils';
+import {getDiffsBeingProcessed, isValidDiff} from '../utils';
 import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
-import {DAY, DIFF_FILES_PER_ITERATION, DIFF_SIZE_LIMIT} from "../../constants";
+import {DAY, DIFF_FILES_PER_ITERATION} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
 import {getActiveUsers, readYML} from '../../utils/common';
@@ -64,9 +64,11 @@ export class bufferHandler {
 		this.settings = generateSettings();
 		this.configJSON = readYML(this.settings.CONFIG_PATH);
 	}
+
 	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
 
 	getDiffFiles = () => {
+		const diffsBeingProcessed = getDiffsBeingProcessed();
 		const diffsDir = fs.readdirSync(this.settings.DIFFS_REPO);
 		let randomDiffFiles = [];
 		const usedIndices = <any>[];
@@ -79,12 +81,9 @@ export class bufferHandler {
 			usedIndices.push(randomIndex);
 			randomDiffFiles.push(diffsDir[randomIndex]);
 		}
-		let diffsSize = 0;
 		// Filter valid diff files
 		randomDiffFiles = randomDiffFiles.filter((diffFile) => {
 			const filePath = path.join(this.settings.DIFFS_REPO, diffFile);
-			// Websocket can only accept data upto 16MB, for above than that, we are reducing number of diffs per iteration to remain under limit.
-			if (diffsSize > DIFF_SIZE_LIMIT) return false;
 			// Pick only yml files
 			if (!diffFile.endsWith('.yml')) {
 				fs.unlinkSync(filePath);
@@ -96,9 +95,6 @@ export class bufferHandler {
 				fs.unlinkSync(filePath);
 				return false;
 			}
-			
-			const diffSize = diffData.diff.length;
-			diffsSize += diffSize;
 
 			if (!(diffData.repo_path in this.configJSON.repos)) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is not in config.yml`);
@@ -110,11 +106,12 @@ export class bufferHandler {
 				fs.unlinkSync(filePath);
 				return false;
 			}
+			// Skip diffs that are in being iterated
+			if (diffsBeingProcessed.has(filePath)) return false;
 			const configRepo = this.configJSON.repos[diffData.repo_path];
 
 			if (!(diffData.branch in configRepo.branches)) {
 				// TODO: Look into syncing offline branch
-				fs.lstatSync(filePath);
 				// Removing diffs of non-synced branch if diff was created 5 days ago and plan limit is not reached
 				// We want to keep data in case plan limit is reached so that user can access it when plan is upgraded
 				const fileInfo = fs.lstatSync(filePath);
@@ -140,9 +137,6 @@ export class bufferHandler {
 			return true;
 		});
 
-		if (diffsSize > DIFF_SIZE_LIMIT) {
-			CodeSyncLogger.error("Diffs size increasing limit");
-		} 
 		return randomDiffFiles;
 	}
 
@@ -182,7 +176,7 @@ export class bufferHandler {
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			CodeSyncLogger.critical("Daemon failed to run", e.stack);
+			CodeSyncLogger.critical("bufferHandler exited", e.stack);
 			// recall daemon
 			return recallDaemon(this.statusBarItem);
 		}

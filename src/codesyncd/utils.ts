@@ -208,3 +208,12 @@ export class statusBarMsgs {
 		return defaultMsg;
 	}
 }
+
+export const getDiffsBeingProcessed = () => {
+	const diffsInState = CodeSyncState.get(CODESYNC_STATES.DIFFS_BEING_PROCESSED);
+	return diffsInState || new Set();
+};
+
+export const setDiffsBeingProcessed = (diffs: Set<string>) => {
+	CodeSyncState.set(CODESYNC_STATES.DIFFS_BEING_PROCESSED, diffs);
+};
