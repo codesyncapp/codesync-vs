@@ -14,6 +14,7 @@ import {
 } from "../../constants";
 import { getPlanLimitReached } from "../../utils/pricing_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
+import { setDiffsBeingProcessed } from "../utils";
 
 let errorCount = 0;
 
@@ -34,6 +35,8 @@ export class SocketClient {
     resetGlobals = () => {
         // Set time when connection is errored out
         CodeSyncState.set(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT, new Date().getTime());
+        // Reset diffsBeingProcessed
+        setDiffsBeingProcessed(new Set());
         try {
             this.client.abort();
         } catch (e) {

@@ -3,7 +3,7 @@ import path from "path";
 
 import {IDiffToSend, IFileToDiff, IRepoDiffs} from "../../interface";
 import {CodeSyncLogger} from "../../logger";
-import {FILE_UPLOAD_WAIT_TIMEOUT} from "../../constants";
+import {DIFF_SIZE_LIMIT, FILE_UPLOAD_WAIT_TIMEOUT} from "../../constants";
 import {readYML} from "../../utils/common";
 import {generateSettings} from "../../settings";
 import {DiffHandler} from "./diff_handler";
@@ -34,6 +34,7 @@ export class DiffsHandler {
         const newFilesDiffs = this.diffsList.filter(diffFile => diffFile.diff.is_new_file);
         const otherDiffs = this.diffsList.filter(x => !newFilesDiffs.includes(x));
         const orderedDiffFiles = [...newFilesDiffs, ...otherDiffs];
+		let diffsSize = 0;
         // Iterate diffs
         for (const fileToDiff of orderedDiffFiles) {
             try {
@@ -104,12 +105,18 @@ export class DiffsHandler {
                 }
                 // Diff data to be sent to server
                 const diffToSend = diffHandler.createDiffToSend(fileId);
+                diffsSize += JSON.stringify(diffToSend).length;
+                // Websocket can only accept data upto 16MB, for above than that, we are reducing number of diffs per iteration to remain under limit.
+                if (diffsSize > DIFF_SIZE_LIMIT) continue;
                 validDiffs.push(diffToSend);
             } catch (e) {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
                 CodeSyncLogger.critical("Error handling diff", e.stack);
             }
+        }
+        if (diffsSize > DIFF_SIZE_LIMIT) {
+            CodeSyncLogger.error(`Diffs size increasing limit, size=${diffsSize} bytes`);
         }
         return validDiffs;
     }
