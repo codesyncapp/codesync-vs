@@ -196,4 +196,4 @@ export const SOCKET_ERRORS = {
 export const DAY = 24 * 60 * 60 * 1000;
 export const PRICING_URL_PATH = "/pricing";
 export const RETRY_WEBSOCKET_CONNECTION_AFTER = 5 * 60 * 1000; // 1000 is for ms;
-export const GLOB_TIME_TAKEN_THRESHOLD = 3;
+export const GLOB_TIME_TAKEN_THRESHOLD = 2;

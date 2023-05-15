@@ -22,7 +22,8 @@ import {
     TEST_EMAIL,
     TEST_REPO_RESPONSE,
     TEST_USER,
-    writeTestRepoFiles
+    writeTestRepoFiles,
+    NESTED_PATH
 } from "../helpers/helpers";
 import {createSystemDirectories} from "../../src/utils/setup_utils";
 
@@ -221,9 +222,9 @@ describe("detectBranchChange", () => {
             email: TEST_EMAIL
         };
         _configData.repos[repoPath].branches[DEFAULT_BRANCH] = {
-            "file_1.js": null,
-            "directory/file_2.js": null
+            "file_1.js": null
         };
+        _configData.repos[repoPath].branches[DEFAULT_BRANCH][NESTED_PATH] = null;
 
         fs.writeFileSync(configPath, yaml.dump(_configData));
 

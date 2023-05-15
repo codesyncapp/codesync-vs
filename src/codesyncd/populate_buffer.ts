@@ -221,12 +221,20 @@ class PopulateBuffer {
          */
         const skipPaths = getSkipPaths(this.shadowRepoBranchPath, this.syncIgnoreItems);
         // These are shadow files whose actual files are present in the repo
-        const skipShadowFiles = this.itemPaths.map(itemPath => path.join(this.shadowRepoBranchPath, itemPath.rel_path));
+        const skipShadowRelPaths = this.itemPaths.map(itemPath => itemPath.rel_path);
         const t0 = new Date().getTime();
-        let shadowFiles = globSync(`${this.shadowRepoBranchPath}/**`, { ignore: skipPaths, nodir: true, dot: true });
+        const shadowRelPaths = globSync("**", { 
+            cwd: this.shadowRepoBranchPath,
+            ignore: skipPaths, 
+            nodir: true, 
+            dot: true
+        });
         // Skip those shadow files whose actual files are present in the repo
-        shadowFiles = shadowFiles.filter(x => !skipShadowFiles.includes(x));
-        const filteredFiles = shadowFiles.filter(shadowFilePath => {
+        const filteredRelPaths = shadowRelPaths.filter(x => !skipShadowRelPaths.includes(x));
+        // Get shadow paths from rel paths
+        const shadowFilePaths = filteredRelPaths.map(shadowRelPath => path.join(this.shadowRepoBranchPath, shadowRelPath));
+        // Itereate over filtered shadow file paths
+        const filteredFiles = shadowFilePaths.filter(shadowFilePath => {
             const relPath = shadowFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
             const isInConfig = relPath in this.configFiles;
             const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);
@@ -253,7 +261,7 @@ class PopulateBuffer {
             if (!content) return false;
             return true;
         });
-        CodeSyncLogger.debug(`getPotentialRenamedFiles: glob took=${(new Date().getTime() - t0)/1000}s, Files Count=${this.itemPaths.length}, repoPath=${this.repoPath}`);
+        CodeSyncLogger.debug(`getPotentialRenamedFiles: glob took=${(new Date().getTime() - t0)/1000}s, Files Count=${shadowRelPaths.length}, repoPath=${this.repoPath}`);
         return filteredFiles;
     }
 

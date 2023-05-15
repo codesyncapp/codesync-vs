@@ -15,7 +15,8 @@ import {
     TEST_USER,
     randomBaseRepoPath,
     randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, getSeqTokenFilePath, Config, addUser, waitFor,
-    writeTestRepoFiles
+    writeTestRepoFiles,
+    NESTED_PATH
 } from "../helpers/helpers";
 import {API_ROUTES, DEFAULT_BRANCH, VSCODE, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
@@ -323,11 +324,12 @@ describe("uploadRepo",  () => {
 
         // Verify file Ids have been added in config
         const config = readYML(configPath);
-        expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual({
+        const expectedConfig = {
             ".syncignore": null,
             "file_1.js": null,
-            "directory/file_2.js": null,
-        });
+        };
+        expectedConfig[NESTED_PATH] = null;
+        expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(expectedConfig);
         expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 

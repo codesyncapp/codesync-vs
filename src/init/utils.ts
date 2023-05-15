@@ -41,7 +41,14 @@ export class initUtils {
 	getSyncablePaths () {
 		const itemPaths: IFileToUpload[] = [];
 		const skipPaths = getSkipPaths(this.repoPath, this.syncIgnoreItems);
-		const globFiles = globSync(`${this.repoPath}/**`, { ignore: skipPaths, nodir: true, dot: true, stat: true, withFileTypes: true });
+		const globFiles = globSync("**", { 
+			cwd: this.repoPath,
+			ignore: skipPaths, 
+			nodir: true, 
+			dot: true, 
+			stat: true,
+			withFileTypes: true
+		});
 		globFiles.forEach(globFile => {
 			// Ignore symlinks, blockDevices, characterDevices, FIFO, sockets
 			if (!globFile.isFile()) return;
