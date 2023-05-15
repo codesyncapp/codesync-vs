@@ -107,9 +107,9 @@ export const TEST_REPO_RESPONSE = {
     },
     'user': TEST_USER
 };
-const nestedPath = path.join("directory", "file_2.js");
-TEST_REPO_RESPONSE['file_path_and_id'][nestedPath] = 2;
-TEST_REPO_RESPONSE['urls'][nestedPath] = PRE_SIGNED_URL;
+export const NESTED_PATH = path.join("directory", "file_2.js");
+TEST_REPO_RESPONSE['file_path_and_id'][NESTED_PATH] = 2;
+TEST_REPO_RESPONSE['urls'][NESTED_PATH] = PRE_SIGNED_URL;
 
 export const DIFF_DATA = {
     repo_path: "",
