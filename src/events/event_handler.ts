@@ -252,8 +252,14 @@ export class eventHandler {
 		const branch = this.branch;
 		this.isDelete = true;
 		// No need to skip repos here as it is for specific directory
-		const shadowFiles = globSync(`${shadowDirPath}/**`, { nodir: true, dot: true });
-		shadowFiles.forEach(shadowFilePath => {
+		const shadowFiles = globSync("**", { 
+			cwd: shadowDirPath,
+			nodir: true, 
+			dot: true,
+			withFileTypes: true
+		});
+		shadowFiles.forEach(globFile => {
+			const shadowFilePath = globFile.fullpath();
 			const relPath = shadowFilePath.split(path.join(pathUtilsObj.formattedRepoPath, branch, path.sep))[1];
 			const cacheRepoBranchPath = pathUtilsObj.getDeletedRepoBranchPath();
 			const cacheFilePath = path.join(cacheRepoBranchPath, relPath);
@@ -330,8 +336,14 @@ export class eventHandler {
 		this.isRename = true;
 		const repoPath = this.repoPath;
 		// No need to skip repos here as it is for specific directory
-		const renamedFiles = globSync(`${newPath}/**`, { nodir: true, dot: true });
-		renamedFiles.forEach(renamedFilePath => {
+		const renamedFiles = globSync("**", { 
+			cwd: newPath,
+			nodir: true, 
+			dot: true,
+			withFileTypes: true
+		});
+		renamedFiles.forEach(globFile => {
+			const renamedFilePath = globFile.fullpath();
 			const oldFilePath = renamedFilePath.replace(newPath, oldPath);
 			const oldRelPath = oldFilePath.split(path.join(repoPath, path.sep))[1];
 			const newRelPath = renamedFilePath.split(path.join(repoPath, path.sep))[1];
@@ -339,7 +351,7 @@ export class eventHandler {
 				'old_rel_path': oldRelPath,
 				'new_rel_path': newRelPath
 			});
-			// // Rename shadow file
+			// Rename shadow file
 			const oldShadowPath = path.join(this.shadowRepoBranchPath, oldRelPath);
 			const newShadowPath = path.join(this.shadowRepoBranchPath, newRelPath);
 			if (fs.existsSync(oldShadowPath)) {

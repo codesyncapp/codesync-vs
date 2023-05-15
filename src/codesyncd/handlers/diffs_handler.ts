@@ -51,13 +51,11 @@ export class DiffsHandler {
                         this.newFiles.push(relPath);
                     }
                     this.configJSON = await diffHandler.handleNewFile();
-                    continue;
+                    continue;   
                 }
 
                 // Skip the changes diffs if relevant file was uploaded in the same iteration, wait for next iteration
-                if (this.newFiles.includes(relPath)) {
-                    continue;
-                }
+                if (this.newFiles.includes(relPath)) continue;
 
                 if (diffData.is_rename) {
                     const oldRelPath = JSON.parse(diffData.diff).old_rel_path;
@@ -91,7 +89,7 @@ export class DiffsHandler {
                             fs.unlinkSync(diffFilePath);
                         } else {
                             WAITING_FILES[relPath] = (new Date()).getTime() / 1000;
-                            if (this.newFiles.indexOf(relPath) > -1) {
+                            if (!this.newFiles.includes(relPath)) {
                                 this.newFiles.push(relPath);
                             }
                             this.configJSON = await diffHandler.forceUploadFile();
