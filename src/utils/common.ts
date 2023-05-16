@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from "path";
 import yaml from 'js-yaml';
 import ignore from 'ignore';
@@ -94,6 +95,9 @@ export const getSkipPaths = (repoPath: string, syncignoreItems: string[]) => {
 	Output of this is used by globSync to ignore given directories
 	That's why appending /**  at the end of each directory path
 	*/
+	if (os.platform() === 'win32') {
+		repoPath = repoPath.replace(/\\/g, "/");
+	}
 	const skipPaths = [...IGNORABLE_DIRECTORIES.map(ignoreDir => `${repoPath}/**/${ignoreDir}/**`)];
 	syncignoreItems.forEach((pattern) => {
 		for (const terminator of ["/", "/*", "/**"]) {
@@ -108,7 +112,7 @@ export const getSkipPaths = (repoPath: string, syncignoreItems: string[]) => {
 		if (!fs.existsSync(itemPath) || !fs.lstatSync(itemPath).isDirectory()) return;
 		const _pattern = `${repoPath}/${pattern}/**`;
 		// Make sure there are no duplicates
-		if (skipPaths.includes(_pattern )) return;
+		if (skipPaths.includes(_pattern)) return;
 		skipPaths.push(_pattern);
 	});
 	return skipPaths;

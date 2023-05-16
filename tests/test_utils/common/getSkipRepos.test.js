@@ -1,4 +1,5 @@
 import fs from "fs";
+import os from "os";
 import path from "path";
 import { getSkipPaths, getSyncIgnoreItems } from "../../../src/utils/common";
 import { getSyncIgnoreFilePath, randomRepoPath } from "../../helpers/helpers";
@@ -9,7 +10,8 @@ describe("getSkipPaths",  () => {
     const repoPath = randomRepoPath();
     const syncIgnorePath = getSyncIgnoreFilePath(repoPath);
     const syncIgnoreData = ".skip_repo_1/\n\n\nskip_repo_2/**\n!.skip_repo_3/*\n.skip_repo_4\file.js";
-    const defaultSkipPaths = [...IGNORABLE_DIRECTORIES.map(ignoreDir => `${repoPath}/**/${ignoreDir}/**`)];
+    const patternRepoPath = os.platform() === 'win32' ? repoPath.replace(/\\/g, "/") : repoPath;
+    const defaultSkipPaths = [...IGNORABLE_DIRECTORIES.map(ignoreDir => `${patternRepoPath}/**/${ignoreDir}/**`)];
 
     beforeEach(() => {
         // Create directories
@@ -33,7 +35,7 @@ describe("getSkipPaths",  () => {
         let syncIgnoreItems = getSyncIgnoreItems(repoPath);
         const skippedRepos = getSkipPaths(repoPath, syncIgnoreItems);
         // skip_repo_4 is non existant
-        expect(skippedRepos.filter(x => !defaultSkipPaths.includes(x))).toEqual([".skip_repo_1/**", "skip_repo_2/**"].map(item => `${repoPath}/${item}`));
+        expect(skippedRepos.filter(x => !defaultSkipPaths.includes(x))).toEqual([".skip_repo_1/**", "skip_repo_2/**"].map(item => `${patternRepoPath}/${item}`));
         expect(skippedRepos.filter(x => !defaultSkipPaths.includes(x)).includes(".skip_repo_4")).toEqual(false);
     });
 
