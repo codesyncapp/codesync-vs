@@ -11,6 +11,7 @@ import {generateSettings} from "../../settings";
 import {getActiveUsers, readYML} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
 import { getPlanLimitReached } from '../../utils/pricing_utils';
+import { removeFile } from '../../utils/file_utils';
 
 
 
@@ -86,24 +87,24 @@ export class bufferHandler {
 			const filePath = path.join(this.settings.DIFFS_REPO, diffFile);
 			// Pick only yml files
 			if (!diffFile.endsWith('.yml')) {
-				fs.unlinkSync(filePath);
+				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
 			const diffData = readYML(filePath);
 			if (!diffData || !isValidDiff(diffData)) {
 				CodeSyncLogger.info(`Removing diff: Skipping invalid diff: ${diffFile}`, "", diffData);
-				fs.unlinkSync(filePath);
+				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
 
 			if (!(diffData.repo_path in this.configJSON.repos)) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is not in config.yml`);
-				fs.unlinkSync(filePath);
+				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
 			if (this.configJSON.repos[diffData.repo_path].is_disconnected) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is disconnected`);
-				fs.unlinkSync(filePath);
+				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
 			// Skip diffs that are in being iterated
@@ -128,8 +129,8 @@ export class bufferHandler {
 							`Removing diff: Branch=${diffData.branch} is not synced. Repo=${diffData.repo_path}`,
 							"", 
 							configRepo.email
-						);	
-						fs.unlinkSync(filePath);
+						);
+						removeFile(filePath, "getDiffFiles");
 					}
 				}
 				return false;

@@ -12,6 +12,7 @@ import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
 import { VSCODE } from "../constants";
 import { isRepoSynced, shouldIgnorePath } from './utils';
+import { removeFile } from '../utils/file_utils';
 
 
 export class eventHandler {
@@ -318,7 +319,7 @@ export class eventHandler {
 		if (fs.existsSync(oldShadowPath)) {
 			const initUtilsObj = new initUtils(this.repoPath);
 			initUtilsObj.copyForRename(oldShadowPath, newShadowPath);
-			fs.unlinkSync(oldShadowPath);
+			removeFile(oldShadowPath, "handleRename");
 		}
 		// Create diff
 		const diff = JSON.stringify({
@@ -357,7 +358,7 @@ export class eventHandler {
 			if (fs.existsSync(oldShadowPath)) {
 				const initUtilsObj = new initUtils(repoPath);
 				initUtilsObj.copyForRename(oldShadowPath, newShadowPath);
-				fs.unlinkSync(oldShadowPath);
+				removeFile(oldShadowPath, "handleDirectoryRenameDiffs");
 			}
 			this.addPathToConfig(newRelPath, oldRelPath);
 			this.addDiff(newRelPath, diff);

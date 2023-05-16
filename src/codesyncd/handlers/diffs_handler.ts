@@ -7,6 +7,7 @@ import {DIFF_SIZE_LIMIT, FILE_UPLOAD_WAIT_TIMEOUT} from "../../constants";
 import {readYML} from "../../utils/common";
 import {generateSettings} from "../../settings";
 import {DiffHandler} from "./diff_handler";
+import { removeFile } from "../../utils/file_utils";
 
 const WAITING_FILES = <any>{};
 
@@ -81,12 +82,12 @@ export class DiffsHandler {
                         if ((now - WAITING_FILES[relPath]) > FILE_UPLOAD_WAIT_TIMEOUT) {
                             CodeSyncLogger.error("diffsHandler: File ID not found", relPath, this.configRepo.email);
                             delete WAITING_FILES[relPath];
-                            fs.unlinkSync(diffFilePath);
+                            removeFile(diffFilePath, "DiffHandler.run");
                         }
                     } else {
                         const filePath = path.join(diffData.repo_path, relPath);
                         if (!fs.existsSync(filePath)) {
-                            fs.unlinkSync(diffFilePath);
+                            removeFile(diffFilePath, "DiffHandler.run");
                         } else {
                             WAITING_FILES[relPath] = (new Date()).getTime() / 1000;
                             if (!this.newFiles.includes(relPath)) {

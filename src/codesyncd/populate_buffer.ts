@@ -31,6 +31,7 @@ import {
 import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
 import { CodeSyncState } from "../utils/state_utils";
+import { removeFile } from "../utils/file_utils";
 
 
 export const populateBuffer = async (viaDaemon=true) => {
@@ -240,12 +241,7 @@ class PopulateBuffer {
             const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);
             // If file is not in config OR is is present in .syncignore, remove the file from .shadow
             if (!isInConfig || shouldIgnorePath) {
-                fs.unlink(shadowFilePath, err => {
-                    if (!err) return false;
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    CodeSyncLogger.error("getPotentialRenamedFiles: Error deleting shadow file", shadowFilePath, err);
-                });
+                removeFile(shadowFilePath, "getPotentialRenamedFiles");
                 return false;
             }
             let isBinary = false;
