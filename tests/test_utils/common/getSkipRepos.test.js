@@ -35,7 +35,7 @@ describe("getSkipPaths",  () => {
         let syncIgnoreItems = getSyncIgnoreItems(repoPath);
         const skippedRepos = getSkipPaths(repoPath, syncIgnoreItems);
         // skip_repo_4 is non existant
-        expect(skippedRepos.filter(x => !defaultSkipPaths.includes(x))).toEqual([".skip_repo_1/**", "skip_repo_2/**"].map(item => `${repoPath}/${item}`));
+        expect(skippedRepos.filter(x => !defaultSkipPaths.includes(x))).toEqual([".skip_repo_1/**", "skip_repo_2/**"].map(item => `${patternRepoPath}/${item}`));
         expect(skippedRepos.filter(x => !defaultSkipPaths.includes(x)).includes(".skip_repo_4")).toEqual(false);
     });
 
