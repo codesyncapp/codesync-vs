@@ -30,7 +30,7 @@ import {
  } from "../constants";
 import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
-import { CodeSyncState } from "../utils/state_utils";
+import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { removeFile } from "../utils/file_utils";
 
 
@@ -41,6 +41,9 @@ export const populateBuffer = async (viaDaemon=true) => {
 };
 
 export const populateBufferForMissedEvents = async (readyRepos: any) => {
+    const isRunning = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_RUNNING);
+    if (isRunning) return;
+    CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_RUNNING, true);
     const currentRepoPath = pathUtils.getRootPath();
     for (const repoPath of Object.keys(readyRepos)) {
         const branch = readyRepos[repoPath];
@@ -76,6 +79,7 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
             CodeSyncLogger.critical(`populateBuffer exited for ${repoPath}`, e.stack);
         }
     }
+    CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_RUNNING, false);
 };
 
 

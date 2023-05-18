@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.21.0] - 2023-05-16 [NOT DEPLOYED]
 - Using fs.unlink instead of fs.unlinkSync
+- Running 1 instance of populateBuffer, waiting before previous iteration is completed
 
 ## [3.20.2] - 2023-05-16
 - Fixed skip patterns for Windows
