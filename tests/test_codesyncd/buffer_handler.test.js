@@ -254,6 +254,8 @@ describe("bufferHandler", () => {
         addUser(baseRepoPath);
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
+        const diffFiles = handler.getDiffFiles();
+        if (diffFiles.length) await waitFor(2);
         expect(assertDiffsCount(0)).toBe(true);
     });
 
@@ -275,6 +277,8 @@ describe("bufferHandler", () => {
         addChangesDiff();
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
+        const diffFiles = handler.getDiffFiles();
+        if (diffFiles.length) await waitFor(2);
         expect(assertDiffsCount(0)).toBe(true);
     });
 
