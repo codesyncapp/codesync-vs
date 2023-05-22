@@ -120,6 +120,20 @@ export const DIFF_DATA = {
     source: VSCODE
 };
 
+export const DEFAULT_SYNCIGNORE_TEST_DATA = `.git/
+################################
+# Comment
+################################
+# Gradle files
+.gradle/
+build/
+# Node
+node_modules/
+# Android
+*.apk
+!*.apk/
+`;
+
 export class Config {
 
     constructor(repoPath, configPath) {

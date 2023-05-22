@@ -10,15 +10,18 @@ import {
     getConfigFilePath,
     getUserFilePath,
     randomBaseRepoPath,
-    randomRepoPath
+    randomRepoPath,
+    DEFAULT_SYNCIGNORE_TEST_DATA
 } from "../helpers/helpers";
 import {
     createSystemDirectories,
     setupCodeSync,
     showConnectRepoView, 
     showLogIn,
-    showRepoIsSyncIgnoredView
+    showRepoIsSyncIgnoredView,
+    createOrUpdateSyncignore
 } from "../../src/utils/setup_utils";
+import { generateSettings } from "../../src/settings";
 import {getRepoInSyncMsg, getDirectorySyncIgnoredMsg, getDirectoryIsSyncedMsg, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 
 
@@ -48,6 +51,30 @@ describe("createSystemDirectories",  () => {
     });
 });
 
+describe("createOrUpdateSyncignore",  () => {
+    const baseRepoPath = randomBaseRepoPath();
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        fetch.resetMocks();
+        fetchMock.mockResponseOnce(DEFAULT_SYNCIGNORE_TEST_DATA);
+        untildify.mockReturnValue(baseRepoPath);
+        fs.mkdirSync(baseRepoPath, { recursive: true });
+    });
+
+    afterEach(() => {
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
+    });
+
+    test('get syncignore from s3', async () => {
+        const settings = generateSettings();
+        if (fs.existsSync(settings.SYNCIGNORE_PATH)) fs.unlinkSync(settings.SYNCIGNORE_PATH);
+        await createOrUpdateSyncignore();
+        expect(fs.existsSync(settings.SYNCIGNORE_PATH)).toBe(true);
+    });
+});
+
+
 describe("setupCodeSync",  () => {
     const baseRepoPath = randomBaseRepoPath();
     const repoPath = randomRepoPath();
@@ -60,6 +87,8 @@ describe("setupCodeSync",  () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        fetch.resetMocks();
+        fetchMock.mockResponseOnce(DEFAULT_SYNCIGNORE_TEST_DATA);
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});

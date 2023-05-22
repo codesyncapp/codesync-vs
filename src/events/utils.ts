@@ -1,22 +1,14 @@
 import fs from 'fs';
-import path from "path";
-import { IGNORABLE_DIRECTORIES, SYNCIGNORE } from "../constants";
-import { checkSubDir, getBranch, isRepoActive, isIgnoreAblePath, isUserActive, readYML, getSyncIgnoreItems } from '../utils/common';
+import { 
+	checkSubDir, 
+	getBranch, 
+	isRepoActive, 
+	isUserActive, 
+	readYML
+} from '../utils/common';
 import { generateSettings } from "../settings";
 import { CodeSyncLogger } from '../logger';
 
-export function shouldIgnorePath(repoPath: string, relPath: string) {
-	const isIgnorableDir = isIgnoreAblePath(relPath, IGNORABLE_DIRECTORIES);
-	if (isIgnorableDir) return true;
-	// Allow file sync if there is no .syncignore
-	const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
-	if (!fs.existsSync(syncIgnorePath)) return false;
-	const syncIgnoreItems = getSyncIgnoreItems(repoPath);
-	// Allow file sync if .syncignore is empty
-	if (!syncIgnoreItems.length) return false;
-	const shouldIgnore = isIgnoreAblePath(relPath, syncIgnoreItems);
-	return shouldIgnore;
-}
 
 export const isRepoSynced = (repoPath: string, checkFileIds=true) => {
 	if (!repoPath) return false;
