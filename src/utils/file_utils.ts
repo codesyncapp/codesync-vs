@@ -1,4 +1,5 @@
 import fs from "fs";
+import { CodeSyncLogger } from '../logger';
 
 export const removeFile = (filePath: string, funcName: string) => {
 	fs.unlink(filePath, err => {
