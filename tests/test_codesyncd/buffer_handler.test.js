@@ -348,7 +348,7 @@ describe("bufferHandler", () => {
         };
         const handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
-        if (diffFiles.length) await waitFor(3);
+        if (diffFiles.length) await waitFor(2);
         expect(assertDiffsCount(0)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(false);
     });
@@ -409,7 +409,7 @@ describe("bufferHandler", () => {
         };
         const handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
-        if (diffFiles.length) await waitFor(3);
+        if (diffFiles.length) await waitFor(2);
         expect(assertDiffsCount(0)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(false);
         const config = readYML(configPath);
@@ -627,7 +627,7 @@ describe("bufferHandler", () => {
         };
         handled = await webSocketEvents.onMessage(syncMsg);
         expect(handled).toBe(true);
-        if (diffFiles.length) await waitFor(3);
+        if (diffFiles.length) await waitFor(2);
         expect(assertDiffsCount(0)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(false);
     });
