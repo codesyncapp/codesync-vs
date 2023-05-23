@@ -18,6 +18,7 @@ export const PLUGIN_USER = {
     logStream: LOG_STREAM,
     url: PLUGIN_USER_URL
 };
+export const SYNCIGNORE_URL = "https://codesync-public.s3.amazonaws.com/syncignore.txt";
 
 export const generateSettings = () => {
     /*
@@ -63,6 +64,7 @@ export const generateSettings = () => {
         CONFIG_PATH: path.join(rootRepo, "config.yml"),
         USER_PATH: path.join(rootRepo, "user.yml"),
         SEQUENCE_TOKEN_PATH: path.join(rootRepo, "sequence_token.yml"),
+        SYNCIGNORE_PATH: path.join(rootRepo, "syncignore.yml"),
     };
     // Lock Files
     const lockFiles = {
@@ -80,6 +82,7 @@ export const generateSettings = () => {
         */
         ALERTS: path.join(rootRepo, "alerts.yml")
     };
+
     return {
         ...systemDirectories,
         ...lockFiles,

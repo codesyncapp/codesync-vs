@@ -15,7 +15,7 @@ import { IFileToUpload } from '../interface';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, RETRY_BRANCH_SYNC_AFTER } from '../constants';
-import { getSkipPaths, isRepoActive, readYML, getSyncIgnoreItems, isIgnoreAblePath } from '../utils/common';
+import { getGlobIgnorePatterns, isRepoActive, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 
@@ -24,12 +24,14 @@ export class initUtils {
 	viaDaemon: boolean;
 	settings: any;
 	syncIgnoreItems: string[];
+	defaultIgnorePatterns: string[];
 
 	constructor(repoPath: string, viaDaemon=false) {
 		this.repoPath = repoPath;
 		this.viaDaemon = viaDaemon;
 		this.settings = generateSettings();
 		this.syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
+		this.defaultIgnorePatterns = getDefaultIgnorePatterns();
 	}
 
 	isBranchSyncInProcess (syncingBranchKey: string) {
@@ -40,10 +42,10 @@ export class initUtils {
 
 	getSyncablePaths () {
 		const itemPaths: IFileToUpload[] = [];
-		const skipPaths = getSkipPaths(this.repoPath, this.syncIgnoreItems);
+		const globIgnorePatterns = getGlobIgnorePatterns(this.repoPath, this.syncIgnoreItems);
 		const globFiles = globSync("**", { 
 			cwd: this.repoPath,
-			ignore: skipPaths, 
+			ignore: globIgnorePatterns, 
 			nodir: true, 
 			dot: true, 
 			stat: true,
@@ -54,8 +56,8 @@ export class initUtils {
 			if (!globFile.isFile()) return;
 			const filePath = globFile.fullpath();
 			const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
-			const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);
-			if (shouldIgnorePath) return;
+			const isIgnoreablePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
+			if (isIgnoreablePath) return;
 			itemPaths.push({
 				file_path: filePath,
 				rel_path: relPath,

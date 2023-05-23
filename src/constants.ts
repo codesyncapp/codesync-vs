@@ -19,16 +19,6 @@ export const GITIGNORE = ".gitignore";
 export const VSCODE = 'vscode';
 export const DEFAULT_BRANCH = 'default';
 
-// TODO: Use standard .gitignore
-export const IGNORABLE_DIRECTORIES = [
-	".git",
-	"node_modules",
-	".DS_Store",
-	".idea",
-	"coverage",
-	"bower_components"
-];
-
 export const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5000;
@@ -186,8 +176,8 @@ export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
 export const RETRY_REQUEST_AFTER = 3 * 60 * 1000; // 1000 is for ms;
 export const RETRY_TEAM_ACTIVITY_REQUEST_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const RETRY_BRANCH_SYNC_AFTER = 3 * 60 * 1000; // 3 minute, 1000 is for ms
-export const RUN_POPULATE_BUFFER_AFTER = 2 * 60 * 1000; // 1000 is for ms;
-export const RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER = 4 * 60 * 1000; // 1000 is for ms;
+export const RUN_POPULATE_BUFFER_AFTER = 5 * 60 * 1000; // 1000 is for ms;
+export const RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER = 10 * 60 * 1000; // 1000 is for ms;
 export const RUN_DELETE_HANDLER_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const SOCKET_CONNECT_ERROR_CODES = ["ECONNREFUSED", "ETIMEDOUT", "ECONNRESET"];
 export const SOCKET_ERRORS = {
@@ -197,3 +187,4 @@ export const DAY = 24 * 60 * 60 * 1000;
 export const PRICING_URL_PATH = "/pricing";
 export const RETRY_WEBSOCKET_CONNECTION_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const GLOB_TIME_TAKEN_THRESHOLD = 2;
+export const UPDATE_SYNCIGNORE_AFTER = 7 * 24 * 60 * 60 * 1000;  // 1 week

@@ -19,9 +19,11 @@ import {
     setWorkspaceFolders,
     TEST_EMAIL,
     waitFor,
-    getSyncIgnoreFilePath
+    getSyncIgnoreFilePath,
+    DEFAULT_SYNCIGNORE_TEST_DATA
 } from "../../helpers/helpers";
 import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
+import { createSystemDirectories, createOrUpdateSyncignore } from "../../../src/utils/setup_utils";
 
 describe("handleRenameFile",  () => {
     /*
@@ -58,7 +60,7 @@ describe("handleRenameFile",  () => {
     let newDirectoryPath;
     let newDirectoryFilePath;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         jest.clearAllMocks();
         global.IS_CODESYNC_TEST_MODE = true;
         
@@ -67,6 +69,11 @@ describe("handleRenameFile",  () => {
         configPath = getConfigFilePath(baseRepoPath);
     
         untildify.mockReturnValue(baseRepoPath);
+        fetch.resetMocks();
+        fetchMock.mockResponseOnce(DEFAULT_SYNCIGNORE_TEST_DATA);
+        createSystemDirectories();
+        await createOrUpdateSyncignore();
+
         setWorkspaceFolders(repoPath);
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
 

@@ -6,12 +6,13 @@ import { globSync } from 'glob';
 
 import { IDiff } from "../interface";
 import { initUtils } from "../init/utils";
-import { formatDatetime, getBranch, readFile, readYML } from "../utils/common";
+import { formatDatetime, getBranch, getDefaultIgnorePatterns, getSyncIgnoreItems, readFile, readYML, shouldIgnorePath } from "../utils/common";
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
 import { VSCODE } from "../constants";
-import { isRepoSynced, shouldIgnorePath } from './utils';
+import { isRepoSynced } from './utils';
+import { removeFile } from '../utils/file_utils';
 
 
 export class eventHandler {
@@ -22,7 +23,9 @@ export class eventHandler {
 	pathUtils: any;
 	shadowRepoBranchPath: string;
 	deletedRepoBranchPath: string;
-	originalsRepoBranchPath: string
+	originalsRepoBranchPath: string;
+	syncIgnoreItems: string[];
+	defaultIgnorePatterns: string[];
 
 	// Diff props
 	isNewFile = false;
@@ -41,6 +44,8 @@ export class eventHandler {
 		this.shadowRepoBranchPath = this.pathUtils.getShadowRepoBranchPath();
 		this.deletedRepoBranchPath = this.pathUtils.getDeletedRepoBranchPath();
 		this.originalsRepoBranchPath = this.pathUtils.getOriginalsRepoBranchPath();
+		this.syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
+		this.defaultIgnorePatterns = getDefaultIgnorePatterns();
 	}
 
 	addDiff = (relPath: string, diffs="") => {
@@ -108,7 +113,7 @@ export class eventHandler {
 		if (!fs.existsSync(filePath)) return;
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
 		// Skip .git and .syncignore files
-		if (shouldIgnorePath(this.repoPath, relPath)) return;
+		if (shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems)) return;
 		let shadowText = "";
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
 		if (!fs.existsSync(shadowPath)) {
@@ -169,7 +174,7 @@ export class eventHandler {
 		if (!filePath.startsWith(this.repoPath)) return;
 
 		const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
-		if (shouldIgnorePath(this.repoPath, relPath)) return;
+		if (shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems)) return;
 
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
 		const originalsPath = path.join(this.originalsRepoBranchPath, relPath);
@@ -219,7 +224,7 @@ export class eventHandler {
 
 		const relPath = itemPath.split(path.join(this.repoPath, path.sep))[1];
 		// Skip .git/ and syncignore files
-		if (shouldIgnorePath(this.repoPath, relPath)) { return; }
+		if (shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems)) return;
 
 		// Shadow path
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
@@ -303,7 +308,7 @@ export class eventHandler {
 		const newRelPath = newAbsPath.split(path.join(this.repoPath, path.sep))[1];
 
 		if (!newAbsPath.startsWith(this.repoPath)) return;
-		if (shouldIgnorePath(this.repoPath, newRelPath)) return;
+		if (shouldIgnorePath(newRelPath, this.defaultIgnorePatterns, this.syncIgnoreItems)) return;
 
 		const isDirectory = fs.lstatSync(newAbsPath).isDirectory();
 		if (isDirectory) {
@@ -318,7 +323,7 @@ export class eventHandler {
 		if (fs.existsSync(oldShadowPath)) {
 			const initUtilsObj = new initUtils(this.repoPath);
 			initUtilsObj.copyForRename(oldShadowPath, newShadowPath);
-			fs.unlinkSync(oldShadowPath);
+			removeFile(oldShadowPath, "handleRename");
 		}
 		// Create diff
 		const diff = JSON.stringify({
@@ -357,7 +362,7 @@ export class eventHandler {
 			if (fs.existsSync(oldShadowPath)) {
 				const initUtilsObj = new initUtils(repoPath);
 				initUtilsObj.copyForRename(oldShadowPath, newShadowPath);
-				fs.unlinkSync(oldShadowPath);
+				removeFile(oldShadowPath, "handleDirectoryRenameDiffs");
 			}
 			this.addPathToConfig(newRelPath, oldRelPath);
 			this.addDiff(newRelPath, diff);

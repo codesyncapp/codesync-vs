@@ -8,7 +8,8 @@ import {
 	MAX_PORT,
 	MIN_PORT,
 	NOTIFICATION,
-	SYNCIGNORE
+	SYNCIGNORE,
+	UPDATE_SYNCIGNORE_AFTER
 } from "../constants";
 import { isRepoSynced } from '../events/utils';
 import { isPortAvailable, logout } from './auth_utils';
@@ -27,8 +28,9 @@ import {
  } from '../handlers/commands_handler';
 import { generateSettings, PLUGIN_USER } from "../settings";
 import { initExpressServer } from "../server/server";
-import { getPluginUser } from './api_utils';
+import { getPluginUser, getSyncignore } from './s3_utils';
 import { pathUtils } from './path_utils';
+import { CodeSyncLogger } from '../logger';
 
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
@@ -84,6 +86,26 @@ export const createSystemDirectories = () => {
 	return settings;
 };
 
+export const createOrUpdateSyncignore = async () => {
+	// Create/Update .syncignore
+	const settings = generateSettings();
+	if (fs.existsSync(settings.SYNCIGNORE_PATH)) {
+		const syncingoreYml = readYML(settings.SYNCIGNORE_PATH);
+		if (syncingoreYml.last_checked_at && (new Date().getTime() - syncingoreYml.last_checked_at < UPDATE_SYNCIGNORE_AFTER)) return;
+	}
+	// Get file from s3 and save it on the system
+	CodeSyncLogger.debug("Downloading .syncignore from s3");
+	const response = await getSyncignore();
+	if (response.error) {
+		CodeSyncLogger.error(`Couldn't download .syncignore from s3, error=${response.error}`);
+		return;
+	}
+	fs.writeFileSync(settings.SYNCIGNORE_PATH, yaml.dump({ 
+		last_checked_at: new Date().getTime(),
+		content: response.content
+	}));	
+};
+
 export const addPluginUser = async () => {
 	const settings = generateSettings();
 	const users = readYML(settings.USER_PATH) || {};
@@ -114,6 +136,7 @@ const generateRandom = (min = 0, max = 100)  => {
 
 export const setupCodeSync = async (repoPath: string) => {
 	const settings = createSystemDirectories();
+	await createOrUpdateSyncignore();
 	await addPluginUser();
 	const userFilePath = settings.USER_PATH;
 	let port = 0;
