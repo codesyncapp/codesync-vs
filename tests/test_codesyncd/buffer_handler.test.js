@@ -330,7 +330,7 @@ describe("bufferHandler", () => {
         const handler = new bufferHandler(statusBarItem);
         const diffFiles = handler.getDiffFiles();
         const repoDiffs = handler.groupRepoDiffs(diffFiles);
-        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
+        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN", true);
         const handled = await webSocketEvents.onMessage({'type': 'abc'});
         expect(handled).toBe(false);
     });
@@ -341,7 +341,7 @@ describe("bufferHandler", () => {
         const handler = new bufferHandler(statusBarItem);
         const diffFiles = handler.getDiffFiles();
         const repoDiffs = handler.groupRepoDiffs(diffFiles);
-        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
+        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN", true);
         const msg = {
             type: 'utf8',
             utf8Data: JSON.stringify({
@@ -363,7 +363,7 @@ describe("bufferHandler", () => {
         const handler = new bufferHandler(statusBarItem);
         let diffFiles = handler.getDiffFiles();
         const repoDiffs = handler.groupRepoDiffs(diffFiles);
-        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
+        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN", true);
         const msg = {
             type: 'utf8',
             utf8Data: JSON.stringify({
@@ -383,7 +383,7 @@ describe("bufferHandler", () => {
         const handler = new bufferHandler(statusBarItem);
         const diffFiles = handler.getDiffFiles();
         const repoDiffs = handler.groupRepoDiffs(diffFiles);
-        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
+        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN", true);
         const msg = {
             type: 'utf8',
             utf8Data: JSON.stringify({
@@ -403,7 +403,7 @@ describe("bufferHandler", () => {
         const handler = new bufferHandler(statusBarItem);
         const diffFiles = handler.getDiffFiles();
         const repoDiffs = handler.groupRepoDiffs(diffFiles);
-        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
+        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN", true);
         const msg = {
             type: 'utf8',
             utf8Data: JSON.stringify({
@@ -433,7 +433,7 @@ describe("bufferHandler", () => {
         let handler = new bufferHandler(statusBarItem);
         let diffFiles = handler.getDiffFiles();
         let repoDiffs = handler.groupRepoDiffs(diffFiles);
-        let webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
+        let webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN", true);
         let msg = {
             type: 'utf8',
             utf8Data: JSON.stringify({
@@ -464,7 +464,7 @@ describe("bufferHandler", () => {
         handler = new bufferHandler(statusBarItem);
         diffFiles = handler.getDiffFiles();
         repoDiffs = handler.groupRepoDiffs(diffFiles);
-        webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
+        webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN", true);
         handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
         expect(fs.existsSync(diffFilePathForChanges)).toBe(true);
@@ -501,7 +501,7 @@ describe("bufferHandler", () => {
         const handler = new bufferHandler(statusBarItem);
         const diffFiles = handler.getDiffFiles();
         const repoDiffs = handler.groupRepoDiffs(diffFiles);
-        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
+        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN", true);
         const msg = {
             type: 'utf8',
             utf8Data: JSON.stringify({
@@ -531,7 +531,7 @@ describe("bufferHandler", () => {
         const handler = new bufferHandler(statusBarItem);
         const diffFiles = handler.getDiffFiles();
         const repoDiffs = handler.groupRepoDiffs(diffFiles);
-        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
+        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN", true);
         const msg = {
             type: 'utf8',
             utf8Data: JSON.stringify({
@@ -552,7 +552,7 @@ describe("bufferHandler", () => {
         const handler = new bufferHandler(statusBarItem);
         const diffFiles = handler.getDiffFiles();
         const repoDiffs = handler.groupRepoDiffs(diffFiles);
-        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
+        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN", true);
         const msg = {
             type: 'utf8',
             utf8Data: JSON.stringify({
@@ -589,7 +589,7 @@ describe("bufferHandler", () => {
         const handler = new bufferHandler(statusBarItem);
         const diffFiles = handler.getDiffFiles();
         const repoDiffs = handler.groupRepoDiffs(diffFiles);
-        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN");
+        const webSocketEvents = new SocketEvents(statusBarItem, repoDiffs, "ACCESS_TOKEN", true);
         const msg = {
             type: 'utf8',
             utf8Data: JSON.stringify({
