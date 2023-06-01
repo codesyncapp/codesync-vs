@@ -26,13 +26,15 @@ export class SocketEvents {
     repoDiffs: IRepoDiffs[];
     accessToken: string;
     statusBarMsgsHandler: any;
+    canSendDiffs: boolean;
 
-    constructor(statusBarItem: vscode.StatusBarItem, repoDiffs: IRepoDiffs[], accessToken: string) {
+    constructor(statusBarItem: vscode.StatusBarItem, repoDiffs: IRepoDiffs[], accessToken: string, canSendDiffs=false) {
         this.connection = (global as any).socketConnection;
         this.statusBarItem = statusBarItem;
         this.repoDiffs = repoDiffs;
         this.accessToken = accessToken;
         this.statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
+        this.canSendDiffs = canSendDiffs;
     }
 
     onInvalidAuth() {
@@ -63,8 +65,7 @@ export class SocketEvents {
         this.connection.send(JSON.stringify({"auth": 200}));
         const statusBarMsg =  this.statusBarMsgsHandler.getMsg();
         this.statusBarMsgsHandler.update(statusBarMsg);
-        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
-        if (!canSendDiffs) return recallDaemon(this.statusBarItem);
+        if (!this.canSendDiffs) return recallDaemon(this.statusBarItem);
         // Send diffs
         let validDiffs: IDiffToSend[] = [];
         errorCount = 0;
@@ -93,8 +94,7 @@ export class SocketEvents {
     onSyncSuccess(diffFilePath: string) {
         const { planLimitReached } = getPlanLimitReached();
         if (planLimitReached) resetPlanLimitReached();
-        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
-        if (!canSendDiffs) return;
+        if (!this.canSendDiffs) return;
         DiffHandler.removeDiffFile(diffFilePath);
         // Remove diff from diffsBeingProcessed
         const diffsBeingProcessed = getDiffsBeingProcessed();

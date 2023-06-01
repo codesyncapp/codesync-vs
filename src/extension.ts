@@ -7,15 +7,20 @@ import {
 	createStatusBarItem,
 	registerCommands, 
 	setInitialContext, 
-	setupCodeSync 
+	setupCodeSync, 
+	uuidv4
 } from "./utils/setup_utils";
 import { pathUtils } from "./utils/path_utils";
 import { checkSubDir } from "./utils/common";
 import { recallDaemon } from "./codesyncd/codesyncd";
 import { CodeSyncLogger } from "./logger";
+import { CODESYNC_STATES, CodeSyncState } from './utils/state_utils';
 
 
 export async function activate(context: vscode.ExtensionContext) {
+	const uuid = uuidv4();
+	CodeSyncState.set(CODESYNC_STATES.INSTANCE_UUID, uuid);
+
 	try {
 		let repoPath = pathUtils.getRootPath();
 		await setupCodeSync(repoPath);
@@ -30,7 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const statusBarItem = createStatusBarItem(context);
 
 		if (repoPath) {
-			CodeSyncLogger.info(`Configured repo: ${repoPath}`);
+			CodeSyncLogger.info(`Configured repo: ${repoPath}, uuid=${uuid}`);
 			if (subDirResult.isSubDir) {
 				repoPath = subDirResult.parentRepo;
 				CodeSyncLogger.debug(`Parent repo: ${repoPath}`);
@@ -89,7 +94,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		// @ts-ignore
 		CodeSyncLogger.critical("Failed to activate extension", e.stack);
 	}
-	CodeSyncLogger.info("activated...");
+	CodeSyncLogger.info(`activated, uuid=${uuid}`);
 }
 
 export function deactivate(context: vscode.ExtensionContext) {

@@ -3,7 +3,7 @@
   "displayName": "CodeSync",
   "description": "Stream code to the cloud. Save it forever. Play it back later. No commits needed.",
   "icon": "images/icon.png",
-  "version": "3.21.0",
+  "version": "3.22.2",
   "publisher": "codesync",
   "engines": {
     "vscode": "^1.32.0",
@@ -156,7 +156,7 @@
       },
       {
         "view": "codesync-signed-up-is-sub-dir",
-        "contents": "You are good to go ✅.\nCurrent directory is in sync with CodeSync because a parent repo is in sync.\n[View parent repo on web](command:codesync.trackRepo)\n[Disconnect parent repo](command:codesync.disconnectRepo))\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "You are good to go ✅.\nCurrent directory is in sync with CodeSync because a parent repo is in sync.\n[View parent repo on web](command:codesync.trackRepo)\n[Disconnect parent repo](command:codesync.disconnectRepo)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-is-sub-dir-syncignored",

@@ -13,7 +13,8 @@ export const CODESYNC_STATES = {
     CAN_AVAIL_TRIAL: "canAvailTrial",
     STATUS_BAR_ACTIVITY_ALERT_MSG: "statusBarActivityAlertMsg",
     WEBSOCKET_ERROR_OCCURRED_AT: "websocketErrorOccurredAt",
-    DIFFS_BEING_PROCESSED: "diffsBeingProcessed"
+    DIFFS_BEING_PROCESSED: "diffsBeingProcessed",
+    INSTANCE_UUID: "instanceUUID"
 };
 
 export class CodeSyncState {
