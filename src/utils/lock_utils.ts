@@ -3,16 +3,19 @@ import { generateSettings } from '../settings';
 import { CodeSyncState, CODESYNC_STATES } from './state_utils';
 import { CodeSyncLogger } from '../logger';
 
-const onCompromisedPopulateBuffer = () => {
+
+const onCompromisedPopulateBuffer = (err: any) => {
+	CodeSyncLogger.warning(`populateBufferLock compromised, error=${err}`);
 	CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
 };
 
-const onCompromisedSendDiffs = () => {
+const onCompromisedSendDiffs = (err: any) => {
+	CodeSyncLogger.warning(`diffsSendLock compromised, error=${err}`);
 	CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
 };
 
-const onCompromisedPricing = () => {
-	// Do nothing
+const onCompromisedPricing = (err: any) => {
+	CodeSyncLogger.warning(`pricingLock compromised, error=${err}`);
 };
 
 export class LockUtils {

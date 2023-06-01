@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.1] - 2023-06-01
+- Added more logging if any lock is compromised
+
 ## [3.22.0] - 2023-06-01
 - Using instance UUID to debug/verify if multiple instances are acquiring locks or same instance is running things multiple times
 - Added logging when an instance acquires lock
