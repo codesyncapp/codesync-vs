@@ -4,34 +4,36 @@ import { CodeSyncState, CODESYNC_STATES } from './state_utils';
 import { CodeSyncLogger } from '../logger';
 
 
-const onCompromisedPopulateBuffer = (err: any) => {
-	CodeSyncLogger.warning(`populateBufferLock compromised, error=${err}`);
-	CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
-};
-
-const onCompromisedSendDiffs = (err: any) => {
-	CodeSyncLogger.warning(`diffsSendLock compromised, error=${err}`);
-	CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
-};
-
-const onCompromisedPricing = (err: any) => {
-	CodeSyncLogger.warning(`pricingLock compromised, error=${err}`);
-};
-
 export class LockUtils {
 	
 	settings: any;
 	lockOptionsPopulateBuffer: LockOptions;
 	lockOptionsSendDiffs: LockOptions;
 	lockOptionsPricing: LockOptions;
+	instanceUUID: string;
 
 	constructor() {
         this.settings = generateSettings();
-		this.lockOptionsPopulateBuffer = ((global as any).IS_CODESYNC_TEST_MODE) ? {onCompromised: onCompromisedPopulateBuffer}: {};
-		this.lockOptionsSendDiffs = ((global as any).IS_CODESYNC_TEST_MODE) ? {onCompromised: onCompromisedSendDiffs}: {};
-		this.lockOptionsPricing = ((global as any).IS_CODESYNC_TEST_MODE) ? {onCompromised: onCompromisedPricing}: {};
+		this.lockOptionsPopulateBuffer = {onCompromised: this.onCompromisedPopulateBuffer};
+		this.lockOptionsSendDiffs = {onCompromised: this.onCompromisedSendDiffs};
+		this.lockOptionsPricing = {onCompromised: this.onCompromisedPricing};
+		this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 	}
 
+	onCompromisedPopulateBuffer = (err: any) => {
+		CodeSyncLogger.debug(`populateBufferLock compromised, uuid=${this.instanceUUID}, error=${err}`);
+		CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
+	};
+	
+	onCompromisedSendDiffs = (err: any) => {
+		CodeSyncLogger.debug(`diffsSendLock compromised, uuid=${this.instanceUUID}, error=${err}`);
+		CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
+	};
+	
+	onCompromisedPricing = (err: any) => {
+		CodeSyncLogger.debug(`pricingLock compromised, uuid=${this.instanceUUID}, error=${err}`);
+	};
+	
 	checkPopulateBufferLock () {
 		try {
 			const isAcquired = lockFile.checkSync(this.settings.POPULATE_BUFFER_LOCK_FILE);
@@ -58,8 +60,7 @@ export class LockUtils {
 		try {
 			lockFile.lockSync(this.settings.POPULATE_BUFFER_LOCK_FILE, this.lockOptionsPopulateBuffer);
 			CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, true);
-			const instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
-			CodeSyncLogger.debug(`populateBufferLock acquired by uuid=${instanceUUID}`);			
+			CodeSyncLogger.debug(`populateBufferLock acquired by uuid=${this.instanceUUID}`);			
 		} catch (e) {
 			CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
 			// 
@@ -70,8 +71,7 @@ export class LockUtils {
 		try {
 			lockFile.lockSync(this.settings.DIFFS_SEND_LOCK_FILE, this.lockOptionsSendDiffs);
 			CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, true);
-			const instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
-			CodeSyncLogger.debug(`DiffsSendLock acquired by uuid=${instanceUUID}`);
+			CodeSyncLogger.debug(`DiffsSendLock acquired by uuid=${this.instanceUUID}`);
 		} catch (e) {
 			CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
 			//
