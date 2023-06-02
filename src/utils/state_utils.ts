@@ -5,6 +5,8 @@ export const CODESYNC_STATES = {
     IS_SYNCIGNORED_SUB_DIR: "isSyncIgnored",
 	DIFFS_SEND_LOCK_ACQUIRED: "diffsSendLockAcquired",
 	POPULATE_BUFFER_LOCK_ACQUIRED: "populateBufferLockAcquired",
+    DIFFS_SEND_LOCK_ACQUIRED_AT: "diffsSendLockAcquiredAt",
+    POPULATE_BUFFER_LOCK_ACQUIRED_AT: "populateBufferLockAcquiredAt",
     POPULATE_BUFFER_RUNNING: "populateBufferRunning",
     PRICING_URL: "pricingUrl",
     REQUEST_SENT_AT: "requestSentAt",

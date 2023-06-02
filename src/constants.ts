@@ -188,3 +188,4 @@ export const PRICING_URL_PATH = "/pricing";
 export const RETRY_WEBSOCKET_CONNECTION_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const GLOB_TIME_TAKEN_THRESHOLD = 2;
 export const UPDATE_SYNCIGNORE_AFTER = 7 * 24 * 60 * 60 * 1000;  // 1 week
+export const IGNORE_ACQUIRED_LOCK_TIMEOUT = 5 * 1000;
