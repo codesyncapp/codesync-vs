@@ -7,6 +7,7 @@ import { IGNORE_ACQUIRED_LOCK_TIMEOUT } from '../constants';
 
 export class LockUtils {
 	
+	isTestMode: boolean;
 	settings: any;
 	lockOptionsPopulateBuffer: LockOptions;
 	lockOptionsDiffsSend: LockOptions;
@@ -15,6 +16,7 @@ export class LockUtils {
 	instanceUUID: string;
 
 	constructor() {
+		this.isTestMode = ((global as any).IS_CODESYNC_TEST_MODE);
         this.settings = generateSettings();
 		this.lockOptionsPopulateBuffer = {onCompromised: this.onCompromisedPopulateBuffer};
 		this.lockOptionsDiffsSend = {onCompromised: this.onCompromisedDiffsSend};
@@ -24,6 +26,7 @@ export class LockUtils {
 	}
 
 	onCompromisedPopulateBuffer = (err: any) => {
+		if (this.isTestMode) return;
 		CodeSyncLogger.debug(`populateBufferLock compromised, uuid=${this.instanceUUID}, error=${err}`);
 		const canIgnore = CodeSyncState.canSkipRun(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED_AT, IGNORE_ACQUIRED_LOCK_TIMEOUT);
 		if (canIgnore) return;
@@ -32,6 +35,7 @@ export class LockUtils {
 	};
 	
 	onCompromisedDiffsSend = (err: any) => {
+		if (this.isTestMode) return;
 		CodeSyncLogger.debug(`diffsSendLock compromised, uuid=${this.instanceUUID}, error=${err}`);
 		const canIgnore = CodeSyncState.canSkipRun(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED_AT, IGNORE_ACQUIRED_LOCK_TIMEOUT);
 		if (canIgnore) return;
@@ -40,6 +44,7 @@ export class LockUtils {
 	};
 	
 	onCompromisedPricing = (err: any) => {
+		if (this.isTestMode) return;
 		CodeSyncLogger.debug(`pricingLock compromised, uuid=${this.instanceUUID}, error=${err}`);
 	};
 	
