@@ -5,10 +5,10 @@ import vscode from "vscode";
 import {getDiffsBeingProcessed, isValidDiff} from '../utils';
 import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
-import {DAY, DIFF_FILES_PER_ITERATION} from "../../constants";
+import {ABNORMAL_DIFFS_COUNT, DAY, DIFF_FILES_PER_ITERATION} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
-import {getActiveUsers, readYML} from '../../utils/common';
+import {getActiveUsers, getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
 import { getPlanLimitReached } from '../../utils/pricing_utils';
 import { removeFile } from '../../utils/file_utils';
@@ -59,11 +59,13 @@ export class bufferHandler {
 	statusBarItem: vscode.StatusBarItem;
 	settings: any;
 	configJSON: any;
+	defaultIgnorePatterns: string[];
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		this.statusBarItem = statusBarItem;
 		this.settings = generateSettings();
 		this.configJSON = readYML(this.settings.CONFIG_PATH);
+        this.defaultIgnorePatterns = getDefaultIgnorePatterns();
 	}
 
 	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
@@ -71,6 +73,7 @@ export class bufferHandler {
 	getDiffFiles = () => {
 		const diffsBeingProcessed = getDiffsBeingProcessed();
 		const diffsDir = fs.readdirSync(this.settings.DIFFS_REPO);
+		if (diffsDir.length > ABNORMAL_DIFFS_COUNT) CodeSyncLogger.warning(`${diffsDir.length} diffs are presnet in buffer`);
 		let randomDiffFiles = [];
 		const usedIndices = <any>[];
 		let randomIndex = undefined;
@@ -109,6 +112,14 @@ export class bufferHandler {
 			}
 			// Skip diffs that are in being iterated
 			if (diffsBeingProcessed.has(filePath)) return false;
+
+			// If rel_path is ignoreable, only delete event should be allowed for that
+			const isIgnoreablePath = shouldIgnorePath(diffData.file_relative_path, this.defaultIgnorePatterns, []);
+			if (isIgnoreablePath && !diffData.is_deleted) {
+				CodeSyncLogger.debug(`Removing diff with ignoreable path=${diffData.file_relative_path}, is_new_file=${diffData.is_new_file}`);
+				removeFile(filePath, "getDiffFiles");
+			}
+			
 			const configRepo = this.configJSON.repos[diffData.repo_path];
 
 			if (!(diffData.branch in configRepo.branches)) {

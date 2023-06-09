@@ -48,7 +48,7 @@ export const Auth0URLs = {
 };
 
 // Diff utils
-export const DIFF_FILES_PER_ITERATION = 50;
+export const DIFF_FILES_PER_ITERATION = 30;
 export const REQUIRED_DIFF_KEYS = ['repo_path', 'branch', 'file_relative_path', 'created_at'];
 export const REQUIRED_FILE_RENAME_DIFF_KEYS = ['old_rel_path', 'new_rel_path'];
 export const REQUIRED_DIR_RENAME_DIFF_KEYS = ['old_path', 'new_path'];
@@ -189,3 +189,4 @@ export const RETRY_WEBSOCKET_CONNECTION_AFTER = 5 * 60 * 1000; // 1000 is for ms
 export const GLOB_TIME_TAKEN_THRESHOLD = 2;
 export const UPDATE_SYNCIGNORE_AFTER = 7 * 24 * 60 * 60 * 1000;  // 1 week
 export const IGNORE_ACQUIRED_LOCK_TIMEOUT = 5 * 1000;
+export const ABNORMAL_DIFFS_COUNT = 1000;
