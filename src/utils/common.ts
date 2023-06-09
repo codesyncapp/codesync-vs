@@ -136,16 +136,16 @@ export const getGlobIgnorePatterns = (repoPath: string, syncignoreItems: string[
 	return skipPatterns;
 };
 
-export const isIgnoreAblePath = (relPath: string, paths: string[]) => {
+export const isIgnorablePath = (relPath: string, paths: string[]) => {
 	const ig = ignore().add(paths);
 	return ig.ignores(relPath);
 };
 
 export function shouldIgnorePath(relPath: string, defaultIgnorePatterns: string[], syncIgnorePatterns: string[]) {
-	const isIgnorableByDefault = isIgnoreAblePath(relPath, defaultIgnorePatterns);
+	const isIgnorableByDefault = isIgnorablePath(relPath, defaultIgnorePatterns);
 	if (isIgnorableByDefault) return true;
 	if (!syncIgnorePatterns.length) return false;
-	const shouldIgnore = isIgnoreAblePath(relPath, syncIgnorePatterns);
+	const shouldIgnore = isIgnorablePath(relPath, syncIgnorePatterns);
 	return shouldIgnore;
 }
 

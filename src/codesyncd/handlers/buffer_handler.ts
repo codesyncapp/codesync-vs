@@ -114,10 +114,11 @@ export class bufferHandler {
 			if (diffsBeingProcessed.has(filePath)) return false;
 
 			// If rel_path is ignoreable, only delete event should be allowed for that
-			const isIgnoreablePath = shouldIgnorePath(diffData.file_relative_path, this.defaultIgnorePatterns, []);
-			if (isIgnoreablePath && !diffData.is_deleted) {
+			const isIgnorablePath = shouldIgnorePath(diffData.file_relative_path, this.defaultIgnorePatterns, []);
+			if (isIgnorablePath && !diffData.is_deleted) {
 				CodeSyncLogger.debug(`Removing diff with ignoreable path=${diffData.file_relative_path}, is_new_file=${diffData.is_new_file}`);
 				removeFile(filePath, "getDiffFiles");
+				return false;
 			}
 			
 			const configRepo = this.configJSON.repos[diffData.repo_path];
@@ -178,6 +179,7 @@ export class bufferHandler {
 		try {
 			const diffFiles = this.getDiffFiles();
 			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
+			CodeSyncLogger.debug(`Processing ${diffFiles.length} diffs`);
 			const repoDiffs = this.groupRepoDiffs(diffFiles);
 			// Check if we have an active user
 			const activeUser = getActiveUsers()[0];

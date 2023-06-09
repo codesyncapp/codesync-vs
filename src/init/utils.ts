@@ -56,8 +56,8 @@ export class initUtils {
 			if (!globFile.isFile()) return;
 			const filePath = globFile.fullpath();
 			const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
-			const isIgnoreablePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
-			if (isIgnoreablePath) return;
+			const isIgnorablePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
+			if (isIgnorablePath) return;
 			itemPaths.push({
 				file_path: filePath,
 				rel_path: relPath,

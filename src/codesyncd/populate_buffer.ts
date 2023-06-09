@@ -251,9 +251,9 @@ class PopulateBuffer {
                 removeFile(shadowFilePath, "getPotentialRenamedFiles");
                 return false;
             }
-            const ignoreAblePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
+            const ignorablePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
             // If file is not in config OR is is present in .syncignore, remove the file from .shadow
-            if (ignoreAblePath) {
+            if (ignorablePath) {
                 removeFile(shadowFilePath, "getPotentialRenamedFiles");
                 return false;
             }
@@ -318,8 +318,8 @@ class PopulateBuffer {
             const cacheFilePath = path.join(this.deletedRepoBranchPath, relPath);
             const shadowFilePath = path.join(this.shadowRepoBranchPath, relPath);
             // See if should discard this file
-            const isIgnoreablePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
-            if (isIgnoreablePath  ||
+            const isIgnorablePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
+            if (isIgnorablePath  ||
                 activeRelPaths.includes(relPath) ||
                 this.renamedFiles.includes(relPath) ||
                 fs.existsSync(cacheFilePath) ||
