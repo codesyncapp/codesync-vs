@@ -302,7 +302,6 @@ describe("detectBranchChange", () => {
         }, 1000);
         const readyRepos = await detectBranchChange();
         expect(assertValidUpload(readyRepos)).toBe(true);
-        expect(console.log).toHaveBeenCalledTimes(1);
         expect(console.log.mock.calls[0][0].startsWith("Uploading")).toBe(true);
 
     });

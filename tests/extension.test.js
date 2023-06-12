@@ -37,7 +37,8 @@ import {
     getConfigFilePath,
     randomBaseRepoPath,
     randomRepoPath,
-    setWorkspaceFolders
+    setWorkspaceFolders,
+    waitFor
 } from "./helpers/helpers";
 import {logout} from "../src/utils/auth_utils";
 
@@ -212,6 +213,7 @@ describe("Extension: activate",() => {
         addUser(baseRepoPath, false);
         setWorkspaceFolders(repoPath);
         await activate(vscode.ExtensionContext);
+        await waitFor(1);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
