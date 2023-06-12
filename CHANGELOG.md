@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.23.0] - 2023-06-09
+- Using globSync to read Diffs Repo instead of fs.readdirsync
+
+## [3.22.5] - 2023-06-09
+- Fixed a bug in deleting diff containing ignoreable path
+
+## [3.22.4] - 2023-06-09
+- Added logging to debug diffs not being sent
+
 ## [3.22.3] - 2023-06-02
 - Fixed an edge case with Lock compromisation if onCompromised is called right after acquiring lock
 

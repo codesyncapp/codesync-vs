@@ -56,8 +56,8 @@ export class initUtils {
 			if (!globFile.isFile()) return;
 			const filePath = globFile.fullpath();
 			const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
-			const isIgnoreablePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
-			if (isIgnoreablePath) return;
+			const isIgnorablePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
+			if (isIgnorablePath) return;
 			itemPaths.push({
 				file_path: filePath,
 				rel_path: relPath,
@@ -171,13 +171,15 @@ export class initUtils {
 			tasks,
 			// optional callback
 			function (err, results) {
+				CodeSyncLogger.debug(`Branch=${branch} upload completed`);
 				// the results array will equal ['one','two'] even though
 				// the second function had a shorter timeout.
+				// Reset key for syncingBranch
+				CodeSyncState.set(syncingBranchKey, false);
 				if (err) {
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-ignore
 					CodeSyncLogger.error("uploadRepoToS3 failed: ", err);
-					CodeSyncState.set(syncingBranchKey, false);
 					return;
 				}
 				// delete .originals repo
@@ -186,8 +188,6 @@ export class initUtils {
 				}
 				// Hide Connect Repo
 				vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
-				// Reset key for syncingBranch
-				CodeSyncState.set(syncingBranchKey, false);
 				// Show success notification
 				if (!viaDaemon) {
 					vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
@@ -297,6 +297,7 @@ export class initUtils {
 		// Save file paths and IDs
 		this.saveFileIds(branch, token, user.email, json.response);
 
+		CodeSyncLogger.debug(`Saved file IDs, uploading branch=${branch} to s3`);
 		// Upload to s3
 		await this.uploadRepoToS3(branch, json.response, syncingBranchKey);
 

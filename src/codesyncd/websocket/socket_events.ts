@@ -76,6 +76,7 @@ export class SocketEvents {
         }
         
         if (validDiffs.length) {
+            CodeSyncLogger.debug(`Sending ${validDiffs.length} diffs`);
             // Keep track of diffs in State
             const currentDiffs = new Set(validDiffs.map(validDiff => validDiff.diff_file_path));
             let diffsBeingProcessed = getDiffsBeingProcessed();   

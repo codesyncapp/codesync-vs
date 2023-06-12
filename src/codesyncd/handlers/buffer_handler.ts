@@ -1,14 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import vscode from "vscode";
+import { globSync } from 'glob';
 
 import {getDiffsBeingProcessed, isValidDiff} from '../utils';
 import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
-import {DAY, DIFF_FILES_PER_ITERATION} from "../../constants";
+import {ABNORMAL_DIFFS_COUNT, DAY, DIFF_FILES_PER_ITERATION} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
-import {getActiveUsers, readYML} from '../../utils/common';
+import {getActiveUsers, getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
 import { getPlanLimitReached } from '../../utils/pricing_utils';
 import { removeFile } from '../../utils/file_utils';
@@ -59,28 +60,51 @@ export class bufferHandler {
 	statusBarItem: vscode.StatusBarItem;
 	settings: any;
 	configJSON: any;
+	defaultIgnorePatterns: string[];
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		this.statusBarItem = statusBarItem;
 		this.settings = generateSettings();
 		this.configJSON = readYML(this.settings.CONFIG_PATH);
+        this.defaultIgnorePatterns = getDefaultIgnorePatterns();
 	}
 
 	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
 
 	getDiffFiles = () => {
 		const diffsBeingProcessed = getDiffsBeingProcessed();
-		const diffsDir = fs.readdirSync(this.settings.DIFFS_REPO);
+
+        const invalidDiffFiles = globSync("**", { 
+			ignore: "*.yml",
+			nodir: true,
+			dot: true,
+            cwd: this.settings.DIFFS_REPO
+        });
+		
+		// Clean invalid diff Files
+		invalidDiffFiles.forEach(invalidDiffFile => {
+			const filePath = path.join(this.settings.DIFFS_REPO, invalidDiffFile);
+			removeFile(filePath, "cleaningInvalidDiffFiles");
+		});
+
+        const diffs = globSync("*.yml", { 
+            cwd: this.settings.DIFFS_REPO,
+			maxDepth: 1,
+			nodir: true,
+			dot: true,
+		});
+
+		if (diffs.length > ABNORMAL_DIFFS_COUNT) CodeSyncLogger.warning(`${diffs.length} diffs are presnet in buffer`);
 		let randomDiffFiles = [];
 		const usedIndices = <any>[];
 		let randomIndex = undefined;
-		for (let index = 0; index < Math.min(DIFF_FILES_PER_ITERATION, diffsDir.length); index++) {
+		for (let index = 0; index < Math.min(DIFF_FILES_PER_ITERATION, diffs.length); index++) {
 			do {
-				randomIndex = this.getRandomIndex( diffsDir.length );
+				randomIndex = this.getRandomIndex( diffs.length );
 			}
 			while ( usedIndices.includes( randomIndex ) );
 			usedIndices.push(randomIndex);
-			randomDiffFiles.push(diffsDir[randomIndex]);
+			randomDiffFiles.push(diffs[randomIndex]);
 		}
 		// Filter valid diff files
 		randomDiffFiles = randomDiffFiles.filter((diffFile) => {
@@ -109,6 +133,15 @@ export class bufferHandler {
 			}
 			// Skip diffs that are in being iterated
 			if (diffsBeingProcessed.has(filePath)) return false;
+
+			// If rel_path is ignoreable, only delete event should be allowed for that
+			const isIgnorablePath = shouldIgnorePath(diffData.file_relative_path, this.defaultIgnorePatterns, []);
+			if (isIgnorablePath && !diffData.is_deleted) {
+				CodeSyncLogger.debug(`Removing diff with ignoreable path=${diffData.file_relative_path}, is_new_file=${diffData.is_new_file}`);
+				removeFile(filePath, "getDiffFiles");
+				return false;
+			}
+			
 			const configRepo = this.configJSON.repos[diffData.repo_path];
 
 			if (!(diffData.branch in configRepo.branches)) {
@@ -167,6 +200,7 @@ export class bufferHandler {
 		try {
 			const diffFiles = this.getDiffFiles();
 			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
+			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffFiles.length} diffs`);
 			const repoDiffs = this.groupRepoDiffs(diffFiles);
 			// Check if we have an active user
 			const activeUser = getActiveUsers()[0];
