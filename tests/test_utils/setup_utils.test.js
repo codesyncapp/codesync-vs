@@ -76,16 +76,21 @@ describe("createOrUpdateSyncignore",  () => {
 
 
 describe("setupCodeSync",  () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const repoPath = randomRepoPath();
-    const userFilePath = getUserFilePath(baseRepoPath);
     const userData = {"dummy_email": {access_token: "ABC"}};
 
-    const configPath = getConfigFilePath(baseRepoPath);
+    let baseRepoPath;
+    let repoPath;
+    let userFilePath;
+    let configPath;
     const configData = {repos: {}};
     configData.repos[repoPath] = {branches: {}};
 
     beforeEach(() => {
+        baseRepoPath = randomBaseRepoPath();
+        repoPath = randomRepoPath();
+        userFilePath = getUserFilePath(baseRepoPath);
+        configPath = getConfigFilePath(baseRepoPath);
+        configData.repos[repoPath] = {branches: {}};
         jest.clearAllMocks();
         fetch.resetMocks();
         fetchMock.mockResponseOnce(DEFAULT_SYNCIGNORE_TEST_DATA);
