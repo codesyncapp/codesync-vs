@@ -42,7 +42,6 @@ export const populateBuffer = async (viaDaemon=true) => {
 };
 
 export const populateBufferForMissedEvents = async (readyRepos: any) => {
-    const instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
     const isRunning = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_RUNNING);
     if (isRunning) return;
     CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_RUNNING, true);
@@ -65,7 +64,7 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
                 const t1 = new Date().getTime();
                 const timeTook = (t1 - t0) / 1000;
                 if (timeTook > GLOB_TIME_TAKEN_THRESHOLD) {
-                    CodeSyncLogger.warning(`populateBuffer took=${timeTook}s for ${repoPath}, files=${populateBuffer.itemPaths.length}, uuid=${instanceUUID}`);
+                    CodeSyncLogger.warning(`populateBuffer took=${timeTook}s for ${repoPath}, files=${populateBuffer.itemPaths.length}`);
                 }
             }
             const generateDiffForDeletedFilesKey = `${repoPath}:${branch}:generateDiffForDeletedFiles`;
@@ -166,7 +165,7 @@ class PopulateBuffer {
     }
 
     async run() {
-        CodeSyncLogger.debug(`PopulateBuffer:run repo=${this.repoPath}, branch=${this.branch}, files=${this.itemPaths.length}, uuid=${this.instanceUUID}`);
+        CodeSyncLogger.debug(`PopulateBuffer:run repo=${this.repoPath}, branch=${this.branch}, files=${this.itemPaths.length}`);
         const handler = new eventHandler(this.repoPath, "", true);
         for (const itemPath of this.itemPaths) {
             let isRename = false;
