@@ -21,6 +21,8 @@ jobs:
             package-manager: yarn
             output: comment
             prnumber: ${{ steps.findPr.outputs.number }}
+      - name: Pre Publish
+        run: yarn vscode:prepublish
   Windows:
     runs-on: windows-latest
     steps:
