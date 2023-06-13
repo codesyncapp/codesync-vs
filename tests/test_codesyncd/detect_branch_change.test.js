@@ -23,9 +23,11 @@ import {
     TEST_REPO_RESPONSE,
     TEST_USER,
     writeTestRepoFiles,
-    NESTED_PATH
+    NESTED_PATH,
+    waitFor
 } from "../helpers/helpers";
 import {createSystemDirectories} from "../../src/utils/setup_utils";
+
 
 describe("detectBranchChange", () => {
     let baseRepoPath;
@@ -286,24 +288,18 @@ describe("detectBranchChange", () => {
             email: TEST_EMAIL
         };
         fs.writeFileSync(configPath, yaml.dump(_configData));
-        
+
         fetchMock
             .mockResponseOnce(JSON.stringify({status: true}))
             .mockResponseOnce(() => new Promise(resolve => setTimeout(() => resolve(JSON.stringify(TEST_REPO_RESPONSE)), 3000)));
-
-        setTimeout(async () => {
-            fetchMock
-                .mockResponseOnce(JSON.stringify({status: true}))
-                .mockResponseOnce(() => new Promise(resolve => setTimeout(() => resolve(JSON.stringify(TEST_REPO_RESPONSE)), 3000)));
-            await detectBranchChange();
-            // Should not increase the counter
-            expect(console.log).toHaveBeenCalledTimes(1);
-
-        }, 1000);
         const readyRepos = await detectBranchChange();
+        await waitFor(2);
         expect(assertValidUpload(readyRepos)).toBe(true);
-        expect(console.log.mock.calls[0][0].startsWith("Uploading")).toBe(true);
-
+        // Should call healthCheck and Repo Init API
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        // Should not call healthCheck
+        await detectBranchChange();
+        expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
 });

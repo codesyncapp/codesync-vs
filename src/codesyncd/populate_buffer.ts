@@ -42,7 +42,6 @@ export const populateBuffer = async (viaDaemon=true) => {
 };
 
 export const populateBufferForMissedEvents = async (readyRepos: any) => {
-    const instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
     const isRunning = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_RUNNING);
     if (isRunning) return;
     CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_RUNNING, true);
@@ -59,22 +58,22 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
         const t0 = new Date().getTime();
         
         try {
-            const obj = new PopulateBuffer(repoPath, branch);
-            if (!obj.modifiedInPast) {
-                await obj.populateBufferForRepo();
+            const populateBuffer = new PopulateBuffer(repoPath, branch);
+            if (!populateBuffer.modifiedInPast) {
+                await populateBuffer.run();
                 const t1 = new Date().getTime();
                 const timeTook = (t1 - t0) / 1000;
                 if (timeTook > GLOB_TIME_TAKEN_THRESHOLD) {
-                    CodeSyncLogger.warning(`populateBuffer took=${timeTook}s for ${repoPath}, files=${obj.itemPaths.length}, uuid=${instanceUUID}`);
+                    CodeSyncLogger.warning(`populateBuffer took=${timeTook}s for ${repoPath}, files=${populateBuffer.itemPaths.length}`);
                 }
             }
             const generateDiffForDeletedFilesKey = `${repoPath}:${branch}:generateDiffForDeletedFiles`;
             const canSkipDeleteHandler = CodeSyncState.canSkipRun(generateDiffForDeletedFilesKey, RUN_DELETE_HANDLER_AFTER);
             if (canSkipDeleteHandler) continue;
-            obj.generateDiffForDeletedFiles();
+            populateBuffer.generateDiffForDeletedFiles();
             CodeSyncState.set(generateDiffForDeletedFilesKey, new Date().getTime());
             // Itereating only 1 repo in 1 iteration
-            if (!obj.modifiedInPast) break;
+            if (!populateBuffer.modifiedInPast) break;
         } catch (e) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
@@ -127,10 +126,13 @@ class PopulateBuffer {
     defaultIgnorePatterns: string[];
     potentialMatchFiles: string[];
     gotPotentialMatchFiles: boolean;
+    instanceUUID: string;
 
     constructor(repoPath: string, branch: string) {
         this.repoPath = repoPath;
         this.branch = branch;
+        this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
+        CodeSyncLogger.debug(`PopulateBuffer:init repo=${this.repoPath}, branch=${this.branch}, uuid=${this.instanceUUID}`);
         this.lastSyncedAtKey = `${this.repoPath}:lastSyncedAt`;
         this.repoModifiedAt = -1;
         this.settings = generateSettings();
@@ -162,9 +164,8 @@ class PopulateBuffer {
         return lastSyncedAt && lastSyncedAt >= this.repoModifiedAt;
     }
 
-    async populateBufferForRepo() {
-        const instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
-        CodeSyncLogger.debug(`Watching Repo: ${this.repoPath},  branch=${this.branch}, files=${this.itemPaths.length}, uuid=${instanceUUID}`);
+    async run() {
+        CodeSyncLogger.debug(`PopulateBuffer:run repo=${this.repoPath}, branch=${this.branch}, files=${this.itemPaths.length}`);
         const handler = new eventHandler(this.repoPath, "", true);
         for (const itemPath of this.itemPaths) {
             let isRename = false;

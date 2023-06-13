@@ -13,6 +13,7 @@ import {getActiveUsers, getDefaultIgnorePatterns, readYML, shouldIgnorePath} fro
 import {SocketClient} from "../websocket/socket_client";
 import { getPlanLimitReached } from '../../utils/pricing_utils';
 import { removeFile } from '../../utils/file_utils';
+import { CODESYNC_STATES, CodeSyncState } from '../../utils/state_utils';
 
 
 
@@ -61,12 +62,14 @@ export class bufferHandler {
 	settings: any;
 	configJSON: any;
 	defaultIgnorePatterns: string[];
+	instanceUUID: string;
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		this.statusBarItem = statusBarItem;
 		this.settings = generateSettings();
 		this.configJSON = readYML(this.settings.CONFIG_PATH);
         this.defaultIgnorePatterns = getDefaultIgnorePatterns();
+		this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 	}
 
 	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
@@ -94,7 +97,7 @@ export class bufferHandler {
 			dot: true,
 		});
 
-		if (diffs.length > ABNORMAL_DIFFS_COUNT) CodeSyncLogger.warning(`${diffs.length} diffs are presnet in buffer`);
+		if (diffs.length > ABNORMAL_DIFFS_COUNT) CodeSyncLogger.warning(`${diffs.length} diffs are present in buffer`);
 		let randomDiffFiles = [];
 		const usedIndices = <any>[];
 		let randomIndex = undefined;
@@ -109,11 +112,6 @@ export class bufferHandler {
 		// Filter valid diff files
 		randomDiffFiles = randomDiffFiles.filter((diffFile) => {
 			const filePath = path.join(this.settings.DIFFS_REPO, diffFile);
-			// Pick only yml files
-			if (!diffFile.endsWith('.yml')) {
-				removeFile(filePath, "getDiffFiles");
-				return false;
-			}
 			const diffData = readYML(filePath);
 			if (!diffData || !isValidDiff(diffData)) {
 				CodeSyncLogger.info(`Removing diff: Skipping invalid diff: ${diffFile}`, "", diffData);
@@ -200,7 +198,7 @@ export class bufferHandler {
 		try {
 			const diffFiles = this.getDiffFiles();
 			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
-			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffFiles.length} diffs`);
+			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffFiles.length} diffs, uuid=${this.instanceUUID}`);
 			const repoDiffs = this.groupRepoDiffs(diffFiles);
 			// Check if we have an active user
 			const activeUser = getActiveUsers()[0];
