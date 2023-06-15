@@ -8,8 +8,10 @@ import {
     checkServerDown,
     createUserWithApi, 
     getUserForToken,
-    getPluginUser
 } from "../../src/utils/api_utils";
+import {
+    getPluginUser
+} from "../../src/utils/s3_utils";
 import {
     getSeqTokenFilePath,
     getUserFilePath,

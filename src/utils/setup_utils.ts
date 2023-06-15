@@ -8,7 +8,8 @@ import {
 	MAX_PORT,
 	MIN_PORT,
 	NOTIFICATION,
-	SYNCIGNORE
+	SYNCIGNORE,
+	UPDATE_SYNCIGNORE_AFTER
 } from "../constants";
 import { isRepoSynced } from '../events/utils';
 import { isPortAvailable, logout } from './auth_utils';
@@ -27,8 +28,9 @@ import {
  } from '../handlers/commands_handler';
 import { generateSettings, PLUGIN_USER } from "../settings";
 import { initExpressServer } from "../server/server";
-import { getPluginUser } from './api_utils';
+import { getPluginUser, getSyncignore } from './s3_utils';
 import { pathUtils } from './path_utils';
+import { CodeSyncLogger } from '../logger';
 
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
@@ -84,6 +86,26 @@ export const createSystemDirectories = () => {
 	return settings;
 };
 
+export const createOrUpdateSyncignore = async () => {
+	// Create/Update .syncignore
+	const settings = generateSettings();
+	if (fs.existsSync(settings.SYNCIGNORE_PATH)) {
+		const syncingoreYml = readYML(settings.SYNCIGNORE_PATH);
+		if (syncingoreYml.last_checked_at && (new Date().getTime() - syncingoreYml.last_checked_at < UPDATE_SYNCIGNORE_AFTER)) return;
+	}
+	// Get file from s3 and save it on the system
+	CodeSyncLogger.debug("Downloading .syncignore from s3");
+	const response = await getSyncignore();
+	if (response.error) {
+		CodeSyncLogger.error(`Couldn't download .syncignore from s3, error=${response.error}`);
+		return;
+	}
+	fs.writeFileSync(settings.SYNCIGNORE_PATH, yaml.dump({ 
+		last_checked_at: new Date().getTime(),
+		content: response.content
+	}));	
+};
+
 export const addPluginUser = async () => {
 	const settings = generateSettings();
 	const users = readYML(settings.USER_PATH) || {};
@@ -114,6 +136,7 @@ const generateRandom = (min = 0, max = 100)  => {
 
 export const setupCodeSync = async (repoPath: string) => {
 	const settings = createSystemDirectories();
+	await createOrUpdateSyncignore();
 	await addPluginUser();
 	const userFilePath = settings.USER_PATH;
 	let port = 0;
@@ -240,4 +263,21 @@ export const createStatusBarItem = (context: vscode.ExtensionContext) => {
 	statusBarItem.command = COMMAND.triggerDisconnectRepo;
 	context.subscriptions.push(statusBarItem);
 	return statusBarItem;
+};
+
+// Ref: https://stackoverflow.com/a/8809472
+export const uuidv4 = () => {
+	let d = new Date().getTime();//Timestamp
+    let d2 = ((typeof performance !== 'undefined') && performance.now && (performance.now()*1000)) || 0;//Time in microseconds since page-load or 0 if unsupported
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        let r = Math.random() * 16;//random number between 0 and 16
+        if(d > 0){//Use timestamp until depleted
+            r = (d + r)%16 | 0;
+            d = Math.floor(d/16);
+        } else {//Use microseconds since page-load if supported
+            r = (d2 + r)%16 | 0;
+            d2 = Math.floor(d2/16);
+        }
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
 };

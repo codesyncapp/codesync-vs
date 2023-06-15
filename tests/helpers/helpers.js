@@ -99,16 +99,17 @@ export const TEST_REPO_RESPONSE = {
     'branch_id': 456,
     'file_path_and_id': {
         "file_1.js": FILE_ID,
-        "directory/file_2.js": 2,
         ".syncignore": 3,
     },
     'urls': {
         "file_1.js": PRE_SIGNED_URL,
-        "directory/file_2.js": PRE_SIGNED_URL,
         ".syncignore": PRE_SIGNED_URL
     },
     'user': TEST_USER
 };
+export const NESTED_PATH = path.join("directory", "file_2.js");
+TEST_REPO_RESPONSE['file_path_and_id'][NESTED_PATH] = 2;
+TEST_REPO_RESPONSE['urls'][NESTED_PATH] = PRE_SIGNED_URL;
 
 export const DIFF_DATA = {
     repo_path: "",
@@ -118,6 +119,20 @@ export const DIFF_DATA = {
     diff: null,
     source: VSCODE
 };
+
+export const DEFAULT_SYNCIGNORE_TEST_DATA = `.git/
+################################
+# Comment
+################################
+# Gradle files
+.gradle/
+build/
+# Node
+node_modules/
+# Android
+*.apk
+!*.apk/
+`;
 
 export class Config {
 

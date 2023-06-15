@@ -14,6 +14,8 @@ import {
 } from "../../constants";
 import { getPlanLimitReached } from "../../utils/pricing_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
+import { setDiffsBeingProcessed } from "../utils";
+
 
 let errorCount = 0;
 
@@ -34,6 +36,8 @@ export class SocketClient {
     resetGlobals = () => {
         // Set time when connection is errored out
         CodeSyncState.set(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT, new Date().getTime());
+        // Reset diffsBeingProcessed
+        setDiffsBeingProcessed(new Set());
         try {
             this.client.abort();
         } catch (e) {
@@ -60,7 +64,7 @@ export class SocketClient {
             const socketConnection = (global as any).socketConnection;
             if (!socketConnection) return;
             // Trigger onValidAuth for already connected socket
-            const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken);
+            const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs);
             webSocketEvents.onValidAuth();
         }
     };
@@ -81,7 +85,7 @@ export class SocketClient {
 
         this.client.on('connect', function (connection: any) {
             errorCount = 0;
-            that.registerConnectionEvents(connection);
+            that.registerConnectionEvents(connection, canSendDiffs);
         });
 
         let url = `${API_ROUTES.DIFFS_WEBSOCKET}&token=${this.accessToken}`;
@@ -91,7 +95,7 @@ export class SocketClient {
         this.client.connect(url);
     };
 
-    registerConnectionEvents = (connection: any) => {
+    registerConnectionEvents = (connection: any, canSendDiffs: boolean) => {
         // Set connection in global
         (global as any).socketConnection = connection;
         // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -110,7 +114,7 @@ export class SocketClient {
         });
 
         // Iterate repoDiffs and send to server
-        const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken);
+        const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs);
 
         connection.on('message', function (message: any) {
             try {

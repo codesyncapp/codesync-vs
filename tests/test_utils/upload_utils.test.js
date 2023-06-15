@@ -118,11 +118,11 @@ describe('uploadFileTos3', () => {
         global.FormData = FormDataMock;
         repoPath = randomRepoPath();
         baseRepoPath = randomBaseRepoPath();
+        untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(repoPath, {recursive: true});
         fs.mkdirSync(baseRepoPath, {recursive: true});
         createSystemDirectories();
         filePath = path.join(repoPath, "file.txt");
-        untildify.mockReturnValue(baseRepoPath);
     });
 
     afterEach(() => {

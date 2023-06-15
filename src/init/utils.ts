@@ -15,7 +15,7 @@ import { IFileToUpload } from '../interface';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, RETRY_BRANCH_SYNC_AFTER } from '../constants';
-import { getSkipPaths, isRepoActive, readYML, getSyncIgnoreItems, isIgnoreAblePath } from '../utils/common';
+import { getGlobIgnorePatterns, isRepoActive, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 
@@ -24,12 +24,14 @@ export class initUtils {
 	viaDaemon: boolean;
 	settings: any;
 	syncIgnoreItems: string[];
+	defaultIgnorePatterns: string[];
 
 	constructor(repoPath: string, viaDaemon=false) {
 		this.repoPath = repoPath;
 		this.viaDaemon = viaDaemon;
 		this.settings = generateSettings();
 		this.syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
+		this.defaultIgnorePatterns = getDefaultIgnorePatterns();
 	}
 
 	isBranchSyncInProcess (syncingBranchKey: string) {
@@ -40,13 +42,22 @@ export class initUtils {
 
 	getSyncablePaths () {
 		const itemPaths: IFileToUpload[] = [];
-		const skipPaths = getSkipPaths(this.repoPath, this.syncIgnoreItems);
-		const globFiles = globSync(`${this.repoPath}/**`, { ignore: skipPaths, nodir: true, dot: true, stat: true, withFileTypes: true });
+		const globIgnorePatterns = getGlobIgnorePatterns(this.repoPath, this.syncIgnoreItems);
+		const globFiles = globSync("**", { 
+			cwd: this.repoPath,
+			ignore: globIgnorePatterns, 
+			nodir: true, 
+			dot: true, 
+			stat: true,
+			withFileTypes: true
+		});
 		globFiles.forEach(globFile => {
+			// Ignore symlinks, blockDevices, characterDevices, FIFO, sockets
+			if (!globFile.isFile()) return;
 			const filePath = globFile.fullpath();
 			const relPath = filePath.split(path.join(this.repoPath, path.sep))[1];
-			const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);
-			if (shouldIgnorePath) return;
+			const isIgnorablePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
+			if (isIgnorablePath) return;
 			itemPaths.push({
 				file_path: filePath,
 				rel_path: relPath,
@@ -160,13 +171,15 @@ export class initUtils {
 			tasks,
 			// optional callback
 			function (err, results) {
+				CodeSyncLogger.debug(`Branch=${branch} upload completed`);
 				// the results array will equal ['one','two'] even though
 				// the second function had a shorter timeout.
+				// Reset key for syncingBranch
+				CodeSyncState.set(syncingBranchKey, false);
 				if (err) {
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-ignore
 					CodeSyncLogger.error("uploadRepoToS3 failed: ", err);
-					CodeSyncState.set(syncingBranchKey, false);
 					return;
 				}
 				// delete .originals repo
@@ -175,8 +188,6 @@ export class initUtils {
 				}
 				// Hide Connect Repo
 				vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
-				// Reset key for syncingBranch
-				CodeSyncState.set(syncingBranchKey, false);
 				// Show success notification
 				if (!viaDaemon) {
 					vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
@@ -237,8 +248,8 @@ export class initUtils {
 
 		// Set key here that Branch is being synced
 		CodeSyncState.set(syncingBranchKey, new Date().getTime());
-
-		CodeSyncLogger.info(`Uploading branch=${branch}, repo=${this.repoPath}`);
+		const instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
+		CodeSyncLogger.info(`Uploading branch=${branch}, repo=${this.repoPath}, uuid=${instanceUUID}`);
 
 		const data = {
 			name: repoName,
@@ -286,6 +297,7 @@ export class initUtils {
 		// Save file paths and IDs
 		this.saveFileIds(branch, token, user.email, json.response);
 
+		CodeSyncLogger.debug(`Saved file IDs, uploading branch=${branch} to s3`);
 		// Upload to s3
 		await this.uploadRepoToS3(branch, json.response, syncingBranchKey);
 

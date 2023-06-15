@@ -3,10 +3,11 @@ import path from "path";
 
 import {IDiffToSend, IFileToDiff, IRepoDiffs} from "../../interface";
 import {CodeSyncLogger} from "../../logger";
-import {FILE_UPLOAD_WAIT_TIMEOUT} from "../../constants";
+import {DIFF_SIZE_LIMIT, FILE_UPLOAD_WAIT_TIMEOUT} from "../../constants";
 import {readYML} from "../../utils/common";
 import {generateSettings} from "../../settings";
 import {DiffHandler} from "./diff_handler";
+import { removeFile } from "../../utils/file_utils";
 
 const WAITING_FILES = <any>{};
 
@@ -34,6 +35,7 @@ export class DiffsHandler {
         const newFilesDiffs = this.diffsList.filter(diffFile => diffFile.diff.is_new_file);
         const otherDiffs = this.diffsList.filter(x => !newFilesDiffs.includes(x));
         const orderedDiffFiles = [...newFilesDiffs, ...otherDiffs];
+		let diffsSize = 0;
         // Iterate diffs
         for (const fileToDiff of orderedDiffFiles) {
             try {
@@ -50,13 +52,11 @@ export class DiffsHandler {
                         this.newFiles.push(relPath);
                     }
                     this.configJSON = await diffHandler.handleNewFile();
-                    continue;
+                    continue;   
                 }
 
                 // Skip the changes diffs if relevant file was uploaded in the same iteration, wait for next iteration
-                if (this.newFiles.includes(relPath)) {
-                    continue;
-                }
+                if (this.newFiles.includes(relPath)) continue;
 
                 if (diffData.is_rename) {
                     const oldRelPath = JSON.parse(diffData.diff).old_rel_path;
@@ -82,15 +82,15 @@ export class DiffsHandler {
                         if ((now - WAITING_FILES[relPath]) > FILE_UPLOAD_WAIT_TIMEOUT) {
                             CodeSyncLogger.error("diffsHandler: File ID not found", relPath, this.configRepo.email);
                             delete WAITING_FILES[relPath];
-                            fs.unlinkSync(diffFilePath);
+                            removeFile(diffFilePath, "DiffHandler.run");
                         }
                     } else {
                         const filePath = path.join(diffData.repo_path, relPath);
                         if (!fs.existsSync(filePath)) {
-                            fs.unlinkSync(diffFilePath);
+                            removeFile(diffFilePath, "DiffHandler.run");
                         } else {
                             WAITING_FILES[relPath] = (new Date()).getTime() / 1000;
-                            if (this.newFiles.indexOf(relPath) > -1) {
+                            if (!this.newFiles.includes(relPath)) {
                                 this.newFiles.push(relPath);
                             }
                             this.configJSON = await diffHandler.forceUploadFile();
@@ -104,12 +104,18 @@ export class DiffsHandler {
                 }
                 // Diff data to be sent to server
                 const diffToSend = diffHandler.createDiffToSend(fileId);
+                diffsSize += JSON.stringify(diffToSend).length;
+                // Websocket can only accept data upto 16MB, for above than that, we are reducing number of diffs per iteration to remain under limit.
+                if (diffsSize > DIFF_SIZE_LIMIT) continue;
                 validDiffs.push(diffToSend);
             } catch (e) {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
                 CodeSyncLogger.critical("Error handling diff", e.stack);
             }
+        }
+        if (diffsSize > DIFF_SIZE_LIMIT) {
+            CodeSyncLogger.error(`Diffs size increasing limit, size=${diffsSize} bytes`);
         }
         return validDiffs;
     }

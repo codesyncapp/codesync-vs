@@ -13,18 +13,26 @@ import {pathUtils} from "../utils/path_utils";
 import {
     formatDatetime,
     getBranch,
-    getSkipPaths,
+    getDefaultIgnorePatterns,
+    getGlobIgnorePatterns,
     getSyncIgnoreItems,
     isEmpty,
-    isIgnoreAblePath,
     isUserActive,
     readFile,
-    readYML
+    readYML,
+    shouldIgnorePath
 } from "../utils/common";
-import { RUN_DELETE_HANDLER_AFTER, RUN_POPULATE_BUFFER_AFTER, SEQUENCE_MATCHER_RATIO } from "../constants";
+import {
+    GLOB_TIME_TAKEN_THRESHOLD, 
+    RUN_DELETE_HANDLER_AFTER, 
+    RUN_POPULATE_BUFFER_AFTER, 
+    RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER, 
+    SEQUENCE_MATCHER_RATIO
+ } from "../constants";
 import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
-import { CodeSyncState } from "../utils/state_utils";
+import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
+import { removeFile } from "../utils/file_utils";
 
 
 export const populateBuffer = async (viaDaemon=true) => {
@@ -34,24 +42,45 @@ export const populateBuffer = async (viaDaemon=true) => {
 };
 
 export const populateBufferForMissedEvents = async (readyRepos: any) => {
+    const isRunning = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_RUNNING);
+    if (isRunning) return;
+    CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_RUNNING, true);
+    const currentRepoPath = pathUtils.getRootPath();
     for (const repoPath of Object.keys(readyRepos)) {
         const branch = readyRepos[repoPath];
         const populateBufferKey = `${repoPath}:${branch}:populateBuffer`;
-        const populateBufferLastRan = CodeSyncState.get(populateBufferKey);
-        const skipRun = (populateBufferLastRan && (new Date().getTime() - populateBufferLastRan) < RUN_POPULATE_BUFFER_AFTER);
-        if (skipRun) continue;
-        const obj = new PopulateBuffer(repoPath, branch);
-        if (!obj.modifiedInPast) {
-            // Go for content diffs if repo was modified after lastSyncedAt
-            await obj.populateBufferForRepo();
-        }
+        // Adding more wait for currently opened repo
+        const compareWith = repoPath === currentRepoPath ? RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER : RUN_POPULATE_BUFFER_AFTER;
+        const skipRunForRepo = CodeSyncState.canSkipRun(populateBufferKey, compareWith);
+
+        if (skipRunForRepo) continue;
         CodeSyncState.set(populateBufferKey, new Date().getTime());
-        const generateDiffForDeletedFilesKey = `${repoPath}:${branch}:generateDiffForDeletedFiles`;
-        const deletedFilesLastRan = CodeSyncState.get(generateDiffForDeletedFilesKey);
-        if (deletedFilesLastRan && (new Date().getTime() - deletedFilesLastRan) < RUN_DELETE_HANDLER_AFTER) continue;
-        obj.generateDiffForDeletedFiles();
-        CodeSyncState.set(generateDiffForDeletedFilesKey, new Date().getTime());
+        const t0 = new Date().getTime();
+        
+        try {
+            const populateBuffer = new PopulateBuffer(repoPath, branch);
+            if (!populateBuffer.modifiedInPast) {
+                await populateBuffer.run();
+                const t1 = new Date().getTime();
+                const timeTook = (t1 - t0) / 1000;
+                if (timeTook > GLOB_TIME_TAKEN_THRESHOLD) {
+                    CodeSyncLogger.warning(`populateBuffer took=${timeTook}s for ${repoPath}, files=${populateBuffer.itemPaths.length}`);
+                }
+            }
+            const generateDiffForDeletedFilesKey = `${repoPath}:${branch}:generateDiffForDeletedFiles`;
+            const canSkipDeleteHandler = CodeSyncState.canSkipRun(generateDiffForDeletedFilesKey, RUN_DELETE_HANDLER_AFTER);
+            if (canSkipDeleteHandler) continue;
+            populateBuffer.generateDiffForDeletedFiles();
+            CodeSyncState.set(generateDiffForDeletedFilesKey, new Date().getTime());
+            // Itereating only 1 repo in 1 iteration
+            if (!populateBuffer.modifiedInPast) break;
+        } catch (e) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            CodeSyncLogger.critical(`populateBuffer exited for ${repoPath}`, e.stack);
+        }
     }
+    CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_RUNNING, false);
 };
 
 
@@ -94,12 +123,16 @@ class PopulateBuffer {
     deletedRepoBranchPath: string;
     originalsRepoBranchPath: string;
     syncIgnoreItems: string[];
+    defaultIgnorePatterns: string[];
     potentialMatchFiles: string[];
     gotPotentialMatchFiles: boolean;
+    instanceUUID: string;
 
     constructor(repoPath: string, branch: string) {
         this.repoPath = repoPath;
         this.branch = branch;
+        this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
+        CodeSyncLogger.debug(`PopulateBuffer:init repo=${this.repoPath}, branch=${this.branch}, uuid=${this.instanceUUID}`);
         this.lastSyncedAtKey = `${this.repoPath}:lastSyncedAt`;
         this.repoModifiedAt = -1;
         this.settings = generateSettings();
@@ -116,6 +149,7 @@ class PopulateBuffer {
         this.deletedRepoBranchPath = this.pathUtils.getDeletedRepoBranchPath();
         this.originalsRepoBranchPath = this.pathUtils.getOriginalsRepoBranchPath();
         this.syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
+        this.defaultIgnorePatterns = getDefaultIgnorePatterns();
         this.potentialMatchFiles = [];
         this.gotPotentialMatchFiles = false;
     }
@@ -130,8 +164,8 @@ class PopulateBuffer {
         return lastSyncedAt && lastSyncedAt >= this.repoModifiedAt;
     }
 
-    async populateBufferForRepo() {
-        console.log(`Watching Repo: ${this.repoPath}`);
+    async run() {
+        CodeSyncLogger.debug(`PopulateBuffer:run repo=${this.repoPath}, branch=${this.branch}, files=${this.itemPaths.length}`);
         const handler = new eventHandler(this.repoPath, "", true);
         for (const itemPath of this.itemPaths) {
             let isRename = false;
@@ -196,36 +230,48 @@ class PopulateBuffer {
         - Shadow file should not be a binary file since we are going to match the text of files
         - Shadow file should not be empty
          */
-        const skipPaths = getSkipPaths(this.shadowRepoBranchPath, this.syncIgnoreItems);
+        const globIgnorePatterns = getGlobIgnorePatterns(this.shadowRepoBranchPath, this.syncIgnoreItems);
         // These are shadow files whose actual files are present in the repo
-        const skipShadowFiles = this.itemPaths.map(itemPath => path.join(this.shadowRepoBranchPath, itemPath.rel_path));
+        const skipShadowRelPaths = this.itemPaths.map(itemPath => itemPath.rel_path);
         const t0 = new Date().getTime();
-        let shadowFiles = globSync(`${this.shadowRepoBranchPath}/**`, { ignore: skipPaths, nodir: true, dot: true });
+        const shadowRelPaths = globSync("**", { 
+            cwd: this.shadowRepoBranchPath,
+            ignore: globIgnorePatterns, 
+            nodir: true, 
+            dot: true
+        });
         // Skip those shadow files whose actual files are present in the repo
-        shadowFiles = shadowFiles.filter(x => !skipShadowFiles.includes(x));
-        const filteredFiles = shadowFiles.filter(shadowFilePath => {
+        const filteredRelPaths = shadowRelPaths.filter(x => !skipShadowRelPaths.includes(x));
+        // Get shadow paths from rel paths
+        const shadowFilePaths = filteredRelPaths.map(shadowRelPath => path.join(this.shadowRepoBranchPath, shadowRelPath));
+        // Itereate over filtered shadow file paths
+        const filteredFiles = shadowFilePaths.filter(shadowFilePath => {
             const relPath = shadowFilePath.split(path.join(this.shadowRepoBranchPath, path.sep))[1];
             const isInConfig = relPath in this.configFiles;
-            const shouldIgnorePath = isIgnoreAblePath(relPath, this.syncIgnoreItems);
-            // If file is not in config OR is is present in .syncignore, remove the file from .shadow
-            if (!isInConfig || shouldIgnorePath) {
-                fs.unlink(shadowFilePath, err => {
-                    if (!err) return false;
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    CodeSyncLogger.error("getPotentialRenamedFiles: Error deleting shadow file", shadowFilePath, err);
-                });
+            if (!isInConfig) {
+                removeFile(shadowFilePath, "getPotentialRenamedFiles");
                 return false;
             }
+            const ignorablePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
+            // If file is not in config OR is is present in .syncignore, remove the file from .shadow
+            if (ignorablePath) {
+                removeFile(shadowFilePath, "getPotentialRenamedFiles");
+                return false;
+            }
+            let isBinary = false;
             // Skip binary files
-            const isBinary = isBinaryFileSync(shadowFilePath);
+            try {
+                isBinary = isBinaryFileSync(shadowFilePath);
+            } catch (e) {
+                CodeSyncLogger.error(`getPotentialRenamedFiles: isBinaryFileSync failed on ${shadowFilePath}`);
+            }
             if (isBinary) return false;
             // Skip empty shadow files
             const content = readFile(shadowFilePath);
             if (!content) return false;
             return true;
         });
-        CodeSyncLogger.debug(`getPotentialRenamedFiles: glob took=${(new Date().getTime() - t0)/1000}s, Files Count=${this.itemPaths.length}, repoPath=${this.repoPath}`);
+        CodeSyncLogger.debug(`getPotentialRenamedFiles: glob took=${(new Date().getTime() - t0)/1000}s, Files Count=${shadowRelPaths.length}, repoPath=${this.repoPath}`);
         return filteredFiles;
     }
 
@@ -273,7 +319,8 @@ class PopulateBuffer {
             const cacheFilePath = path.join(this.deletedRepoBranchPath, relPath);
             const shadowFilePath = path.join(this.shadowRepoBranchPath, relPath);
             // See if should discard this file
-            if (isIgnoreAblePath(relPath, this.syncIgnoreItems) ||
+            const isIgnorablePath = shouldIgnorePath(relPath, this.defaultIgnorePatterns, this.syncIgnoreItems);
+            if (isIgnorablePath  ||
                 activeRelPaths.includes(relPath) ||
                 this.renamedFiles.includes(relPath) ||
                 fs.existsSync(cacheFilePath) ||

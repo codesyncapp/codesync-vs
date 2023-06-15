@@ -10,6 +10,7 @@ import {CodeSyncLogger} from "../../logger";
 import {pathUtils} from "../../utils/path_utils";
 import {initUtils} from "../../init/utils";
 import {VSCODE} from "../../constants";
+import { removeFile } from "../../utils/file_utils";
 
 export class DiffHandler {
     fileRelPath: string;
@@ -116,12 +117,7 @@ export class DiffHandler {
         const settings = generateSettings();
         const relative = path.relative(settings.DIFFS_REPO, diffFilePath);
         const isRelative = relative && !relative.startsWith('..') && !path.isAbsolute(relative);
-        if (isRelative && fs.existsSync(diffFilePath)) {
-            try {
-                fs.unlinkSync(diffFilePath);
-            } catch (e) {
-                // pass
-            }
-        }
+        if (!(isRelative && fs.existsSync(diffFilePath))) return;
+        removeFile(diffFilePath, "removeDiffFile");
     }
 }

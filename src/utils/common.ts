@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from "path";
 import yaml from 'js-yaml';
 import ignore from 'ignore';
@@ -9,12 +10,10 @@ import dateFormat from 'dateformat';
 import {
 	DATETIME_FORMAT,
 	DEFAULT_BRANCH,
-	IGNORABLE_DIRECTORIES,
 	SYNCIGNORE
 } from "../constants";
 import { IUserProfile } from "../interface";
 import { generateSettings } from "../settings";
-import { shouldIgnorePath } from '../events/utils';
 import { CodeSyncLogger } from '../logger';
 
 
@@ -58,6 +57,8 @@ export const checkSubDir = (currentRepoPath: string) => {
 	}
 
 	const repoPaths = Object.keys(config.repos);
+	const defaultIgnorePatterns = getDefaultIgnorePatterns();
+
 	let parentRepo = "";
 	for (const _repoPath of repoPaths) {
 		const configRepo = config.repos[_repoPath];
@@ -68,7 +69,8 @@ export const checkSubDir = (currentRepoPath: string) => {
 		if (isSubdir) {
 			parentRepo = _repoPath;
 			const relPath = currentRepoPath.split(path.join(_repoPath, path.sep))[1];
-			isSyncIgnored = relPath ? shouldIgnorePath(_repoPath, relPath) : false;
+			const syncIgnoreItems = getSyncIgnoreItems(_repoPath);
+			isSyncIgnored = relPath ? shouldIgnorePath(relPath, defaultIgnorePatterns, syncIgnoreItems) : false;
 			break;
 		}
 	}
@@ -86,16 +88,36 @@ export const getSyncIgnoreItems = (repoPath: string) => {
 	if (!syncIgnoreExists) return [];
 	const syncIgnoreData = readFile(syncIgnorePath);
 	const syncIgnoreItems = syncIgnoreData.split("\n");
-	return syncIgnoreItems.filter(item => item && !item.startsWith("!"));
+	return syncIgnoreItems.filter(item => item && !item.startsWith("#"));
 };
 
-export const getSkipPaths = (repoPath: string, syncignoreItems: string[]) => {
+export const getDefaultIgnorePatterns = () => {
+	const settings = generateSettings();
+	if (!fs.existsSync(settings.SYNCIGNORE_PATH)) return [];
+	const syncignoreYML = readYML(settings.SYNCIGNORE_PATH);
+	const defaultSyncignoreData = syncignoreYML.content.split("\n");
+	return defaultSyncignoreData.filter((pattern: string) => pattern && !pattern.startsWith("#"));
+};
+
+export const getGlobIgnorePatterns = (repoPath: string, syncignoreItems: string[]) => {
 	/*
 	Output of this is used by globSync to ignore given directories
 	That's why appending /**  at the end of each directory path
 	*/
-	const skipPaths = [...IGNORABLE_DIRECTORIES.map(ignoreDir => `${repoPath}/**/${ignoreDir}/**`)];
+	if (os.platform() === 'win32') {
+		repoPath = repoPath.replace(/\\/g, "/");
+	}
+	
+	const defaultIgnorePatterns = getDefaultIgnorePatterns();
+	// For globSync, skipping only directory paths
+	const skipPatterns = defaultIgnorePatterns.map((pattern: string) => {
+		if (pattern.endsWith("/")) {
+			return `**/${pattern}**`;
+		}
+		return `**/${pattern}`;
+	});
 	syncignoreItems.forEach((pattern) => {
+		// Removing any terminator as we need to check path in the code below 
 		for (const terminator of ["/", "/*", "/**"]) {
 			if (pattern.endsWith(terminator)) {
 				const splitPath = pattern.split(terminator);
@@ -106,18 +128,26 @@ export const getSkipPaths = (repoPath: string, syncignoreItems: string[]) => {
 		const itemPath = path.join(repoPath, pattern);
 		// Only need to append /** for directories
 		if (!fs.existsSync(itemPath) || !fs.lstatSync(itemPath).isDirectory()) return;
-		const _pattern = `${repoPath}/${pattern}/**`;
+		const _pattern = `**/${pattern}/**`;
 		// Make sure there are no duplicates
-		if (skipPaths.includes(_pattern )) return;
-		skipPaths.push(_pattern);
+		if (skipPatterns.includes(_pattern)) return;
+		skipPatterns.push(_pattern);
 	});
-	return skipPaths;
+	return skipPatterns;
 };
 
-export const isIgnoreAblePath = (relPath: string, paths: string[]) => {
+export const isIgnorablePath = (relPath: string, paths: string[]) => {
 	const ig = ignore().add(paths);
 	return ig.ignores(relPath);
 };
+
+export function shouldIgnorePath(relPath: string, defaultIgnorePatterns: string[], syncIgnorePatterns: string[]) {
+	const isIgnorableByDefault = isIgnorablePath(relPath, defaultIgnorePatterns);
+	if (isIgnorableByDefault) return true;
+	if (!syncIgnorePatterns.length) return false;
+	const shouldIgnore = isIgnorablePath(relPath, syncIgnorePatterns);
+	return shouldIgnore;
+}
 
 export const isEmpty = (obj: any) => {
     return Object.keys(obj).length === 0;

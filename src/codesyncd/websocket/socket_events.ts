@@ -6,7 +6,7 @@ import {IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffHandler} from "../handlers/diff_handler";
 import {recallDaemon} from "../codesyncd";
 import {DiffsHandler} from "../handlers/diffs_handler";
-import {statusBarMsgs} from "../utils";
+import {getDiffsBeingProcessed, setDiffsBeingProcessed, statusBarMsgs} from "../utils";
 import {markUsersInactive} from "../../utils/auth_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
 import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from "../../utils/pricing_utils";
@@ -26,13 +26,15 @@ export class SocketEvents {
     repoDiffs: IRepoDiffs[];
     accessToken: string;
     statusBarMsgsHandler: any;
+    canSendDiffs: boolean;
 
-    constructor(statusBarItem: vscode.StatusBarItem, repoDiffs: IRepoDiffs[], accessToken: string) {
+    constructor(statusBarItem: vscode.StatusBarItem, repoDiffs: IRepoDiffs[], accessToken: string, canSendDiffs=false) {
         this.connection = (global as any).socketConnection;
         this.statusBarItem = statusBarItem;
         this.repoDiffs = repoDiffs;
         this.accessToken = accessToken;
         this.statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
+        this.canSendDiffs = canSendDiffs;
     }
 
     onInvalidAuth() {
@@ -63,8 +65,7 @@ export class SocketEvents {
         this.connection.send(JSON.stringify({"auth": 200}));
         const statusBarMsg =  this.statusBarMsgsHandler.getMsg();
         this.statusBarMsgsHandler.update(statusBarMsg);
-        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
-        if (!canSendDiffs) return recallDaemon(this.statusBarItem);
+        if (!this.canSendDiffs) return recallDaemon(this.statusBarItem);
         // Send diffs
         let validDiffs: IDiffToSend[] = [];
         errorCount = 0;
@@ -73,7 +74,18 @@ export class SocketEvents {
             const diffs = await diffsHandler.run();
             validDiffs = validDiffs.concat(diffs);
         }
+        
         if (validDiffs.length) {
+            CodeSyncLogger.debug(`Sending ${validDiffs.length} diffs`);
+            // Keep track of diffs in State
+            const currentDiffs = new Set(validDiffs.map(validDiff => validDiff.diff_file_path));
+            let diffsBeingProcessed = getDiffsBeingProcessed();   
+            if (diffsBeingProcessed.size) {
+                diffsBeingProcessed =  new Set([...diffsBeingProcessed, ...currentDiffs]);
+                setDiffsBeingProcessed(diffsBeingProcessed);
+            } else {
+                setDiffsBeingProcessed(currentDiffs);
+            }
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
         }
         // Recall daemon
@@ -83,9 +95,13 @@ export class SocketEvents {
     onSyncSuccess(diffFilePath: string) {
         const { planLimitReached } = getPlanLimitReached();
         if (planLimitReached) resetPlanLimitReached();
-        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
-        if (!canSendDiffs) return;
+        if (!this.canSendDiffs) return;
         DiffHandler.removeDiffFile(diffFilePath);
+        // Remove diff from diffsBeingProcessed
+        const diffsBeingProcessed = getDiffsBeingProcessed();
+        if (!diffsBeingProcessed.size) return;
+        diffsBeingProcessed.delete(diffFilePath);
+        setDiffsBeingProcessed(diffsBeingProcessed);
     }
 
     async onMessage(message: IWebSocketMessage) {

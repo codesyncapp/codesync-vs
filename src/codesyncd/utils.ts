@@ -21,6 +21,7 @@ import { pathUtils } from "../utils/path_utils";
 import { checkSubDir, getActiveUsers, isRepoActive, readFile, readYML } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
+import { removeFile } from '../utils/file_utils';
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -87,7 +88,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 
 	// Delete file from .originals
 	if (fs.existsSync(originalsFilePath)) {
-		fs.unlinkSync(originalsFilePath);
+		removeFile(originalsFilePath, "handleNewFileUpload");
 	}
 
 	return {
@@ -104,9 +105,8 @@ export const cleanUpDeleteDiff = (repoPath: string, branch: string, relPath: str
 	const originalsPath = path.join(pathUtilsObj.getOriginalsRepoBranchPath(), relPath);
 	const cacheFilePath = path.join(pathUtilsObj.getDeletedRepoBranchPath(), relPath);
 	[shadowPath, originalsPath, cacheFilePath].forEach((path) => {
-		if (fs.existsSync(path)) {
-			fs.unlinkSync(path);
-		}
+		if (!fs.existsSync(path)) return;
+		removeFile(path, "cleanUpDeleteDiff");
 	});
 	delete configJSON.repos[repoPath].branches[branch][relPath];
 	// write file id to config.yml
@@ -121,8 +121,13 @@ export const getDIffForDeletedFile = (repoPath: string, branch: string, relPath:
 		cleanUpDeleteDiff(repoPath, branch, relPath, configJSON);
 		return diff;
 	}
+	let isBinary = false;
 	// See if shadow file can be read
-	const isBinary = isBinaryFileSync(shadowPath);
+	try {
+		isBinary = isBinaryFileSync(shadowPath);
+	} catch (e) {
+		CodeSyncLogger.error(`getDIffForDeletedFile: isBinaryFileSync failed on ${shadowPath}`);
+	}
 	if (isBinary) {
 		cleanUpDeleteDiff(repoPath, branch, relPath, configJSON);
 		return diff;
@@ -203,3 +208,12 @@ export class statusBarMsgs {
 		return defaultMsg;
 	}
 }
+
+export const getDiffsBeingProcessed = () => {
+	const diffsInState = CodeSyncState.get(CODESYNC_STATES.DIFFS_BEING_PROCESSED);
+	return diffsInState || new Set();
+};
+
+export const setDiffsBeingProcessed = (diffs: Set<string>) => {
+	CodeSyncState.set(CODESYNC_STATES.DIFFS_BEING_PROCESSED, diffs);
+};

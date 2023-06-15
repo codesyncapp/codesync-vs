@@ -4,6 +4,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.24.0] - 2023-06-13
+- Upgraded packages
+
+## [3.23.0] - 2023-06-09
+- Using globSync to read Diffs Repo instead of fs.readdirsync
+
+## [3.22.5] - 2023-06-09
+- Fixed a bug in deleting diff containing ignoreable path
+
+## [3.22.4] - 2023-06-09
+- Added logging to debug diffs not being sent
+
+## [3.22.3] - 2023-06-02
+- Fixed an edge case with Lock compromisation if onCompromised is called right after acquiring lock
+
+## [3.22.2] - 2023-06-01
+- Corrected command in package.json for "Disconnect parent repo"
+- Fixed onCompromised callback
+
+## [3.22.1] - 2023-06-01
+- Added more logging if any lock is compromised
+
+## [3.22.0] - 2023-06-01
+- Using instance UUID to debug/verify if multiple instances are acquiring locks or same instance is running things multiple times
+- Added logging when an instance acquires lock
+- Added logging for populateBuffer for "Watching Repo" for debugging
+- When lock is compromised, resetting the state variable
+
+## [3.21.0] - 2023-05-22
+- Using fs.unlink instead of fs.unlinkSync
+- Running 1 instance of populateBuffer, waiting before previous iteration is completed
+- Using .syncignore on system level to ignore default directories/files like .git, node_modules etc
+
+## [3.20.2] - 2023-05-16
+- Fixed skip patterns for Windows
+
+## [3.20.1] - 2023-05-15
+- Fixed glob patterns for Windows in reading a repo
+
+## [3.20.0] - 2023-05-05
+- Fixed duplicate sending of diffs in case diffs are not processed within 5s
+
+## [3.19.2] - 2023-04-26
+- Ignorning symlinks and other types. Only dealing with files in globSync
+- Iterating only 1 repo in populateBuffer in one iteration
+- For currently opened repo, waiting for 4 minutes and for other repos, waiting for 2 minutes to run populateBuffer
+- try/catch added in populateBuffer so that it does not fail infinitely 
+
 ## [3.19.1] - 2023-04-19
 - Upgraded few packages
 - Skipping shadow files manually instead of using glob ignores

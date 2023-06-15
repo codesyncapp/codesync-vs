@@ -2,7 +2,7 @@ name: CodeSync VSCode Plugin Tests
 run-name: ${{ github.actor }} is testing CodeSync VSCode Plugin 🚀
 on: [push]
 jobs:
-  VSCode-Plugin-Tests:
+  Posix:
     runs-on: ubuntu-latest
     steps:
       - run: echo "token => ${{ github.token }}, GITHUB_TOKEN => ${{ secrets.GITHUB_TOKEN }}"
@@ -21,3 +21,17 @@ jobs:
             package-manager: yarn
             output: comment
             prnumber: ${{ steps.findPr.outputs.number }}
+      - name: Pre Publish
+        run: yarn vscode:prepublish
+  Windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.20.0'
+          cache: 'yarn'
+      - name: Install dependencies
+        run: yarn install
+      - name: Run Tests
+        run: yarn test
