@@ -18,10 +18,10 @@ export class LockUtils {
 	constructor() {
 		this.isTestMode = ((global as any).IS_CODESYNC_TEST_MODE);
         this.settings = generateSettings();
-		this.lockOptionsPopulateBuffer = {onCompromised: this.onCompromisedPopulateBuffer};
-		this.lockOptionsDiffsSend = {onCompromised: this.onCompromisedDiffsSend};
-		this.lockOptionsPricing = {onCompromised: this.onCompromisedPricing};
-		this.checkSyncOptions = {stale: 15000};
+		this.lockOptionsPopulateBuffer = {update:1000, onCompromised: this.onCompromisedPopulateBuffer};
+		this.lockOptionsDiffsSend = {update:1000, onCompromised: this.onCompromisedDiffsSend};
+		this.lockOptionsPricing = {update:1000, onCompromised: this.onCompromisedPricing};
+		this.checkSyncOptions = {stale: 10000};
 		this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 	}
 
@@ -50,9 +50,7 @@ export class LockUtils {
 	
 	checkPopulateBufferLock () {
 		try {
-			const isAcquired = lockFile.checkSync(this.settings.POPULATE_BUFFER_LOCK_FILE, this.checkSyncOptions);
-			if (!isAcquired) CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
-			return isAcquired;
+			return lockFile.checkSync(this.settings.POPULATE_BUFFER_LOCK_FILE, this.checkSyncOptions);
 		} catch (e) {
 			CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
 			return false;
@@ -61,9 +59,7 @@ export class LockUtils {
 
 	checkDiffsSendLock = () => {
 		try {
-			const isAcquired = lockFile.checkSync(this.settings.DIFFS_SEND_LOCK_FILE, this.checkSyncOptions);
-			if (!isAcquired) CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
-			return isAcquired;
+			return lockFile.checkSync(this.settings.DIFFS_SEND_LOCK_FILE, this.checkSyncOptions);
 		} catch (e) {
 			CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
 			return false;
@@ -75,10 +71,9 @@ export class LockUtils {
 			lockFile.lockSync(this.settings.POPULATE_BUFFER_LOCK_FILE, this.lockOptionsPopulateBuffer);
 			CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED_AT, new Date().getTime());
 			CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, true);
-			CodeSyncLogger.debug(`populateBufferLock acquired by uuid=${this.instanceUUID}`);			
+			CodeSyncLogger.debug(`populateBufferLock acquired by uuid=${this.instanceUUID}`);
 		} catch (e) {
 			CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, false);
-			// 
 		}    
 	};
 	
@@ -90,7 +85,6 @@ export class LockUtils {
 			CodeSyncLogger.debug(`DiffsSendLock acquired by uuid=${this.instanceUUID}`);
 		} catch (e) {
 			CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
-			//
 		}
 	};
 

@@ -99,7 +99,7 @@ export class initHandler {
 	postPublicPrivate = async (userEmail: string, isPublic: boolean) => {
 		const initUtilsObj = new initUtils(this.repoPath, this.viaDaemon);
 		// get item paths to upload and copy in respective repos
-		const itemPaths = initUtilsObj.getSyncablePaths();
+		const itemPaths = await initUtilsObj.getSyncablePaths();
 		const filePaths = itemPaths.map(itemPath => itemPath.file_path);
 		const pathUtilsObj = new pathUtils(this.repoPath, this.branch);
 		// copy files to .originals repo

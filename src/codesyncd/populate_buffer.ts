@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import { globSync } from 'glob';
+import { glob } from 'glob';
 import {isBinaryFileSync} from "isbinaryfile";
 import stringSimilarity from "string-similarity";
 
@@ -59,6 +59,7 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
         
         try {
             const populateBuffer = new PopulateBuffer(repoPath, branch);
+            await populateBuffer.init();
             if (!populateBuffer.modifiedInPast) {
                 await populateBuffer.run();
                 const t1 = new Date().getTime();
@@ -132,14 +133,11 @@ class PopulateBuffer {
         this.repoPath = repoPath;
         this.branch = branch;
         this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
-        CodeSyncLogger.debug(`PopulateBuffer:init repo=${this.repoPath}, branch=${this.branch}, uuid=${this.instanceUUID}`);
         this.lastSyncedAtKey = `${this.repoPath}:lastSyncedAt`;
         this.repoModifiedAt = -1;
         this.settings = generateSettings();
         this.repoBranchPath = path.join(this.repoPath, this.branch);
         this.initUtilsObj = new initUtils(this.repoPath, true);
-        this.itemPaths = this.initUtilsObj.getSyncablePaths();
-        this.modifiedInPast = this.getModifiedInPast();
         this.config = readYML(this.settings.CONFIG_PATH);
         const configRepo = this.config.repos[this.repoPath];
         this.configFiles = configRepo.branches[this.branch];
@@ -152,6 +150,14 @@ class PopulateBuffer {
         this.defaultIgnorePatterns = getDefaultIgnorePatterns();
         this.potentialMatchFiles = [];
         this.gotPotentialMatchFiles = false;
+        this.itemPaths = [];
+        this.modifiedInPast = false;
+    }
+
+    async init() {
+        CodeSyncLogger.debug(`PopulateBuffer:init repo=${this.repoPath}, branch=${this.branch}, uuid=${this.instanceUUID}`);
+        this.itemPaths = await this.initUtilsObj.getSyncablePaths();
+        this.modifiedInPast = this.getModifiedInPast();
     }
 
     getModifiedInPast() {
@@ -197,7 +203,7 @@ class PopulateBuffer {
             // If rel_path is not in configFiles and shadow does not exist, can be a new file OR a rename
             if (!shadowExists) {
                 if (!this.gotPotentialMatchFiles) {
-                    this.potentialMatchFiles = this.getPotentialRenamedFiles();
+                    this.potentialMatchFiles = await this.getPotentialRenamedFiles();
                     this.gotPotentialMatchFiles = true;
                 }
                 const renameResult = this.checkForRename(itemPath.file_path);
@@ -220,7 +226,7 @@ class PopulateBuffer {
         }
     }
 
-    getPotentialRenamedFiles() {
+    async getPotentialRenamedFiles() {
         /*
         If a file is renamed in actual repo, it will be present in the shadow repo with pervious name.
         So potential renamed files in the shadow repo should possess following properties
@@ -234,7 +240,7 @@ class PopulateBuffer {
         // These are shadow files whose actual files are present in the repo
         const skipShadowRelPaths = this.itemPaths.map(itemPath => itemPath.rel_path);
         const t0 = new Date().getTime();
-        const shadowRelPaths = globSync("**", { 
+        const shadowRelPaths = await glob("**", { 
             cwd: this.shadowRepoBranchPath,
             ignore: globIgnorePatterns, 
             nodir: true, 
@@ -371,7 +377,7 @@ export const detectBranchChange = async () => {
             // If all files IDs are None in config.yml, we need to sync the branch
             const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
             if (shouldSyncBranch) {
-                const itemPaths = initUtilsObj.getSyncablePaths();
+                const itemPaths = await initUtilsObj.getSyncablePaths();
                 uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
                 if (!uploaded) continue;    
             }
@@ -385,7 +391,7 @@ export const detectBranchChange = async () => {
 
         if (originalsRepoExists) {
             // init has been called, now see if we can upload the repo/branch
-            const itemPaths = initUtilsObj.getSyncablePaths();
+            const itemPaths = await initUtilsObj.getSyncablePaths();
             uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
         } else {
             const handler = new initHandler(repoPath, accessToken, true);

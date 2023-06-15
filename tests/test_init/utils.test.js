@@ -44,19 +44,19 @@ describe("getSyncablePaths",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("No .syncignore",  () => {
+    test("No .syncignore", async () => {
         fs.writeFileSync(filePath, "");
         const initUtilsObj = new initUtils(repoPath);
-        const paths = initUtilsObj.getSyncablePaths();
+        const paths = await initUtilsObj.getSyncablePaths();
         expect(paths).toHaveLength(1);
     });
 
-    test("Ignore file and match rest",  () => {
+    test("Ignore file and match rest", async () => {
         fs.writeFileSync(filePath, "");
         fs.writeFileSync(path.join(repoPath, "ignore.js"), DUMMY_FILE_CONTENT);
         fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
         const initUtilsObj = new initUtils(repoPath);
-        const paths = initUtilsObj.getSyncablePaths();
+        const paths = await initUtilsObj.getSyncablePaths();
         // 1 is .syncignore, other is file.js
         expect(paths).toHaveLength(2);
         expect(paths[0].rel_path).toStrictEqual("file.js");
@@ -69,14 +69,14 @@ describe("getSyncablePaths",  () => {
         expect(paths[1].size).toBeTruthy();
     });
 
-    test("Dot files/directories",  () => {
+    test("Dot files/directories", async () => {
         // .directory should be ignored, .ignore file should be considered
         const dotRepoPath = path.join(repoPath, ".directory");
         const filePath = path.join(repoPath, ".ignore");
         fs.mkdirSync(dotRepoPath, {recursive: true});
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         const initUtilsObj = new initUtils(repoPath);
-        const paths = initUtilsObj.getSyncablePaths();
+        const paths = await initUtilsObj.getSyncablePaths();
         expect(paths).toHaveLength(1);
         expect(paths[0].rel_path).toStrictEqual(".ignore");
         expect(paths[0].is_binary).toBe(false);
@@ -84,11 +84,11 @@ describe("getSyncablePaths",  () => {
         expect(paths[0].size === 0).toBe(false);
     });
 
-    test("with symlink",  () => {
+    test("with symlink", async () => {
         const dotRepoPath = path.join(repoPath, ".directory");
         fs.symlinkSync(repoPath, dotRepoPath);
         const initUtilsObj = new initUtils(repoPath);
-        const paths = initUtilsObj.getSyncablePaths();
+        const paths = await initUtilsObj.getSyncablePaths();
         expect(paths).toHaveLength(0);
     });
 });
@@ -313,7 +313,7 @@ describe("uploadRepo",  () => {
     test("Server Down",  async () => {
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths();
+        const itemPaths = await initUtilsObj.getSyncablePaths();
         // Files count from TEST_RESPONSE_DATA
         expect(itemPaths).toHaveLength(3);
         // Mock response for checkServerDown
@@ -336,7 +336,7 @@ describe("uploadRepo",  () => {
     test("repo In Config",  async () => {
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths();
+        const itemPaths = await initUtilsObj.getSyncablePaths();
         // Files count from TEST_RESPONSE_DATA
         expect(itemPaths).toHaveLength(3);
         // Mock response for checkServerDown
@@ -383,7 +383,7 @@ describe("uploadRepo",  () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.removeRepo();
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths();
+        const itemPaths = await initUtilsObj.getSyncablePaths();
         // Files count from TEST_RESPONSE_DATA
         expect(itemPaths).toHaveLength(3);
         // Mock response for checkServerDown
@@ -446,7 +446,7 @@ describe("uploadRepo",  () => {
         fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
 
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths();
+        const itemPaths = await initUtilsObj.getSyncablePaths();
         // Files count from TEST_RESPONSE_DATA
         expect(itemPaths).toHaveLength(3);
         // Mock response for checkServerDown
