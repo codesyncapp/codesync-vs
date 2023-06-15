@@ -101,7 +101,7 @@ export const getDefaultIgnorePatterns = () => {
 
 export const getGlobIgnorePatterns = (repoPath: string, syncignoreItems: string[]) => {
 	/*
-	Output of this is used by globSync to ignore given directories
+	Output of this is used by glob to ignore given directories
 	That's why appending /**  at the end of each directory path
 	*/
 	if (os.platform() === 'win32') {
@@ -109,7 +109,7 @@ export const getGlobIgnorePatterns = (repoPath: string, syncignoreItems: string[
 	}
 	
 	const defaultIgnorePatterns = getDefaultIgnorePatterns();
-	// For globSync, skipping only directory paths
+	// For glob, skipping only directory paths
 	const skipPatterns = defaultIgnorePatterns.map((pattern: string) => {
 		if (pattern.endsWith("/")) {
 			return `**/${pattern}**`;

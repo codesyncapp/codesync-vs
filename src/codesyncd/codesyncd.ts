@@ -10,17 +10,22 @@ import { Alerts } from "./alert_utils";
 import { CodeSyncLogger } from "../logger";
 
 
-
 export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true, isServerDown=false) => {
     /*
     There are two types of locks we are using.
     1- POPULATE_BUFFER_LOCK (Overall across all IDEs)
     2- DIFFS_SEND_LOCK (Per IDE type)
 
-    Whenever a lock is acquired, we set following states in global
+    We are using Locks for sending diffs and populating buffer
+    - checkLock() returns true if lock is acquired by any process. It does not specifies the instance/process
+    - acqurieLock() acquires the lock first time but then returns false
+    
+    Whenever a lock is acquired, we set following states in global State:
     1- POPULATE_BUFFER_LOCK_ACQUIRED
     2- DIFFS_SEND_LOCK_ACQUIRED
     respectively
+
+    Checking the state variable, we decide to run both components of Daemon i.e. populateBuffer and bufferHandler.
 
     Case 1:
         If both locks have been acquired by this instance, Daemon runs both populateBuffer and bufferHandler
@@ -68,6 +73,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
     // Check permissions to run populateBuffer and bufferHandler
     const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
     const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+
     // Check Locks availability
     const lockUtils = new LockUtils();
     const isPopulateBufferLockAcquired = lockUtils.checkPopulateBufferLock();
@@ -92,6 +98,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
 
     // Do not re-run daemon in case of tests
     if ((global as any).IS_CODESYNC_TEST_MODE) return;
+
     return setTimeout(() => {
         // Populate Buffer
         const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);

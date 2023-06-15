@@ -1,12 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 import vscode from "vscode";
-import { globSync } from 'glob';
+import { glob } from 'glob';
 
 import {getDiffsBeingProcessed, isValidDiff} from '../utils';
 import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
-import {ABNORMAL_DIFFS_COUNT, DAY, DIFF_FILES_PER_ITERATION} from "../../constants";
+import {DAY, DIFF_FILES_PER_ITERATION} from "../../constants";
 import {recallDaemon} from "../codesyncd";
 import {generateSettings} from "../../settings";
 import {getActiveUsers, getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
@@ -74,10 +74,10 @@ export class bufferHandler {
 
 	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
 
-	getDiffFiles = () => {
+	getDiffFiles = async () => {
 		const diffsBeingProcessed = getDiffsBeingProcessed();
 
-        const invalidDiffFiles = globSync("**", { 
+        const invalidDiffFiles = await glob("**", { 
 			ignore: "*.yml",
 			nodir: true,
 			dot: true,
@@ -90,14 +90,13 @@ export class bufferHandler {
 			removeFile(filePath, "cleaningInvalidDiffFiles");
 		});
 
-        const diffs = globSync("*.yml", { 
+        const diffs = await glob("*.yml", { 
             cwd: this.settings.DIFFS_REPO,
 			maxDepth: 1,
 			nodir: true,
 			dot: true,
 		});
 
-		if (diffs.length > ABNORMAL_DIFFS_COUNT) CodeSyncLogger.warning(`${diffs.length} diffs are present in buffer`);
 		let randomDiffFiles = [];
 		const usedIndices = <any>[];
 		let randomIndex = undefined;
@@ -169,7 +168,10 @@ export class bufferHandler {
 			return true;
 		});
 
-		return randomDiffFiles;
+		return {
+			files: randomDiffFiles,
+			count: diffs.length
+		};
 	}
 
 	groupRepoDiffs = (diffFiles: string[]) => {
@@ -196,10 +198,10 @@ export class bufferHandler {
 
 	async run(canSendDiffs: boolean) {
 		try {
-			const diffFiles = this.getDiffFiles();
-			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
-			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffFiles.length} diffs, uuid=${this.instanceUUID}`);
-			const repoDiffs = this.groupRepoDiffs(diffFiles);
+			const diffs = await this.getDiffFiles();
+			if (!diffs.files.length) return recallDaemon(this.statusBarItem);
+			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
+			const repoDiffs = this.groupRepoDiffs(diffs.files);
 			// Check if we have an active user
 			const activeUser = getActiveUsers()[0];
 			if (!activeUser) return recallDaemon(this.statusBarItem);

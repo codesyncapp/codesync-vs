@@ -42,7 +42,7 @@ describe("detectBranchChange", () => {
     const configData = {repos: {}};
     const userData = {};    
 
-    beforeEach(() => {
+    beforeEach(async () => {
         fetch.resetMocks();
         jest.clearAllMocks();
         jest.spyOn(global.console, 'log');
@@ -68,7 +68,7 @@ describe("detectBranchChange", () => {
         fs.writeFileSync(userFilePath, yaml.dump(userData));
         fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths();
+        const itemPaths = await initUtilsObj.getSyncablePaths();
         const filePaths = itemPaths.map(itemPath => itemPath.file_path);
         // copy files to .originals repo
         initUtilsObj.copyFilesTo(filePaths, originalsRepoBranchPath);

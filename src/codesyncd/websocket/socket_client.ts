@@ -33,7 +33,7 @@ export class SocketClient {
         this.client = (global as any).client;
     }
 
-    resetGlobals = () => {
+    resetGlobals = (canSendDiffs=false) => {
         // Set time when connection is errored out
         CodeSyncState.set(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT, new Date().getTime());
         // Reset diffsBeingProcessed
@@ -46,6 +46,7 @@ export class SocketClient {
         this.client = null;
         (global as any).client = null;
         (global as any).socketConnection = null;
+        if (!canSendDiffs) return recallDaemon(this.statusBarItem);
     }
 
     connect = (canSendDiffs: boolean) => {
@@ -62,7 +63,7 @@ export class SocketClient {
             this.registerEvents(canSendDiffs);
         } else {
             const socketConnection = (global as any).socketConnection;
-            if (!socketConnection) return;
+            if (!socketConnection) return this.resetGlobals(canSendDiffs);
             // Trigger onValidAuth for already connected socket
             const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs);
             webSocketEvents.onValidAuth();
@@ -92,6 +93,7 @@ export class SocketClient {
         if (!canSendDiffs) {
             url += '&auth_only=1';
         }
+        console.log(`Socket Connecting... canSendDiffs=${canSendDiffs}`, );
         this.client.connect(url);
     };
 
@@ -110,7 +112,8 @@ export class SocketClient {
         });
 
         connection.on('close', function () {
-            that.resetGlobals();
+            console.log("Socket closed");
+            that.resetGlobals(canSendDiffs);
         });
 
         // Iterate repoDiffs and send to server

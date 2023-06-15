@@ -1,7 +1,7 @@
 import fs from 'fs';
 import os from "os";
 import path from 'path';
-import { globSync } from 'glob';
+import { glob } from 'glob';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
 import parallel from "run-parallel";
@@ -40,14 +40,14 @@ export class initUtils {
 		return isSyncInProcess;
 	}
 
-	getSyncablePaths () {
+	async getSyncablePaths () {
 		const itemPaths: IFileToUpload[] = [];
 		const globIgnorePatterns = getGlobIgnorePatterns(this.repoPath, this.syncIgnoreItems);
-		const globFiles = globSync("**", { 
+		const globFiles = await glob("**", { 
 			cwd: this.repoPath,
-			ignore: globIgnorePatterns, 
-			nodir: true, 
-			dot: true, 
+			ignore: globIgnorePatterns,
+			nodir: true,
+			dot: true,
 			stat: true,
 			withFileTypes: true
 		});
