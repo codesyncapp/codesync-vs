@@ -6,8 +6,7 @@ import { glob } from 'glob';
 import {getDiffsBeingProcessed, isValidDiff} from '../utils';
 import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
-import {DAY, DIFF_FILES_PER_ITERATION} from "../../constants";
-import {recallDaemon} from "../codesyncd";
+import {DAY, DIFF_FILES_PER_ITERATION, RETRY_WEBSOCKET_CONNECTION_AFTER} from "../../constants";
 import {generateSettings} from "../../settings";
 import {getActiveUsers, getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
@@ -63,6 +62,8 @@ export class bufferHandler {
 	configJSON: any;
 	defaultIgnorePatterns: string[];
 	instanceUUID: string;
+	// Log run msg after 2 minutes
+	LOG_BUFFER_HANDLER_RUN_AFTER = 2 * 60 * 1000;
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		this.statusBarItem = statusBarItem;
@@ -197,14 +198,30 @@ export class bufferHandler {
 	};
 
 	async run(canSendDiffs: boolean) {
+		const isRunning = CodeSyncState.get(CODESYNC_STATES.BUFFER_HANDLER_RUNNING);
+		const skipLog = CodeSyncState.canSkipRun(CODESYNC_STATES.BUFFER_HANDLER_LOGGED_AT, this.LOG_BUFFER_HANDLER_RUN_AFTER);
+		if (!skipLog) {
+			CodeSyncLogger.debug(`bufferHandler:run, uuid=${this.instanceUUID}`);
+			CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_LOGGED_AT, new Date().getTime());
+		}
+		if (isRunning) return;
+		
+		const errorOccurredAt = CodeSyncState.get(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT);
+		const canConnect = !errorOccurredAt || (new Date().getTime() - errorOccurredAt) > RETRY_WEBSOCKET_CONNECTION_AFTER;
+		if (!canConnect) {
+			return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+		}
+
+		CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, true);
+		
 		try {
 			const diffs = await this.getDiffFiles();
-			if (!diffs.files.length) return recallDaemon(this.statusBarItem);
+			if (!diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			const repoDiffs = this.groupRepoDiffs(diffs.files);
 			// Check if we have an active user
 			const activeUser = getActiveUsers()[0];
-			if (!activeUser) return recallDaemon(this.statusBarItem);
+			if (!activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			// Create Websocket client
 			const webSocketClient = new SocketClient(this.statusBarItem, activeUser.access_token, repoDiffs);
 			webSocketClient.connect(canSendDiffs);
@@ -213,7 +230,7 @@ export class bufferHandler {
 			// @ts-ignore
 			CodeSyncLogger.critical("bufferHandler exited", e.stack);
 			// recall daemon
-			return recallDaemon(this.statusBarItem);
+			return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 		}
 	}
 }

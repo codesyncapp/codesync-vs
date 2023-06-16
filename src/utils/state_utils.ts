@@ -8,6 +8,7 @@ export const CODESYNC_STATES = {
     DIFFS_SEND_LOCK_ACQUIRED_AT: "diffsSendLockAcquiredAt",
     POPULATE_BUFFER_LOCK_ACQUIRED_AT: "populateBufferLockAcquiredAt",
     POPULATE_BUFFER_RUNNING: "populateBufferRunning",
+    BUFFER_HANDLER_RUNNING: "bufferHandlerRunning",
     PRICING_URL: "pricingUrl",
     REQUEST_SENT_AT: "requestSentAt",
     SYNCING_BRANCH: "syncingBranch",
@@ -16,7 +17,9 @@ export const CODESYNC_STATES = {
     STATUS_BAR_ACTIVITY_ALERT_MSG: "statusBarActivityAlertMsg",
     WEBSOCKET_ERROR_OCCURRED_AT: "websocketErrorOccurredAt",
     DIFFS_BEING_PROCESSED: "diffsBeingProcessed",
-    INSTANCE_UUID: "instanceUUID"
+    INSTANCE_UUID: "instanceUUID",
+    DAEMON_ERROR: "daemonError",
+    BUFFER_HANDLER_LOGGED_AT: "bufferHandlerLoggedAt"
 };
 
 export class CodeSyncState {
