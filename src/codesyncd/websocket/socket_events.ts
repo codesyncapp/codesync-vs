@@ -4,7 +4,6 @@ import {STATUS_BAR_MSGS} from "../../constants";
 import {CodeSyncLogger, logErrorMsg} from "../../logger";
 import {IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffHandler} from "../handlers/diff_handler";
-import {recallDaemon} from "../codesyncd";
 import {DiffsHandler} from "../handlers/diffs_handler";
 import {getDiffsBeingProcessed, setDiffsBeingProcessed, statusBarMsgs} from "../utils";
 import {markUsersInactive} from "../../utils/auth_utils";
@@ -42,7 +41,7 @@ export class SocketEvents {
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
         // Mark user as inactive in user.yml
         markUsersInactive(false);
-        return recallDaemon(this.statusBarItem);
+        CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
     async onRepoSizeLimitReached() {
@@ -65,7 +64,7 @@ export class SocketEvents {
         this.connection.send(JSON.stringify({"auth": 200}));
         const statusBarMsg =  this.statusBarMsgsHandler.getMsg();
         this.statusBarMsgsHandler.update(statusBarMsg);
-        if (!this.canSendDiffs) return recallDaemon(this.statusBarItem);
+        if (!this.canSendDiffs) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
         // Send diffs
         let validDiffs: IDiffToSend[] = [];
         errorCount = 0;
@@ -88,8 +87,7 @@ export class SocketEvents {
             }
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
         }
-        // Recall daemon
-        return recallDaemon(this.statusBarItem);
+        CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
     onSyncSuccess(diffFilePath: string) {

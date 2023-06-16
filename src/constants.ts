@@ -21,7 +21,7 @@ export const DEFAULT_BRANCH = 'default';
 
 export const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
-export const RESTART_DAEMON_AFTER = 5000;
+export const RESTART_DAEMON_AFTER = 5 * 1000;
 
 export const API_BASE_URL = `${CODESYNC_HOST}/v1`;
 export const API_PATH = {
@@ -169,6 +169,8 @@ export class staticFiles {
 	}
 }
 
+export const ECONNREFUSED = "ECONNREFUSED";
+
 export const FILE_UPLOAD_WAIT_TIMEOUT = 5 * 60;
 export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .syncignore. It follows same format as .gitignore.";
 // Log after 5 min, as daemon restarts after 5s so it will log after 60 iterations
@@ -179,13 +181,13 @@ export const RETRY_BRANCH_SYNC_AFTER = 3 * 60 * 1000; // 3 minute, 1000 is for m
 export const RUN_POPULATE_BUFFER_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER = 10 * 60 * 1000; // 1000 is for ms;
 export const RUN_DELETE_HANDLER_AFTER = 5 * 60 * 1000; // 1000 is for ms;
-export const SOCKET_CONNECT_ERROR_CODES = ["ECONNREFUSED", "ETIMEDOUT", "ECONNRESET"];
+export const SOCKET_CONNECT_ERROR_CODES = [ECONNREFUSED, "ETIMEDOUT", "ECONNRESET"];
 export const SOCKET_ERRORS = {
 	ERROR_MSG_RECEIVE: 'Error receiving socket msg'
 };
 export const DAY = 24 * 60 * 60 * 1000;
 export const PRICING_URL_PATH = "/pricing";
-export const RETRY_WEBSOCKET_CONNECTION_AFTER = 5 * 60 * 1000; // 1000 is for ms;
+export const RETRY_WEBSOCKET_CONNECTION_AFTER = 3 * 60 * 1000; // 1000 is for ms;
 export const GLOB_TIME_TAKEN_THRESHOLD = 2;
 export const UPDATE_SYNCIGNORE_AFTER = 7 * 24 * 60 * 60 * 1000;  // 1 week
 export const IGNORE_ACQUIRED_LOCK_TIMEOUT = 5 * 1000;

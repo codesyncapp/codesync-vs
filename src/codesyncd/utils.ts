@@ -181,6 +181,7 @@ export class statusBarMsgs {
 		if (!fs.existsSync(this.settings.CONFIG_PATH)) return STATUS_BAR_MSGS.NO_CONFIG;
 		const repoPath = pathUtils.getRootPath();
 		const activeUsers = getActiveUsers();
+		const daemonError = CodeSyncState.get(CODESYNC_STATES.DAEMON_ERROR);
 		// No Valid account found
 		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
 		// Check plan limits
@@ -194,7 +195,7 @@ export class statusBarMsgs {
 		// No repo is opened
 		if (!repoPath) return activityAlertMsg || STATUS_BAR_MSGS.NO_REPO_OPEN;
 
-		const defaultMsg = activityAlertMsg || STATUS_BAR_MSGS.DEFAULT;
+		const defaultMsg = daemonError || activityAlertMsg || STATUS_BAR_MSGS.DEFAULT;
 
 		const subDirResult = checkSubDir(repoPath);
 		if (subDirResult.isSubDir) {

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
-import { API_ROUTES, NOTIFICATION, RETRY_TEAM_ACTIVITY_REQUEST_AFTER, STATUS_BAR_MSGS } from "../constants";
+import { API_ROUTES, ECONNREFUSED, NOTIFICATION, RETRY_TEAM_ACTIVITY_REQUEST_AFTER, STATUS_BAR_MSGS } from "../constants";
 import { viewActivityHandler } from '../handlers/commands_handler';
 import { IRepoInfo, IUser } from "../interface";
 import { CodeSyncLogger } from '../logger';
@@ -124,15 +124,23 @@ export class Alerts {
 		// Set time when request is sent
 		CodeSyncState.set(CODESYNC_STATES.TEAM_ACTIVITY_REQUEST_SENT_AT, new Date().getTime());
 		// Check if there has been some acitivty in past 24 hours
-		const json = await getTeamActivity(accessToken);
-		if (json.error) {
-			CodeSyncLogger.error("Error getting team activity", json.error);
+		const response = await getTeamActivity(accessToken);
+		if (response.error) {
+			CodeSyncLogger.error("Error getting team activity", response.error);
+			try {
+				if (response.error.toString().includes(ECONNREFUSED)) {
+					CodeSyncState.set(CODESYNC_STATES.DAEMON_ERROR, STATUS_BAR_MSGS.SERVER_DOWN);
+				}	
+			} catch (e) {
+				// 
+			}
 			return;
 		}
+		CodeSyncState.set(CODESYNC_STATES.DAEMON_ERROR, "");
 		// In case there is no activity
-		if (!json.activities) return;
+		if (!response.activities) return;
 		// Check if there is some recent activity to show
-		const hasRecentActivty = json.activities.some((repoInfo: IRepoInfo) => {
+		const hasRecentActivty = response.activities.some((repoInfo: IRepoInfo) => {
 			const lastSyncedAt = new Date(repoInfo.last_synced_at);
 			// Ignore activity after the "before"
 			if (lastSyncedAt > this.checkFor) return false;
@@ -151,7 +159,7 @@ export class Alerts {
 		let msg = NOTIFICATION.USER_ACTIVITY_ALERT;
 		let button = NOTIFICATION.REVIEW_PLAYBACK;
 		let logMsg = `User activity alert shown at ${new Date()}, user=${userEmail}`;
-		if (json.is_team_activity) {
+		if (response.is_team_activity) {
 			msg = NOTIFICATION.TEAM_ACTIVITY_ALERT;
 			button = NOTIFICATION.REVIEW_TEAM_PLAYBACK;
 			logMsg = `Team activity alert shown at ${new Date()}, user=${userEmail}`;
@@ -161,7 +169,7 @@ export class Alerts {
 			if (selection) return viewActivityHandler();
 		});
 		// Showing activity alert msg in the status bar as well
-		const statusBarMsg = json.is_team_activity ? STATUS_BAR_MSGS.TEAM_ACTIVITY_ALERT : STATUS_BAR_MSGS.USER_ACTIVITY_ALERT;
+		const statusBarMsg = response.is_team_activity ? STATUS_BAR_MSGS.TEAM_ACTIVITY_ALERT : STATUS_BAR_MSGS.USER_ACTIVITY_ALERT;
 		CodeSyncState.set(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG, statusBarMsg);
 		this.statusBarMsgsHandler.update(statusBarMsg);
 		// Update alert config for shown_at_vscode
