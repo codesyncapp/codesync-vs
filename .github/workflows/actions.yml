@@ -15,7 +15,7 @@ jobs:
         uses: jwalton/gh-find-current-pr@v1
         id: findPr
       - name: Code Coverage Report
-        uses: ArtiomTr/jest-coverage-report-action@v2.1.2
+        uses: ArtiomTr/jest-coverage-report-action@v2.2.4
         id: coverage
         with:
             package-manager: yarn

@@ -89,6 +89,7 @@ describe("bufferHandler", () => {
 
         CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, true);
         CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, true);
+        CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     });
 
     afterEach(() => {
