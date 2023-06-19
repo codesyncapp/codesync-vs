@@ -20,4 +20,4 @@ Simply install the plugin in your IDE and follow the steps. CodeSync supports bo
 
 ### What does a Code Playback look like?
 
-![Example View (Replaying your changes)](https://codesync-images.s3.amazonaws.com/codesync-intro.gif)
+![Repo Playback (Replaying your changes)](https://codesync-images.s3.amazonaws.com/playback-dark-theme.gif)

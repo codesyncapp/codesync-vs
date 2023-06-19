@@ -129,7 +129,7 @@ export class bufferHandler {
 				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
-			// Skip diffs that are in being iterated
+			// Skip diffs that are already being iterated
 			if (diffsBeingProcessed.has(filePath)) return false;
 
 			// If rel_path is ignoreable, only delete event should be allowed for that
