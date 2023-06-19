@@ -303,7 +303,7 @@
     "proper-lockfile": "^4.1.2",
     "run-parallel": "^1.2.0",
     "string-similarity": "^4.0.4",
-    "untildify": "^4.0.0",
+    "untildify": "^5.0.0",
     "websocket": "^1.0.34"
   },
   "repository": {
