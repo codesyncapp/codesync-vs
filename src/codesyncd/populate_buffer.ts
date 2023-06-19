@@ -222,7 +222,7 @@ class PopulateBuffer {
                 }
             }
             // If not handled in changesHandler and renameHandler, it must be new file
-            handler.handleNewFile(itemPath.file_path);
+            handler.handleNewFile(itemPath.file_path, true);
         }
     }
 

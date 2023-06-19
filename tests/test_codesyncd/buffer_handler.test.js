@@ -247,6 +247,7 @@ describe("bufferHandler", () => {
         fs.writeFileSync(diffFilePath, yaml.dump({user: 12345}));
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
+        await waitFor(1);
         expect(assertDiffsCount()).toBe(true);
     });
 

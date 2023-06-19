@@ -162,7 +162,7 @@ export class eventHandler {
 		});
 	}
 
-	handleNewFile = (_filePath: string) => {
+	handleNewFile = (_filePath: string, forceUpload=false) => {
 		if (this.repoIsNotSynced) return;
 		const filePath = pathUtils.normalizePath(_filePath);
 		// Do not continue if file does not exist
@@ -179,7 +179,7 @@ export class eventHandler {
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
 		const originalsPath = path.join(this.originalsRepoBranchPath, relPath);
 
-		if (!this.viaDaemon && fs.existsSync(shadowPath) || fs.existsSync(originalsPath)) return;
+		if (!forceUpload && (fs.existsSync(shadowPath) || fs.existsSync(originalsPath))) return;
 		
 		this.log(`FileCreated: ${filePath}`);
 

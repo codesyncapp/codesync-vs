@@ -3,7 +3,7 @@ import os from "os";
 import path from "path";
 
 import {IDiff, IDiffToSend} from "../../interface";
-import {cleanUpDeleteDiff, getDIffForDeletedFile, handleNewFileUpload} from "../utils";
+import {cleanUpDeleteDiff, getDIffForDeletedFile, getDiffsBeingProcessed, handleNewFileUpload, setDiffsBeingProcessed} from "../utils";
 import {generateSettings} from "../../settings";
 import {readYML} from "../../utils/common";
 import {CodeSyncLogger} from "../../logger";
@@ -52,7 +52,14 @@ export class DiffHandler {
         );
 
         // Clean up diff file
-        if (json.deleteDiff) this.cleanDiffFile();
+        if (json.deleteDiff) {
+            this.cleanDiffFile();
+            // Remove diff from diffsBeingProcessed
+            const diffsBeingProcessed = getDiffsBeingProcessed();
+            if (!diffsBeingProcessed.size) return;
+            diffsBeingProcessed.delete(this.diffFilePath);
+            setDiffsBeingProcessed(diffsBeingProcessed);
+        }
         
         if (!json.uploaded) return this.configJSON;
         
