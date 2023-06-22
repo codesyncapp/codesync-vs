@@ -82,6 +82,7 @@ export class SocketClient {
 
         this.client.on('connect', function (connection: any) {
             CodeSyncState.set(CODESYNC_STATES.DAEMON_ERROR, "");
+            CodeSyncState.set(CODESYNC_STATES.SOCKET_CONNECTED_AT, new Date().getTime());
             errorCount = 0;
             that.registerConnectionEvents(connection, canSendDiffs);
         });

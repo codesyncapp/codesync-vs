@@ -191,3 +191,5 @@ export const RETRY_WEBSOCKET_CONNECTION_AFTER = 3 * 60 * 1000; // 1000 is for ms
 export const GLOB_TIME_TAKEN_THRESHOLD = 2;
 export const UPDATE_SYNCIGNORE_AFTER = 7 * 24 * 60 * 60 * 1000;  // 1 week
 export const IGNORE_ACQUIRED_LOCK_TIMEOUT = 5 * 1000;
+export const FORCE_UPLOAD_FROM_DAEMON = DAY;  // 1 day
+export const FORCE_CONNECT_WEBSOCKET_AFTER = 30 * 60 * 1000; // 1000 is for ms;

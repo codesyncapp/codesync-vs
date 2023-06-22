@@ -19,7 +19,8 @@ export const CODESYNC_STATES = {
     DIFFS_BEING_PROCESSED: "diffsBeingProcessed",
     INSTANCE_UUID: "instanceUUID",
     DAEMON_ERROR: "daemonError",
-    BUFFER_HANDLER_LOGGED_AT: "bufferHandlerLoggedAt"
+    BUFFER_HANDLER_LOGGED_AT: "bufferHandlerLoggedAt",
+    SOCKET_CONNECTED_AT: "socketConnectedAt"
 };
 
 export class CodeSyncState {
