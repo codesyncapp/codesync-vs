@@ -23,6 +23,7 @@ import {
     shouldIgnorePath
 } from "../utils/common";
 import {
+    FORCE_UPLOAD_FROM_DAEMON,
     GLOB_TIME_TAKEN_THRESHOLD, 
     RUN_DELETE_HANDLER_AFTER, 
     RUN_POPULATE_BUFFER_AFTER, 
@@ -158,6 +159,7 @@ class PopulateBuffer {
         CodeSyncLogger.debug(`PopulateBuffer:init repo=${this.repoPath}, branch=${this.branch}, uuid=${this.instanceUUID}`);
         this.itemPaths = await this.initUtilsObj.getSyncablePaths();
         this.modifiedInPast = this.getModifiedInPast();
+        CodeSyncLogger.debug(`PopulateBuffer:init:files files=${this.itemPaths.length}, repo=${this.repoPath}, branch=${this.branch}`);
     }
 
     getModifiedInPast() {
@@ -171,7 +173,7 @@ class PopulateBuffer {
     }
 
     async run() {
-        CodeSyncLogger.debug(`PopulateBuffer:run repo=${this.repoPath}, branch=${this.branch}, files=${this.itemPaths.length}`);
+        CodeSyncLogger.debug(`PopulateBuffer:run repo=${this.repoPath}, branch=${this.branch}`);
         const handler = new eventHandler(this.repoPath, "", true);
         for (const itemPath of this.itemPaths) {
             let isRename = false;
@@ -222,7 +224,8 @@ class PopulateBuffer {
                 }
             }
             // If not handled in changesHandler and renameHandler, it must be new file
-            handler.handleNewFile(itemPath.file_path, true);
+            const forceUpload = Boolean(itemPath.created_at && (new Date().getTime() - itemPath.created_at) > FORCE_UPLOAD_FROM_DAEMON);
+            handler.handleNewFile(itemPath.file_path, forceUpload);
         }
     }
 

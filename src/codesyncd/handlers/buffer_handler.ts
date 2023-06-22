@@ -6,7 +6,7 @@ import { glob } from 'glob';
 import {getDiffsBeingProcessed, isValidDiff} from '../utils';
 import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
-import {DAY, DIFF_FILES_PER_ITERATION, RETRY_WEBSOCKET_CONNECTION_AFTER} from "../../constants";
+import {DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER} from "../../constants";
 import {generateSettings} from "../../settings";
 import {getActiveUsers, getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
@@ -205,12 +205,19 @@ export class bufferHandler {
 			CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_LOGGED_AT, new Date().getTime());
 		}
 		if (isRunning) return;
-		
+
+		let canConnect = true;
 		const errorOccurredAt = CodeSyncState.get(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT);
-		const canConnect = !errorOccurredAt || (new Date().getTime() - errorOccurredAt) > RETRY_WEBSOCKET_CONNECTION_AFTER;
-		if (!canConnect) {
-			return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+		const lastConnectedAt = CodeSyncState.get(CODESYNC_STATES.SOCKET_CONNECTED_AT);
+
+		if (errorOccurredAt && lastConnectedAt) {
+			canConnect = (new Date().getTime() - lastConnectedAt) > FORCE_CONNECT_WEBSOCKET_AFTER;
+			if (!canConnect) {
+				canConnect = (new Date().getTime() - errorOccurredAt) > RETRY_WEBSOCKET_CONNECTION_AFTER;
+			}
 		}
+
+		if (!canConnect) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 
 		CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, true);
 		
