@@ -10,7 +10,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.20.0'
-          cache: 'yarn'
       - name: Find PR number 
         uses: jwalton/gh-find-current-pr@v1.3.2
         id: findPr
@@ -21,6 +20,7 @@ jobs:
             package-manager: yarn
             output: comment
             prnumber: ${{ steps.findPr.outputs.number }}
+            test-script: yarn test
       - name: Pre Publish
         run: yarn vscode:prepublish
   Windows:
@@ -30,7 +30,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.20.0'
-          cache: 'yarn'
       - name: Install dependencies
         run: yarn install
       - name: Run Tests
