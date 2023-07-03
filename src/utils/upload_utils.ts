@@ -149,9 +149,7 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 		});
 		// Actual file has to be appended last.
 		formData.append("file", content);
-		console.log("presignedUrl", presignedUrl);
 		formData.submit(presignedUrl.url, function(err, res) {
-			console.log("ERROR", err, res);
 			if (err) resolve({error: err});
 			resolve({error: null});
 		});
