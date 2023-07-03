@@ -135,7 +135,7 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 		};
 	}
 
-	return new Promise((resolve, reject) => {
+	return await new Promise((resolve, reject) => {
 		// reject raises an expcetion so not using it
 		let content;
 		try {
@@ -151,10 +151,8 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 		formData.append("file", content);
 		console.log("presignedUrl", presignedUrl);
 		formData.submit(presignedUrl.url, function(err, res) {
-			console.log("ERROR", err);
-			if (err) {
-				resolve({error: err});
-			}
+			console.log("ERROR", err, res);
+			if (err) resolve({error: err});
 			resolve({error: null});
 		});
 	});
