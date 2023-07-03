@@ -34,3 +34,14 @@ jobs:
         run: yarn install
       - name: Run Tests
         run: yarn test
+  MacOS:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.20.0'
+      - name: Install dependencies
+        run: yarn install
+      - name: Run Tests
+        run: yarn test

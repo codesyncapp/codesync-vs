@@ -59,6 +59,7 @@ describe("getSyncablePaths",  () => {
         const paths = await initUtilsObj.getSyncablePaths();
         // 1 is .syncignore, other is file.js
         expect(paths).toHaveLength(2);
+        paths.sort((a, b) => a.size - b.size);
         expect(paths[0].rel_path).toStrictEqual("file.js");
         expect(paths[0].is_binary).toBe(false);
         expect(paths[0].file_path).toStrictEqual(filePath);

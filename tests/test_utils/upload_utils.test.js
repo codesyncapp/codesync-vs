@@ -143,7 +143,7 @@ describe('uploadFileTos3', () => {
 
     test('InValid response', async () => {
         fs.writeFileSync(filePath, "12345");
-        const resp = await uploadFileTos3(filePath, {url: "url", fields: {}});
+        const resp = await uploadFileTos3(filePath, {url: "http://localhost:8005", fields: {}});
         expect(resp.error).toBeTruthy();
     });
 
@@ -209,7 +209,7 @@ describe('uploadFileToServer', () => {
     test('InValid response', async () => {
         fs.rmSync(filePath);
         fs.writeFileSync(filePath, "Dummy Content Is In The File");
-        const response = {id: 1234, url: {url: "url", fields: {}}};
+        const response = {id: 1234, url: {url: "http://localhost:8005", fields: {}}};
         fetchMock.mockResponseOnce(JSON.stringify(response), { status: 500 });
         const res = await uploadFileToServer("ACCESS_TOKEN", 6789, DEFAULT_BRANCH, filePath,
             "file.txt", formatDatetime());
