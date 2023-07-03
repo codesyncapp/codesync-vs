@@ -209,7 +209,7 @@ describe('uploadFileToServer', () => {
     test.only('InValid response', async () => {
         fs.rmSync(filePath);
         fs.writeFileSync(filePath, "Dummy Content Is In The File");
-        const response = {id: 1234, url: {url: "", fields: {}}};
+        const response = {id: 1234, url: {url: "http://localhost:8000", fields: {}}};
         fetchMock.mockResponseOnce(JSON.stringify(response), { status: 500 });
         const res = await uploadFileToServer("ACCESS_TOKEN", 6789, DEFAULT_BRANCH, filePath,
             "file.txt", formatDatetime());
