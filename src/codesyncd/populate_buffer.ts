@@ -25,6 +25,7 @@ import {
 import {
     FORCE_UPLOAD_FROM_DAEMON,
     GLOB_TIME_TAKEN_THRESHOLD, 
+    BRANCH_SYNC_TIMEOUT, 
     RUN_DELETE_HANDLER_AFTER, 
     RUN_POPULATE_BUFFER_AFTER, 
     RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER, 
@@ -43,8 +44,12 @@ export const populateBuffer = async (viaDaemon=true) => {
 };
 
 export const populateBufferForMissedEvents = async (readyRepos: any) => {
+    // Return if populateBuffer is already running
     const isRunning = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_RUNNING);
     if (isRunning) return;
+    // Return if any branch is being synced
+    const isBranchSyncInProcess = CodeSyncState.canSkipRun(CODESYNC_STATES.IS_SYNCING_BRANCH, BRANCH_SYNC_TIMEOUT);
+    if (isBranchSyncInProcess) return;
     CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_RUNNING, true);
     const currentRepoPath = pathUtils.getRootPath();
     for (const repoPath of Object.keys(readyRepos)) {
@@ -371,6 +376,11 @@ export const detectBranchChange = async () => {
             continue;
         }
 
+		// Check if branch is already being synced, skip it
+		const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${repoPath}:${branch}`;
+		const isSyncInProcess = CodeSyncState.canSkipRun(syncingBranchKey, BRANCH_SYNC_TIMEOUT);
+		if (isSyncInProcess) continue;
+
         const initUtilsObj = new initUtils(repoPath, true);
         let uploaded = false; 
 
@@ -381,7 +391,7 @@ export const detectBranchChange = async () => {
             const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
             if (shouldSyncBranch) {
                 const itemPaths = await initUtilsObj.getSyncablePaths();
-                uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
+                uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email);
                 if (!uploaded) continue;    
             }
             // By default, add repo to readyRepos
@@ -395,7 +405,7 @@ export const detectBranchChange = async () => {
         if (originalsRepoExists) {
             // init has been called, now see if we can upload the repo/branch
             const itemPaths = await initUtilsObj.getSyncablePaths();
-            uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
+            uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email);
         } else {
             const handler = new initHandler(repoPath, accessToken, true);
             uploaded = await handler.connectRepo();

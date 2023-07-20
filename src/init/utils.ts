@@ -14,7 +14,7 @@ import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload } from '../interface';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
-import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, RETRY_BRANCH_SYNC_AFTER } from '../constants';
+import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT } from '../constants';
 import { getGlobIgnorePatterns, isRepoActive, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
@@ -32,12 +32,6 @@ export class initUtils {
 		this.settings = generateSettings();
 		this.syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
 		this.defaultIgnorePatterns = getDefaultIgnorePatterns();
-	}
-
-	isBranchSyncInProcess (syncingBranchKey: string) {
-		const branchSyncStartedAt = CodeSyncState.get(syncingBranchKey);
-		const isSyncInProcess = branchSyncStartedAt && (new Date().getTime() - branchSyncStartedAt) < RETRY_BRANCH_SYNC_AFTER;
-		return isSyncInProcess;
 	}
 
 	async getSyncablePaths () {
@@ -171,15 +165,15 @@ export class initUtils {
 			tasks,
 			// optional callback
 			function (err, results) {
-				CodeSyncLogger.debug(`Branch=${branch} upload completed`);
+				CodeSyncLogger.debug(`Branch=${branch} upload callback`);
 				// the results array will equal ['one','two'] even though
 				// the second function had a shorter timeout.
-				// Reset key for syncingBranch
-				CodeSyncState.set(syncingBranchKey, false);
 				if (err) {
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-ignore
 					CodeSyncLogger.error("uploadRepoToS3 failed: ", err);
+					CodeSyncState.set(syncingBranchKey, false);
+					CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
 					return;
 				}
 				// delete .originals repo
@@ -199,6 +193,10 @@ export class initUtils {
 						}
 					});
 				}
+				// Reset key for syncingBranch
+				CodeSyncState.set(syncingBranchKey, false);
+				CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
+				CodeSyncLogger.debug(`Branch=${branch} upload completed`);
 		});
 	}
 
@@ -242,12 +240,13 @@ export class initUtils {
 		}
 
 		// Check if branch is already being synced, skip it
-		const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${repoName}:${branch}`;
-		const isSyncInProcess = this.isBranchSyncInProcess(syncingBranchKey);
+		const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${this.repoPath}:${branch}`;
+		const isSyncInProcess = CodeSyncState.canSkipRun(syncingBranchKey, BRANCH_SYNC_TIMEOUT);
 		if (isSyncInProcess) return false;
 
 		// Set key here that Branch is being synced
 		CodeSyncState.set(syncingBranchKey, new Date().getTime());
+		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, new Date().getTime());
 		const instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 		CodeSyncLogger.info(`Uploading branch=${branch}, repo=${this.repoPath}, uuid=${instanceUUID}`);
 
