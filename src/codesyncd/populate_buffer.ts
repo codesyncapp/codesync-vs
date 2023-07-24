@@ -39,6 +39,9 @@ import { removeFile } from "../utils/file_utils";
 
 export const populateBuffer = async (viaDaemon=true) => {
     if (!viaDaemon) return;
+    // Return if any branch is being synced
+    const isBranchSyncInProcess = CodeSyncState.canSkipRun(CODESYNC_STATES.IS_SYNCING_BRANCH, BRANCH_SYNC_TIMEOUT);
+    if (isBranchSyncInProcess) return;
     const readyRepos = await detectBranchChange();
     await populateBufferForMissedEvents(readyRepos);
 };
@@ -47,9 +50,6 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
     // Return if populateBuffer is already running
     const isRunning = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_RUNNING);
     if (isRunning) return;
-    // Return if any branch is being synced
-    const isBranchSyncInProcess = CodeSyncState.canSkipRun(CODESYNC_STATES.IS_SYNCING_BRANCH, BRANCH_SYNC_TIMEOUT);
-    if (isBranchSyncInProcess) return;
     CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_RUNNING, true);
     const currentRepoPath = pathUtils.getRootPath();
     for (const repoPath of Object.keys(readyRepos)) {

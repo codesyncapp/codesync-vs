@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.28.2] - 2023-07-24
+- Upgraded couple packagxes, downgraded glob to 9.3.5 since tests are unable to run due to ESM changes
+- If branch sync is in progress, not running populateBuffer, including detectBranchChange
+
 ## [3.28.1] - 2023-07-21
 - Upgraded couple packagxes, downgraded glob to 9.3.5 since tests are unable to run due to ESM changes
 - If branch sync is in progress, not running populateBuffer. Using branch sync timeout to be 5 minutes.
