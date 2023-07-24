@@ -12,6 +12,7 @@ export const CODESYNC_STATES = {
     PRICING_URL: "pricingUrl",
     REQUEST_SENT_AT: "requestSentAt",
     SYNCING_BRANCH: "syncingBranch",
+    IS_SYNCING_BRANCH: "isSyncingBranch",
     TEAM_ACTIVITY_REQUEST_SENT_AT: "teamActivtyRequestSentAt",
     CAN_AVAIL_TRIAL: "canAvailTrial",
     STATUS_BAR_ACTIVITY_ALERT_MSG: "statusBarActivityAlertMsg",

@@ -63,7 +63,7 @@ export class bufferHandler {
 	defaultIgnorePatterns: string[];
 	instanceUUID: string;
 	// Log run msg after 2 minutes
-	LOG_BUFFER_HANDLER_RUN_AFTER = 2 * 60 * 1000;
+	LOG_BUFFER_HANDLER_RUN_AFTER = 5 * 60 * 1000;
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		this.statusBarItem = statusBarItem;
