@@ -137,6 +137,7 @@ export class initUtils {
 		const filePathAndURLs =  uploadResponse.urls;
 		const uploaderUtils = new s3UploaderUtils();
 		uploaderUtils.saveURLs(this.repoPath, branch, filePathAndURLs);
+		CodeSyncLogger.debug(`Saved s3 URLs, branch=${branch} repo=${this.repoPath}`);
 		// Reset state values
 		CodeSyncState.set(syncingBranchKey, false);
 		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);

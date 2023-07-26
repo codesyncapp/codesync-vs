@@ -90,12 +90,15 @@ export const generateSettings = () => {
         ALERTS: path.join(rootRepo, "alerts.yml")
     };
 
+    const DATABASE_FILE_PATH = path.join(rootRepo, "codesyncdb.db");
+
     return {
         ...systemDirectories,
         ...lockFiles,
         ...alerts,
         deprecatedFiles: [
             systemDirectories.SEQUENCE_TOKEN_PATH
-        ]
+        ],
+        DATABASE_FILE_PATH
     };
 };
