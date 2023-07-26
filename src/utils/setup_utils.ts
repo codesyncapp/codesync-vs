@@ -1,6 +1,9 @@
 import fs from 'fs';
+import path from 'path';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
+import initSqlJs from 'sql.js';
+
 import {
 	COMMAND,
 	getDirectoryIsSyncedMsg,
@@ -83,6 +86,7 @@ export const createSystemDirectories = () => {
 	// Clean content of config.yml
 	const config = readYML(settings.CONFIG_PATH);
 	if (!config.repos) fs.writeFileSync(settings.CONFIG_PATH, defaultData[settings.CONFIG_PATH]);
+
 	return settings;
 };
 
@@ -136,6 +140,8 @@ const generateRandom = (min = 0, max = 100)  => {
 
 export const setupCodeSync = async (repoPath: string) => {
 	const settings = createSystemDirectories();
+	// Setup Database
+	await setupDatabase();
 	await createOrUpdateSyncignore();
 	await addPluginUser();
 	const userFilePath = settings.USER_PATH;
@@ -280,4 +286,28 @@ export const uuidv4 = () => {
         }
         return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
+};
+
+export const setupDatabase = async () => {
+	const settings = generateSettings();
+	if (!fs.existsSync(settings.DATABASE_FILE_PATH)) {
+		console.log("Creating DB");
+		fs.openSync(settings.DATABASE_FILE_PATH, "w+");
+	}
+	const filebuffer = fs.readFileSync(settings.DATABASE_FILE_PATH);
+	const SQL = await initSqlJs({
+		// Required to load the wasm binary asynchronously. Of course, you can host it wherever you want
+		// You can omit locateFile completely when running in node
+		locateFile: file => path.join(__dirname, ".." , `node_modules/sql.js/dist/${file}`)
+	});
+	console.log("db", 1);
+	const db = new SQL.Database(filebuffer);
+	console.log("db", 2);
+	try {
+		const res = db.exec("SELECT * FROM hello");
+	} catch (e) {
+		console.log("Creating table");
+		// Testing a comment with Latest Sanic version on Server
+		// How about now with intermediate changes
+	}
 };
