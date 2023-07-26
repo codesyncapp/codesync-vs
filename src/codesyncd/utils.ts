@@ -9,6 +9,7 @@ import { IDiff } from "../interface";
 import {
 	COMMAND,
 	DIFF_SIZE_LIMIT,
+	HTTP_STATUS_CODES,
 	REQUIRED_DIFF_KEYS,
 	REQUIRED_DIR_RENAME_DIFF_KEYS,
 	REQUIRED_FILE_RENAME_DIFF_KEYS,
@@ -75,10 +76,11 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 
 	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, addedAt);
 	if (response.error) {
-		CodeSyncLogger.error(`Error uploading file: ${response.error}`);
+		CodeSyncLogger.error(`Error uploading file=${relPath}: ${response.error}`);
+		const isClientError = [HTTP_STATUS_CODES.INVALID_USAGE, HTTP_STATUS_CODES.FORBIDDEN, HTTP_STATUS_CODES.NOT_FOUND].includes(response.statusCode);
 		return {
 			uploaded: false,
-			deleteDiff: response.statusCode === 404,
+			deleteDiff: isClientError,
 			config: configJSON
 		};
 	}
