@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.29.0] - 2023-07-26
+- Handling 400, 403, 404 status codes for file upload endpoint and deleting diff in this case
+
 ## [3.28.2] - 2023-07-24
 - Upgraded couple packagxes, downgraded glob to 9.3.5 since tests are unable to run due to ESM changes
 - If branch sync is in progress, not running populateBuffer, including detectBranchChange

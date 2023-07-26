@@ -193,3 +193,9 @@ export const UPDATE_SYNCIGNORE_AFTER = 7 * 24 * 60 * 60 * 1000;  // 1 week
 export const IGNORE_ACQUIRED_LOCK_TIMEOUT = 5 * 1000;
 export const FORCE_UPLOAD_FROM_DAEMON = DAY;  // 1 day
 export const FORCE_CONNECT_WEBSOCKET_AFTER = 30 * 60 * 1000; // 1000 is for ms;
+
+export const HTTP_STATUS_CODES = {
+	INVALID_USAGE: 400,
+	FORBIDDEN: 403,
+	NOT_FOUND: 404
+};
