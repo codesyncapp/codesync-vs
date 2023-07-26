@@ -283,6 +283,7 @@
     "@types/node-fetch": "^2.5.12",
     "@types/proper-lockfile": "^4.1.2",
     "@types/run-parallel": "^1.1.0",
+    "@types/sql.js": "^1.4.4",
     "@types/string-similarity": "^4.0.0",
     "aws-sdk": "^2.1409.0",
     "current-git-branch": "^1.1.0",
@@ -301,6 +302,7 @@
     "node-fetch": "^3.3.0",
     "proper-lockfile": "^4.1.2",
     "run-parallel": "^1.2.0",
+    "sql.js": "^1.8.0",
     "string-similarity": "^4.0.4",
     "untildify": "^5.0.0",
     "websocket": "^1.0.34"

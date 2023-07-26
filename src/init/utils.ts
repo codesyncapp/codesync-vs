@@ -130,7 +130,7 @@ export class initUtils {
 		}
 	}
 
-	saveFileIds(branch: string, token: string, userEmail: string, uploadResponse: any) {
+	saveFileIds(branch: string, userEmail: string, uploadResponse: any) {
 		// Save file IDs, repoId and email against repo path
 		const repoId = uploadResponse.repo_id;
 		const filePathAndId = uploadResponse.file_path_and_id;
@@ -294,7 +294,7 @@ export class initUtils {
 		this.saveSequenceTokenFile(user.email);
 
 		// Save file paths and IDs
-		this.saveFileIds(branch, token, user.email, json.response);
+		this.saveFileIds(branch, user.email, json.response);
 
 		CodeSyncLogger.debug(`Saved file IDs, uploading branch=${branch} to s3`);
 		// Upload to s3
