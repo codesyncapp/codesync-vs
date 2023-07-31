@@ -14,7 +14,7 @@ import {
     TEST_REPO_RESPONSE,
     TEST_USER,
     randomBaseRepoPath,
-    randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, getSeqTokenFilePath, Config, addUser, waitFor,
+    randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, Config, addUser, waitFor,
     writeTestRepoFiles,
     NESTED_PATH
 } from "../helpers/helpers";
@@ -210,40 +210,6 @@ describe("saveIamUser",  () => {
     });
 });
 
-describe("saveSequenceTokenFile",  () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const repoPath = randomRepoPath();
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-    const sequenceTokenFileData = {};
-    sequenceTokenFileData[TEST_EMAIL] = "";
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-        untildify.mockReturnValue(baseRepoPath);
-        fs.mkdirSync(baseRepoPath, {recursive: true});
-    });
-
-    afterEach(() => {
-        fs.rmSync(baseRepoPath, { recursive: true, force: true });
-    });
-
-    test("With no sequence_token.yml",  () => {
-        const initUtilsObj = new initUtils(repoPath);
-        initUtilsObj.saveSequenceTokenFile(TEST_EMAIL);
-        expect(fs.existsSync(sequenceTokenFilePath)).toBe(true);
-        const users = readYML(sequenceTokenFilePath);
-        expect(users[TEST_EMAIL]).toStrictEqual("");
-    });
-
-    test("User not in user.yml",  () => {
-        const initUtilsObj = new initUtils(repoPath);
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(sequenceTokenFileData));
-        initUtilsObj.saveSequenceTokenFile(ANOTHER_TEST_EMAIL);
-        expect(fs.existsSync(sequenceTokenFilePath)).toBe(true);
-        const users = readYML(sequenceTokenFilePath);
-        expect(users[ANOTHER_TEST_EMAIL]).toStrictEqual("");
-    });
-});
 
 describe("saveFileIds",  () => {
     const baseRepoPath = randomBaseRepoPath();
@@ -267,7 +233,7 @@ describe("saveFileIds",  () => {
 
     test("Should save file IDs",  () => {
         const initUtilsObj = new initUtils(repoPath);
-        initUtilsObj.saveFileIds(DEFAULT_BRANCH, "ACCESS_TOKEN", TEST_EMAIL, TEST_REPO_RESPONSE);
+        initUtilsObj.saveFileIds(DEFAULT_BRANCH, TEST_EMAIL, TEST_REPO_RESPONSE);
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
     });
@@ -279,7 +245,6 @@ describe("uploadRepo",  () => {
     let syncIgnorePath;
     let configPath;
     let userFilePath;
-    let sequenceTokenFilePath;
     const configData = {repos: {}};
 
     beforeEach(() => {
@@ -297,7 +262,6 @@ describe("uploadRepo",  () => {
         writeTestRepoFiles(repoPath);
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
         syncIgnorePath = getSyncIgnoreFilePath(repoPath);
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
@@ -362,12 +326,8 @@ describe("uploadRepo",  () => {
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
 
-        // Verify sequence_token.yml
-        let users = readYML(sequenceTokenFilePath);
-        expect(users[TEST_EMAIL]).toStrictEqual("");
-
         // verify user.yml
-        users = readYML(userFilePath);
+        const users = readYML(userFilePath);
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -409,12 +369,8 @@ describe("uploadRepo",  () => {
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
 
-        // Verify sequence_token.yml
-        let users = readYML(sequenceTokenFilePath);
-        expect(users[TEST_EMAIL]).toStrictEqual("");
-
         // verify user.yml
-        users = readYML(userFilePath);
+        const users = readYML(userFilePath);
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         // Verify notification msg
@@ -444,7 +400,6 @@ describe("uploadRepo",  () => {
     test("Error in uploadRepoToServer",  async () => {
         // Write these files as putLogEvent is called when error occurs
         fs.writeFileSync(userFilePath, yaml.dump({}));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
 
         const initUtilsObj = new initUtils(repoPath);
         const itemPaths = await initUtilsObj.getSyncablePaths();
@@ -462,9 +417,6 @@ describe("uploadRepo",  () => {
         const config = readYML(configPath);
         expect(DEFAULT_BRANCH in config.repos[repoPath].branches[DEFAULT_BRANCH]).toBe(false);
 
-        // Verify sequence_token.yml
-        const sequenceTokenUsers = readYML(sequenceTokenFilePath);
-        expect(TEST_EMAIL in sequenceTokenUsers).toBe(false);
         // verify user.yml
         const users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(false);

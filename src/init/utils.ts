@@ -115,22 +115,7 @@ export class initUtils {
 		fs.writeFileSync(this.settings.USER_PATH, yaml.dump(users));
 	}
 
-	saveSequenceTokenFile (email: string) {
-		// Save email for sequence_token
-		if (!fs.existsSync(this.settings.SEQUENCE_TOKEN_PATH)) {
-			const users = <any>{};
-			users[email] = "";
-			fs.writeFileSync(this.settings.SEQUENCE_TOKEN_PATH, yaml.dump(users));
-		} else {
-			const users = readYML(this.settings.SEQUENCE_TOKEN_PATH) || {};
-			if (!(email in users)) {
-				users[email] = "";
-				fs.writeFileSync(this.settings.SEQUENCE_TOKEN_PATH, yaml.dump(users));
-			}
-		}
-	}
-
-	saveFileIds(branch: string, token: string, userEmail: string, uploadResponse: any) {
+	saveFileIds(branch: string, userEmail: string, uploadResponse: any) {
 		// Save file IDs, repoId and email against repo path
 		const repoId = uploadResponse.repo_id;
 		const filePathAndId = uploadResponse.file_path_and_id;
@@ -141,6 +126,7 @@ export class initUtils {
 		configRepo.id = repoId;
 		configRepo.email = userEmail;
 		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(configJSON));
+		CodeSyncLogger.debug(`Saved file IDs, uploading branch=${branch} to s3`);
 	}
 
 	async uploadRepoToS3(branch: string, uploadResponse: any, syncingBranchKey: string) {
@@ -290,13 +276,9 @@ export class initUtils {
 		// Save IAM credentials
 		this.saveIamUser(user);
 
-		// Save email for sequence_token
-		this.saveSequenceTokenFile(user.email);
-
 		// Save file paths and IDs
-		this.saveFileIds(branch, token, user.email, json.response);
+		this.saveFileIds(branch, user.email, json.response);
 
-		CodeSyncLogger.debug(`Saved file IDs, uploading branch=${branch} to s3`);
 		// Upload to s3
 		await this.uploadRepoToS3(branch, json.response, syncingBranchKey);
 

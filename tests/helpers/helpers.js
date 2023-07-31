@@ -46,10 +46,6 @@ export function getUserFilePath(baseRepoPath) {
     return path.join(baseRepoPath, "user.yml");
 }
 
-export function getSeqTokenFilePath(baseRepoPath) {
-    return path.join(baseRepoPath, "sequence_token.yml");
-}
-
 export function getSyncIgnoreFilePath(repoPath) {
     return path.join(repoPath, ".syncignore");
 }

@@ -16,7 +16,6 @@ import {
     DIFF_DATA,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
-    getSeqTokenFilePath,
     getUserFilePath,
     INVALID_TOKEN_JSON,
     FILE_UPLOAD_400,
@@ -98,7 +97,6 @@ describe("handleNewFileUpload",  () => {
     const configData = {repos: {}};
     let configPath;
     let userFilePath;
-    let sequenceTokenFilePath;
 
     let repoPath;
     let filePath;
@@ -118,7 +116,6 @@ describe("handleNewFileUpload",  () => {
         createSystemDirectories();
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
         untildify.mockReturnValue(baseRepoPath);
         
         filePath = path.join(repoPath, "file.js");
@@ -126,7 +123,6 @@ describe("handleNewFileUpload",  () => {
         originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 
         fs.writeFileSync(userFilePath, yaml.dump({}));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
         configData.repos[repoPath] = {branches: {}};
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
         fs.writeFileSync(configPath, yaml.dump(configData));

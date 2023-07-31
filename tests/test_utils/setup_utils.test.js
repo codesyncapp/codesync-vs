@@ -47,7 +47,6 @@ describe("createSystemDirectories",  () => {
         expect(lsResult.includes(".deleted")).toBe(true);
         expect(lsResult.includes(".locks")).toBe(true);
         expect(lsResult.includes("config.yml")).toBe(true);
-        expect(lsResult.includes("sequence_token.yml")).toBe(true);
     });
 });
 
@@ -113,7 +112,6 @@ describe("setupCodeSync",  () => {
         expect(lsResult.includes(".deleted")).toBe(true);
         expect(lsResult.includes(".locks")).toBe(true);
         expect(lsResult.includes("config.yml")).toBe(true);
-        expect(lsResult.includes("sequence_token.yml")).toBe(true);
         // should return port number
         expect(port).toBeTruthy();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
