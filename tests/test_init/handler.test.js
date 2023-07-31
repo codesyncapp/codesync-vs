@@ -11,7 +11,6 @@ import {
     Config,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
-    getSeqTokenFilePath,
     getUserFilePath,
     INVALID_TOKEN_JSON,
     randomBaseRepoPath,
@@ -211,7 +210,6 @@ describe("initHandler: Syncing Branch", () => {
     let repoPath;
     let configPath;
     let userFilePath;
-    let sequenceTokenFilePath;
     const fileName = "file_1.js";
     let filePath;
     let pathUtilsObj;
@@ -235,7 +233,6 @@ describe("initHandler: Syncing Branch", () => {
         const configData = { repos: {} };
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
         fs.writeFileSync(configPath, yaml.dump(configData));
         writeTestRepoFiles(repoPath);
     });
@@ -283,11 +280,8 @@ describe("initHandler: Syncing Branch", () => {
         expect(DEFAULT_BRANCH in config.repos[repoPath].branches).toBe(true);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH][fileName]).toBe(TEST_REPO_RESPONSE.file_path_and_id[fileName]);
-        // Verify sequence_token.yml
-        let users = readYML(sequenceTokenFilePath);
-        expect(users[TEST_EMAIL]).toStrictEqual("");
         // verify user.yml
-        users = readYML(userFilePath);
+        const users = readYML(userFilePath);
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);

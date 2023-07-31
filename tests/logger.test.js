@@ -1,19 +1,21 @@
 import fs from "fs";
 import yaml from "js-yaml";
-import AWS from "aws-sdk";
+import { 
+	CloudWatchLogsClient,
+    PutLogEventsCommand
+} from "@aws-sdk/client-cloudwatch-logs";
+
 import untildify from "untildify";
 
-import {getSeqTokenFilePath, getUserFilePath, randomBaseRepoPath, TEST_EMAIL, TEST_USER} from "./helpers/helpers";
+import {getUserFilePath, randomBaseRepoPath, TEST_EMAIL, TEST_USER} from "./helpers/helpers";
 import {LOGS_METADATA, PLUGIN_USER} from "../src/settings";
-import {CodeSyncLogger, updateSequenceToken} from "../src/logger";
-import {readYML} from "../src/utils/common";
+import {CodeSyncLogger} from "../src/logger";
 import {addPluginUser} from "../src/utils/setup_utils";
 
 
 describe("putLogEvent",  () => {
     const baseRepoPath = randomBaseRepoPath("putLogEvent");
     const userFilePath = getUserFilePath(baseRepoPath);
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
 
     beforeEach(() => {
         fetch.resetMocks();
@@ -21,7 +23,6 @@ describe("putLogEvent",  () => {
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.writeFileSync(userFilePath, yaml.dump({}));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
     });
 
     afterEach(() => {
@@ -30,28 +31,34 @@ describe("putLogEvent",  () => {
 
     test("No user.yml", () => {
         CodeSyncLogger.error("Error message");
-        expect(AWS.CloudWatchLogs.mock.instances).toHaveLength(0);
-        const sequenceTokenUsers = readYML(sequenceTokenFilePath);
-        expect(sequenceTokenUsers).toStrictEqual({});
+        expect(CloudWatchLogsClient.mock.instances).toHaveLength(0);
     });
 
-    test("No User in user.yml", async () => {
+    test("No User in user.yml, use system user", async () => {
+        const errMsg = "Error message";
         fetchMock.mockResponseOnce(JSON.stringify({
             IAM_ACCESS_KEY: "IAM_ACCESS_KEY",
             IAM_SECRET_KEY: "IAM_SECRET_KEY"
         }));
         await addPluginUser();
-        CodeSyncLogger.error("Error message");
-        expect(AWS.CloudWatchLogs.mock.calls[0][0]).toStrictEqual({
+        CodeSyncLogger.error(errMsg);
+        expect(CloudWatchLogsClient.mock.calls[0][0]).toStrictEqual({
             accessKeyId: "IAM_ACCESS_KEY",
             secretAccessKey: "IAM_SECRET_KEY",
             region: LOGS_METADATA.AWS_REGION
         });
-        const sequenceTokenUsers = readYML(sequenceTokenFilePath);
-        expect(sequenceTokenUsers).toStrictEqual({});
+        expect(PutLogEventsCommand).toHaveBeenCalledTimes(1);
+        const params = PutLogEventsCommand.mock.calls[0][0];
+        expect(params.logGroupName).toStrictEqual(LOGS_METADATA.GROUP);
+        expect(params.logStreamName).toStrictEqual(PLUGIN_USER.logStream);
+        const CWMsg = JSON.parse(params.logEvents[0].message);
+        ["msg", "type", "source", "version", "platform", "mac_address"].forEach(key => {
+            expect(key in CWMsg).toBe(true);
+        });
+        expect(CWMsg.msg).toStrictEqual(errMsg);
     });
 
-    test("1 user as default",() => {
+    test("Log with userEmail", async () => {
         const userFileData = {};
         userFileData[TEST_USER.email] = {
             access_key: TEST_USER.iam_access_key,
@@ -60,53 +67,21 @@ describe("putLogEvent",  () => {
         };
         fs.writeFileSync(userFilePath, yaml.dump(userFileData));
 
-        CodeSyncLogger.error("Error message");
-
-        const sequenceTokenUsers = readYML(sequenceTokenFilePath);
-        expect(sequenceTokenUsers).toStrictEqual({});
-    });
-
-    test("Log with userEmail", () => {
-        const userFileData = {};
-        userFileData[TEST_USER.email] = {
-            access_key: TEST_USER.iam_access_key,
-            secret_key: TEST_USER.iam_secret_key,
-        };
-        fs.writeFileSync(userFilePath, yaml.dump(userFileData));
-
-        CodeSyncLogger.error("Error message", "", TEST_EMAIL);
-
-        const sequenceTokenUsers = readYML(sequenceTokenFilePath);
-        expect(sequenceTokenUsers).toStrictEqual({});
-    });
-
-    test("With Sequence Token and user email",() => {
-        const userFileData = {};
-        userFileData[TEST_USER.email] = {
-            access_key: TEST_USER.iam_access_key,
-            secret_key: TEST_USER.iam_secret_key,
-        };
-        fs.writeFileSync(userFilePath, yaml.dump(userFileData));
-
-        const users = {};
-        users[TEST_EMAIL] = "Sequence Token";
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(users));
-
-        CodeSyncLogger.error("Error message", "", TEST_USER.email);
-
-        const sequenceTokenUsers = readYML(sequenceTokenFilePath);
-        expect(sequenceTokenUsers).toStrictEqual(users);
-    });
-
-    test("afterSuccessfullyLogged",() => {
-        const nextSequenceToken = "NEXT SEQUENCE TOKEN";
-        const users = {};
-        users[TEST_EMAIL] = "Sequence Token";
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(users));
-
-        updateSequenceToken(TEST_EMAIL, nextSequenceToken);
-
-        const sequenceTokenUsers = readYML(sequenceTokenFilePath);
-        expect(sequenceTokenUsers[TEST_EMAIL]).toStrictEqual(nextSequenceToken);
+        const errMsg = "Error message";
+        await CodeSyncLogger.error(errMsg, "", TEST_EMAIL);
+        expect(CloudWatchLogsClient.mock.calls[0][0]).toStrictEqual({
+            accessKeyId: TEST_USER.iam_access_key,
+            secretAccessKey: TEST_USER.iam_secret_key,
+            region: LOGS_METADATA.AWS_REGION
+        });
+        expect(PutLogEventsCommand).toHaveBeenCalledTimes(1);
+        const params = PutLogEventsCommand.mock.calls[0][0];
+        expect(params.logGroupName).toStrictEqual(LOGS_METADATA.GROUP);
+        expect(params.logStreamName).toStrictEqual(TEST_EMAIL);
+        const CWMsg = JSON.parse(params.logEvents[0].message);
+        ["msg", "type", "source", "version", "platform", "mac_address"].forEach(key => {
+            expect(key in CWMsg).toBe(true);
+        });
+        expect(CWMsg.msg).toStrictEqual(errMsg);
     });
 });

@@ -17,7 +17,6 @@ import {
     assertRenameEvent,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
-    getSeqTokenFilePath,
     randomBaseRepoPath,
     randomRepoPath,
     TEST_EMAIL,
@@ -31,7 +30,6 @@ describe("populateBuffer", () => {
     let baseRepoPath;
     let repoPath;
     let configPath;
-    let sequenceTokenFilePath;
     let pathUtilsObj;
     let shadowRepoBranchPath;
     let diffsRepo;
@@ -54,7 +52,6 @@ describe("populateBuffer", () => {
         untildify.mockReturnValue(baseRepoPath);
 
         configPath = getConfigFilePath(baseRepoPath);
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
     
         pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
@@ -87,10 +84,6 @@ describe("populateBuffer", () => {
             delete configData.repos[repoPath].branches[DEFAULT_BRANCH][fileRelPath];
         }
         fs.writeFileSync(configPath, yaml.dump(configData));
-        // Update sequence_token.yml
-        const users = {};
-        users[TEST_EMAIL] = "";
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(users));
         addUser(baseRepoPath, isActive);
     };
 
