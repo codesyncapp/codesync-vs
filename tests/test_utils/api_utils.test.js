@@ -13,7 +13,6 @@ import {
     getPluginUser
 } from "../../src/utils/s3_utils";
 import {
-    getSeqTokenFilePath,
     getUserFilePath,
     INVALID_TOKEN_JSON,
     randomBaseRepoPath,
@@ -24,7 +23,6 @@ import {
 describe('checkServerDown', () => {
     const baseRepoPath = randomBaseRepoPath();
     const userFilePath = getUserFilePath(baseRepoPath);
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
 
     beforeEach(() => {
         fetch.resetMocks();
@@ -32,7 +30,6 @@ describe('checkServerDown', () => {
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.writeFileSync(userFilePath, yaml.dump({}));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
     });
 
     afterEach(() => {

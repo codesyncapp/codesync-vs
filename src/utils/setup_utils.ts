@@ -51,38 +51,43 @@ export const createSystemDirectories = () => {
 	const defaultData = <any>{};
 	defaultData[settings.CONFIG_PATH] = yaml.dump({ repos: {} });
 	defaultData[settings.USER_PATH] = yaml.dump({});
-	defaultData[settings.SEQUENCE_TOKEN_PATH] = yaml.dump({});
 	defaultData[settings.ALERTS] = yaml.dump({ team_activity: {} });
 	defaultData[settings.POPULATE_BUFFER_LOCK_FILE] = "";
 	defaultData[settings.DIFFS_SEND_LOCK_FILE] = "";
 	defaultData[settings.UPGRADE_PLAN_ALERT] = "";
+	// Create file if does not exist
 	[
 		// System Files
 		settings.CONFIG_PATH,
 		settings.USER_PATH, 
-		settings.SEQUENCE_TOKEN_PATH, 
 		settings.ALERTS,
 		// Lock Files
 		settings.POPULATE_BUFFER_LOCK_FILE, 
 		settings.DIFFS_SEND_LOCK_FILE, 
 		settings.UPGRADE_PLAN_ALERT
 	].forEach(filePath => {
-		// Create file if does not exist
 		if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, defaultData[filePath]);
 	});
-	// YML files
+	// Reset file if it contains invalid data
 	[
 		settings.CONFIG_PATH,
 		settings.USER_PATH,
-		settings.SEQUENCE_TOKEN_PATH, 
 		settings.ALERTS
 	].forEach(filePath => {
-		// Update file if it has no valid data
-		if (!readYML(filePath)) fs.writeFileSync(filePath, defaultData[filePath]);
+		// Update file if it has invalid data
+		const content = readYML(filePath);
+		if (!content) fs.writeFileSync(filePath, defaultData[filePath]);
 	});
 	// Clean content of config.yml
 	const config = readYML(settings.CONFIG_PATH);
 	if (!config.repos) fs.writeFileSync(settings.CONFIG_PATH, defaultData[settings.CONFIG_PATH]);
+	
+	// TODO: Remove deprecated files, Not doing until Intellij handles this as well
+	// settings.deprecatedFiles.forEach(filePath => {
+	// 	if (!fs.existsSync(filePath)) return;
+	// 	fs.unlinkSync(filePath);
+	// });
+	
 	return settings;
 };
 

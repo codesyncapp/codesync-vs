@@ -15,7 +15,6 @@ import {
     addUser,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
-    getSeqTokenFilePath,
     PRE_SIGNED_URL,
     randomBaseRepoPath,
     randomRepoPath,
@@ -37,7 +36,6 @@ describe("bufferHandler", () => {
     let baseRepoPath;
     let repoPath;
     let configPath;
-    let sequenceTokenFilePath;
 
     let pathUtilsObj;
     let shadowRepoBranchPath;
@@ -75,7 +73,6 @@ describe("bufferHandler", () => {
         setWorkspaceFolders(repoPath);
 
         configPath = getConfigFilePath(baseRepoPath);
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
     
         pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
@@ -113,10 +110,6 @@ describe("bufferHandler", () => {
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = TEST_REPO_RESPONSE.file_path_and_id;
         configData.repos[repoPath].branches[DEFAULT_BRANCH]["ignore.js"] = 12345;
         fs.writeFileSync(configPath, yaml.dump(configData));
-        // Update sequence_token.yml
-        const users = {};
-        users[TEST_EMAIL] = "";
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(users));
         addUser(baseRepoPath, true);
     };
 

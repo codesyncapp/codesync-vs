@@ -86,6 +86,9 @@ export const generateSettings = () => {
     return {
         ...systemDirectories,
         ...lockFiles,
-        ...alerts
+        ...alerts,
+        deprecatedFiles: [
+            systemDirectories.SEQUENCE_TOKEN_PATH
+        ]
     };
 };

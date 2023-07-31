@@ -46,10 +46,6 @@ export function getUserFilePath(baseRepoPath) {
     return path.join(baseRepoPath, "user.yml");
 }
 
-export function getSeqTokenFilePath(baseRepoPath) {
-    return path.join(baseRepoPath, "sequence_token.yml");
-}
-
 export function getSyncIgnoreFilePath(repoPath) {
     return path.join(repoPath, ".syncignore");
 }
@@ -84,6 +80,11 @@ export const PRE_SIGNED_URL = {
 export const TEST_EMAIL = 'test@codesync.com';
 export const ANOTHER_TEST_EMAIL = 'anotherTest@codesync.com';
 export const INVALID_TOKEN_JSON = {"error": {"message": "Invalid token"}};
+export const FILE_UPLOAD_400 = {error: {message: "File path is in the syncignore file and can not be uploaded."}};
+export const FILE_UPLOAD_402 = {error: {message: "Repo size limit reached"}};
+export const FILE_UPLOAD_404 = {error: {message: "Branch not found"}};
+export const FILE_UPLOAD_403 = {error: {message: "Unauthorized for given repo"}};
+export const INTERNAL_SERVER_ERROR = {error: {message: "Internal Server Error"}};
 export const SYNC_IGNORE_DATA = ".DS_Store\n.git\n\n\n.node_modules\n!tests";
 export const DUMMY_FILE_CONTENT = "DUMMY FILE CONTENT";
 
