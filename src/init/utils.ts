@@ -18,6 +18,7 @@ import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT } f
 import { getGlobIgnorePatterns, isRepoActive, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
+import { s3Uploader } from './s3Uploader';
 
 export class initUtils {
 	repoPath: string;
@@ -126,10 +127,22 @@ export class initUtils {
 		configRepo.id = repoId;
 		configRepo.email = userEmail;
 		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(configJSON));
-		CodeSyncLogger.debug(`Saved file IDs, uploading branch=${branch} to s3`);
+		CodeSyncLogger.debug(`Saved file IDs, branch=${branch} repo=${this.repoPath}`);
 	}
 
 	async uploadRepoToS3(branch: string, uploadResponse: any, syncingBranchKey: string) {
+		/* 
+			1- Save URLs in YML file
+			2- Process that file
+		*/
+		const filePathAndURLs =  uploadResponse.urls;
+		const repoId =  uploadResponse.repo_id;
+		const uploader = new s3Uploader();
+		const filePath = uploader.saveURLs(repoId, branch, filePathAndURLs);
+		await uploader.process(filePath);
+	}
+
+	async uploadRepoToS3_(branch: string, uploadResponse: any, syncingBranchKey: string) {
 		const viaDaemon = this.viaDaemon;
 		const s3Urls =  uploadResponse.urls;
 		const tasks: any[] = [];
@@ -251,9 +264,7 @@ export class initUtils {
 			CodeSyncState.set(syncingBranchKey, false);
 			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
 			CodeSyncLogger.error(error, json.error, userEmail);
-			if (!this.viaDaemon) {
-				vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
-			}
+			if (!this.viaDaemon) vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			return false;
 		}
 		/*
@@ -276,7 +287,7 @@ export class initUtils {
 		// Save IAM credentials
 		this.saveIamUser(user);
 
-		// Save file paths and IDs
+		// Save file paths and IDs in config
 		this.saveFileIds(branch, user.email, json.response);
 
 		// Upload to s3
