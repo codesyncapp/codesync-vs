@@ -130,15 +130,15 @@ export class initUtils {
 		CodeSyncLogger.debug(`Saved file IDs, branch=${branch} repo=${this.repoPath}`);
 	}
 
-	async uploadRepoToS3(branch: string, uploadResponse: any, syncingBranchKey: string) {
+	async uploadRepoToS3(branch: string, uploadResponse: any) {
 		/* 
 			1- Save URLs in YML file
 			2- Process that file
 		*/
 		const filePathAndURLs =  uploadResponse.urls;
 		const repoId =  uploadResponse.repo_id;
-		const uploader = new s3Uploader();
-		const filePath = uploader.saveURLs(repoId, branch, filePathAndURLs);
+		const uploader = new s3Uploader(this.viaDaemon);
+		const filePath = uploader.saveURLs(this.repoPath, branch, filePathAndURLs);
 		await uploader.process(filePath);
 	}
 
@@ -291,7 +291,7 @@ export class initUtils {
 		this.saveFileIds(branch, user.email, json.response);
 
 		// Upload to s3
-		await this.uploadRepoToS3(branch, json.response, syncingBranchKey);
+		await this.uploadRepoToS3(branch, json.response);
 
 		return true;
 	}

@@ -15,7 +15,6 @@ import {
     INVALID_TOKEN_JSON,
     randomBaseRepoPath,
     randomRepoPath,
-    TEST_EMAIL,
     TEST_REPO_RESPONSE,
     TEST_USER,
     waitFor,
@@ -25,7 +24,8 @@ import {
 import { SYNC_IGNORE_FILE_DATA } from "../../src/constants";
 import { pathUtils } from "../../src/utils/path_utils";
 import { readYML, readFile } from "../../src/utils/common";
-import {createSystemDirectories} from "../../src/utils/setup_utils";
+import { createSystemDirectories } from "../../src/utils/setup_utils";
+import { CodeSyncState, CODESYNC_STATES } from "../../src/utils/state_utils";
 
 describe("initHandler: connectRepo", () => {
     let baseRepoPath;
@@ -291,5 +291,9 @@ describe("initHandler: Syncing Branch", () => {
         expect(fs.existsSync(shadowFilePath)).toBe(true);
         await waitFor(3);
         expect(fs.existsSync(originalsFilePath)).toBe(false);
+        const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${repoPath}:${DEFAULT_BRANCH}`;
+        expect(CodeSyncState.get(syncingBranchKey)).toBe(false);
+        expect(CodeSyncState.get(CODESYNC_STATES.IS_SYNCING_BRANCH)).toBe(false);
+        expect(fs.readdirSync(pathUtilsObj.getS3UploaderRepo())).toHaveLength(0);
     });
 });

@@ -243,6 +243,7 @@ describe("detectBranchChange", () => {
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
         const readyRepos = await detectBranchChange();
+        await waitFor(3);
         expect(assertValidUpload(readyRepos)).toBe(true);
     });
 
@@ -262,6 +263,7 @@ describe("detectBranchChange", () => {
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
         const readyRepos = await detectBranchChange();
+        await waitFor(3);
         expect(assertValidUpload(readyRepos)).toBe(true);
     });
 
@@ -283,7 +285,7 @@ describe("detectBranchChange", () => {
             .mockResponseOnce(JSON.stringify({status: true}))
             .mockResponseOnce(() => new Promise(resolve => setTimeout(() => resolve(JSON.stringify(TEST_REPO_RESPONSE)), 3000)));
         const readyRepos = await detectBranchChange();
-        await waitFor(2);
+        await waitFor(3);
         expect(assertValidUpload(readyRepos)).toBe(true);
         // Should call healthCheck and Repo Init API
         expect(fetchMock).toHaveBeenCalledTimes(2);
