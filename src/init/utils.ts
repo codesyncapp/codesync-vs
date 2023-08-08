@@ -136,67 +136,9 @@ export class initUtils {
 			2- Process that file
 		*/
 		const filePathAndURLs =  uploadResponse.urls;
-		const repoId =  uploadResponse.repo_id;
 		const uploader = new s3Uploader(this.viaDaemon);
 		const filePath = uploader.saveURLs(this.repoPath, branch, filePathAndURLs);
 		await uploader.process(filePath);
-	}
-
-	async uploadRepoToS3_(branch: string, uploadResponse: any, syncingBranchKey: string) {
-		const viaDaemon = this.viaDaemon;
-		const s3Urls =  uploadResponse.urls;
-		const tasks: any[] = [];
-		const pathUtilsObj = new pathUtils(this.repoPath, branch);
-		const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-
-		Object.keys(s3Urls).forEach(relPath => {
-			const presignedUrl = s3Urls[relPath];
-			const absPath = path.join(originalsRepoBranchPath, relPath);
-			if (presignedUrl) {
-				tasks.push(async function (callback: any) {
-					const json = <any> await uploadFileTos3(absPath, presignedUrl);
-					callback(json.error, true);
-				});
-			}
-		});
-
-		parallel(
-			tasks,
-			// optional callback
-			function (err, results) {
-				CodeSyncLogger.debug(`Branch=${branch} upload callback`);
-				// the results array will equal ['one','two'] even though
-				// the second function had a shorter timeout.
-				if (err) {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
-					CodeSyncLogger.error("uploadRepoToS3 failed: ", err);
-					CodeSyncState.set(syncingBranchKey, false);
-					CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
-					return;
-				}
-				// delete .originals repo
-				if (fs.existsSync(originalsRepoBranchPath)) {
-					fs.rmSync(originalsRepoBranchPath, { recursive: true });
-				}
-				// Hide Connect Repo
-				vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
-				// Show success notification
-				if (!viaDaemon) {
-					vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
-						NOTIFICATION.TRACK_IT
-					]).then(selection => {
-						if (!selection) { return; }
-						if (selection === NOTIFICATION.TRACK_IT) {
-							trackRepoHandler();
-						}
-					});
-				}
-				// Reset key for syncingBranch
-				CodeSyncState.set(syncingBranchKey, false);
-				CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
-				CodeSyncLogger.debug(`Branch=${branch} upload completed`);
-		});
 	}
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
