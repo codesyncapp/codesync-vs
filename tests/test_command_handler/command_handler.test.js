@@ -290,6 +290,7 @@ describe("trackRepoHandler",  () => {
         configData.repos[repoPath] = {
             id: 1234,
             branches: {},
+            email: TEST_EMAIL
         };
         fs.writeFileSync(configPath, yaml.dump(configData));
         const playbackLink = trackRepoHandler();
@@ -403,7 +404,8 @@ describe("trackFileHandler",  () => {
         // Update config file
         configData.repos[repoPath] = {
             id: 1234,
-            branches: {}
+            branches: {},
+            email: TEST_EMAIL
         };
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = {"file.js": 1234};
         fs.writeFileSync(configPath, yaml.dump(configData));

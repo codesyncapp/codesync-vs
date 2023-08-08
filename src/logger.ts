@@ -3,6 +3,7 @@ import os from 'os';
 import macaddress from "macaddress";
 import { 
 	CloudWatchLogsClient,
+	CloudWatchLogsClientConfig,
 	PutLogEventsCommand,
 	PutLogEventsRequest
 } from "@aws-sdk/client-cloudwatch-logs";
@@ -101,16 +102,14 @@ const putLogEvent = async (msg: string, eventType: string, additionalMsg="", log
 		secretKey = pluginUser.secret_key;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	// Recreate client if accessKey is changed
-	if (isEmpty(cloudWatchClient) || cloudWatchClient.config.accessKeyId != accessKey) {
-		const config = {
-			accessKeyId: accessKey,
-			secretAccessKey: secretKey,
-			region: LOGS_METADATA.AWS_REGION
-		};
-		cloudWatchClient = new CloudWatchLogsClient(config);
+	if (isEmpty(cloudWatchClient)) {
+		cloudWatchClient = __createClient(accessKey, secretKey);
+	} else {
+		// Recreate client if accessKey is changed
+		const credentials = await cloudWatchClient.config.credentials();
+		if (credentials.accessKeyId !== accessKey) {
+			cloudWatchClient = __createClient(accessKey, secretKey);
+		}
 	}
 
 	const logGroupName = LOGS_METADATA.GROUP;
@@ -166,4 +165,17 @@ export const logErrorMsg = (msg: string, errCount: number) => {
 	}
 	errCount += 1;
 	return errCount;
+};
+
+
+const __createClient = (accessKeyId: string, secretAccessKey: string) => {
+	const config: CloudWatchLogsClientConfig =
+		{
+			region: LOGS_METADATA.AWS_REGION,
+			credentials: {
+				accessKeyId,
+				secretAccessKey
+			}
+		};
+	return new CloudWatchLogsClient(config);
 };
