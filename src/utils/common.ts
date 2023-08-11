@@ -41,6 +41,13 @@ export const checkSubDir = (currentRepoPath: string) => {
 	const settings = generateSettings();
 	const configPath = settings.CONFIG_PATH;
 	let isSyncIgnored = false;
+
+	const user = getActiveUsers()[0];
+	if (!user) return {
+		isSubDir: false,
+		parentRepo: "",
+		isSyncIgnored
+	};
 	// If config.yml does not exist, return
 	if (!fs.existsSync(configPath)) return {
 		isSubDir: false,
@@ -62,6 +69,8 @@ export const checkSubDir = (currentRepoPath: string) => {
 	let parentRepo = "";
 	for (const _repoPath of repoPaths) {
 		const configRepo = config.repos[_repoPath];
+		// Verify connected repo is of current user's repo
+		if (configRepo.email !== user.email) continue;
 		// Skip disconnected repos
 		if (configRepo.is_disconnected) continue;
 		const relative = path.relative(_repoPath, currentRepoPath);

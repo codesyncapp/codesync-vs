@@ -2,7 +2,10 @@ const AWS = {
     CloudWatchLogsClient: jest.fn(() => ({
         send: jest.fn(),
         config: {
-            accessKeyId: jest.fn()
+            credentials: jest.fn(() => ({
+                accessKeyId: "",
+                secretAccessKey: ""
+            }))
         }
     })),
     PutLogEventsCommand: jest.fn(() => ({
