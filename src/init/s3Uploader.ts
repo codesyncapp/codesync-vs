@@ -147,11 +147,10 @@ export class s3Uploader {
 		this.failedCount = content.failed_count;
 		this.setChunkSize();
 		const fileCreatedAt = parseFloat(fileName.split(".yml")[0]);
-		const skipRun = (new Date().getTime() - fileCreatedAt) < S3_UPLOAD_TIMEOUT;
 		// if some other instance of s3Uploader is processing this file, skip it
-		if (content.locked_by && content.locked_by !== this.uuid && skipRun) return {
+		if (content.locked_by && content.locked_by !== this.uuid) return {
 			deleteFile: false,
-			skip: true,
+			skip: (new Date().getTime() - fileCreatedAt) < S3_UPLOAD_TIMEOUT,
 			content
 		};
 		// Get repoConfig for given repoID
@@ -260,7 +259,7 @@ export class s3Uploader {
 		});
 		for (const fileName of files) {
 			// Processing only 1 file in 1 iteration
-			CodeSyncLogger.debug("s3Uploader: Processing", fileName);
+			CodeSyncLogger.debug(`s3Uploader: Processing=${fileName}`);
 			await this.process(fileName);
 			return;
 		}
