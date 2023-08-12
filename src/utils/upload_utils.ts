@@ -156,27 +156,6 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 	});
 };
 
-export const uploadFileTos3_ = async (filePath: string, presignedUrl: any) => {
-	return await new Promise((resolve, reject) => {
-		// reject raises an expcetion so not using it
-		let content;
-		try {
-			content = readFile(filePath);
-		} catch (e) {
-			resolve({error: `Could not read file: ${filePath}`});
-		}
-		const formData = new FormData();
-		Object.keys(presignedUrl.fields).forEach(key => {
-			formData.append(key, presignedUrl.fields[key]);
-		});
-		// Actual file has to be appended last.
-		formData.append("file", content);
-		formData.submit(presignedUrl.url, function(err, res) {
-			if (err) resolve({error: err});
-			resolve({error: null});
-		});
-	});
-};
 
 export const uploadFileToServer = async (accessToken: string, repoId: number, branch: string, filePath: string,
 										relPath: string, addedAt: string) => {

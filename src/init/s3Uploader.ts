@@ -11,7 +11,7 @@ import { generateSettings } from "../settings";
 import { uuidv4 } from '../utils/setup_utils';
 import { removeFile } from '../utils/file_utils';
 import { pathUtils } from '../utils/path_utils';
-import { uploadFileTos3_ } from '../utils/upload_utils';
+import { uploadFileTos3 } from '../utils/upload_utils';
 import { CodeSyncLogger } from '../logger';
 import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
 import { IS3UploaderFile, IS3UploaderPreProcess } from '../interface';
@@ -32,8 +32,8 @@ export class s3Uploader {
 			file_path_1: url_1
 			file_path_2: url_2
 			...
-		locked_by: uuid
 		failed_count: 0
+		locked_by: uuid  (If user clicks Connect Repo)
 	
 	Flow:
 		- For valid paths and URLs, we create tasks to upload each file to s3.
@@ -82,7 +82,7 @@ export class s3Uploader {
 		return false;
 	}
 
-	saveURLs = (repoPath: string, branch: string, filePathsAndURLs: any, lockFile=true) => {
+	saveURLs = (repoPath: string, branch: string, filePathsAndURLs: any) => {
 		/*
 			Once we receive the response of /v1/init from server, we save presigned URLs inside .s3_uploader/
 		*/
@@ -92,7 +92,7 @@ export class s3Uploader {
 			file_path_and_urls: filePathsAndURLs,
 			failed_count: this.failedCount
 		};
-		if (lockFile) data.locked_by = this.uuid;
+		if (!this.viaDaemon) data.locked_by = this.uuid;
 		const fileName = `${new Date().getTime()}.yml`;
 		const filePath = path.join(this.settings.S3_UPLOADER, fileName);
 		fs.writeFileSync(filePath, yaml.dump(data));
@@ -180,7 +180,7 @@ export class s3Uploader {
 			}
 			this.filePathAndURLs[fileRelPath] = presignedURL;
 			this.tasks.push(async function (callback: any) {
-				const json = <any> await uploadFileTos3_(originalsFilePath, presignedURL);
+				const json = <any> await uploadFileTos3(originalsFilePath, presignedURL);
 				callback(json.error, originalsFilePath);
 			});
 		});
@@ -230,7 +230,7 @@ export class s3Uploader {
 					if (index < startIndex || index >= endIndex) return;
 					failedChunk[fileRelPath] = that.filePathAndURLs[fileRelPath];
 				});
-				that.saveURLs(that.repoPath, that.branch, failedChunk, false);
+				that.saveURLs(that.repoPath, that.branch, failedChunk);
 				// Proceeed for next chunk
 				await that.processTasks(endIndex);
 			}
