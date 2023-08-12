@@ -5,7 +5,6 @@ import { isBinaryFileSync } from "isbinaryfile";
 import { API_ROUTES } from "../constants";
 import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
-import { removeFile } from './file_utils';
 
 
 export const uploadRepoToServer = async (token: string, data: any) => {
