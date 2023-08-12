@@ -36,7 +36,7 @@ export class s3Uploader {
 		failed_count: 0
 	
 	Flow:
-		= For valid paths and URLs, we create tasks to upload each file to s3.
+		- For valid paths and URLs, we create tasks to upload each file to s3.
 		- We then iterate chunks of those tasks to slow the upload process a bit. 
 		  e.g. we have 450 files then with default chunk size of 100, we will have 5 chunks.
 	
@@ -44,7 +44,7 @@ export class s3Uploader {
 		- If some chunk is failed to upload successfully somehow, we save that chunk in a separate file to retry later.
 		- To retry a failed chunk, we reduce the chunk size to 50 to try with less concurrent uploads.
 		- We repeat this process 3 times, finally with the chunk size of 25.
-		= If failed count becomes 3 for a file, we ignore that file for now.
+		- If failed count becomes 3 for a file, we ignore that file for now.
 	
 	Internet Outage:
 		- If internet is offline, it retires after 5 minutes.
@@ -72,7 +72,17 @@ export class s3Uploader {
 		this.viaDaemon = viaDaemon;
 	}
 
-	saveURLs (repoPath: string, branch: string, filePathsAndURLs: any, lockFile=true) {
+	shouldProceed = async () => {
+		const canSkip = CodeSyncState.canSkipRun(CODESYNC_STATES.INTERNET_DOWN_AT, S3_UPLOADR_RETRY_AFTER);
+		if (canSkip) return false;
+		const internetWorking = await isOnline();
+		if (internetWorking) return true;
+		CodeSyncState.set(CODESYNC_STATES.INTERNET_DOWN_AT, new Date().getTime());
+		CodeSyncLogger.warning("s3Uploader: Internet is down");
+		return false;
+	}
+
+	saveURLs = (repoPath: string, branch: string, filePathsAndURLs: any, lockFile=true) => {
 		/*
 			Once we receive the response of /v1/init from server, we save presigned URLs inside .s3_uploader/
 		*/
@@ -95,7 +105,7 @@ export class s3Uploader {
 		return missingKeys.length;
 	}
 
-	setChunkSize() {
+	setChunkSize = () => {
 		// Only process files with failed_count <= 3
 		switch (this.failedCount) {
 			case 1:
@@ -113,7 +123,7 @@ export class s3Uploader {
 		}
 	}
 
-	preProcess(fileName: string) {
+	preProcess = (fileName: string) => {
 		/* 
 			Validates that the file exist and has valid data in it.
 			If a file is locked by some other instance, it ignores that file
@@ -136,8 +146,10 @@ export class s3Uploader {
 		this.branch = content.branch;
 		this.failedCount = content.failed_count;
 		this.setChunkSize();
+		const fileCreatedAt = parseFloat(fileName.split(".yml")[0]);
+		const skipRun = (new Date().getTime() - fileCreatedAt) < S3_UPLOAD_TIMEOUT;
 		// if some other instance of s3Uploader is processing this file, skip it
-		if (content.locked_by && content.locked_by !== this.uuid) return {
+		if (content.locked_by && content.locked_by !== this.uuid && skipRun) return {
 			deleteFile: false,
 			skip: true,
 			content
@@ -152,7 +164,7 @@ export class s3Uploader {
 		};
 	}
 
-	async createTasks(content: IS3UploaderFile) {
+	createTasks = async (content: IS3UploaderFile) => {
 		// Proceess the given file
 		const pathUtils_ = new pathUtils(this.repoPath, content.branch);
         this.originalsRepoBranchPath = pathUtils_.getOriginalsRepoBranchPath();
@@ -175,22 +187,18 @@ export class s3Uploader {
 		});
 	}
 
-	async process(fileName: string) {
-		const internetWorking = await isOnline();
-		if (!internetWorking) {
-			CodeSyncState.set(CODESYNC_STATES.INTERNET_DOWN_AT, new Date().getTime());
-			CodeSyncLogger.warning("s3Uploader: Internet is down");
-			return;
-		}
+	process = async (fileName: string) => {
+		if (!await this.shouldProceed()) return;
 		const json: IS3UploaderPreProcess = this.preProcess(fileName);
 		if (json.deleteFile) return removeFile(this.filePath, "s3Uploader.deleting-file");
 		if (json.skip) return;
 		await this.createTasks(json.content);
 		if (!this.tasks.length) return removeFile(this.filePath, "s3Uploader.deleting-file");
-		return this.processTasks(0);
+		return await this.processTasks(0);
 	}
 
-	processTasks(startIndex: number) {
+	processTasks = async (startIndex: number) => {
+		if (!await this.shouldProceed()) return;
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		const that = this;
 		if (startIndex > this.tasks.length-1) return this.postProcess();
@@ -202,14 +210,14 @@ export class s3Uploader {
 		
 		parallel(
 			tasksChunk,
-			function (err, results) {
+			async function (err, results) {
 				// Proceeed for next chunk
 				if (!err) {
 					for (const filePath of results) {
 						if (typeof(filePath) !== 'string') continue;
 						removeFile(filePath, 'uploadFileTos3');
 					}
-					return that.processTasks(endIndex);
+					return await that.processTasks(endIndex);
 				
 				}
 				// Save failed chunk in a separate file
@@ -225,12 +233,12 @@ export class s3Uploader {
 				});
 				that.saveURLs(that.repoPath, that.branch, failedChunk, false);
 				// Proceeed for next chunk
-				that.processTasks(endIndex);
+				await that.processTasks(endIndex);
 			}
 		);
 	}
 
-	postProcess() {
+	postProcess = () => {
 		let msg = `s3Uploader: Branch=${this.branch} chunk uploaded successfully`;
 		// delete .originals repo
 		if (!this.failedCount) {
@@ -242,9 +250,8 @@ export class s3Uploader {
 		return removeFile(this.filePath, "s3Uploader.deleting-file");
 	}
 
-	async run () {
-		const canSkip = CodeSyncState.canSkipRun(CODESYNC_STATES.INTERNET_DOWN_AT, S3_UPLOADR_RETRY_AFTER);
-		if (canSkip) return;
+	run = async () => {
+		if (!await this.shouldProceed()) return;
 		const files = await glob("*.yml", { 
             cwd: this.settings.S3_UPLOADER,
 			maxDepth: 1,
