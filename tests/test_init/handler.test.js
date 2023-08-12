@@ -2,8 +2,8 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
+import isOnline from 'is-online';
 import untildify from 'untildify';
-
 import { DEFAULT_BRANCH, GITIGNORE, NOTIFICATION, SYNCIGNORE } from "../../src/constants";
 import fetchMock from "jest-fetch-mock";
 import { initHandler } from "../../src/init/init_handler";
@@ -264,6 +264,7 @@ describe("initHandler: Syncing Branch", () => {
     });
 
     test("Should sync branch", async () => {
+        isOnline.mockReturnValue(true);
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))

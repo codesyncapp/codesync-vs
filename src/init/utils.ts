@@ -4,7 +4,6 @@ import path from 'path';
 import { glob } from 'glob';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
-import parallel from "run-parallel";
 import { isBinaryFileSync } from 'isbinaryfile';
 
 import { CodeSyncLogger } from '../logger';
@@ -12,13 +11,13 @@ import { generateSettings } from "../settings";
 import { pathUtils } from '../utils/path_utils';
 import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload } from '../interface';
-import { trackRepoHandler } from '../handlers/commands_handler';
-import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
+import { uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT } from '../constants';
 import { getGlobIgnorePatterns, isRepoActive, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { s3Uploader } from './s3Uploader';
+import { trackRepoHandler } from '../handlers/commands_handler';
 
 export class initUtils {
 	repoPath: string;
@@ -130,15 +129,28 @@ export class initUtils {
 		CodeSyncLogger.debug(`Saved file IDs, branch=${branch} repo=${this.repoPath}`);
 	}
 
-	async uploadRepoToS3(branch: string, uploadResponse: any) {
+	async uploadRepoToS3(branch: string, uploadResponse: any, syncingBranchKey: string) {
 		/* 
-			1- Save URLs in YML file
-			2- Process that file
+			Save URLs in YML file for s3Uploader
 		*/
 		const filePathAndURLs =  uploadResponse.urls;
 		const uploader = new s3Uploader(this.viaDaemon);
-		const filePath = uploader.saveURLs(this.repoPath, branch, filePathAndURLs);
-		await uploader.process(filePath);
+		const fileName = uploader.saveURLs(this.repoPath, branch, filePathAndURLs);
+		await uploader.process(fileName);
+		// Reset state values
+		CodeSyncState.set(syncingBranchKey, false);
+		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
+		// Hide Connect Repo
+		vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
+		// Show success notification
+		if (!this.viaDaemon) {
+			vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
+				NOTIFICATION.TRACK_IT
+			]).then(selection => {
+				if (!selection) return;
+				if (selection === NOTIFICATION.TRACK_IT) return trackRepoHandler();
+			});
+		}
 	}
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
@@ -233,7 +245,7 @@ export class initUtils {
 		this.saveFileIds(branch, user.email, json.response);
 
 		// Upload to s3
-		await this.uploadRepoToS3(branch, json.response);
+		await this.uploadRepoToS3(branch, json.response, syncingBranchKey);
 
 		return true;
 	}

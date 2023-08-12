@@ -65,3 +65,18 @@ export interface IDiffToSend {
 export interface IRepoInfo {
 	last_synced_at: string;
 }
+
+export interface IS3UploaderFile {
+	repo_path: string;
+	branch: string;
+	file_path_and_urls: any;
+	locked_by?: string;
+	failed_count: number;
+}
+
+export interface IS3UploaderPreProcess {
+	deleteFile: boolean;
+	skip: boolean;
+	content: IS3UploaderFile;
+}
+

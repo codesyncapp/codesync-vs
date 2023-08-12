@@ -5,7 +5,6 @@ import { isBinaryFileSync } from "isbinaryfile";
 import { API_ROUTES } from "../constants";
 import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
-import { removeFile } from './file_utils';
 
 
 export const uploadRepoToServer = async (token: string, data: any) => {
@@ -174,7 +173,6 @@ export const uploadFileTos3_ = async (filePath: string, presignedUrl: any) => {
 		formData.append("file", content);
 		formData.submit(presignedUrl.url, function(err, res) {
 			if (err) resolve({error: err});
-			removeFile(filePath, 'uploadFileTos3');
 			resolve({error: null});
 		});
 	});
