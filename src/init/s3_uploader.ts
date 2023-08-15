@@ -5,7 +5,7 @@ import { glob } from 'glob';
 import isOnline from 'is-online';
 import parallel from "run-parallel";
 
-import { readYML } from '../utils/common';
+import { isEmpty, readYML } from '../utils/common';
 
 import { generateSettings } from "../settings";
 import { uuidv4 } from '../utils/setup_utils';
@@ -167,10 +167,10 @@ export class s3Uploader {
 		// Proceess the given file
 		const pathUtils_ = new pathUtils(this.repoPath, content.branch);
         this.originalsRepoBranchPath = pathUtils_.getOriginalsRepoBranchPath();
+		const filePathAndURLs = Object.keys(content.file_path_and_urls);
+		if (!filePathAndURLs || isEmpty(content.file_path_and_urls)) return this.cleanUpOrignalsRepo();
 		this.filePathAndURLs = <any>{};
 		// Skip files which don't exist in .originals or don't have URL
-		const filePathAndURLs = Object.keys(content.file_path_and_urls);
-		if (!filePathAndURLs) return;
 		filePathAndURLs.sort().forEach(fileRelPath => {
 			const originalsFilePath = path.join(this.originalsRepoBranchPath, fileRelPath);
 			if (!fs.existsSync(originalsFilePath)) return;
@@ -185,9 +185,7 @@ export class s3Uploader {
 			});
 		});
 		// delete .originals repo
-		if (!this.tasks.length && fs.existsSync(this.originalsRepoBranchPath)) {
-			fs.rmSync(this.originalsRepoBranchPath, { recursive: true });
-		}
+		if (!this.tasks.length) this.cleanUpOrignalsRepo();
 	}
 
 	process = async (fileName: string) => {
@@ -251,7 +249,7 @@ export class s3Uploader {
 		}
 		// delete .originals repo
 		if (!this.failedCount && this.tasks.length > 1) {
-			if (fs.existsSync(this.originalsRepoBranchPath)) fs.rmSync(this.originalsRepoBranchPath, { recursive: true });
+			this.cleanUpOrignalsRepo();
 		}
 		CodeSyncLogger.debug(msg);
 		CodeSyncState.set(CODESYNC_STATES.UPLOADING_TO_S3, "");
@@ -272,5 +270,10 @@ export class s3Uploader {
 		for (const fileName of files) {
 			await this.process(fileName);
 		}
+	}
+
+	cleanUpOrignalsRepo = () => {
+		if (!fs.existsSync(this.originalsRepoBranchPath)) return;
+		fs.rmSync(this.originalsRepoBranchPath, { recursive: true });
 	}
 }
