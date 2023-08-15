@@ -241,11 +241,9 @@ export class s3Uploader {
 	}
 
 	postProcess = () => {
-		let msg = `s3Uploader: Branch=${this.branch} uploaded successfully`;
+		let msg = `s3Uploader: ${this.tasks.length} files uploaded successfully, branch=${this.branch}`;
 		if (this.tasks.length === 1) {
-			msg = `s3Uploader: File uploaded successfully`;
-		} else if (!this.failedCount) {
-			msg = `s3Uploader: Branch=${this.branch} chunk uploaded successfully`;
+			msg = `s3Uploader: File uploaded successfully, branch=${this.branch}`;
 		}
 		// delete .originals repo
 		if (!this.failedCount && this.tasks.length > 1) {
