@@ -142,7 +142,8 @@ export const STATUS_BAR_MSGS = {
 	UPGRADE_PRICING_PLAN: ' CodeSync ❌, Click to upgrade pricing plan!',
 	UPGRADE_PRICING_PLAN_FOR_FREE: ' CodeSync ❌, Click to upgrade pricing plan for free!',
 	USER_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your activity today!",
-	TEAM_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your team's activity today!"
+	TEAM_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your team's activity today!",
+	UPLOADING_BRANCH: ' CodeSync $(loading~spin) Uploading branch...'
 };
 
 export const COMMAND = {

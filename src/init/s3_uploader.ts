@@ -54,7 +54,7 @@ export class s3Uploader {
 	DEFAULT_CHUNK_SIZE = 100;
 	settings: any;
 	uuid: string;
-	viaDaemon = false;
+	connectingRepo = false;
 	config: any;
 	tasks: any[] = [];
 	repoPath = "";
@@ -65,11 +65,11 @@ export class s3Uploader {
 	chunkSize = this.DEFAULT_CHUNK_SIZE;
 	failedCount = 0;
 
-	constructor(viaDaemon=false) {
+	constructor(connectingRepo=false) {
 		this.settings = generateSettings();
 		this.config = readYML(this.settings.CONFIG_PATH);
 		this.uuid = uuidv4();
-		this.viaDaemon = viaDaemon;
+		this.connectingRepo = connectingRepo;
 	}
 
 	shouldProceed = async () => {
@@ -92,7 +92,7 @@ export class s3Uploader {
 			file_path_and_urls: filePathsAndURLs,
 			failed_count: this.failedCount
 		};
-		if (!this.viaDaemon) data.locked_by = this.uuid;
+		if (this.connectingRepo) data.locked_by = this.uuid;
 		const fileName = `${new Date().getTime()}.yml`;
 		const filePath = path.join(this.settings.S3_UPLOADER, fileName);
 		fs.writeFileSync(filePath, yaml.dump(data));
@@ -184,10 +184,15 @@ export class s3Uploader {
 				callback(json.error, originalsFilePath);
 			});
 		});
+		// delete .originals repo
+		if (!this.tasks.length && fs.existsSync(this.originalsRepoBranchPath)) {
+			fs.rmSync(this.originalsRepoBranchPath, { recursive: true });
+		}
 	}
 
 	process = async (fileName: string) => {
 		if (!await this.shouldProceed()) return;
+		CodeSyncLogger.debug(`s3Uploader: Processing=${fileName}`);
 		const json: IS3UploaderPreProcess = this.preProcess(fileName);
 		if (json.deleteFile) return removeFile(this.filePath, "s3Uploader.deleting-file");
 		if (json.skip) return;
@@ -238,11 +243,15 @@ export class s3Uploader {
 	}
 
 	postProcess = () => {
-		let msg = `s3Uploader: Branch=${this.branch} chunk uploaded successfully`;
+		let msg = `s3Uploader: Branch=${this.branch} uploaded successfully`;
+		if (this.tasks.length === 1) {
+			msg = `s3Uploader: File uploaded successfully`;
+		} else if (!this.failedCount) {
+			msg = `s3Uploader: Branch=${this.branch} chunk uploaded successfully`;
+		}
 		// delete .originals repo
-		if (!this.failedCount) {
+		if (!this.failedCount && this.tasks.length > 1) {
 			if (fs.existsSync(this.originalsRepoBranchPath)) fs.rmSync(this.originalsRepoBranchPath, { recursive: true });
-			msg = `s3Uploader: Branch=${this.branch} uploaded successfully`;
 		}
 		CodeSyncLogger.debug(msg);
 		CodeSyncState.set(CODESYNC_STATES.UPLOADING_TO_S3, "");
@@ -250,18 +259,18 @@ export class s3Uploader {
 	}
 
 	run = async () => {
-		if (!await this.shouldProceed()) return;
 		const files = await glob("*.yml", { 
             cwd: this.settings.S3_UPLOADER,
 			maxDepth: 1,
 			nodir: true,
 			dot: true
 		});
+		if (!files.length) return;
+		// Check if internet is up
+		const shouldProceed = await this.shouldProceed();
+		if (!shouldProceed) return;
 		for (const fileName of files) {
-			// Processing only 1 file in 1 iteration
-			CodeSyncLogger.debug(`s3Uploader: Processing=${fileName}`);
 			await this.process(fileName);
-			return;
 		}
 	}
 }

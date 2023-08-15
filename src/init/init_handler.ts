@@ -16,6 +16,7 @@ import { askAndTriggerSignUp } from '../utils/auth_utils';
 import { checkServerDown, getUserForToken } from "../utils/api_utils";
 import { getBranch, readFile } from "../utils/common";
 import { isRepoSynced } from '../events/utils';
+import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
 
 
 export class initHandler {
@@ -97,6 +98,7 @@ export class initHandler {
 	};
 
 	postPublicPrivate = async (userEmail: string, isPublic: boolean) => {
+		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, new Date().getTime());
 		const initUtilsObj = new initUtils(this.repoPath, this.viaDaemon);
 		// get item paths to upload and copy in respective repos
 		const itemPaths = await initUtilsObj.getSyncablePaths();
@@ -109,6 +111,8 @@ export class initHandler {
 		const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
 		initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
 		// Upload repo/branch
-		return await initUtilsObj.uploadRepo(this.branch, this.accessToken, itemPaths, userEmail, isPublic);
+		const uploaded = await initUtilsObj.uploadRepo(this.branch, this.accessToken, itemPaths, userEmail, isPublic);
+		if (!uploaded) CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
+		return uploaded;
 	};
 }

@@ -36,7 +36,7 @@ import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { removeFile } from "../utils/file_utils";
-import { s3Uploader } from "../init/s3Uploader";
+import { s3Uploader } from "../init/s3_uploader";
 
 
 const shouldProceed = () => {
@@ -59,6 +59,7 @@ const shouldProceed = () => {
 
 const runS3Uploader = async () => {
     const uploader = new s3Uploader();
+    CodeSyncState.set(CODESYNC_STATES.UPLOADING_TO_S3, new Date().getTime());
     try {
         await uploader.run();
     } catch (e) {
@@ -66,6 +67,7 @@ const runS3Uploader = async () => {
         // @ts-ignore
         CodeSyncLogger.critical("s3Uploaded failed to run", e.stack);
     }
+    CodeSyncState.set(CODESYNC_STATES.UPLOADING_TO_S3, "");
 };
 
 export const populateBuffer = async (viaDaemon=true) => {
@@ -428,9 +430,9 @@ export const detectBranchChange = async () => {
         }
         // Need to sync the branch
         const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-        const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
+        const originalsRepoBranchPathExists = fs.existsSync(originalsRepoBranchPath);
 
-        if (originalsRepoExists) {
+        if (originalsRepoBranchPathExists) {
             // init has been called, now see if we can upload the repo/branch
             const itemPaths = await initUtilsObj.getSyncablePaths();
             uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email);
