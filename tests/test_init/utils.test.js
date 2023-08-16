@@ -3,6 +3,7 @@ import os from "os";
 import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
+import isOnline from 'is-online';
 import untildify from 'untildify';
 import {initUtils} from "../../src/init/utils";
 
@@ -299,6 +300,8 @@ describe("uploadRepo",  () => {
     });
 
     test("repo In Config",  async () => {
+        isOnline.mockReturnValue(true);
+
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
         const itemPaths = await initUtilsObj.getSyncablePaths();
@@ -317,7 +320,7 @@ describe("uploadRepo",  () => {
         // copy files to .shadow repo
         const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
         initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
-    
+
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
             TEST_EMAIL, false);
         await waitFor(3);
@@ -337,7 +340,7 @@ describe("uploadRepo",  () => {
             const relPath = _filePath.split(path.join(repoPath, path.sep))[1];
             const originalPath = path.join(originalsRepoBranchPath, relPath);
             expect(fs.existsSync(originalPath)).toBe(false);
-        });
+        });    
     });
 
     test("repo Not In Config",  async () => {

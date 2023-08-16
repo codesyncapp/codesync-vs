@@ -61,6 +61,7 @@ export const generateSettings = () => {
         SHADOW_REPO: path.join(rootRepo, ".shadow"),
         DELETED_REPO: path.join(rootRepo, ".deleted"),
         LOCKS_REPO: path.join(rootRepo, ".locks"),
+        S3_UPLOADER: path.join(rootRepo, ".s3_uploader"),
         CONFIG_PATH: path.join(rootRepo, "config.yml"),
         USER_PATH: path.join(rootRepo, "user.yml"),
         SEQUENCE_TOKEN_PATH: path.join(rootRepo, "sequence_token.yml"),

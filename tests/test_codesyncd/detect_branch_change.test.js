@@ -11,6 +11,7 @@ import {pathUtils} from "../../src/utils/path_utils";
 import {readYML} from "../../src/utils/common";
 import {initUtils} from "../../src/init/utils";
 import {detectBranchChange} from "../../src/codesyncd/populate_buffer";
+import {CodeSyncState, CODESYNC_STATES} from "../../src/utils/state_utils";
 
 import {
     addUser,
@@ -230,6 +231,7 @@ describe("detectBranchChange", () => {
     });
 
     test("Repo is not synced with given branch", async () => {
+        CodeSyncState.set(CODESYNC_STATES.UPLOADING_TO_S3, "");
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const _configData = {repos: {}};
@@ -243,6 +245,7 @@ describe("detectBranchChange", () => {
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
         const readyRepos = await detectBranchChange();
+        await waitFor(3);
         expect(assertValidUpload(readyRepos)).toBe(true);
     });
 
@@ -262,6 +265,7 @@ describe("detectBranchChange", () => {
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
         const readyRepos = await detectBranchChange();
+        await waitFor(3);
         expect(assertValidUpload(readyRepos)).toBe(true);
     });
 
@@ -283,7 +287,7 @@ describe("detectBranchChange", () => {
             .mockResponseOnce(JSON.stringify({status: true}))
             .mockResponseOnce(() => new Promise(resolve => setTimeout(() => resolve(JSON.stringify(TEST_REPO_RESPONSE)), 3000)));
         const readyRepos = await detectBranchChange();
-        await waitFor(2);
+        await waitFor(3);
         expect(assertValidUpload(readyRepos)).toBe(true);
         // Should call healthCheck and Repo Init API
         expect(fetchMock).toHaveBeenCalledTimes(2);

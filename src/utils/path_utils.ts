@@ -66,4 +66,7 @@ export class pathUtils {
         return path.join(this.settings.DIFFS_REPO);
     }
 
+    getS3UploaderRepo = () => {
+        return path.join(this.settings.S3_UPLOADER);
+    }
 }

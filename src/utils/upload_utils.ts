@@ -5,6 +5,7 @@ import { isBinaryFileSync } from "isbinaryfile";
 import { API_ROUTES } from "../constants";
 import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
+import { s3Uploader } from '../init/s3_uploader';
 
 
 export const uploadRepoToServer = async (token: string, data: any) => {
@@ -156,8 +157,9 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 	});
 };
 
+
 export const uploadFileToServer = async (accessToken: string, repoId: number, branch: string, filePath: string,
-										relPath: string, addedAt: string) => {
+										relPath: string, addedAt: string, repoPath: string) => {
 	/*
 	Uploads new file to server returns its ID
 	*/
@@ -181,16 +183,12 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 		};
 	}
 	if (fileInfo.size && json.response.url) {
-		const s3json = await uploadFileTos3(filePath, json.response.url);
-		const error = (s3json as any).error;
-		if (error) {
-			return {
-				error: `s3Error: ${error}`,
-				fileId: json.response.id,
-				statusCode: json.statusCode
-			};
-		}
+		const filePathAndURL = <any>{};
+		filePathAndURL[relPath] = json.response.url;
+		const uploader = new s3Uploader();
+		uploader.saveURLs(repoPath, branch, filePathAndURL);
 	}
+
 	return {
 		error: null,
 		fileId: json.response.id,

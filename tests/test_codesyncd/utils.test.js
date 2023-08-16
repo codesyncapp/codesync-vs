@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 import fetchMock from "jest-fetch-mock";
-
+import isOnline from 'is-online';
 import untildify from "untildify";
 
 import {
@@ -25,11 +25,13 @@ import {
     INTERNAL_SERVER_ERROR,
     PRE_SIGNED_URL,
     randomBaseRepoPath,
-    randomRepoPath
+    randomRepoPath,
+    waitFor
 } from "../helpers/helpers";
 import {DEFAULT_BRANCH} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
 import {pathUtils} from "../../src/utils/path_utils";
+import {s3Uploader} from "../../src/init/s3_uploader";
 
 
 describe("isValidDiff",  () => {
@@ -107,8 +109,10 @@ describe("handleNewFileUpload",  () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
+        isOnline.mockReturnValue(true);
         baseRepoPath = randomBaseRepoPath("handleNewFileUpload");
         repoPath = randomRepoPath();
+        untildify.mockReturnValue(baseRepoPath);
 
         fs.mkdirSync(repoPath, {recursive: true});
         fs.mkdirSync(baseRepoPath, {recursive: true});
@@ -116,7 +120,6 @@ describe("handleNewFileUpload",  () => {
         createSystemDirectories();
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
-        untildify.mockReturnValue(baseRepoPath);
         
         filePath = path.join(repoPath, "file.js");
         pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
@@ -224,10 +227,14 @@ describe("handleNewFileUpload",  () => {
         expect(result.uploaded).toBe(true);
         expect(result.deleteDiff).toBe(true);
         expect(fileRelPath in result.config.repos[repoPath].branches[DEFAULT_BRANCH]).toBe(true);
+        // File should not be deleted from .originals
+        expect(fs.existsSync(originalsFilePath)).toBe(true);
+        const uploader = new s3Uploader();
+        await uploader.run();
+        await waitFor(2);
         // File should be deleted from .originals
         expect(fs.existsSync(originalsFilePath)).toBe(false);
     });
-
 });
 
 describe("cleanUpDeleteDiff",  () => {

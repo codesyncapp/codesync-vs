@@ -159,6 +159,7 @@ describe('uploadFileToServer', () => {
         fs.writeFileSync(filePath, "");
         const baseRepoPath = randomBaseRepoPath();
         untildify.mockReturnValue(baseRepoPath);
+        createSystemDirectories();
     });
 
     afterEach(() => {
@@ -209,7 +210,7 @@ describe('uploadFileToServer', () => {
     test('InValid response', async () => {
         fs.rmSync(filePath);
         fs.writeFileSync(filePath, "Dummy Content Is In The File");
-        const response = {id: 1234, url: {url: "http://localhost:8005", fields: {}}};
+        const response = {error: {message: "ERROR msg"}};
         fetchMock.mockResponseOnce(JSON.stringify(response), { status: 500 });
         const res = await uploadFileToServer("ACCESS_TOKEN", 6789, DEFAULT_BRANCH, filePath,
             "file.txt", formatDatetime());
