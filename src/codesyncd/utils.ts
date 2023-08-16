@@ -74,7 +74,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		config: configJSON
 	};
 
-	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, addedAt);
+	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, addedAt, repoPath);
 	if (response.error) {
 		CodeSyncLogger.error(`Error uploading file=${relPath}: ${response.error}`);
 		const isClientError = [HTTP_STATUS_CODES.INVALID_USAGE, HTTP_STATUS_CODES.FORBIDDEN, HTTP_STATUS_CODES.NOT_FOUND].includes(response.statusCode);
@@ -87,11 +87,6 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 	configJSON.repos[repoPath].branches[branch][relPath] = response.fileId;
 	// write file id to config.yml
 	fs.writeFileSync(settings.CONFIG_PATH, yaml.dump(configJSON));
-
-	// Delete file from .originals
-	if (fs.existsSync(originalsFilePath)) {
-		removeFile(originalsFilePath, "handleNewFileUpload");
-	}
 
 	return {
 		uploaded: true,
@@ -196,9 +191,11 @@ export class statusBarMsgs {
 
 		// No repo is opened
 		if (!repoPath) return activityAlertMsg || STATUS_BAR_MSGS.NO_REPO_OPEN;
-
+		// Branch is being uploaded
+		const isSyncingBranch = CodeSyncState.get(CODESYNC_STATES.IS_SYNCING_BRANCH);
+		if (isSyncingBranch) return STATUS_BAR_MSGS.UPLOADING_BRANCH;
+		// Get default msg
 		const defaultMsg = daemonError || activityAlertMsg || STATUS_BAR_MSGS.DEFAULT;
-
 		const subDirResult = checkSubDir(repoPath);
 		if (subDirResult.isSubDir) {
 			if (subDirResult.isSyncIgnored) {

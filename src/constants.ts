@@ -142,7 +142,8 @@ export const STATUS_BAR_MSGS = {
 	UPGRADE_PRICING_PLAN: ' CodeSync ❌, Click to upgrade pricing plan!',
 	UPGRADE_PRICING_PLAN_FOR_FREE: ' CodeSync ❌, Click to upgrade pricing plan for free!',
 	USER_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your activity today!",
-	TEAM_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your team's activity today!"
+	TEAM_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your team's activity today!",
+	UPLOADING_BRANCH: ' CodeSync $(loading~spin) Uploading branch...'
 };
 
 export const COMMAND = {
@@ -177,7 +178,9 @@ export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .sy
 export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
 export const RETRY_REQUEST_AFTER = 3 * 60 * 1000; // 1000 is for ms;
 export const RETRY_TEAM_ACTIVITY_REQUEST_AFTER = 5 * 60 * 1000; // 1000 is for ms;
-export const BRANCH_SYNC_TIMEOUT = 5 * 60 * 1000; // 1000 is for ms
+export const BRANCH_SYNC_TIMEOUT = 3 * 60 * 1000; // 1000 is for ms
+export const S3_UPLOAD_TIMEOUT = 5 * 60 * 1000; // 1000 is for ms
+export const S3_UPLOADR_RETRY_AFTER = 5 * 60 * 1000; // 1000 is for ms
 export const RUN_POPULATE_BUFFER_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER = 10 * 60 * 1000; // 1000 is for ms;
 export const RUN_DELETE_HANDLER_AFTER = 5 * 60 * 1000; // 1000 is for ms;

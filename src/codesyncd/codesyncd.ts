@@ -20,12 +20,14 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
     - checkLock() returns true if lock is acquired by any process. It does not specifies the instance/process
     - acqurieLock() acquires the lock first time but then returns false
     
-    Whenever a lock is acquired, we set following states in global State:
+    So, to keep track which instance of the IDE acquired the locks, whenever a lock is acquired, we set following 
+    states in global State:
+    
     1- POPULATE_BUFFER_LOCK_ACQUIRED
     2- DIFFS_SEND_LOCK_ACQUIRED
     respectively
 
-    Checking the state variable, we decide to run both components of Daemon i.e. populateBuffer and bufferHandler.
+    By checking the state variable, we decide to run both components of Daemon i.e. populateBuffer and bufferHandler.
 
     Case 1:
         If both locks have been acquired by this instance, Daemon runs both populateBuffer and bufferHandler
@@ -66,7 +68,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
         CodeSyncLogger.error("Activity alert failed", e.stack);    
     }
 
-    // Check permissions to run populateBuffer and bufferHandler
+    // Checking permissions here to run populateBuffer and bufferHandler
     const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
     const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
 
