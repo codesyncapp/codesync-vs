@@ -1,6 +1,5 @@
 .topnav {
     overflow: hidden;
-    background-color: #f8f9fa !important;
 }
 
 .topnav a {
@@ -9,6 +8,10 @@
     padding: 14px 16px;
     text-decoration: none;
     color: black;
+}
+
+.topnav img {
+    margin-right: 10px;
 }
 
 .navbar-brand {
@@ -60,7 +63,19 @@ img, svg {
 .alert-success {
     margin-top: 50px;
     background-color: #04AA6D;
-    padding: 20px;
+    padding: 15px;
     color: white;
     text-align: center;
+}
+
+.button-div {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.codesync-button {
+    border: 1px solid rgb(129, 135, 226); 
+    background: linear-gradient(100deg, rgb(205, 71, 225) 0%, rgb(32, 216, 227) 100%); 
+    border-radius: 5px; color: rgb(255, 255, 255);
+    padding: 10px;
 }

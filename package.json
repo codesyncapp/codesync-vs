@@ -3,12 +3,12 @@
   "displayName": "CodeSync",
   "description": "Stream code to the cloud. Save it forever. Play it back later. No commits needed.",
   "icon": "images/icon.png",
-  "version": "3.31.0",
+  "version": "3.33.0",
   "publisher": "codesync",
   "engines": {
     "vscode": "^1.79.0",
     "npm": "8.1.2",
-    "node": "16.20.0"
+    "node": "16.20.2"
   },
   "categories": [
     "Other"
