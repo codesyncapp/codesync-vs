@@ -26,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Error Handling: If some chunk is failed to upload successfully somehow, 
     we save that chunk in a separate file to retry later by reducing chunk size
 - Shows a spinner loader in status bar while branch is being uploaded to the server
-- 
 
 ## [3.30.1] - 2023-08-08
 - Fixed passing AWS Config to CloudWatchLogsClient
