@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [3.32.0] - 2023-11-04
-- Mionr tweaks in Login Success and Failed HTML files
+- Minor tweaks in Login Success and Failed HTML files
 
 ## [3.31.0] - 2023-08-16
 - s3Uploader introduced to manage repo, branch and file upload to s3
@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Error Handling: If some chunk is failed to upload successfully somehow, 
     we save that chunk in a separate file to retry later by reducing chunk size
 - Shows a spinner loader in status bar while branch is being uploaded to the server
-- 
+
 
 ## [3.30.1] - 2023-08-08
 - Fixed passing AWS Config to CloudWatchLogsClient
