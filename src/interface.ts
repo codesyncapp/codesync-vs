@@ -1,6 +1,7 @@
 export interface IDiff {
 	repo_path: string;
 	branch: string;
+	commit_hash: string|null;
 	file_relative_path: string;
 	created_at: string;
 	added_at: string;
