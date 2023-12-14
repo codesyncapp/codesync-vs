@@ -14,12 +14,13 @@ import { VSCODE } from "../constants";
 import { isRepoSynced } from './utils';
 import { removeFile } from '../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
+import gitCommitInfo from 'git-commit-info';
 
 
 export class eventHandler {
 	repoPath: string;
 	branch: string;
-	commitHash: string;
+	commitHash: string|null;
 	viaDaemon: boolean;
 	repoIsNotSynced: boolean;
 	pathUtils: any;
@@ -48,7 +49,16 @@ export class eventHandler {
 		this.originalsRepoBranchPath = this.pathUtils.getOriginalsRepoBranchPath();
 		this.syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
 		this.defaultIgnorePatterns = getDefaultIgnorePatterns();
-		this.commitHash = CodeSyncState.get(CODESYNC_STATES.GIT_COMMIT_HASH);
+		if (viaDaemon) {
+			const commitInfo = gitCommitInfo({cwd: this.repoPath});
+			this.commitHash = commitInfo.hash || null;
+		} else {
+			this.commitHash = CodeSyncState.get(CODESYNC_STATES.GIT_COMMIT_HASH) || null;
+			if (!this.commitHash) {
+				const commitInfo = gitCommitInfo({cwd: repoPath});
+				this.commitHash = commitInfo.hash || null;	
+			}
+		}
 	}
 
 	addDiff = (relPath: string, diffs="") => {
@@ -62,7 +72,7 @@ export class eventHandler {
 		newDiff.source = VSCODE;
 		newDiff.repo_path = this.repoPath;
 		newDiff.branch = this.branch;
-		newDiff.commit_hash = this.commitHash || null;
+		newDiff.commit_hash = this.commitHash;
 		newDiff.file_relative_path = relPath;
 		newDiff.diff = diffs;
 		newDiff.is_new_file = this.isNewFile;
