@@ -24,6 +24,7 @@ export const CODESYNC_STATES = {
     BUFFER_HANDLER_LOGGED_AT: "bufferHandlerLoggedAt",
     SOCKET_CONNECTED_AT: "socketConnectedAt",
     INTERNET_DOWN_AT: "internetDownAt",
+    GIT_COMMIT_HASH: "gitCommitHash"
 };
 
 export class CodeSyncState {

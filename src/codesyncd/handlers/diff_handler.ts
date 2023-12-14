@@ -99,6 +99,7 @@ export class DiffHandler {
     createDiffToSend(fileId: number) {
         return {
             'file_id': fileId,
+            'commit_hash': this.diffData.commit_hash,
             'path': this.fileRelPath,
             'diff': this.diffData.diff,
             'is_deleted': this.diffData.is_deleted,

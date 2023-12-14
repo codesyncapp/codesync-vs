@@ -1,6 +1,6 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
-import vscode from 'vscode';
+import vscode, { Extension } from 'vscode';
 import {
 	COMMAND,
 	getDirectoryIsSyncedMsg,
@@ -31,6 +31,8 @@ import { initExpressServer } from "../server/server";
 import { getPluginUser, getSyncignore } from './s3_utils';
 import { pathUtils } from './path_utils';
 import { CodeSyncLogger } from '../logger';
+import { GitExtension } from '../git';
+import { CODESYNC_STATES, CodeSyncState } from './state_utils';
 
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
@@ -238,6 +240,42 @@ const registerSyncIgnoreSaveEvent = (repoPath: string) => {
 			showRepoStatusMsg(repoPath);
 		});
 	}
+};
+
+const getBuiltInGitApi = async () => {
+    try {
+        const extension = vscode.extensions.getExtension('vscode.git') as Extension<GitExtension>;
+        if (extension !== undefined) {
+            const gitExtension = extension.isActive ? extension.exports : await extension.activate();
+            return gitExtension.getAPI(1);
+        }
+    } catch {
+		return undefined;
+	}
+    return undefined;
+};
+
+export const registerGitListener = async (repoPath: string) => {
+	if (!repoPath) return;
+	// Check if the workspace is a Git repository, use the Git extension API to get Git information
+	const gitExtension = await getBuiltInGitApi();
+	if (!gitExtension) return;
+	const gitRepository = gitExtension.repositories.find(repo => repo.rootUri.fsPath === repoPath);
+	if (!gitRepository) {
+		console.log("Is not a gitRepo");
+		return;
+	}
+	const currentCommit = gitRepository.state.HEAD?.commit;
+	if (!currentCommit) return;
+	CodeSyncState.set(CODESYNC_STATES.GIT_COMMIT_HASH, currentCommit);
+	CodeSyncLogger.debug(`CommitHash=${currentCommit}`);
+	gitRepository.state.onDidChange(() => {
+		const gitRepository = gitExtension.repositories.find(repo => repo.rootUri.fsPath === repoPath);
+		if (!gitRepository) return;	
+		const newCommitHash = gitRepository.state.HEAD?.commit;
+		if (!newCommitHash) return;
+		CodeSyncState.set(CODESYNC_STATES.GIT_COMMIT_HASH, newCommitHash);
+	});
 };
 
 export const setInitialContext = () => {

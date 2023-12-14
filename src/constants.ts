@@ -83,7 +83,6 @@ export const NOTIFICATION = {
 	WELCOME_MSG: "Welcome to CodeSync!",
 	LOGIN_SUCCESS: "Success! Now, switch back to Visual Studio Code to connect your repo.",
 	CONNECT_REPO: "Connect your repo with CodeSync",
-	CONNECT_AFTER_JOIN: "Successfully logged in to CodeSync. Let's connect your repo",
 	CHOOSE_ACCOUNT: "Choose account to sync your repo",
 	USE_DIFFERENT_ACCOUNT: "Use different account",
 	PUBLIC: "Public",
@@ -111,6 +110,10 @@ export const NOTIFICATION = {
 export const getRepoInSyncMsg = (repoPath: string) => {
     const repoName = path.basename(repoPath);
     return `Repo ${repoName} ${NOTIFICATION.REPO_IN_SYNC}`;
+};
+
+export const getConnectRepoMsgAfterJoin = (email: string) => {
+    return `Successfully logged in to CodeSync with ${email}. Let's connect your repo`;
 };
 
 export const getDirectoryIsSyncedMsg = (repoPath: string, parentPath: string) => {
