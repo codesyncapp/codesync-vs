@@ -55,7 +55,7 @@ export class eventHandler {
 		} else {
 			this.commitHash = CodeSyncState.get(CODESYNC_STATES.GIT_COMMIT_HASH) || null;
 			if (!this.commitHash) {
-				const commitInfo = gitCommitInfo({cwd: repoPath});
+				const commitInfo = gitCommitInfo({cwd: this.repoPath});
 				this.commitHash = commitInfo.hash || null;	
 			}
 		}
