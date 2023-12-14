@@ -260,7 +260,7 @@ export const registerGitListener = async (repoPath: string) => {
 	// Check if the workspace is a Git repository, use the Git extension API to get Git information
 	const gitExtension = await getBuiltInGitApi();
 	if (!gitExtension) return;
-	const gitRepository = gitExtension.repositories.find(repo => repo.rootUri.fsPath === repoPath);
+	const gitRepository = gitExtension.repositories.find(repo => pathUtils.normalizePath(repo.rootUri.fsPath) === repoPath);
 	if (!gitRepository) {
 		console.log("Is not a gitRepo");
 		return;
@@ -270,7 +270,7 @@ export const registerGitListener = async (repoPath: string) => {
 	CodeSyncState.set(CODESYNC_STATES.GIT_COMMIT_HASH, currentCommit);
 	CodeSyncLogger.debug(`CommitHash=${currentCommit}`);
 	gitRepository.state.onDidChange(() => {
-		const gitRepository = gitExtension.repositories.find(repo => repo.rootUri.fsPath === repoPath);
+		const gitRepository = gitExtension.repositories.find(repo => pathUtils.normalizePath(repo.rootUri.fsPath) === repoPath);
 		if (!gitRepository) return;	
 		const newCommitHash = gitRepository.state.HEAD?.commit;
 		if (!newCommitHash) return;
