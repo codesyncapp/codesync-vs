@@ -273,6 +273,7 @@ export const registerGitListener = async (repoPath: string) => {
 		const gitRepository = gitExtension.repositories.find(repo => repo.rootUri.fsPath === repoPath);
 		if (!gitRepository) return;	
 		const newCommitHash = gitRepository.state.HEAD?.commit;
+		CodeSyncLogger.debug(`newCommitHash=${newCommitHash}`);
 		if (!newCommitHash) return;
 		CodeSyncState.set(CODESYNC_STATES.GIT_COMMIT_HASH, newCommitHash);
 	});
