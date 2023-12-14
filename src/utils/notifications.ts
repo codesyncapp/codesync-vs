@@ -2,7 +2,7 @@ import vscode from 'vscode';
 import { initHandler } from '../init/init_handler';
 import { getActiveUsers } from './common';
 import { redirectToBrowser } from './auth_utils';
-import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION } from '../constants';
+import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin } from '../constants';
 import { trackRepoHandler, disconnectRepoHandler, openSyncIgnoreHandler } from '../handlers/commands_handler';
 
 
@@ -26,7 +26,7 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 		(global as any).skipAskConnect = false;
 		return;
 	}
-	const msg = email ? NOTIFICATION.CONNECT_AFTER_JOIN : NOTIFICATION.CONNECT_REPO;
+	const msg = email ? getConnectRepoMsgAfterJoin(email) : NOTIFICATION.CONNECT_REPO;
 	vscode.window.showInformationMessage(msg, ...[
 		NOTIFICATION.CONNECT
 	]).then(async selection => {

@@ -76,6 +76,7 @@ export class bufferHandler {
 	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
 
 	getDiffFiles = async () => {
+		const activeUser = getActiveUsers()[0];
 		const diffsBeingProcessed = getDiffsBeingProcessed();
 
         const invalidDiffFiles = await glob("**", { 
@@ -118,13 +119,19 @@ export class bufferHandler {
 				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
+			const configRepo = this.configJSON.repos[diffData.repo_path];
 
-			if (!(diffData.repo_path in this.configJSON.repos)) {
+			if (!configRepo) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is not in config.yml`);
 				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
-			if (this.configJSON.repos[diffData.repo_path].is_disconnected) {
+
+			// If diff does not belong to user's repo, skip it
+			if (configRepo.email !== activeUser.email) return false;
+
+			// Remove diff is repo is disconnected
+			if (configRepo.is_disconnected) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is disconnected`);
 				removeFile(filePath, "getDiffFiles");
 				return false;
@@ -140,8 +147,6 @@ export class bufferHandler {
 				return false;
 			}
 			
-			const configRepo = this.configJSON.repos[diffData.repo_path];
-
 			if (!(diffData.branch in configRepo.branches)) {
 				// TODO: Look into syncing offline branch
 				// Removing diffs of non-synced branch if diff was created 5 days ago and plan limit is not reached
@@ -222,13 +227,13 @@ export class bufferHandler {
 		CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, true);
 		
 		try {
+			// Check if we have an active user
+			const activeUser = getActiveUsers()[0];
+			if (!activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			const diffs = await this.getDiffFiles();
 			if (!diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			const repoDiffs = this.groupRepoDiffs(diffs.files);
-			// Check if we have an active user
-			const activeUser = getActiveUsers()[0];
-			if (!activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			// Create Websocket client
 			const webSocketClient = new SocketClient(this.statusBarItem, activeUser.access_token, repoDiffs);
 			webSocketClient.connect(canSendDiffs);
