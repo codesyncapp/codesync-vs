@@ -3,6 +3,7 @@ import yaml from 'js-yaml';
 import vscode, { Extension } from 'vscode';
 import {
 	COMMAND,
+	contextVariables,
 	getDirectoryIsSyncedMsg,
 	getRepoInSyncMsg,
 	MAX_PORT,
@@ -12,12 +13,13 @@ import {
 	UPDATE_SYNCIGNORE_AFTER
 } from "../constants";
 import { isRepoSynced } from '../events/utils';
-import { isPortAvailable, logout } from './auth_utils';
+import { createUser, isPortAvailable, logout } from './auth_utils';
 import { showConnectRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
 import { checkSubDir, getActiveUsers, readYML } from './common';
 import { 
 	disconnectRepoHandler, 
 	openSyncIgnoreHandler, 
+	reactivateAccountHandler, 
 	SignUpHandler, 
 	SyncHandler, 
 	trackFileHandler, 
@@ -167,12 +169,15 @@ export const setupCodeSync = async (repoPath: string) => {
 	}
 
 	// Check if there is valid user present
-	const validUsers = getActiveUsers();
-	if (validUsers.length === 0) {
+	const activeUser = getActiveUsers()[0];
+	if (!activeUser) {
 		showSignUpButtons();
 		return port;
 	}
-
+	// Check is accessToken is valid 
+	const userAccount = await createUser(activeUser.access_token, "");
+	if (userAccount.isDeactivated) return;
+	// Check if repo is connected
 	return showRepoStatusMsg(repoPath, port);
 };
 
@@ -282,16 +287,16 @@ export const registerGitListener = async (repoPath: string) => {
 export const setInitialContext = () => {
 	const repoPath = pathUtils.getRootPath();
 	const subDirResult = checkSubDir(repoPath);
-	vscode.commands.executeCommand('setContext', 'showLogIn', showLogIn());
-	vscode.commands.executeCommand('setContext', 'showConnectRepoView', showConnectRepoView(repoPath));
-	vscode.commands.executeCommand('setContext', 'isSubDir', subDirResult.isSubDir);
-	vscode.commands.executeCommand('setContext', 'isSyncIgnored', subDirResult.isSyncIgnored);
-	vscode.commands.executeCommand('setContext', 'CodeSyncActivated', true);
-	vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
+	vscode.commands.executeCommand('setContext', contextVariables.showLogIn, showLogIn());
+	vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, showConnectRepoView(repoPath));
+	vscode.commands.executeCommand('setContext', contextVariables.isSubDir, subDirResult.isSubDir);
+	vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, subDirResult.isSyncIgnored);
+	vscode.commands.executeCommand('setContext', contextVariables.codesyncActivated, true);
+	vscode.commands.executeCommand('setContext', contextVariables.upgradePricingPlan, false);
 };
 
 export const registerCommands = (context: vscode.ExtensionContext) => {
-	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, SignUpHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, SignUpHandler));	
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerLogout, logout));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSync, SyncHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerDisconnectRepo, disconnectRepoHandler));
@@ -301,6 +306,7 @@ export const registerCommands = (context: vscode.ExtensionContext) => {
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.upgradePlan, upgradePlanHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.viewDashboard, viewDashboardHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.viewActivity, viewActivityHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.reactivateAccount, reactivateAccountHandler));
 };
 
 export const createStatusBarItem = (context: vscode.ExtensionContext) => {

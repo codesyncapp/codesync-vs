@@ -1,6 +1,6 @@
 import vscode from "vscode";
 
-import {STATUS_BAR_MSGS} from "../../constants";
+import {contextVariables, STATUS_BAR_MSGS} from "../../constants";
 import {CodeSyncLogger, logErrorMsg} from "../../logger";
 import {IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffHandler} from "../handlers/diff_handler";
@@ -44,6 +44,14 @@ export class SocketEvents {
         CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
+    onDeactivatedAccount() {
+        errorCount = logErrorMsg(STATUS_BAR_MSGS.AUTH_FAILED_SENDING_DIFF, errorCount);
+        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED);
+        CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+        CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, true);
+        vscode.commands.executeCommand('setContext', contextVariables.showReactivateAccount, true);
+    }
+
     async onRepoSizeLimitReached() {
         CodeSyncLogger.error("Failed sending diff, Repo-Size Limit has been reached");
         await setPlanLimitReached(this.accessToken);
@@ -62,6 +70,7 @@ export class SocketEvents {
 
     async onValidAuth() {
         this.connection.send(JSON.stringify({"auth": 200}));
+        CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
         const statusBarMsg =  this.statusBarMsgsHandler.getMsg();
         this.statusBarMsgsHandler.update(statusBarMsg);
         if (!this.canSendDiffs) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
@@ -112,6 +121,9 @@ export class SocketEvents {
                     case 200:
                         await this.onValidAuth();
                         return true;
+                    case ErrorCodes.USER_ACCOUNT_DEACTIVATED:
+                        this.onDeactivatedAccount();
+                        return true;    
                     default:
                         this.onInvalidAuth();
                         return true;

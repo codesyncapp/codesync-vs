@@ -12,7 +12,7 @@ import { pathUtils } from '../utils/path_utils';
 import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload } from '../interface';
 import { uploadRepoToServer } from '../utils/upload_utils';
-import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT } from '../constants';
+import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT, contextVariables } from '../constants';
 import { getGlobIgnorePatterns, isRepoActive, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
@@ -142,7 +142,7 @@ export class initUtils {
 		CodeSyncState.set(syncingBranchKey, false);
 		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
 		// Hide Connect Repo
-		vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
+		vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, false);
 		// Show success notification
 		if (!this.viaDaemon) {
 			vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
