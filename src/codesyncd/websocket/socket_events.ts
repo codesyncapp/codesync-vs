@@ -60,14 +60,6 @@ export class SocketEvents {
         this.statusBarMsgsHandler.update(msg);
     }
 
-    async onDiffsLimitReached() {
-        CodeSyncLogger.error("Failed sending diff, Limit has been reached");
-        await setPlanLimitReached(this.accessToken);
-        const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
-        const msg = canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
-        this.statusBarMsgsHandler.update(msg);
-    }
-
     async onValidAuth() {
         this.connection.send(JSON.stringify({"auth": 200}));
         CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
@@ -133,9 +125,6 @@ export class SocketEvents {
                     case 200:
                         this.onSyncSuccess(resp.diff_file_path);
                         return true;
-                    case ErrorCodes.DIFFS_LIMIT_REACHED:
-                        await this.onDiffsLimitReached();
-                        return true;    
                     case ErrorCodes.REPO_SIZE_LIMIT_REACHED:
                         await this.onRepoSizeLimitReached(); 
                         return true;    

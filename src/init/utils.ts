@@ -16,7 +16,7 @@ import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT, co
 import { getGlobIgnorePatterns, isRepoActive, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
-import { s3Uploader } from './s3_uploader';
+import { s3UploaderUtils } from './s3_uploader';
 import { trackRepoHandler } from '../handlers/commands_handler';
 
 export class initUtils {
@@ -134,10 +134,8 @@ export class initUtils {
 			Save URLs in YML file for s3Uploader
 		*/
 		const filePathAndURLs =  uploadResponse.urls;
-		const connectingRepo = !this.viaDaemon;
-		const uploader = new s3Uploader(connectingRepo);
-		const fileName = uploader.saveURLs(this.repoPath, branch, filePathAndURLs);
-		await uploader.process(fileName);
+		const uploaderUtils = new s3UploaderUtils();
+		uploaderUtils.saveURLs(this.repoPath, branch, filePathAndURLs);
 		// Reset state values
 		CodeSyncState.set(syncingBranchKey, false);
 		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);

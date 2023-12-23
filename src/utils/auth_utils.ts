@@ -11,7 +11,7 @@ import {showConnectRepo} from "./notifications";
 import {createUserWithApi} from "./api_utils";
 import {generateSettings} from "../settings";
 import {reactivateAccountHandler, trackRepoHandler} from "../handlers/commands_handler";
-import {Auth0URLs, contextVariables, getRepoInSyncMsg, NOTIFICATION, NOTIFICATION_BUTTON} from "../constants";
+import {Auth0URLs, contextVariables, ECONNREFUSED, getRepoInSyncMsg, HTTP_STATUS_CODES, NOTIFICATION, NOTIFICATION_BUTTON} from "../constants";
 import { CodeSyncLogger } from "../logger";
 import { generateAuthUrl } from "./url_utils";
 import { CODESYNC_STATES, CodeSyncState } from "./state_utils";
@@ -35,6 +35,7 @@ export const redirectToBrowser = (skipAskConnect=false) => {
 };
 
 const postSuccessLoginAddUser = (userEmail: string, accessToken: string) => {
+    if (!userEmail) return;
     const settings = generateSettings();
     // Save access token of user against email in user.yml
     const users = readYML(settings.USER_PATH) || {};
@@ -81,24 +82,43 @@ const postDeactivatedAccount = (userEmail: string, accessToken: string) => {
     CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, true);
 };
 
+const checkDeactivatedAccount = (statusCode: number, accessToken: string, email="") => {
+    if (statusCode === ErrorCodes.USER_ACCOUNT_DEACTIVATED) {
+        postDeactivatedAccount(email, accessToken);
+        vscode.window.showErrorMessage(NOTIFICATION.ACCOUNT_DEACTIVATED, NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT).then(selection => {
+            if (!selection) return;
+            if (selection === NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT) {
+                reactivateAccountHandler();
+            }
+        });
+        return true;
+    }
+    return false;
+};
+
+export const checkAccount = async (email: string, accessToken: string) => {
+    const isValidAccount = true;
+    const userResponse = await createUserWithApi(accessToken);
+    if (!userResponse.error) return isValidAccount;
+    const isDeactivated = checkDeactivatedAccount(userResponse.statusCode, accessToken, email);
+    if (isDeactivated) return false;
+    if (userResponse.statusCode === HTTP_STATUS_CODES.UNAUTHORIZED) {
+        askAndTriggerSignUp();
+        return false;
+    }
+    return !userResponse.error.toString().includes(ECONNREFUSED);
+};
+
 export const createUser = async (accessToken: string, repoPath: string) => {
     const userResponse = await createUserWithApi(accessToken);
     if (userResponse.error) {
-        if (userResponse.statusCode === ErrorCodes.USER_ACCOUNT_DEACTIVATED) {
-            postDeactivatedAccount(userResponse.email, accessToken);
-            vscode.window.showErrorMessage(NOTIFICATION.ACCOUNT_DEACTIVATED, NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT).then(selection => {
-                if (!selection) return;
-                if (selection === NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT) {
-                    reactivateAccountHandler();
-                }
-            });
-            return {
-                success: true,
-                isDeactivated: true
-            };
-        }
+        const isDeactivated = checkDeactivatedAccount(userResponse.statusCode, accessToken);
+        if (isDeactivated) return {
+            success: false,
+            isDeactivated: true
+        };
         vscode.window.showErrorMessage(NOTIFICATION.SIGNUP_FAILED);
-        CodeSyncLogger.critical("Error creaing user from API", userResponse.error);
+        CodeSyncLogger.critical("Error creaing user from API", userResponse.error);    
         return {
             success: false,
             isDeactivated: false

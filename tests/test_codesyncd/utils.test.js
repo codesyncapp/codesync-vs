@@ -31,7 +31,7 @@ import {
 import {DEFAULT_BRANCH} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
 import {pathUtils} from "../../src/utils/path_utils";
-import {s3Uploader} from "../../src/init/s3_uploader";
+import {s3UploaderUtils} from "../../src/init/s3_uploader";
 
 
 describe("isValidDiff",  () => {
@@ -229,8 +229,8 @@ describe("handleNewFileUpload",  () => {
         expect(fileRelPath in result.config.repos[repoPath].branches[DEFAULT_BRANCH]).toBe(true);
         // File should not be deleted from .originals
         expect(fs.existsSync(originalsFilePath)).toBe(true);
-        const uploader = new s3Uploader();
-        await uploader.run();
+        const uploaderUtils = new s3UploaderUtils();
+        await uploaderUtils.runUploader();
         await waitFor(2);
         // File should be deleted from .originals
         expect(fs.existsSync(originalsFilePath)).toBe(false);

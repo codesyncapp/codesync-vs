@@ -76,7 +76,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 
 	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, addedAt, repoPath);
 	if (response.error) {
-		CodeSyncLogger.error(`Error uploading file=${relPath}: ${response.error}`);
+		CodeSyncLogger.error(`Error uploading file=${relPath}, repoPath=${repoPath}, branch=${branch} error=${response.error}`);
 		const isClientError = [HTTP_STATUS_CODES.INVALID_USAGE, HTTP_STATUS_CODES.FORBIDDEN, HTTP_STATUS_CODES.NOT_FOUND].includes(response.statusCode);
 		return {
 			uploaded: false,
