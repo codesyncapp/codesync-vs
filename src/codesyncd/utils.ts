@@ -51,7 +51,7 @@ export const isValidDiff = (diffData: IDiff) => {
 };
 
 export const handleNewFileUpload = async (accessToken: string, repoPath: string, branch: string, addedAt: string,
-											relPath: string, repoId: number, configJSON: any, deleteDiff=true) => {
+	relPath: string, repoId: number, configJSON: any, deleteDiff = true) => {
 	/*
 		Uploads new file to server and adds it in config
 		Ignores if file is not present in .originals repo
@@ -67,7 +67,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		};
 	}
 	// Check plan limits
-	const {planLimitReached, canRetry } = getPlanLimitReached();
+	const { planLimitReached, canRetry } = getPlanLimitReached();
 	if (planLimitReached && !canRetry) return {
 		uploaded: false,
 		deleteDiff: false,
@@ -76,7 +76,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 
 	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, addedAt, repoPath);
 	if (response.error) {
-		CodeSyncLogger.error(`Error uploading file=${relPath}: ${response.error}`);
+		CodeSyncLogger.error(`Error uploading file=${relPath}, repoPath=${repoPath}, branch=${branch} error=${response.error}`);
 		const isClientError = [HTTP_STATUS_CODES.INVALID_USAGE, HTTP_STATUS_CODES.FORBIDDEN, HTTP_STATUS_CODES.NOT_FOUND].includes(response.statusCode);
 		return {
 			uploaded: false,
@@ -154,24 +154,37 @@ export class statusBarMsgs {
 
 	update = (text: string) => {
 		try {
-			if (text === STATUS_BAR_MSGS.AUTHENTICATION_FAILED) {
-				this.statusBarItem.command = COMMAND.triggerSignUp;
-			} else if (text === STATUS_BAR_MSGS.CONNECT_REPO) {
-				this.statusBarItem.command = COMMAND.triggerSync;
-			} else if (text === STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN) {
-				this.statusBarItem.command = COMMAND.upgradePlan;
-			} else if ([STATUS_BAR_MSGS.USER_ACTIVITY_ALERT, STATUS_BAR_MSGS.TEAM_ACTIVITY_ALERT].includes(text)) {
-				this.statusBarItem.command = COMMAND.viewActivity;
-			} else {
-				this.statusBarItem.command = undefined;
+			let command = undefined;
+			switch (text) {
+				case STATUS_BAR_MSGS.AUTHENTICATION_FAILED:
+					command = COMMAND.triggerSignUp;
+					break;
+				case STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED:
+					command = COMMAND.reactivateAccount;
+					break;
+				case STATUS_BAR_MSGS.CONNECT_REPO:
+					command = COMMAND.triggerSync;
+					break;
+				case STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN:
+					command = COMMAND.upgradePlan;
+					break;
+				case STATUS_BAR_MSGS.USER_ACTIVITY_ALERT:
+					command = COMMAND.viewActivity;
+					break;
+				case STATUS_BAR_MSGS.TEAM_ACTIVITY_ALERT:
+					command = COMMAND.viewActivity;
+					break;
+				default:
+					break;
 			}
+			this.statusBarItem.command = command;
 			this.statusBarItem.text = text;
 			this.statusBarItem.show();
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			CodeSyncLogger.error("Error updating statusBar message", e.stack);
-		}	
+		}
 	};
 
 	getMsg = () => {
@@ -181,6 +194,8 @@ export class statusBarMsgs {
 		const daemonError = CodeSyncState.get(CODESYNC_STATES.DAEMON_ERROR);
 		// No Valid account found
 		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
+		const isDeactivated = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);
+		if (isDeactivated) return STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED;
 		// Check plan limits
 		const { planLimitReached } = getPlanLimitReached();
 		if (planLimitReached) {
@@ -201,7 +216,7 @@ export class statusBarMsgs {
 			if (subDirResult.isSyncIgnored) {
 				return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
 			}
-			return defaultMsg;	
+			return defaultMsg;
 		}
 		// Repo is not synced
 		if (!isRepoActive(this.configJSON, repoPath)) return STATUS_BAR_MSGS.CONNECT_REPO;

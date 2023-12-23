@@ -27,8 +27,9 @@ export const initExpressServer = () => {
         const repoPath = pathUtils.getRootPath() || "";
         const files = new staticFiles(__dirname);
         try {
-            await createUser(req.query.access_token, repoPath);
-            res.sendFile(files.LOGIN_SUCCESS);
+            const userResponse = await createUser(req.query.access_token, repoPath);
+            const responseFile = userResponse.success ? files.LOGIN_SUCCESS : files.LOGIN_FAILURE;
+            res.sendFile(responseFile);
         } catch (e) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
