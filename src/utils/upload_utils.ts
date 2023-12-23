@@ -2,10 +2,10 @@ import fs from 'fs';
 import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
-import { API_ROUTES } from "../constants";
+import { API_ROUTES, HTTP_STATUS_CODES } from "../constants";
 import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
-import { s3Uploader } from '../init/s3_uploader';
+import { s3UploaderUtils } from '../init/s3_uploader';
 
 
 export const uploadRepoToServer = async (token: string, data: any) => {
@@ -54,7 +54,7 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 	})
 	.catch(err => error = err);
 
-	if (statusCode === 402) {
+	if (statusCode === HTTP_STATUS_CODES.PRICING_PLAN_LIMIT_REACHED) {
 		// Check if key is set or not
 		await setPlanLimitReached(token);
 	} else {
@@ -108,7 +108,7 @@ export const uploadFile = async (token: string, data: any) => {
 	})
 	.catch(err => error = err);
 
-	if (statusCode === 402) {
+	if (statusCode === HTTP_STATUS_CODES.PRICING_PLAN_LIMIT_REACHED) {
 		// Check if key is set or not
 		await setPlanLimitReached(token);
 	} else {
@@ -132,7 +132,7 @@ export const uploadFile = async (token: string, data: any) => {
 export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 	if (!fs.existsSync(filePath)) {
 		return {
-			error: `file not found on : ${filePath}`
+			error: `uploadFileTos3: File=${filePath} not found`
 		};
 	}
 
@@ -185,7 +185,7 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 	if (fileInfo.size && json.response.url) {
 		const filePathAndURL = <any>{};
 		filePathAndURL[relPath] = json.response.url;
-		const uploader = new s3Uploader();
+		const uploader = new s3UploaderUtils();
 		uploader.saveURLs(repoPath, branch, filePathAndURL);
 	}
 

@@ -33,6 +33,7 @@ export const API_ROUTES = {
 	REPO_INIT: generateServerUrl("/init"),
 	REPOS: generateServerUrl(API_PATH.REPOS),
 	USERS: generateServerUrl("/users"),
+	REACTIVATE_ACCOUNT: generateServerUrl("/users/reactivate"),
 	USER_SUBSCRIPTION: generateServerUrl("/users/subscription"),
 	DIFFS_WEBSOCKET: generateServerUrl("/v2/websocket", CODESYNC_WEBSOCKET_HOST),
 	TEAM_ACTIVITY: generateServerUrl("/team_activity", API_BASE_URL, true)
@@ -58,6 +59,10 @@ export const SEQUENCE_MATCHER_RATIO = 0.8;
 // Error msgs
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
 
+export const NOTIFICATION_BUTTON = {
+	REACTIVATE_ACCOUNT: "Reactivate Account"
+};
+
 // Notification Messages
 export const NOTIFICATION = {
 	JOIN: "Join",
@@ -81,9 +86,8 @@ export const NOTIFICATION = {
 	DISCONNECT_REPO: "Dicsonnect",
 	DISCONNECT_PARENT_REPO: "Dicsonnect parent repo",
 	WELCOME_MSG: "Welcome to CodeSync!",
-	LOGIN_SUCCESS: "Success! Now, switch back to Visual Studio Code to connect your repo.",
+	REACTIVATED_SUCCESS: "Successfully reactivated your account",
 	CONNECT_REPO: "Connect your repo with CodeSync",
-	CONNECT_AFTER_JOIN: "Successfully logged in to CodeSync. Let's connect your repo",
 	CHOOSE_ACCOUNT: "Choose account to sync your repo",
 	USE_DIFFERENT_ACCOUNT: "Use different account",
 	PUBLIC: "Public",
@@ -105,12 +109,18 @@ export const NOTIFICATION = {
 	REPO_DISCONNECT_PARENT_CONFIRMATION: "Are you sure to disconnect parent repo? You won't be able to revert this!",
 	LOGGED_OUT_SUCCESSFULLY: "Successfully logged out!",
 	TEAM_ACTIVITY_ALERT: "Hope you had a great day! It's time to get in sync with your team's code.",
-	USER_ACTIVITY_ALERT: "Hope you had a great day! Shall we review today's code playback?"
+	USER_ACTIVITY_ALERT: "Hope you had a great day! Shall we review today's code playback?",
+	SIGNUP_FAILED: "Sign up to CodeSync failed!",
+	ACCOUNT_DEACTIVATED: "Your account has been deactivated. Please click 'Reactivate Account' below to resume syncing."
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {
     const repoName = path.basename(repoPath);
     return `Repo ${repoName} ${NOTIFICATION.REPO_IN_SYNC}`;
+};
+
+export const getConnectRepoMsgAfterJoin = (email: string) => {
+    return `Successfully logged in to CodeSync with ${email}. Let's connect your repo`;
 };
 
 export const getDirectoryIsSyncedMsg = (repoPath: string, parentPath: string) => {
@@ -133,6 +143,7 @@ export const STATUS_BAR_MSGS = {
 	AUTH_FAILED_SENDING_DIFF: 'Authentication failed while sending diff ',
 	DEFAULT: ' CodeSync ✅',
 	AUTHENTICATION_FAILED: ' CodeSync ❌, Click to authenticate!',
+	ACCOUNT_DEACTIVATED: ' CodeSync ❌, Click to reactivate your account!',
 	SERVER_DOWN: ' CodeSync ❌, Offline',
 	GETTING_READY: ' CodeSync $(loading~spin)',
 	NO_REPO_OPEN: ' CodeSync => No project is open',
@@ -148,6 +159,7 @@ export const STATUS_BAR_MSGS = {
 
 export const COMMAND = {
 	triggerSignUp: 'codesync.signup',
+	reactivateAccount: 'codesync.accountReactivate',
 	triggerLogout: 'codesync.logout',
 	triggerSync: 'codesync.sync',
 	triggerDisconnectRepo: 'codesync.disconnectRepo',
@@ -157,6 +169,17 @@ export const COMMAND = {
 	upgradePlan: 'codesync.upgradePlan',
 	viewDashboard: 'codesync.viewDashboard',
 	viewActivity: 'codesync.viewActivity',
+};
+
+export const contextVariables = {
+	showLogIn: "showLogIn",
+	showConnectRepoView: "showConnectRepoView",
+	showReactivateAccount: "showReactivateAccount",
+	isSubDir: "isSubDir",
+	isSyncIgnored: "isSyncIgnored",
+	upgradePricingPlan: "upgradePricingPlan",
+	canAvailTrial: "canAvailTrial",
+	codesyncActivated: "CodeSyncActivated"
 };
 
 export class staticFiles {
@@ -199,6 +222,9 @@ export const FORCE_CONNECT_WEBSOCKET_AFTER = 30 * 60 * 1000; // 1000 is for ms;
 
 export const HTTP_STATUS_CODES = {
 	INVALID_USAGE: 400,
+	UNAUTHORIZED: 401,
+	PRICING_PLAN_LIMIT_REACHED: 402,
 	FORBIDDEN: 403,
-	NOT_FOUND: 404
+	NOT_FOUND: 404,
+	SERVER_ERROR: 500
 };

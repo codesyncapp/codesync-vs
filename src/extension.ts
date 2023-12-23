@@ -6,6 +6,7 @@ import { eventHandler } from "./events/event_handler";
 import { 
 	createStatusBarItem,
 	registerCommands, 
+	registerGitListener, 
 	setInitialContext, 
 	setupCodeSync, 
 	uuidv4
@@ -24,7 +25,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	try {
 		let repoPath = pathUtils.getRootPath();
 		await setupCodeSync(repoPath);
-
+		await registerGitListener(repoPath);
 		const subDirResult = checkSubDir(repoPath);
 		
 		// vscode.commands.executeCommand

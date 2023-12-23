@@ -1,6 +1,7 @@
 export interface IDiff {
 	repo_path: string;
 	branch: string;
+	commit_hash: string|null;
 	file_relative_path: string;
 	created_at: string;
 	added_at: string;
@@ -71,7 +72,8 @@ export interface IS3UploaderFile {
 	branch: string;
 	file_path_and_urls: any;
 	locked_by?: string;
-	failed_count: number;
+	locked_at?: number;
+	run_count: number;
 }
 
 export interface IS3UploaderPreProcess {

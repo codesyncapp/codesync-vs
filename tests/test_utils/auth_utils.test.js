@@ -10,7 +10,7 @@ import {
     logout,
     redirectToBrowser
 } from "../../src/utils/auth_utils";
-import { Auth0URLs, NOTIFICATION } from "../../src/constants";
+import { Auth0URLs, contextVariables, NOTIFICATION } from "../../src/constants";
 import { createRedirectUri } from "../../src/utils/url_utils";
 import {
     addUser,
@@ -142,13 +142,16 @@ describe("createUser",  () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         const users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(true);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
         expect(vscode.commands.executeCommand.mock.calls[0][2]).toBe(false);
         expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual("showConnectRepoView");
-        expect(vscode.commands.executeCommand.mock.calls[1][2]).toBe(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.showReactivateAccount);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toBe(false);
+        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual("setContext");
+        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.showConnectRepoView);
+        expect(vscode.commands.executeCommand.mock.calls[2][2]).toBe(true);
     });
 
     test("with user in user.yml", async () => {
@@ -161,13 +164,16 @@ describe("createUser",  () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(true);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
         expect(vscode.commands.executeCommand.mock.calls[0][2]).toBe(false);
         expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual("showConnectRepoView");
-        expect(vscode.commands.executeCommand.mock.calls[1][2]).toBe(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.showReactivateAccount);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toBe(false);
+        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual("setContext");
+        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.showConnectRepoView);
+        expect(vscode.commands.executeCommand.mock.calls[2][2]).toBe(true);
     });
 });
 

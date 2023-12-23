@@ -1,5 +1,5 @@
 import vscode from 'vscode';
-import { NOTIFICATION, PRICING_URL_PATH, RETRY_REQUEST_AFTER } from '../constants';
+import { contextVariables, NOTIFICATION, PRICING_URL_PATH, RETRY_REQUEST_AFTER } from '../constants';
 import { generateSettings } from '../settings';
 import { checkSubDir, readYML } from './common';
 import { LockUtils } from './lock_utils';
@@ -45,8 +45,8 @@ export const setPlanLimitReached = async (accessToken: string) => {
 	}
 
 	// Mark upgradePricingPlan to show button in left panel
-	vscode.commands.executeCommand('setContext', 'upgradePricingPlan', true);
-	vscode.commands.executeCommand('setContext', 'canAvailTrial', canAvailTrial);
+	vscode.commands.executeCommand('setContext', contextVariables.upgradePricingPlan, true);
+	vscode.commands.executeCommand('setContext', contextVariables.canAvailTrial, canAvailTrial);
 
 	const msg = isOrgRepo ? NOTIFICATION.UPGRADE_ORG_PLAN : NOTIFICATION.UPGRADE_PRICING_PLAN;
 	let button = NOTIFICATION.UPGRADE;
@@ -85,7 +85,7 @@ export const resetPlanLimitReached = () => {
 	*/
 	const lockUtils = new LockUtils();
 	lockUtils.releasePricingAlertLock();
-	vscode.commands.executeCommand('setContext', 'upgradePricingPlan', false);
+	vscode.commands.executeCommand('setContext', contextVariables.upgradePricingPlan, false);
 	// Set time to "" when request is sent
 	CodeSyncState.set(CODESYNC_STATES.REQUEST_SENT_AT, "");
 };
