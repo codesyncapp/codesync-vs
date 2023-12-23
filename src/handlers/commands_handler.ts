@@ -4,27 +4,48 @@ import vscode from 'vscode';
 import yaml from "js-yaml";
 
 import {
+	contextVariables,
 	getRepoInSyncMsg,
 	NOTIFICATION,
 	SYNCIGNORE
 } from '../constants';
-import { checkSubDir, getBranch, isRepoActive, readYML } from '../utils/common';
+import { checkSubDir, getActiveUsers, getBranch, isRepoActive, readYML } from '../utils/common';
 import { isRepoSynced } from '../events/utils';
-import { redirectToBrowser } from "../utils/auth_utils";
+import { postSuccessLogin, redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
 import { updateRepo } from '../utils/sync_repo_utils';
-import { generateSettings, WEB_APP_URL } from "../settings";
+import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
 import { generateWebUrl } from "../utils/url_utils";
+import { reactivateAccount } from "../utils/api_utils";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
 };
 
+export const reactivateAccountHandler = async () => {
+	const validUsers = getActiveUsers();
+	if (!validUsers.length) {
+		vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
+		return;
+	}
+	const accessToken = validUsers[0].access_token;
+	const repoPath = pathUtils.getRootPath();
+
+	const json = await reactivateAccount(accessToken);
+	if (json.error) {
+		vscode.window.showErrorMessage(NOTIFICATION.AUTHENTICATION_FAILED);
+		return;
+	}
+	vscode.window.showInformationMessage(NOTIFICATION.REACTIVATED_SUCCESS);
+	postSuccessLogin(json.email, accessToken, repoPath);
+	CodeSyncState.set(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT, false);
+};
+
 export const SyncHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
-	if (!repoPath) { return; }
+	if (!repoPath) return;
 	if (isRepoSynced(repoPath)) {
 		// Show notification that repo is in sync
 		vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
@@ -37,7 +58,7 @@ export const SyncHandler = async () => {
 
 export const disconnectRepoHandler = async () => {
 	let repoPath = pathUtils.getRootPath();
-	if (!repoPath) { return; }
+	if (!repoPath) return;
 	let msg = NOTIFICATION.REPO_DISCONNECT_CONFIRMATION;
 	const result = checkSubDir(repoPath);
 	if (result.isSubDir) {
@@ -69,9 +90,9 @@ export const postSelectionDisconnectRepo = async (repoPath: string, selection?: 
 	configRepo.is_disconnected = true;
 	fs.writeFileSync(settings.CONFIG_PATH, yaml.dump(config));
 	// TODO: Maybe should delete repo from .shadow and .originals,
-	vscode.commands.executeCommand('setContext', 'showConnectRepoView', true);
-	vscode.commands.executeCommand('setContext', 'isSubDir', false);
-	vscode.commands.executeCommand('setContext', 'isSyncIgnored', false);
+	vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, true);
+	vscode.commands.executeCommand('setContext', contextVariables.isSubDir, false);
+	vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, false);
 	vscode.window.showInformationMessage(NOTIFICATION.REPO_DISCONNECTED);
 };
 

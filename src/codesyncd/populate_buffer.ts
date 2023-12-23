@@ -36,14 +36,14 @@ import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { removeFile } from "../utils/file_utils";
-import { s3Uploader } from "../init/s3_uploader";
+import { s3UploaderUtils } from "../init/s3_uploader";
 
 
 const shouldProceed = () => {
     /* Process only if 
-        - populateBuffer is not running already
-        - branchSync is not in progress
         - s3Upload is not in progress
+        - branchSync is not in progress
+        - populateBuffer is not running already
     */
     // Return if any branch is being uploaded to s3
     const uploadingToS3 = CodeSyncState.canSkipRun(CODESYNC_STATES.UPLOADING_TO_S3, S3_UPLOAD_TIMEOUT);
@@ -57,22 +57,9 @@ const shouldProceed = () => {
     return true; 
 };
 
-const runS3Uploader = async () => {
-    const uploader = new s3Uploader();
-    CodeSyncState.set(CODESYNC_STATES.UPLOADING_TO_S3, new Date().getTime());
-    try {
-        await uploader.run();
-    } catch (e) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        CodeSyncLogger.critical("s3Uploaded failed to run", e.stack);
-    }
-    CodeSyncState.set(CODESYNC_STATES.UPLOADING_TO_S3, "");
-};
-
 export const populateBuffer = async (viaDaemon=true) => {
     if (!viaDaemon || !shouldProceed()) return;
-    await runS3Uploader();
+    await new s3UploaderUtils().runUploader();
     const readyRepos = await detectBranchChange();
     await populateBufferForMissedEvents(readyRepos);
 };

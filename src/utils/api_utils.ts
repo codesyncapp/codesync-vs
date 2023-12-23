@@ -41,6 +41,7 @@ export const getUserForToken = async (accessToken: string) => {
 export const createUserWithApi = async (accessToken: string) => {
 	let error = "";
 	let email = "";
+	let statusCode = 200;
 	const response = <any> await fetch(API_ROUTES.USERS, {
 			method: 'POST',
 			headers: {
@@ -49,7 +50,10 @@ export const createUserWithApi = async (accessToken: string) => {
 			}
 		}
 	)
-		.then(res => res.json())
+		.then(res => {
+			statusCode = res.status;
+			return res.json();
+		})
 		.then(json => json)
 		.catch(err => error = err);
 
@@ -63,10 +67,41 @@ export const createUserWithApi = async (accessToken: string) => {
 
 	return {
 		email,
-		error
+		error,
+		statusCode: statusCode
 	};
 };
 
+
+export const reactivateAccount = async (accessToken: string) => {
+	let error = "";
+	let email = "";
+	const response = <any> await fetch(API_ROUTES.REACTIVATE_ACCOUNT, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Basic ${accessToken}`
+			}
+		}
+	)
+		.then(res => {
+			return res.json();
+		})
+		.then(json => json)
+		.catch(err => error = err);
+
+	if (response.error) {
+		error = response.error.message;
+	}
+	if (!error) {
+		email = response.user.email;
+	}
+
+	return {
+		email,
+		error
+	};
+};
 
 export const getTeamActivity = async (accessToken: string) => {
 	let error = "";

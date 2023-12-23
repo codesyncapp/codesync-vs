@@ -192,8 +192,7 @@ export const getActiveUsers = () => {
 };
 
 
-// TODO: For now they are same, will be different in upcoming version
 export const ErrorCodes  = {
     REPO_SIZE_LIMIT_REACHED: 402,
-    DIFFS_LIMIT_REACHED: 402
+	USER_ACCOUNT_DEACTIVATED: 403
 };
