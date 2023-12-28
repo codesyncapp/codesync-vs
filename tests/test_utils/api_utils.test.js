@@ -6,8 +6,7 @@ import fetchMock from "jest-fetch-mock";
 import {API_ROUTES} from "../../src/constants";
 import {
     checkServerDown,
-    createUserWithApi, 
-    getUserForToken,
+    createUserWithApi
 } from "../../src/utils/api_utils";
 import {
     getPluginUser
@@ -55,55 +54,6 @@ describe('checkServerDown', () => {
         const isServerDown = await checkServerDown();
         expect(isServerDown).toBe(true);
         expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.HEALTHCHECK);
-    });
-});
-
-
-describe("getUserForToken",  () => {
-    beforeEach(() => {
-        fetch.resetMocks();
-    });
-
-    const user = {
-        "email": "dummy@email.cpm",
-        "plan": {},
-        "repo_count": 0
-    };
-
-    const assertAPICall = (token="ACCESS_TOKEN") => {
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.USERS);
-        const options = fetch.mock.calls[0][1];
-        expect(options.headers).toStrictEqual({
-            'Content-Type': 'application/json',
-            'Authorization': `Basic ${token}`
-        });
-        return true;
-    };
-
-    test('should get auth error', async () => {
-        const token = "INVALID_TOKEN";
-        fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
-        const res = await getUserForToken(token);
-        expect(res.isTokenValid).toBe(false);
-        // Assert API call
-        expect(assertAPICall(token)).toBe(true);
-    });
-
-    test('should fetch users', async () => {
-        fetchMock.mockResponseOnce(JSON.stringify(user));
-        const apiResponse = await getUserForToken("ACCESS_TOKEN");
-        expect(apiResponse.isTokenValid).toBe(true);
-        expect(apiResponse.response).toEqual(user);
-        // Assert API call
-        expect(assertAPICall()).toBe(true);
-    });
-
-    test('with null response', async () => {
-        fetchMock.mockResponseOnce(null);
-        const apiResponse = await getUserForToken("ACCESS_TOKEN");
-        expect(apiResponse.isTokenValid).toBe(false);
-        // Assert API call
-        expect(assertAPICall()).toBe(true);
     });
 });
 

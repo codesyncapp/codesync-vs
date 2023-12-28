@@ -19,6 +19,7 @@ export const CODESYNC_STATES = {
     STATUS_BAR_ACTIVITY_ALERT_MSG: "statusBarActivityAlertMsg",
     WEBSOCKET_ERROR_OCCURRED_AT: "websocketErrorOccurredAt",
     DIFFS_BEING_PROCESSED: "diffsBeingProcessed",
+    S3_UPLOADER_FILES_BEING_PROCESSED: "s3UploaderFilesBeingProcessed",
     INSTANCE_UUID: "instanceUUID",
     DAEMON_ERROR: "daemonError",
     BUFFER_HANDLER_LOGGED_AT: "bufferHandlerLoggedAt",

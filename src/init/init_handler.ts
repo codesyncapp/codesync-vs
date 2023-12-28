@@ -12,8 +12,8 @@ import { initUtils } from './utils';
 import { IUser } from '../interface';
 import { pathUtils } from "../utils/path_utils";
 import { askPublicPrivate } from '../utils/notifications';
-import { askAndTriggerSignUp } from '../utils/auth_utils';
-import { checkServerDown, getUserForToken } from "../utils/api_utils";
+import { askAndTriggerSignUp, isAccountActive } from '../utils/auth_utils';
+import { checkServerDown } from "../utils/api_utils";
 import { getBranch, readFile } from "../utils/common";
 import { isRepoSynced } from '../events/utils';
 import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
@@ -22,12 +22,14 @@ import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
 export class initHandler {
 	repoPath: string;
 	accessToken: string;
+	userEmail: string;
 	viaDaemon: boolean;
 	branch: string;
 
-	constructor(repoPath: string, accessToken: string, viaDaemon=false) {
+	constructor(repoPath: string, accessToken: string, userEmail: string, viaDaemon=false) {
 		this.repoPath = repoPath;
 		this.accessToken = accessToken;
+		this.userEmail = userEmail;
 		// This is set True via daemon
 		this.viaDaemon = viaDaemon;
 		this.branch = getBranch(this.repoPath);
@@ -42,16 +44,12 @@ export class initHandler {
 		}
 
 		const user = <IUser>{};
-		user.email = "";
+		user.email = this.userEmail;
 
 		if (!isServerDown) {
 			// Validate access token
-			const userJSON = <any> await getUserForToken(this.accessToken);
-			if (!userJSON.isTokenValid) {
-				askAndTriggerSignUp();
-				return false;
-			}
-			user.email = userJSON.response.email;
+			const success = await isAccountActive(this.userEmail, this.accessToken);
+			if (!success) return false;	
 		}
 
 		const repoSynced = isRepoSynced(this.repoPath);

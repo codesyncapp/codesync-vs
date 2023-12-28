@@ -15,7 +15,7 @@ import { uploadFileTos3 } from '../utils/upload_utils';
 import { CodeSyncLogger } from '../logger';
 import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
 import { IS3UploaderFile, IS3UploaderPreProcess } from '../interface';
-import { S3_UPLOADR_RETRY_AFTER, S3_UPLOAD_TIMEOUT } from '../constants';
+import { S3_UPLOADR_RETRY_AFTER } from '../constants';
 
 
 export class s3UploaderUtils {
@@ -33,6 +33,15 @@ export class s3UploaderUtils {
 		this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 		this.config = readYML(this.settings.CONFIG_PATH);
 	}
+
+	getFilesBeingProcessed = () => {
+		const filesInState = CodeSyncState.get(CODESYNC_STATES.S3_UPLOADER_FILES_BEING_PROCESSED);
+		return filesInState || new Set();
+	};
+	
+	setFilesBeingProcessed = (files: Set<string>) => {
+		CodeSyncState.set(CODESYNC_STATES.S3_UPLOADER_FILES_BEING_PROCESSED, files);
+	};
 
 	saveURLs = (repoPath: string, branch: string, filePathsAndURLs: any, runCount = 0) => {
 		/*
@@ -62,22 +71,30 @@ export class s3UploaderUtils {
 
 	runUploader = async () => {
 		CodeSyncState.set(CODESYNC_STATES.UPLOADING_TO_S3, this.now);
-		const value = CodeSyncState.get(CODESYNC_STATES.UPLOADING_TO_S3);
 		const files = await glob("*.yml", {
 			cwd: this.settings.S3_UPLOADER,
 			maxDepth: 1,
 			nodir: true,
 			dot: true
 		});
-
-		if (!files.length) return this.exit();
+		const filesCount = files.length;
+		if (!filesCount) return this.exit();
 		// Check if internet is up
 		const shouldProceed = await this.shouldProceed();
 		if (!shouldProceed) return this.exit();
-		for (const [index, fileName] of files.entries()) {
+
+		for (const fileName of files) {
 			try {
-				const isLastFile = index===files.length-1;
-				const uploader = new s3Uploader(fileName, isLastFile);
+				const filesBeingProcessed = this.getFilesBeingProcessed();
+				console.log(`s3uploader: filesBeingProcessed=${filesBeingProcessed.size}`);
+				if (filesBeingProcessed.has(fileName)) continue;
+				if (filesBeingProcessed.size) {
+					const updatedFilesBeingProcessed = new Set([...filesBeingProcessed, fileName]);
+					this.setFilesBeingProcessed(updatedFilesBeingProcessed);
+				} else {
+					this.setFilesBeingProcessed(new Set([fileName]));
+				}
+				const uploader = new s3Uploader(fileName);
 				await uploader.process();
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -146,12 +163,10 @@ class s3Uploader extends s3UploaderUtils {
 	runCount = 0;
 	chunkSize = this.DEFAULT_CHUNK_SIZE;
 	chunkFailed = false;
-	isLastFile = false;
 
-	constructor(fileName: string, isLastFile: boolean) {
+	constructor(fileName: string) {
 		super();
 		this.fileName = fileName;
-		this.isLastFile = isLastFile;
 	}
 
 	isInvalidFile = (content: IS3UploaderFile) => {
@@ -214,7 +229,7 @@ class s3Uploader extends s3UploaderUtils {
 			CodeSyncLogger.debug(`s3Uploader.preProcess file=${this.fileName} was locked ${lockedAgo/1000}s ago by instance=${content.locked_by}, uuid=${this.uuid}`);
 			return {
 				deleteFile: false,
-				skip: lockedAgo < S3_UPLOAD_TIMEOUT,
+				skip: lockedAgo < S3_UPLOADR_RETRY_AFTER,
 				content
 			};
 		}
@@ -349,6 +364,14 @@ class s3Uploader extends s3UploaderUtils {
 	}
 
 	gracefulExit = () => {
-		return this.isLastFile ? this.exit(): "";
+		// Remove file from filesBeingProcessed
+		const filesBeingProcessed = this.getFilesBeingProcessed();
+		if (filesBeingProcessed.size) {
+			filesBeingProcessed.delete(this.fileName);
+		}
+		this.setFilesBeingProcessed(filesBeingProcessed);
+		if (filesBeingProcessed.size) return;
+		CodeSyncLogger.debug("Exiting s3Uploader");
+		return this.exit();
 	}
 }

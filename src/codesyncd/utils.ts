@@ -190,12 +190,12 @@ export class statusBarMsgs {
 	getMsg = () => {
 		if (!fs.existsSync(this.settings.CONFIG_PATH)) return STATUS_BAR_MSGS.NO_CONFIG;
 		const repoPath = pathUtils.getRootPath();
-		const activeUsers = getActiveUsers();
 		const daemonError = CodeSyncState.get(CODESYNC_STATES.DAEMON_ERROR);
-		// No Valid account found
-		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
 		const isDeactivated = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);
 		if (isDeactivated) return STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED;
+		// No Valid account found
+		const activeUsers = getActiveUsers();
+		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
 		// Check plan limits
 		const { planLimitReached } = getPlanLimitReached();
 		if (planLimitReached) {

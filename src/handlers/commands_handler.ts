@@ -31,15 +31,13 @@ export const reactivateAccountHandler = async () => {
 		return;
 	}
 	const accessToken = validUsers[0].access_token;
-	const repoPath = pathUtils.getRootPath();
-
 	const json = await reactivateAccount(accessToken);
 	if (json.error) {
 		vscode.window.showErrorMessage(NOTIFICATION.AUTHENTICATION_FAILED);
 		return;
 	}
 	vscode.window.showInformationMessage(NOTIFICATION.REACTIVATED_SUCCESS);
-	postSuccessLogin(json.email, accessToken, repoPath);
+	postSuccessLogin(json.email, accessToken);
 	CodeSyncState.set(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT, false);
 };
 

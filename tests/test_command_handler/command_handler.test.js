@@ -72,16 +72,10 @@ describe("SyncHandler",  () => {
     });
 
     test("repo Not In Config", async () => {
-        const user = {
-            "email": TEST_EMAIL,
-            "plan": {
-                REPO_COUNT: 5
-            },
-            "repo_count": 4
-        };
+        const userResponse = {user: {email: TEST_EMAIL}};
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user));
+            .mockResponseOnce(JSON.stringify(userResponse));
         await SyncHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
         // TODO: In case we activate choose account option

@@ -60,7 +60,8 @@ describe("bufferHandler", () => {
         global.IS_CODESYNC_TEST_MODE = true;
         global.socketConnection = {
             on: jest.fn(),
-            send: jest.fn()
+            send: jest.fn(),
+            close: jest.fn()
         };
         global.client = null;
 

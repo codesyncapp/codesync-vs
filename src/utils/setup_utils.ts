@@ -13,7 +13,7 @@ import {
 	UPDATE_SYNCIGNORE_AFTER
 } from "../constants";
 import { isRepoSynced } from '../events/utils';
-import { checkAccount, isPortAvailable, logout } from './auth_utils';
+import { isAccountActive, isPortAvailable, logout } from './auth_utils';
 import { showConnectRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
 import { checkSubDir, getActiveUsers, readYML } from './common';
 import { 
@@ -175,7 +175,7 @@ export const setupCodeSync = async (repoPath: string) => {
 		return port;
 	}
 	// Check is accessToken is valid 
-	const success = await checkAccount(activeUser.email, activeUser.access_token);
+	const success = await isAccountActive(activeUser.email, activeUser.access_token);
 	if (success) {
 		CodeSyncLogger.debug(`User's access toekn is active, user=${activeUser.email}`);
 	}
@@ -194,7 +194,7 @@ export const showLogIn = () => {
 };
 
 export const showRepoStatusMsg = (repoPath: string, port?: number) => {
-	if (!repoPath) { return; }
+	if (!repoPath) return;
 
 	const subDirResult = checkSubDir(repoPath);
 

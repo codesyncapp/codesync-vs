@@ -19,7 +19,9 @@ import {
     randomBaseRepoPath,
     randomRepoPath,
     TEST_EMAIL,
-    waitFor
+    waitFor,
+    AUTH0_TEST_ID_TOKEN,
+    setWorkspaceFolders
 } from "../helpers/helpers";
 import { readYML } from "../../src/utils/common";
 import { initExpressServer } from "../../src/server/server";
@@ -117,6 +119,7 @@ describe("createUser",  () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
+        setWorkspaceFolders(repoPath);
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
@@ -130,7 +133,7 @@ describe("createUser",  () => {
 
     test("with invalid token", async () => {
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
-        await createUser("TOKEN", repoPath);
+        await createUser("TOKEN", AUTH0_TEST_ID_TOKEN);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
     });
 
@@ -138,7 +141,7 @@ describe("createUser",  () => {
         const user = {"user": {"id": 1, "email": TEST_EMAIL}};
         fetchMock.mockResponseOnce(JSON.stringify(user));
         global.skipAskConnect = false;
-        await createUser("TOKEN", repoPath);
+        await createUser("TOKEN", AUTH0_TEST_ID_TOKEN);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         const users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(true);
@@ -160,7 +163,7 @@ describe("createUser",  () => {
         fs.writeFileSync(userFilePath, yaml.dump(users));
         const user = {"user": {"id": 1}};
         fetchMock.mockResponseOnce(JSON.stringify(user));
-        await createUser("TOKEN", repoPath);
+        await createUser("TOKEN", AUTH0_TEST_ID_TOKEN);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(true);
