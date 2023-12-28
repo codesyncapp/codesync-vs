@@ -21,7 +21,7 @@ export const showSignUpButtons = () => {
 export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 	const skipAskConnect = (global as any).skipAskConnect;
 	if (skipAskConnect && email && accessToken) {
-		const handler = new initHandler(repoPath, accessToken);
+		const handler = new initHandler(repoPath, accessToken, email);
 		handler.connectRepo();
 		(global as any).skipAskConnect = false;
 		return;
@@ -33,7 +33,7 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 		if (selection === NOTIFICATION.CONNECT) {
 
 			if (email && accessToken) {
-				const handler = new initHandler(repoPath, accessToken);
+				const handler = new initHandler(repoPath, accessToken, email);
 				await handler.connectRepo();
 				return;
 			}
@@ -46,14 +46,13 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 
 export const showChooseAccount = async (repoPath: string) => {
 	// Check if access token is present against users
-	const validUsers =  getActiveUsers();
-	if (validUsers.length === 0) {
+	const activeUser =  getActiveUsers()[0];
+	if (!activeUser) {
 		vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
 		return;
 	}
 	// By Default choosing first account
-	const user = validUsers[0];
-	const handler = new initHandler(repoPath, user.access_token);
+	const handler = new initHandler(repoPath, activeUser.access_token, activeUser.email);
 	await handler.connectRepo();
 	return handler;
 	// TODO: Option to choose different account

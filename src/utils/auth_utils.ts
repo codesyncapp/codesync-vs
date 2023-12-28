@@ -15,6 +15,7 @@ import {Auth0URLs, contextVariables, ECONNREFUSED, getRepoInSyncMsg, HTTP_STATUS
 import { CodeSyncLogger } from "../logger";
 import { generateAuthUrl } from "./url_utils";
 import { CODESYNC_STATES, CodeSyncState } from "./state_utils";
+import { pathUtils } from "./path_utils";
 
 
 export const isPortAvailable = async (port: number) => {
@@ -51,11 +52,12 @@ const postSuccessLoginAddUser = (userEmail: string, accessToken: string) => {
     fs.writeFileSync(settings.USER_PATH, yaml.dump(users));
 };
 
-export const postSuccessLogin = (userEmail: string, accessToken: string, repoPath: string) => {
+export const postSuccessLogin = (userEmail: string, accessToken: string) => {
     postSuccessLoginAddUser(userEmail, accessToken);
-    vscode.commands.executeCommand('setContext', contextVariables.showLogIn, false);    
+    vscode.commands.executeCommand('setContext', contextVariables.showLogIn, false);
     vscode.commands.executeCommand('setContext', contextVariables.showReactivateAccount, false);
     CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
+    const repoPath = pathUtils.getRootPath() || "";
     if (!repoPath) return;
     const repoInSync = isRepoSynced(repoPath);
     vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, !repoInSync);
@@ -82,40 +84,39 @@ const postDeactivatedAccount = (userEmail: string, accessToken: string) => {
     CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, true);
 };
 
-const checkDeactivatedAccount = (statusCode: number, accessToken: string, email="") => {
-    if (statusCode === ErrorCodes.USER_ACCOUNT_DEACTIVATED) {
-        postDeactivatedAccount(email, accessToken);
-        vscode.window.showErrorMessage(NOTIFICATION.ACCOUNT_DEACTIVATED, NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT).then(selection => {
-            if (!selection) return;
-            if (selection === NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT) {
-                reactivateAccountHandler();
-            }
-        });
-        return true;
-    }
-    return false;
+const checkDeactivatedAccount = (email: string, accessToken: string, statusCode: number) => {
+    if (statusCode !== ErrorCodes.USER_ACCOUNT_DEACTIVATED) return false;
+    postDeactivatedAccount(email, accessToken);
+    vscode.window.showErrorMessage(NOTIFICATION.ACCOUNT_DEACTIVATED, NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT).then(selection => {
+        if (!selection) return;
+        if (selection === NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT) {
+            reactivateAccountHandler();
+        }
+    });
+    return true;
 };
 
-export const checkAccount = async (email: string, accessToken: string) => {
+export const isAccountActive = async (email: string, accessToken: string) => {
     const isValidAccount = true;
     const userResponse = await createUserWithApi(accessToken);
     if (!userResponse.error) return isValidAccount;
-    const isDeactivated = checkDeactivatedAccount(userResponse.statusCode, accessToken, email);
-    if (isDeactivated) return false;
     if (userResponse.statusCode === HTTP_STATUS_CODES.UNAUTHORIZED) {
         askAndTriggerSignUp();
         return false;
     }
+    const isDeactivated = checkDeactivatedAccount(email, accessToken, userResponse.statusCode);
+    if (isDeactivated) return false;
     return !userResponse.error.toString().includes(ECONNREFUSED);
 };
 
-export const createUser = async (accessToken: string, repoPath: string) => {
+export const createUser = async (accessToken: string, idToken: string) => {
+    const auth0User = parseJwt(idToken);
     const userResponse = await createUserWithApi(accessToken);
     if (userResponse.error) {
-        const isDeactivated = checkDeactivatedAccount(userResponse.statusCode, accessToken);
+        const isDeactivated = checkDeactivatedAccount(auth0User.email, accessToken, userResponse.statusCode);
         if (isDeactivated) return {
-            success: false,
-            isDeactivated: true
+                success: true,
+                isDeactivated: true
         };
         vscode.window.showErrorMessage(NOTIFICATION.SIGNUP_FAILED);
         CodeSyncLogger.critical("Error creaing user from API", userResponse.error);    
@@ -125,7 +126,7 @@ export const createUser = async (accessToken: string, repoPath: string) => {
         };
     }
     const userEmail = userResponse.email;
-    postSuccessLogin(userEmail, accessToken, repoPath);
+    postSuccessLogin(userEmail, accessToken);
     return {
         success: true,
         isDeactivated: false
@@ -164,4 +165,9 @@ export const askAndTriggerSignUp = () => {
             redirectToBrowser(true);
         }
     });
+};
+
+
+const parseJwt = (token: string) => {
+    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
 };

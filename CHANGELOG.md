@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.35.1] - 2023-12-28
+- Fixed Login from Deactivated account if user is logged-out
+- Removed usage of GET /users API
+- Improved logic of exiting s3Uploader by saving filesBeingProcessed in State
+
 ## [3.35.0] - 2023-12-23
 - Reactivate Account functionality added if user has deactivated the account from webapp
 - Improved logic for s3Uploader

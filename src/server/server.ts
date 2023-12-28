@@ -24,11 +24,15 @@ export const initExpressServer = () => {
 
     // define a route handler for the authorization callback
     expressApp.get(Auth0URLs.LOGIN_CALLBACK_PATH, async (req: any, res: any) => {
-        const repoPath = pathUtils.getRootPath() || "";
         const files = new staticFiles(__dirname);
+        let responseFile = files.LOGIN_SUCCESS;
         try {
-            const userResponse = await createUser(req.query.access_token, repoPath);
-            const responseFile = userResponse.success ? files.LOGIN_SUCCESS : files.LOGIN_FAILURE;
+            const userResponse = await createUser(req.query.access_token, req.query.id_token);
+            if (!userResponse.success) {
+                responseFile = files.LOGIN_FAILURE;
+            } else if (userResponse.isDeactivated) {
+                responseFile = files.DEACTIVATED_ACCOUNT;
+            }
             res.sendFile(responseFile);
         } catch (e) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment

@@ -30,7 +30,7 @@ import {
     RUN_POPULATE_BUFFER_AFTER, 
     RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER, 
     SEQUENCE_MATCHER_RATIO,
-    S3_UPLOAD_TIMEOUT
+    S3_UPLOADER_TIMEOUT
  } from "../constants";
 import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
@@ -46,8 +46,9 @@ const shouldProceed = () => {
         - populateBuffer is not running already
     */
     // Return if any branch is being uploaded to s3
-    const uploadingToS3 = CodeSyncState.canSkipRun(CODESYNC_STATES.UPLOADING_TO_S3, S3_UPLOAD_TIMEOUT);
-    if (uploadingToS3) return false;
+    const s3UploaderRunning = CodeSyncState.canSkipRun(CODESYNC_STATES.UPLOADING_TO_S3, S3_UPLOADER_TIMEOUT);
+    if (s3UploaderRunning) return false;
+    CodeSyncState.set(CODESYNC_STATES.S3_UPLOADER_FILES_BEING_PROCESSED, new Set());
     // Return if any branch is being synced
     const isBranchSyncInProcess = CodeSyncState.canSkipRun(CODESYNC_STATES.IS_SYNCING_BRANCH, BRANCH_SYNC_TIMEOUT);
     if (isBranchSyncInProcess) return false;
@@ -424,7 +425,7 @@ export const detectBranchChange = async () => {
             const itemPaths = await initUtilsObj.getSyncablePaths();
             uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email);
         } else {
-            const handler = new initHandler(repoPath, accessToken, true);
+            const handler = new initHandler(repoPath, accessToken, configRepo.email, true);
             uploaded = await handler.connectRepo();
         }
         if (uploaded) {

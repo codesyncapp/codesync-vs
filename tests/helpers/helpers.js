@@ -78,6 +78,7 @@ export const PRE_SIGNED_URL = {
 };
 
 export const TEST_EMAIL = 'test@codesync.com';
+export const AUTH0_TEST_ID_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAY29kZXN5bmMuY29tIn0.bl7QQajhg2IjPp8h0gzFku85qCrXQN4kThoo1AxB_Dc';
 export const ANOTHER_TEST_EMAIL = 'anotherTest@codesync.com';
 export const INVALID_TOKEN_JSON = {"error": {"message": "Invalid token"}};
 export const FILE_UPLOAD_400 = {error: {message: "File path is in the syncignore file and can not be uploaded."}};

@@ -139,8 +139,13 @@ export const getPublicPrivateMsg = (repoPath: string) => {
 	return `Do you want the repo ${repoName} public or private? (You can change this later)`;
 };
 
+export const ERROR_SENDING_DIFFS = {
+	REPO_SIZE_LIMIT_REACHED: "Failed sending diff: Repo-Size Limit has been reached!",
+	AUTH_FAILED_SENDING_DIFF: 'Error sending diffs: Authentication Failed!',
+	DEACTIVATED_ACCOUNT_FOUND: 'Error sending diffs: Account is Deactivated!',
+};
+
 export const STATUS_BAR_MSGS = {
-	AUTH_FAILED_SENDING_DIFF: 'Authentication failed while sending diff ',
 	DEFAULT: ' CodeSync ✅',
 	AUTHENTICATION_FAILED: ' CodeSync ❌, Click to authenticate!',
 	ACCOUNT_DEACTIVATED: ' CodeSync ❌, Click to reactivate your account!',
@@ -185,11 +190,19 @@ export const contextVariables = {
 export class staticFiles {
 	LOGIN_SUCCESS: string;
 	LOGIN_FAILURE: string;
+	DEACTIVATED_ACCOUNT: string;
+	fileNames = {
+		loginSuccess: "login-success.html",
+		loginFailure:"login-failure.html",
+		deactivatedAccount: "deactivated-account.html"
+	}
 
 	constructor(baseRepo: string) {
 		const rootPath = baseRepo.replace("out", "src");
-		this.LOGIN_SUCCESS = path.join(rootPath, "static", "login-success.html");
-		this.LOGIN_FAILURE = path.join(rootPath, "static", "login-failure.html");
+		const basePath = path.join(rootPath, "static");
+		this.LOGIN_SUCCESS = path.join(basePath, this.fileNames.loginSuccess);
+		this.LOGIN_FAILURE = path.join(basePath, this.fileNames.loginFailure);
+		this.DEACTIVATED_ACCOUNT = path.join(basePath, this.fileNames.deactivatedAccount);
 	}
 }
 
@@ -202,7 +215,7 @@ export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
 export const RETRY_REQUEST_AFTER = 3 * 60 * 1000; // 1000 is for ms;
 export const RETRY_TEAM_ACTIVITY_REQUEST_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const BRANCH_SYNC_TIMEOUT = 3 * 60 * 1000; // 1000 is for ms
-export const S3_UPLOAD_TIMEOUT = 5 * 60 * 1000; // 1000 is for ms
+export const S3_UPLOADER_TIMEOUT = 10 * 60 * 1000; // 1000 is for ms
 export const S3_UPLOADR_RETRY_AFTER = 5 * 60 * 1000; // 1000 is for ms
 export const RUN_POPULATE_BUFFER_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER = 10 * 60 * 1000; // 1000 is for ms;
