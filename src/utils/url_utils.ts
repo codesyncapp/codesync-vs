@@ -1,9 +1,9 @@
 import { TIMEZONE, VERSION, VSCODE, Auth0URLs, API_BASE_URL } from "../constants";
 import { WEB_APP_URL } from "../settings";
 
-export const createRedirectUri = () => {
+export const createRedirectUri = (path=Auth0URLs.LOGIN_CALLBACK_PATH) => {
     const port = (global as any).port;
-    return `http://localhost:${port}${Auth0URLs.LOGIN_CALLBACK_PATH}`;
+    return `http://localhost:${port}${path}`;
 };
 
 export const generateAuthUrl = (url: string) => {
