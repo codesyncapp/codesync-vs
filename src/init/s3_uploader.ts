@@ -175,6 +175,11 @@ class s3Uploader extends s3UploaderUtils {
 		return missingKeys.length;
 	}
 
+	hasFilesData = (content: IS3UploaderFile) => {
+		if (!content) return false;
+		return !isEmpty(content.file_path_and_urls);
+	}
+
 	setChunkSize = () => {
 		switch (this.runCount) {
 			case 0:
@@ -210,6 +215,11 @@ class s3Uploader extends s3UploaderUtils {
 				content
 			};
 		}
+		if (!this.hasFilesData(content)) return {
+			deleteFile: true,
+			skip: false,
+			content
+		};	
 		this.repoPath = content.repo_path;
 		this.branch = content.branch;
 		this.runCount = content.run_count;

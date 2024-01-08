@@ -50,36 +50,6 @@ export const createUserWithApi = async (accessToken: string) => {
 };
 
 
-export const reactivateAccount = async (accessToken: string) => {
-	let error = "";
-	let email = "";
-	const response = <any> await fetch(API_ROUTES.REACTIVATE_ACCOUNT, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Basic ${accessToken}`
-			}
-		}
-	)
-		.then(res => {
-			return res.json();
-		})
-		.then(json => json)
-		.catch(err => error = err);
-
-	if (response.error) {
-		error = response.error.message;
-	}
-	if (!error) {
-		email = response.user.email;
-	}
-
-	return {
-		email,
-		error
-	};
-};
-
 export const getTeamActivity = async (accessToken: string) => {
 	let error = "";
 	let is_team_activity = false;

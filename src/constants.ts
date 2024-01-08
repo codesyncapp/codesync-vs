@@ -45,7 +45,8 @@ export const MAX_PORT = 65535;
 export const Auth0URLs = {
 	AUTHORIZE: `${CODESYNC_HOST}/authorize`,
     LOGOUT: `${CODESYNC_HOST}/auth-logout`,
-	LOGIN_CALLBACK_PATH: "/login-callback"
+	LOGIN_CALLBACK_PATH: "/login-callback",
+	REACTIVATE_CALLBACK_PATH: "/reactivate-callback"
 };
 
 // Diff utils
@@ -191,10 +192,12 @@ export class staticFiles {
 	LOGIN_SUCCESS: string;
 	LOGIN_FAILURE: string;
 	DEACTIVATED_ACCOUNT: string;
+	REACTIVATED_ACCOUNT: string;
 	fileNames = {
 		loginSuccess: "login-success.html",
 		loginFailure:"login-failure.html",
-		deactivatedAccount: "deactivated-account.html"
+		deactivatedAccount: "deactivated-account.html",
+		reactivatedAccount: "reactivated-account.html"
 	}
 
 	constructor(baseRepo: string) {
@@ -203,6 +206,7 @@ export class staticFiles {
 		this.LOGIN_SUCCESS = path.join(basePath, this.fileNames.loginSuccess);
 		this.LOGIN_FAILURE = path.join(basePath, this.fileNames.loginFailure);
 		this.DEACTIVATED_ACCOUNT = path.join(basePath, this.fileNames.deactivatedAccount);
+		this.REACTIVATED_ACCOUNT = path.join(basePath, this.fileNames.reactivatedAccount);
 	}
 }
 
