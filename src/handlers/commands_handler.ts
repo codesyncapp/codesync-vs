@@ -4,6 +4,7 @@ import vscode from 'vscode';
 import yaml from "js-yaml";
 
 import {
+	Auth0URLs,
 	contextVariables,
 	getRepoInSyncMsg,
 	NOTIFICATION,
@@ -17,28 +18,19 @@ import { updateRepo } from '../utils/sync_repo_utils';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
-import { generateWebUrl } from "../utils/url_utils";
-import { reactivateAccount } from "../utils/api_utils";
+import { createRedirectUri, generateWebUrl } from "../utils/url_utils";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
 };
 
-export const reactivateAccountHandler = async () => {
-	const validUsers = getActiveUsers();
-	if (!validUsers.length) {
-		vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
-		return;
-	}
-	const accessToken = validUsers[0].access_token;
-	const json = await reactivateAccount(accessToken);
-	if (json.error) {
-		vscode.window.showErrorMessage(NOTIFICATION.AUTHENTICATION_FAILED);
-		return;
-	}
-	vscode.window.showInformationMessage(NOTIFICATION.REACTIVATED_SUCCESS);
-	postSuccessLogin(json.email, accessToken);
-	CodeSyncState.set(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT, false);
+export const reactivateAccountHandler = () => {
+	const activeUser = getActiveUsers()[0];
+	if (!activeUser) return vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
+	const webUrl = generateWebUrl("/settings");
+	const redirectURI = createRedirectUri(Auth0URLs.REACTIVATE_CALLBACK_PATH);
+	const reactivateWebUrl = `${webUrl}&callback=${redirectURI}`;
+	vscode.env.openExternal(vscode.Uri.parse(reactivateWebUrl));
 };
 
 export const SyncHandler = async () => {
