@@ -15,7 +15,7 @@ import {
 } from "../src/constants";
 import {
     SignUpHandler,
-    SyncHandler,
+    connectRepoHandler,
     trackFileHandler,
     trackRepoHandler,
     disconnectRepoHandler,
@@ -110,7 +110,7 @@ describe("Extension: activate",() => {
         expect(vscode.commands.registerCommand.mock.calls[1][0]).toStrictEqual(COMMAND.triggerLogout);
         expect(vscode.commands.registerCommand.mock.calls[1][1]).toStrictEqual(logout);
         expect(vscode.commands.registerCommand.mock.calls[2][0]).toStrictEqual(COMMAND.triggerSync);
-        expect(vscode.commands.registerCommand.mock.calls[2][1]).toStrictEqual(SyncHandler);
+        expect(vscode.commands.registerCommand.mock.calls[2][1]).toStrictEqual(connectRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[3][0]).toStrictEqual(COMMAND.triggerDisconnectRepo);
         expect(vscode.commands.registerCommand.mock.calls[3][1]).toStrictEqual(disconnectRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[4][0]).toStrictEqual(COMMAND.trackRepo);
@@ -186,7 +186,7 @@ describe("Extension: activate",() => {
         expect(vscode.commands.registerCommand.mock.calls[1][0]).toStrictEqual(COMMAND.triggerLogout);
         expect(vscode.commands.registerCommand.mock.calls[1][1]).toStrictEqual(logout);
         expect(vscode.commands.registerCommand.mock.calls[2][0]).toStrictEqual(COMMAND.triggerSync);
-        expect(vscode.commands.registerCommand.mock.calls[2][1]).toStrictEqual(SyncHandler);
+        expect(vscode.commands.registerCommand.mock.calls[2][1]).toStrictEqual(connectRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[3][0]).toStrictEqual(COMMAND.triggerDisconnectRepo);
         expect(vscode.commands.registerCommand.mock.calls[3][1]).toStrictEqual(disconnectRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[4][0]).toStrictEqual(COMMAND.trackRepo);
