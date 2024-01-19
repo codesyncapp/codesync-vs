@@ -11,8 +11,8 @@ import {
 	SYNCIGNORE
 } from '../constants';
 import { checkSubDir, getActiveUsers, getBranch, isRepoActive, readYML } from '../utils/common';
-import { isRepoSynced } from '../events/utils';
-import { postSuccessLogin, redirectToBrowser } from "../utils/auth_utils";
+import { isRepoConnected } from '../events/utils';
+import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
 import { updateRepo } from '../utils/sync_repo_utils';
 import { generateSettings } from "../settings";
@@ -33,10 +33,10 @@ export const reactivateAccountHandler = () => {
 	vscode.env.openExternal(vscode.Uri.parse(reactivateWebUrl));
 };
 
-export const SyncHandler = async () => {
+export const connectRepoHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
-	if (isRepoSynced(repoPath)) {
+	if (isRepoConnected(repoPath)) {
 		// Show notification that repo is in sync
 		vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
 		return;
