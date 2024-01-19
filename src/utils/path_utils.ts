@@ -63,7 +63,11 @@ export class pathUtils {
     };
 
     getDiffsRepo = () => {
-        return path.join(this.settings.DIFFS_REPO);
+        return this.settings.DIFFS_REPO;
     }
 
+    static getS3UploaderRepo = () => {
+        const settings = generateSettings();
+        return settings.S3_UPLOADER;
+    }
 }

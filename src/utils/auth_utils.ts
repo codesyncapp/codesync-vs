@@ -5,15 +5,17 @@ import vscode from 'vscode';
 import yaml from 'js-yaml';
 import detectPort from "detect-port";
 
-import {readYML} from './common';
-import {isRepoSynced} from "../events/utils";
+import {ErrorCodes, readYML} from './common';
+import {isRepoConnected} from "../events/utils";
 import {showConnectRepo} from "./notifications";
 import {createUserWithApi} from "./api_utils";
 import {generateSettings} from "../settings";
-import {trackRepoHandler} from "../handlers/commands_handler";
-import {Auth0URLs, getRepoInSyncMsg, NOTIFICATION, VERSION, VSCODE} from "../constants";
+import {reactivateAccountHandler, trackRepoHandler} from "../handlers/commands_handler";
+import {Auth0URLs, contextVariables, ECONNREFUSED, getRepoInSyncMsg, HTTP_STATUS_CODES, NOTIFICATION, NOTIFICATION_BUTTON} from "../constants";
 import { CodeSyncLogger } from "../logger";
 import { generateAuthUrl } from "./url_utils";
+import { CODESYNC_STATES, CodeSyncState } from "./state_utils";
+import { pathUtils } from "./path_utils";
 
 
 export const isPortAvailable = async (port: number) => {
@@ -33,14 +35,8 @@ export const redirectToBrowser = (skipAskConnect=false) => {
     vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
 };
 
-export const createUser = async (accessToken: string, repoPath: string) => {
-    const userResponse = await createUserWithApi(accessToken);
-    if (userResponse.error) {
-        vscode.window.showErrorMessage("Sign up to CodeSync failed");
-        CodeSyncLogger.critical("Error creaing user from API", userResponse.error);
-        return;
-    }
-    const userEmail = userResponse.email;
+const postSuccessLoginAddUser = (userEmail: string, accessToken: string) => {
+    if (!userEmail) return;
     const settings = generateSettings();
     // Save access token of user against email in user.yml
     const users = readYML(settings.USER_PATH) || {};
@@ -54,15 +50,18 @@ export const createUser = async (accessToken: string, repoPath: string) => {
         };
     }
     fs.writeFileSync(settings.USER_PATH, yaml.dump(users));
+};
 
-    vscode.commands.executeCommand('setContext', 'showLogIn', false);
-    
-    if (!repoPath) { return; }
-    
-    const repoInSync = isRepoSynced(repoPath);
-    vscode.commands.executeCommand('setContext', 'showConnectRepoView', !repoInSync);
-    
-	if (!repoInSync) {
+export const postSuccessLogin = (userEmail: string, accessToken: string) => {
+    postSuccessLoginAddUser(userEmail, accessToken);
+    vscode.commands.executeCommand('setContext', contextVariables.showLogIn, false);
+    vscode.commands.executeCommand('setContext', contextVariables.showReactivateAccount, false);
+    CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
+    const repoPath = pathUtils.getRootPath() || "";
+    if (!repoPath) return;
+    const repoIsConnected = isRepoConnected(repoPath, false);
+    vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, !repoIsConnected);
+	if (!repoIsConnected) {
         // Show notification to user to Sync the repo
         return showConnectRepo(repoPath, userEmail, accessToken);
     }
@@ -77,6 +76,63 @@ export const createUser = async (accessToken: string, repoPath: string) => {
     });
 };
 
+const postDeactivatedAccount = (userEmail: string, accessToken: string) => {
+    postSuccessLoginAddUser(userEmail, accessToken);
+    vscode.commands.executeCommand('setContext', contextVariables.showLogIn, false);
+    vscode.commands.executeCommand('setContext', contextVariables.showReactivateAccount, true);
+    vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, false);
+    CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, true);
+};
+
+const checkDeactivatedAccount = (email: string, accessToken: string, statusCode: number) => {
+    if (statusCode !== ErrorCodes.USER_ACCOUNT_DEACTIVATED) return false;
+    postDeactivatedAccount(email, accessToken);
+    vscode.window.showErrorMessage(NOTIFICATION.ACCOUNT_DEACTIVATED, NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT).then(selection => {
+        if (!selection) return;
+        if (selection === NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT) {
+            reactivateAccountHandler();
+        }
+    });
+    return true;
+};
+
+export const isAccountActive = async (email: string, accessToken: string) => {
+    const isValidAccount = true;
+    const userResponse = await createUserWithApi(accessToken);
+    if (!userResponse.error) return isValidAccount;
+    if (userResponse.statusCode === HTTP_STATUS_CODES.UNAUTHORIZED) {
+        askAndTriggerSignUp();
+        return false;
+    }
+    const isDeactivated = checkDeactivatedAccount(email, accessToken, userResponse.statusCode);
+    if (isDeactivated) return false;
+    return !userResponse.error.toString().includes(ECONNREFUSED);
+};
+
+export const createUser = async (accessToken: string, idToken: string) => {
+    const auth0User = parseJwt(idToken);
+    const userResponse = await createUserWithApi(accessToken);
+    if (userResponse.error) {
+        const isDeactivated = checkDeactivatedAccount(auth0User.email, accessToken, userResponse.statusCode);
+        if (isDeactivated) return {
+                success: true,
+                isDeactivated: true
+        };
+        vscode.window.showErrorMessage(NOTIFICATION.SIGNUP_FAILED);
+        CodeSyncLogger.critical("Error creaing user from API", userResponse.error);    
+        return {
+            success: false,
+            isDeactivated: false
+        };
+    }
+    const userEmail = userResponse.email;
+    postSuccessLogin(userEmail, accessToken);
+    return {
+        success: true,
+        isDeactivated: false
+    };
+};
+
 export const logout = () => {
     const logoutUrl = generateAuthUrl(Auth0URLs.LOGOUT);
     markUsersInactive();
@@ -84,7 +140,7 @@ export const logout = () => {
 };
 
 export const markUsersInactive = (notify=true) => {
-    vscode.commands.executeCommand('setContext', 'showLogIn', true);
+    vscode.commands.executeCommand('setContext', contextVariables.showLogIn, true);
     // Mark all users as is_active=false in user.yml
     const settings = generateSettings();
     const users = readYML(settings.USER_PATH);
@@ -109,4 +165,9 @@ export const askAndTriggerSignUp = () => {
             redirectToBrowser(true);
         }
     });
+};
+
+
+const parseJwt = (token: string) => {
+    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
 };

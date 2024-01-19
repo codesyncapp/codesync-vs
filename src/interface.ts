@@ -1,6 +1,7 @@
 export interface IDiff {
 	repo_path: string;
 	branch: string;
+	commit_hash: string|null;
 	file_relative_path: string;
 	created_at: string;
 	added_at: string;
@@ -65,3 +66,19 @@ export interface IDiffToSend {
 export interface IRepoInfo {
 	last_synced_at: string;
 }
+
+export interface IS3UploaderFile {
+	repo_path: string;
+	branch: string;
+	file_path_and_urls: any;
+	locked_by?: string;
+	locked_at?: number;
+	run_count: number;
+}
+
+export interface IS3UploaderPreProcess {
+	deleteFile: boolean;
+	skip: boolean;
+	content: IS3UploaderFile;
+}
+

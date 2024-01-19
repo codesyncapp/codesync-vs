@@ -4,28 +4,39 @@ import vscode from 'vscode';
 import yaml from "js-yaml";
 
 import {
+	Auth0URLs,
+	contextVariables,
 	getRepoInSyncMsg,
 	NOTIFICATION,
 	SYNCIGNORE
 } from '../constants';
-import { checkSubDir, getBranch, isRepoActive, readYML } from '../utils/common';
-import { isRepoSynced } from '../events/utils';
+import { checkSubDir, getActiveUsers, getBranch, isRepoActive, readYML } from '../utils/common';
+import { isRepoConnected } from '../events/utils';
 import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
 import { updateRepo } from '../utils/sync_repo_utils';
-import { generateSettings, WEB_APP_URL } from "../settings";
+import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
-import { generateWebUrl } from "../utils/url_utils";
+import { createRedirectUri, generateWebUrl } from "../utils/url_utils";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
 };
 
-export const SyncHandler = async () => {
+export const reactivateAccountHandler = () => {
+	const activeUser = getActiveUsers()[0];
+	if (!activeUser) return vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
+	const webUrl = generateWebUrl("/settings");
+	const redirectURI = createRedirectUri(Auth0URLs.REACTIVATE_CALLBACK_PATH);
+	const reactivateWebUrl = `${webUrl}&callback=${redirectURI}`;
+	vscode.env.openExternal(vscode.Uri.parse(reactivateWebUrl));
+};
+
+export const connectRepoHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
-	if (!repoPath) { return; }
-	if (isRepoSynced(repoPath)) {
+	if (!repoPath) return;
+	if (isRepoConnected(repoPath)) {
 		// Show notification that repo is in sync
 		vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
 		return;
@@ -37,7 +48,7 @@ export const SyncHandler = async () => {
 
 export const disconnectRepoHandler = async () => {
 	let repoPath = pathUtils.getRootPath();
-	if (!repoPath) { return; }
+	if (!repoPath) return;
 	let msg = NOTIFICATION.REPO_DISCONNECT_CONFIRMATION;
 	const result = checkSubDir(repoPath);
 	if (result.isSubDir) {
@@ -69,9 +80,9 @@ export const postSelectionDisconnectRepo = async (repoPath: string, selection?: 
 	configRepo.is_disconnected = true;
 	fs.writeFileSync(settings.CONFIG_PATH, yaml.dump(config));
 	// TODO: Maybe should delete repo from .shadow and .originals,
-	vscode.commands.executeCommand('setContext', 'showConnectRepoView', true);
-	vscode.commands.executeCommand('setContext', 'isSubDir', false);
-	vscode.commands.executeCommand('setContext', 'isSyncIgnored', false);
+	vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, true);
+	vscode.commands.executeCommand('setContext', contextVariables.isSubDir, false);
+	vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, false);
 	vscode.window.showInformationMessage(NOTIFICATION.REPO_DISCONNECTED);
 };
 

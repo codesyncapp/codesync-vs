@@ -2,7 +2,7 @@ import vscode from 'vscode';
 import { initHandler } from '../init/init_handler';
 import { getActiveUsers } from './common';
 import { redirectToBrowser } from './auth_utils';
-import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION } from '../constants';
+import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin } from '../constants';
 import { trackRepoHandler, disconnectRepoHandler, openSyncIgnoreHandler } from '../handlers/commands_handler';
 
 
@@ -21,19 +21,19 @@ export const showSignUpButtons = () => {
 export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 	const skipAskConnect = (global as any).skipAskConnect;
 	if (skipAskConnect && email && accessToken) {
-		const handler = new initHandler(repoPath, accessToken);
+		const handler = new initHandler(repoPath, accessToken, email);
 		handler.connectRepo();
 		(global as any).skipAskConnect = false;
 		return;
 	}
-	const msg = email ? NOTIFICATION.CONNECT_AFTER_JOIN : NOTIFICATION.CONNECT_REPO;
+	const msg = email ? getConnectRepoMsgAfterJoin(email) : NOTIFICATION.CONNECT_REPO;
 	vscode.window.showInformationMessage(msg, ...[
 		NOTIFICATION.CONNECT
 	]).then(async selection => {
 		if (selection === NOTIFICATION.CONNECT) {
 
 			if (email && accessToken) {
-				const handler = new initHandler(repoPath, accessToken);
+				const handler = new initHandler(repoPath, accessToken, email);
 				await handler.connectRepo();
 				return;
 			}
@@ -43,17 +43,16 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 	});
 };
 
-
+// TODO: Probably add a separate function
 export const showChooseAccount = async (repoPath: string) => {
 	// Check if access token is present against users
-	const validUsers =  getActiveUsers();
-	if (validUsers.length === 0) {
+	const activeUser =  getActiveUsers()[0];
+	if (!activeUser) {
 		vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
 		return;
 	}
 	// By Default choosing first account
-	const user = validUsers[0];
-	const handler = new initHandler(repoPath, user.access_token);
+	const handler = new initHandler(repoPath, activeUser.access_token, activeUser.email);
 	await handler.connectRepo();
 	return handler;
 	// TODO: Option to choose different account

@@ -42,6 +42,10 @@ export class DiffsHandler {
                 const diffData = fileToDiff.diff;
                 const diffFilePath = fileToDiff.file_path;
                 const configFiles = this.configRepo.branches[diffData.branch];
+                if (!configFiles) continue;
+                // If all files IDs are None in config.yml, we need to sync the branch first
+                const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
+                if (shouldSyncBranch) continue;
                 const relPath = diffData.file_relative_path;
                 const isDeleted = diffData.is_deleted;
 

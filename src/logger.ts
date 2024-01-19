@@ -3,6 +3,7 @@ import os from 'os';
 import macaddress from "macaddress";
 import { 
 	CloudWatchLogsClient,
+	CloudWatchLogsClientConfig,
 	PutLogEventsCommand,
 	PutLogEventsRequest
 } from "@aws-sdk/client-cloudwatch-logs";
@@ -37,29 +38,29 @@ export class CodeSyncLogger {
 	  CRITICAL: Errors that are blocking for the normal operation of the plugin and should be fixed immediately.
 	*/
 
-	static async debug (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
-		await putLogEvent(msg, logErrorMsgTypes.DEBUG, additionalMsg, logStream, retryCount);
+	static async debug (msg: string, additionalMsg="", logStream?: string) {
+		await putLogEvent(msg, logErrorMsgTypes.DEBUG, additionalMsg, logStream);
 	}
 
-	static async info (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
-		await putLogEvent(msg, logErrorMsgTypes.INFO, additionalMsg, logStream, retryCount);
+	static async info (msg: string, additionalMsg="", logStream?: string) {
+		await putLogEvent(msg, logErrorMsgTypes.INFO, additionalMsg, logStream);
 	}
 
-	static async warning (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
-		await putLogEvent(msg, logErrorMsgTypes.WARNING, additionalMsg, logStream, retryCount);
+	static async warning (msg: string, additionalMsg="", logStream?: string) {
+		await putLogEvent(msg, logErrorMsgTypes.WARNING, additionalMsg, logStream);
 	}
 
-	static async error (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
-		await putLogEvent(msg, logErrorMsgTypes.ERROR, additionalMsg, logStream, retryCount);
+	static async error (msg: string, additionalMsg="", logStream?: string) {
+		await putLogEvent(msg, logErrorMsgTypes.ERROR, additionalMsg, logStream);
 	}
 
-	static async critical (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
-		await putLogEvent(msg, logErrorMsgTypes.CRITICAL, additionalMsg, logStream, retryCount);
+	static async critical (msg: string, additionalMsg="", logStream?: string) {
+		await putLogEvent(msg, logErrorMsgTypes.CRITICAL, additionalMsg, logStream);
 	}
 
 }
 
-const putLogEvent = async (msg: string, eventType: string, additionalMsg="", logStream?: string, retryCount=0) => {
+const putLogEvent = async (msg: string, eventType: string, additionalMsg="", logStream?: string) => {
 	let eventMsg = msg;
 	if (additionalMsg) {
 		eventMsg = `${msg}, ${additionalMsg}`;
@@ -101,16 +102,14 @@ const putLogEvent = async (msg: string, eventType: string, additionalMsg="", log
 		secretKey = pluginUser.secret_key;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	// Recreate client if accessKey is changed
-	if (isEmpty(cloudWatchClient) || cloudWatchClient.config.accessKeyId != accessKey) {
-		const config = {
-			accessKeyId: accessKey,
-			secretAccessKey: secretKey,
-			region: LOGS_METADATA.AWS_REGION
-		};
-		cloudWatchClient = new CloudWatchLogsClient(config);
+	if (isEmpty(cloudWatchClient)) {
+		cloudWatchClient = __createClient(accessKey, secretKey);
+	} else {
+		// Recreate client if accessKey is changed
+		const credentials = await cloudWatchClient.config.credentials();
+		if (credentials.accessKeyId !== accessKey) {
+			cloudWatchClient = __createClient(accessKey, secretKey);
+		}
 	}
 
 	const logGroupName = LOGS_METADATA.GROUP;
@@ -144,14 +143,6 @@ const putLogEvent = async (msg: string, eventType: string, additionalMsg="", log
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		console.log(`Failed to log: ${err}`);
-		if (retryCount) {
-			if (retryCount < 10) {
-				retryCount += 1;
-				putLogEvent(msg, eventType, additionalMsg, email, retryCount);
-			}
-		} else {
-			putLogEvent(msg, eventType, additionalMsg, email, 1);
-		}
 	}
 };
 
@@ -166,4 +157,17 @@ export const logErrorMsg = (msg: string, errCount: number) => {
 	}
 	errCount += 1;
 	return errCount;
+};
+
+
+const __createClient = (accessKeyId: string, secretAccessKey: string) => {
+	const config: CloudWatchLogsClientConfig =
+		{
+			region: LOGS_METADATA.AWS_REGION,
+			credentials: {
+				accessKeyId,
+				secretAccessKey
+			}
+		};
+	return new CloudWatchLogsClient(config);
 };

@@ -3,11 +3,18 @@ import untildify from "untildify";
 
 // Set this to true for Development
 const DEBUG = false;
+const useStaging = false;
+const DevConfig = {
+    ROOT_REPO: useStaging ? '~/.codesync-staging': '~/.codesync-local',
+    WEBSOCKET_HOST: useStaging ? 'wss://api-staging.codesync.com': 'ws://localhost:8000',
+    CODESYNC_HOST: useStaging ? 'https://api-staging.codesync.com': 'http://localhost:8000',
+    WEB_APP_URL: useStaging ? "https://staging.codesync.com": "http://localhost:3000"
+};
 
-const ROOT_REPO_NAME = DEBUG ? '~/.codesync-local' : '~/.codesync';
-export const CODESYNC_WEBSOCKET_HOST = DEBUG ? "ws://127.0.0.1:8000" : "wss://api.codesync.com";
-export const CODESYNC_HOST = DEBUG ? 'http://127.0.0.1:8000': "https://api.codesync.com";
-export const WEB_APP_URL = DEBUG ? "http://localhost:3000" : "https://www.codesync.com";
+const ROOT_REPO_NAME = DEBUG ? DevConfig.ROOT_REPO : '~/.codesync';
+export const CODESYNC_WEBSOCKET_HOST = DEBUG ? DevConfig.WEBSOCKET_HOST : "wss://api.codesync.com";
+export const CODESYNC_HOST = DEBUG ? DevConfig.CODESYNC_HOST: "https://api.codesync.com";
+export const WEB_APP_URL = DEBUG ? DevConfig.WEB_APP_URL : "https://www.codesync.com";
 export const LOGS_METADATA = {
     AWS_REGION: 'us-east-1',
     GROUP: DEBUG ? 'client-logs-dev' : 'client-logs'
@@ -61,6 +68,7 @@ export const generateSettings = () => {
         SHADOW_REPO: path.join(rootRepo, ".shadow"),
         DELETED_REPO: path.join(rootRepo, ".deleted"),
         LOCKS_REPO: path.join(rootRepo, ".locks"),
+        S3_UPLOADER: path.join(rootRepo, ".s3_uploader"),
         CONFIG_PATH: path.join(rootRepo, "config.yml"),
         USER_PATH: path.join(rootRepo, "user.yml"),
         SEQUENCE_TOKEN_PATH: path.join(rootRepo, "sequence_token.yml"),

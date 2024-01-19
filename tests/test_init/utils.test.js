@@ -3,6 +3,7 @@ import os from "os";
 import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
+import isOnline from 'is-online';
 import untildify from 'untildify';
 import {initUtils} from "../../src/init/utils";
 
@@ -23,6 +24,7 @@ import {readYML} from "../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {pathUtils} from "../../src/utils/path_utils";
 import { createSystemDirectories } from "../../src/utils/setup_utils";
+import { s3UploaderUtils } from "../../src/init/s3_uploader";
 
 
 describe("getSyncablePaths",  () => {
@@ -241,6 +243,7 @@ describe("saveFileIds",  () => {
 
 describe("uploadRepo",  () => {
     let baseRepoPath;
+    let s3UploaderRepo;
     let repoPath;
     let syncIgnorePath;
     let configPath;
@@ -268,6 +271,7 @@ describe("uploadRepo",  () => {
         fs.writeFileSync(configPath, yaml.dump(configData));
         fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
         fs.writeFileSync(path.join(repoPath, "ignore.js"), DUMMY_FILE_CONTENT);
+        s3UploaderRepo = pathUtils.getS3UploaderRepo();
     });
 
     afterEach(() => {
@@ -299,6 +303,8 @@ describe("uploadRepo",  () => {
     });
 
     test("repo In Config",  async () => {
+        isOnline.mockReturnValue(true);
+
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
         const itemPaths = await initUtilsObj.getSyncablePaths();
@@ -317,11 +323,13 @@ describe("uploadRepo",  () => {
         // copy files to .shadow repo
         const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
         initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
-    
+
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
             TEST_EMAIL, false);
+        // Run s3Uploader
+        const uploaderUtils = new s3UploaderUtils();
+        await uploaderUtils.runUploader();
         await waitFor(3);
-
         // Verify file Ids have been added in config
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
@@ -332,12 +340,15 @@ describe("uploadRepo",  () => {
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_SYNCED);
+
         // Make sure files have been deleted from .originals
         filePaths.forEach(_filePath => {
             const relPath = _filePath.split(path.join(repoPath, path.sep))[1];
             const originalPath = path.join(originalsRepoBranchPath, relPath);
             expect(fs.existsSync(originalPath)).toBe(false);
         });
+        let diffFiles = fs.readdirSync(s3UploaderRepo);
+        expect(diffFiles).toHaveLength(0);
     });
 
     test("repo Not In Config",  async () => {

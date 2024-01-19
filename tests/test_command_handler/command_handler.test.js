@@ -9,7 +9,7 @@ import getBranchName from "current-git-branch";
 import {
     postSelectionDisconnectRepo,
     SignUpHandler,
-    SyncHandler,
+    connectRepoHandler,
     trackFileHandler,
     trackRepoHandler,
     disconnectRepoHandler
@@ -41,7 +41,7 @@ describe("SignUpHandler",  () => {
     });
 });
 
-describe("SyncHandler",  () => {
+describe("connectRepoHandler",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
@@ -67,22 +67,16 @@ describe("SyncHandler",  () => {
     });
 
     test("No Repo Path",  async () => {
-        await SyncHandler();
+        await connectRepoHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
     test("repo Not In Config", async () => {
-        const user = {
-            "email": TEST_EMAIL,
-            "plan": {
-                REPO_COUNT: 5
-            },
-            "repo_count": 4
-        };
+        const userResponse = {user: {email: TEST_EMAIL}};
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user));
-        await SyncHandler();
+            .mockResponseOnce(JSON.stringify(userResponse));
+        await connectRepoHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
         // TODO: In case we activate choose account option
         // expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -94,7 +88,7 @@ describe("SyncHandler",  () => {
     test("repo In Config", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-        await SyncHandler();
+        await connectRepoHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const repoInSyncMsg = getRepoInSyncMsg(repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(repoInSyncMsg);
@@ -290,6 +284,7 @@ describe("trackRepoHandler",  () => {
         configData.repos[repoPath] = {
             id: 1234,
             branches: {},
+            email: TEST_EMAIL
         };
         fs.writeFileSync(configPath, yaml.dump(configData));
         const playbackLink = trackRepoHandler();
@@ -403,7 +398,8 @@ describe("trackFileHandler",  () => {
         // Update config file
         configData.repos[repoPath] = {
             id: 1234,
-            branches: {}
+            branches: {},
+            email: TEST_EMAIL
         };
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = {"file.js": 1234};
         fs.writeFileSync(configPath, yaml.dump(configData));

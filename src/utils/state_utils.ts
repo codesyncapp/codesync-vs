@@ -13,15 +13,20 @@ export const CODESYNC_STATES = {
     REQUEST_SENT_AT: "requestSentAt",
     SYNCING_BRANCH: "syncingBranch",
     IS_SYNCING_BRANCH: "isSyncingBranch",
+    UPLOADING_TO_S3: "uploadingToS3",
     TEAM_ACTIVITY_REQUEST_SENT_AT: "teamActivtyRequestSentAt",
     CAN_AVAIL_TRIAL: "canAvailTrial",
     STATUS_BAR_ACTIVITY_ALERT_MSG: "statusBarActivityAlertMsg",
     WEBSOCKET_ERROR_OCCURRED_AT: "websocketErrorOccurredAt",
     DIFFS_BEING_PROCESSED: "diffsBeingProcessed",
+    S3_UPLOADER_FILES_BEING_PROCESSED: "s3UploaderFilesBeingProcessed",
     INSTANCE_UUID: "instanceUUID",
     DAEMON_ERROR: "daemonError",
     BUFFER_HANDLER_LOGGED_AT: "bufferHandlerLoggedAt",
-    SOCKET_CONNECTED_AT: "socketConnectedAt"
+    SOCKET_CONNECTED_AT: "socketConnectedAt",
+    INTERNET_DOWN_AT: "internetDownAt",
+    GIT_COMMIT_HASH: "gitCommitHash",
+    ACCOUNT_DEACTIVATED: "accountDeactivated"
 };
 
 export class CodeSyncState {
@@ -41,8 +46,8 @@ export class CodeSyncState {
     }
 
     static canSkipRun = (key: string, compareWith: number) => {
-        const lastRanAt = CodeSyncState.get(key);
-        const skipRun = lastRanAt && (new Date().getTime() - lastRanAt) < compareWith;
+        const prevTimestamp = CodeSyncState.get(key);
+        const skipRun = prevTimestamp && (new Date().getTime() - prevTimestamp) < compareWith;
         return skipRun;
     }
 }

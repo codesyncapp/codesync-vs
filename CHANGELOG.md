@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.38.0] - 2024-01-12
+- Sending commit_hash for new files 
+
+## [3.37.0] - 2024-01-08
+- Reactivating account via Webapp's callback instead of using API
+
+## [3.36.0] - 2023-12-30
+- Updated README content
+
+## [3.35.1] - 2023-12-28
+- Fixed Login from Deactivated account if user is logged-out
+- Removed usage of GET /users API
+- Improved logic of exiting s3Uploader by saving filesBeingProcessed in State
+
+## [3.35.0] - 2023-12-23
+- Reactivate Account functionality added if user has deactivated the account from webapp
+- Improved logic for s3Uploader
+
+## [3.34.2] - 2023-12-14
+- Getting commit hashes for populate-buffer for each repo
+
+## [3.34.1] - 2023-12-14
+- Fix for Window path
+
+## [3.34.0] - 2023-12-14
+- Sending commit_hashes along with diffs to the server
+
+## [3.33.0] - 2023-11-04
+- Mionr tweaks in Login Success and Failed HTML files
+
+## [3.31.0] - 2023-08-16
+- s3Uploader introduced to manage repo, branch and file upload to s3
+- If internet is down, it retries after 5 minutes
+- Error Handling: If some chunk is failed to upload successfully somehow, 
+    we save that chunk in a separate file to retry later by reducing chunk size
+- Shows a spinner loader in status bar while branch is being uploaded to the server
+
+## [3.30.1] - 2023-08-08
+- Fixed passing AWS Config to CloudWatchLogsClient
+- Fixed checking sub directory by checking if parent repo belongs to current user
+
 ## [3.30.0] - 2023-07-31
 - Removed sequence_token.yml, aws-sdk v3 takes care of that now
 

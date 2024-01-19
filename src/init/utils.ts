@@ -4,7 +4,6 @@ import path from 'path';
 import { glob } from 'glob';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
-import parallel from "run-parallel";
 import { isBinaryFileSync } from 'isbinaryfile';
 
 import { CodeSyncLogger } from '../logger';
@@ -12,12 +11,14 @@ import { generateSettings } from "../settings";
 import { pathUtils } from '../utils/path_utils';
 import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload } from '../interface';
-import { trackRepoHandler } from '../handlers/commands_handler';
-import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
-import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT } from '../constants';
+import { uploadRepoToServer } from '../utils/upload_utils';
+import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT, contextVariables } from '../constants';
 import { getGlobIgnorePatterns, isRepoActive, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
+import { s3UploaderUtils } from './s3_uploader';
+import { trackRepoHandler } from '../handlers/commands_handler';
+import gitCommitInfo from 'git-commit-info';
 
 export class initUtils {
 	repoPath: string;
@@ -126,64 +127,30 @@ export class initUtils {
 		configRepo.id = repoId;
 		configRepo.email = userEmail;
 		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(configJSON));
-		CodeSyncLogger.debug(`Saved file IDs, uploading branch=${branch} to s3`);
+		CodeSyncLogger.debug(`Saved file IDs, branch=${branch} repo=${this.repoPath}`);
 	}
 
 	async uploadRepoToS3(branch: string, uploadResponse: any, syncingBranchKey: string) {
-		const viaDaemon = this.viaDaemon;
-		const s3Urls =  uploadResponse.urls;
-		const tasks: any[] = [];
-		const pathUtilsObj = new pathUtils(this.repoPath, branch);
-		const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-
-		Object.keys(s3Urls).forEach(relPath => {
-			const presignedUrl = s3Urls[relPath];
-			const absPath = path.join(originalsRepoBranchPath, relPath);
-			if (presignedUrl) {
-				tasks.push(async function (callback: any) {
-					const json = <any> await uploadFileTos3(absPath, presignedUrl);
-					callback(json.error, true);
-				});
-			}
-		});
-
-		parallel(
-			tasks,
-			// optional callback
-			function (err, results) {
-				CodeSyncLogger.debug(`Branch=${branch} upload callback`);
-				// the results array will equal ['one','two'] even though
-				// the second function had a shorter timeout.
-				if (err) {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
-					CodeSyncLogger.error("uploadRepoToS3 failed: ", err);
-					CodeSyncState.set(syncingBranchKey, false);
-					CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
-					return;
-				}
-				// delete .originals repo
-				if (fs.existsSync(originalsRepoBranchPath)) {
-					fs.rmSync(originalsRepoBranchPath, { recursive: true });
-				}
-				// Hide Connect Repo
-				vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
-				// Show success notification
-				if (!viaDaemon) {
-					vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
-						NOTIFICATION.TRACK_IT
-					]).then(selection => {
-						if (!selection) { return; }
-						if (selection === NOTIFICATION.TRACK_IT) {
-							trackRepoHandler();
-						}
-					});
-				}
-				// Reset key for syncingBranch
-				CodeSyncState.set(syncingBranchKey, false);
-				CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
-				CodeSyncLogger.debug(`Branch=${branch} upload completed`);
-		});
+		/* 
+			Save URLs in YML file for s3Uploader
+		*/
+		const filePathAndURLs =  uploadResponse.urls;
+		const uploaderUtils = new s3UploaderUtils();
+		uploaderUtils.saveURLs(this.repoPath, branch, filePathAndURLs);
+		// Reset state values
+		CodeSyncState.set(syncingBranchKey, false);
+		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
+		// Hide Connect Repo
+		vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, false);
+		// Show success notification
+		if (!this.viaDaemon) {
+			vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
+				NOTIFICATION.TRACK_IT
+			]).then(selection => {
+				if (!selection) return;
+				if (selection === NOTIFICATION.TRACK_IT) return trackRepoHandler();
+			});
+		}
 	}
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
@@ -236,10 +203,13 @@ export class initUtils {
 		const instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 		CodeSyncLogger.info(`Uploading branch=${branch}, repo=${this.repoPath}, uuid=${instanceUUID}`);
 
+		const commit_hash = gitCommitInfo({cwd: this.repoPath}).hash || null;
+
 		const data = {
 			name: repoName,
 			is_public: isPublic,
 			branch,
+			commit_hash,
 			files_data: JSON.stringify(filesData),
 			source: VSCODE,
 			platform: os.platform()
@@ -251,9 +221,7 @@ export class initUtils {
 			CodeSyncState.set(syncingBranchKey, false);
 			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
 			CodeSyncLogger.error(error, json.error, userEmail);
-			if (!this.viaDaemon) {
-				vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
-			}
+			if (!this.viaDaemon) vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			return false;
 		}
 		/*
@@ -276,7 +244,7 @@ export class initUtils {
 		// Save IAM credentials
 		this.saveIamUser(user);
 
-		// Save file paths and IDs
+		// Save file paths and IDs in config
 		this.saveFileIds(branch, user.email, json.response);
 
 		// Upload to s3

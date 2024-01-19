@@ -43,9 +43,11 @@ describe("putLogEvent",  () => {
         await addPluginUser();
         CodeSyncLogger.error(errMsg);
         expect(CloudWatchLogsClient.mock.calls[0][0]).toStrictEqual({
-            accessKeyId: "IAM_ACCESS_KEY",
-            secretAccessKey: "IAM_SECRET_KEY",
-            region: LOGS_METADATA.AWS_REGION
+            region: LOGS_METADATA.AWS_REGION,
+            credentials: {
+                accessKeyId: "IAM_ACCESS_KEY",
+                secretAccessKey: "IAM_SECRET_KEY",
+            }
         });
         expect(PutLogEventsCommand).toHaveBeenCalledTimes(1);
         const params = PutLogEventsCommand.mock.calls[0][0];
@@ -70,9 +72,11 @@ describe("putLogEvent",  () => {
         const errMsg = "Error message";
         await CodeSyncLogger.error(errMsg, "", TEST_EMAIL);
         expect(CloudWatchLogsClient.mock.calls[0][0]).toStrictEqual({
-            accessKeyId: TEST_USER.iam_access_key,
-            secretAccessKey: TEST_USER.iam_secret_key,
-            region: LOGS_METADATA.AWS_REGION
+            region: LOGS_METADATA.AWS_REGION,
+            credentials: {
+                accessKeyId: TEST_USER.iam_access_key,
+                secretAccessKey: TEST_USER.iam_secret_key,
+            }
         });
         expect(PutLogEventsCommand).toHaveBeenCalledTimes(1);
         const params = PutLogEventsCommand.mock.calls[0][0];

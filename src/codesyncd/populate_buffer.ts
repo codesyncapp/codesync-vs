@@ -29,27 +29,44 @@ import {
     RUN_DELETE_HANDLER_AFTER, 
     RUN_POPULATE_BUFFER_AFTER, 
     RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER, 
-    SEQUENCE_MATCHER_RATIO
+    SEQUENCE_MATCHER_RATIO,
+    S3_UPLOADER_TIMEOUT
  } from "../constants";
 import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { removeFile } from "../utils/file_utils";
+import { s3UploaderUtils } from "../init/s3_uploader";
 
 
-export const populateBuffer = async (viaDaemon=true) => {
-    if (!viaDaemon) return;
+const shouldProceed = () => {
+    /* Process only if 
+        - s3Upload is not in progress
+        - branchSync is not in progress
+        - populateBuffer is not running already
+    */
+    // Return if any branch is being uploaded to s3
+    const s3UploaderRunning = CodeSyncState.canSkipRun(CODESYNC_STATES.UPLOADING_TO_S3, S3_UPLOADER_TIMEOUT);
+    if (s3UploaderRunning) return false;
+    CodeSyncState.set(CODESYNC_STATES.S3_UPLOADER_FILES_BEING_PROCESSED, new Set());
     // Return if any branch is being synced
     const isBranchSyncInProcess = CodeSyncState.canSkipRun(CODESYNC_STATES.IS_SYNCING_BRANCH, BRANCH_SYNC_TIMEOUT);
-    if (isBranchSyncInProcess) return;
+    if (isBranchSyncInProcess) return false;
+    // Return if populateBuffer is already running
+    const isRunning = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_RUNNING);
+    if (isRunning) return false;    
+    return true; 
+};
+
+export const populateBuffer = async (viaDaemon=true) => {
+    if (!viaDaemon || !shouldProceed()) return;
+    await new s3UploaderUtils().runUploader();
     const readyRepos = await detectBranchChange();
     await populateBufferForMissedEvents(readyRepos);
 };
 
 export const populateBufferForMissedEvents = async (readyRepos: any) => {
-    // Return if populateBuffer is already running
-    const isRunning = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_RUNNING);
-    if (isRunning) return;
+    if (!shouldProceed()) return;
     CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_RUNNING, true);
     const currentRepoPath = pathUtils.getRootPath();
     for (const repoPath of Object.keys(readyRepos)) {
@@ -352,10 +369,11 @@ export const detectBranchChange = async () => {
     * See if repo is in config.yml and is active
     * Check if associated user has an access token
     */
+    const readyRepos = <any>{};
+    if (!shouldProceed()) return readyRepos;
     const settings = generateSettings();
     const configJSON = readYML(settings.CONFIG_PATH);
     const users = readYML(settings.USER_PATH) || {};
-    const readyRepos = <any>{};
     for (const repoPath of Object.keys(configJSON.repos)) {
 
         if (configJSON.repos[repoPath].is_disconnected) continue;
@@ -400,14 +418,14 @@ export const detectBranchChange = async () => {
         }
         // Need to sync the branch
         const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-        const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
+        const originalsRepoBranchPathExists = fs.existsSync(originalsRepoBranchPath);
 
-        if (originalsRepoExists) {
+        if (originalsRepoBranchPathExists) {
             // init has been called, now see if we can upload the repo/branch
             const itemPaths = await initUtilsObj.getSyncablePaths();
             uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email);
         } else {
-            const handler = new initHandler(repoPath, accessToken, true);
+            const handler = new initHandler(repoPath, accessToken, configRepo.email, true);
             uploaded = await handler.connectRepo();
         }
         if (uploaded) {

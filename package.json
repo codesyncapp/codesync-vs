@@ -3,12 +3,12 @@
   "displayName": "CodeSync",
   "description": "Stream code to the cloud. Save it forever. Play it back later. No commits needed.",
   "icon": "images/icon.png",
-  "version": "3.30.0",
+  "version": "3.37.0",
   "publisher": "codesync",
   "engines": {
-    "vscode": "^1.79.0",
+    "vscode": "^1.82.0",
     "npm": "8.1.2",
-    "node": "16.20.0"
+    "node": "16.20.2"
   },
   "categories": [
     "Other"
@@ -33,6 +33,11 @@
       {
         "command": "codesync.logout",
         "title": "Logout",
+        "category": "CodeSync"
+      },
+      {
+        "command": "codesync.accountReactivate",
+        "title": "Reactivate Account",
         "category": "CodeSync"
       },
       {
@@ -93,34 +98,39 @@
           "when": "workbenchState != empty && showLogIn && CodeSyncActivated"
         },
         {
+          "id": "codesync-signed-up-deactivated-account",
+          "name": "CodeSync",
+          "when": "workbenchState != empty && !showLogIn && CodeSyncActivated && showReactivateAccount"
+        },
+        {
           "id": "codesync-signed-up-not-synced",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && showConnectRepoView && !isSubDir && CodeSyncActivated"
+          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && CodeSyncActivated && showConnectRepoView && !isSubDir && CodeSyncActivated"
         },
         {
           "id": "codesync-signed-up-and-synced",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSubDir && CodeSyncActivated && !upgradePricingPlan"
+          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && !isSubDir && CodeSyncActivated && !upgradePricingPlan"
         },
         {
           "id": "codesync-signed-up-and-synced-and-pricing-plan-limit-reached",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSubDir && CodeSyncActivated && upgradePricingPlan && !canAvailTrial"
+          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && !isSubDir && CodeSyncActivated && upgradePricingPlan && !canAvailTrial"
         },
         {
           "id": "codesync-signed-up-and-synced-and-upgrade-plan-for-free",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && !isSubDir && CodeSyncActivated && upgradePricingPlan && canAvailTrial"
+          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && !isSubDir && CodeSyncActivated && upgradePricingPlan && canAvailTrial"
         },
         {
           "id": "codesync-signed-up-is-sub-dir",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && isSubDir && !isSyncIgnored && CodeSyncActivated"
+          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && isSubDir && !isSyncIgnored && CodeSyncActivated"
         },
         {
           "id": "codesync-signed-up-is-sub-dir-syncignored",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showConnectRepoView && isSubDir && isSyncIgnored && CodeSyncActivated"
+          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && isSubDir && isSyncIgnored && CodeSyncActivated"
         },
         {
           "id": "codesync-is-loading",
@@ -139,20 +149,24 @@
         "contents": "Login to CodeSync.\n[Join](command:codesync.signup)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
       },
       {
+        "view": "codesync-signed-up-deactivated-account",
+        "contents": "You are conneced with CodeSync. Reactivate your account to resume syncing.\n[Reactivate account](command:codesync.accountReactivate)\n[Logout](command:codesync.logout)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
+      },
+      {
         "view": "codesync-signed-up-not-synced",
         "contents": "You are conneced with CodeSync.\nConnect your repo.\n[Connect](command:codesync.sync)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-and-synced",
-        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.disconnectRepo)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-and-synced-and-pricing-plan-limit-reached",
-        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.disconnectRepo)\n[Upgrade plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[Upgrade plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-and-synced-and-upgrade-plan-for-free",
-        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect repo](command:codesync.disconnectRepo)\n[Upgrade plan for free](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[Upgrade plan for free](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-signed-up-is-sub-dir",
@@ -210,9 +224,14 @@
           "when": "workbenchState != empty && !showLogIn"
         },
         {
+          "group": "navigation",
+          "command": "codesync.accountReactivate",
+          "when": "workbenchState != empty && !showLogIn && showReactivateAccount"
+        },
+        {
           "group": "1_modification",
           "command": "codesync.sync",
-          "when": "workbenchState != empty && !showLogIn && showConnectRepoView && !isSyncIgnored"
+          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && showConnectRepoView && !isSyncIgnored"
         },
         {
           "group": "1_modification",
@@ -260,18 +279,18 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.7",
-    "@babel/preset-env": "^7.15.0",
+    "@babel/preset-env": "^7.23.8",
     "@babel/preset-typescript": "^7.22.5",
     "@types/current-git-branch": "^1.1.1",
     "@types/dateformat": "3.0.1",
     "@types/diff-match-patch": "^1.0.32",
     "@types/js-yaml": "^3.12.5",
     "@types/node": "^20.3.0",
-    "@types/vscode": "^1.79.0",
+    "@types/vscode": "^1.82.0",
     "@types/websocket": "^1.0.4",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.31.1",
-    "babel-jest": "^29.3.1",
+    "babel-jest": "^29.7.0",
     "eslint": "^7.1.0",
     "eslint-plugin-jest": "^27.2.0",
     "jest": "^29.5.0",
@@ -292,8 +311,10 @@
     "esbuild": "^0.18.11",
     "express": "^4.18.2",
     "form-data": "^4.0.0",
+    "git-commit-info": "^2.0.2",
     "glob": "^9.3.5",
     "ignore": "^5.2.4",
+    "is-online": "^10.0.0",
     "isbinaryfile": "^5.0.0",
     "jest-fetch-mock": "^3.0.3",
     "js-yaml": "^4.1.0",

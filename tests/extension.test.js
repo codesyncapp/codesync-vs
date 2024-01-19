@@ -15,14 +15,15 @@ import {
 } from "../src/constants";
 import {
     SignUpHandler,
-    SyncHandler,
+    connectRepoHandler,
     trackFileHandler,
     trackRepoHandler,
     disconnectRepoHandler,
     openSyncIgnoreHandler,
     upgradePlanHandler,
     viewDashboardHandler,
-    viewActivityHandler
+    viewActivityHandler,
+    reactivateAccountHandler
 } from "../src/handlers/commands_handler";
 import {
     createSystemDirectories, 
@@ -103,13 +104,13 @@ describe("Extension: activate",() => {
         expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
         
         // Output of registerCommands
-        expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(10);
+        expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(Object.keys(COMMAND).length);
         expect(vscode.commands.registerCommand.mock.calls[0][0]).toStrictEqual(COMMAND.triggerSignUp);
         expect(vscode.commands.registerCommand.mock.calls[0][1]).toStrictEqual(SignUpHandler);
         expect(vscode.commands.registerCommand.mock.calls[1][0]).toStrictEqual(COMMAND.triggerLogout);
         expect(vscode.commands.registerCommand.mock.calls[1][1]).toStrictEqual(logout);
         expect(vscode.commands.registerCommand.mock.calls[2][0]).toStrictEqual(COMMAND.triggerSync);
-        expect(vscode.commands.registerCommand.mock.calls[2][1]).toStrictEqual(SyncHandler);
+        expect(vscode.commands.registerCommand.mock.calls[2][1]).toStrictEqual(connectRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[3][0]).toStrictEqual(COMMAND.triggerDisconnectRepo);
         expect(vscode.commands.registerCommand.mock.calls[3][1]).toStrictEqual(disconnectRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[4][0]).toStrictEqual(COMMAND.trackRepo);
@@ -124,6 +125,8 @@ describe("Extension: activate",() => {
         expect(vscode.commands.registerCommand.mock.calls[8][1]).toStrictEqual(viewDashboardHandler);
         expect(vscode.commands.registerCommand.mock.calls[9][0]).toStrictEqual(COMMAND.viewActivity);
         expect(vscode.commands.registerCommand.mock.calls[9][1]).toStrictEqual(viewActivityHandler);
+        expect(vscode.commands.registerCommand.mock.calls[10][0]).toStrictEqual(COMMAND.reactivateAccount);
+        expect(vscode.commands.registerCommand.mock.calls[10][1]).toStrictEqual(reactivateAccountHandler);
 
         // createStatusBarItem
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
@@ -177,13 +180,13 @@ describe("Extension: activate",() => {
         setWorkspaceFolders("");
         // Register commands
         registerCommands(vscode.ExtensionContext);
-        expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(10);
+        expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(Object.keys(COMMAND).length);
         expect(vscode.commands.registerCommand.mock.calls[0][0]).toStrictEqual(COMMAND.triggerSignUp);
         expect(vscode.commands.registerCommand.mock.calls[0][1]).toStrictEqual(SignUpHandler);
         expect(vscode.commands.registerCommand.mock.calls[1][0]).toStrictEqual(COMMAND.triggerLogout);
         expect(vscode.commands.registerCommand.mock.calls[1][1]).toStrictEqual(logout);
         expect(vscode.commands.registerCommand.mock.calls[2][0]).toStrictEqual(COMMAND.triggerSync);
-        expect(vscode.commands.registerCommand.mock.calls[2][1]).toStrictEqual(SyncHandler);
+        expect(vscode.commands.registerCommand.mock.calls[2][1]).toStrictEqual(connectRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[3][0]).toStrictEqual(COMMAND.triggerDisconnectRepo);
         expect(vscode.commands.registerCommand.mock.calls[3][1]).toStrictEqual(disconnectRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[4][0]).toStrictEqual(COMMAND.trackRepo);
@@ -198,6 +201,8 @@ describe("Extension: activate",() => {
         expect(vscode.commands.registerCommand.mock.calls[8][1]).toStrictEqual(viewDashboardHandler);
         expect(vscode.commands.registerCommand.mock.calls[9][0]).toStrictEqual(COMMAND.viewActivity);
         expect(vscode.commands.registerCommand.mock.calls[9][1]).toStrictEqual(viewActivityHandler);
+        expect(vscode.commands.registerCommand.mock.calls[10][0]).toStrictEqual(COMMAND.reactivateAccount);
+        expect(vscode.commands.registerCommand.mock.calls[10][1]).toStrictEqual(reactivateAccountHandler);
     });
 
     test("createStatusBarItem: Fresh Setup, no user, no repo opened", async () => {
