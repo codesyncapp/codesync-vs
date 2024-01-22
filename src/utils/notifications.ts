@@ -43,7 +43,7 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 	});
 };
 
-
+// TODO: Probably add a separate function
 export const showChooseAccount = async (repoPath: string) => {
 	// Check if access token is present against users
 	const activeUser =  getActiveUsers()[0];
