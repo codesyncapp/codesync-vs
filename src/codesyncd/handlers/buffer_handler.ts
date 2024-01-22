@@ -1,13 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 import vscode from "vscode";
-import { globSync } from 'glob';
+import { glob } from 'glob';
 
 import {getDiffsBeingProcessed, isValidDiff} from '../utils';
 import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
-import {ABNORMAL_DIFFS_COUNT, DAY, DIFF_FILES_PER_ITERATION} from "../../constants";
-import {recallDaemon} from "../codesyncd";
+import {DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER} from "../../constants";
 import {generateSettings} from "../../settings";
 import {getActiveUsers, getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
@@ -63,6 +62,8 @@ export class bufferHandler {
 	configJSON: any;
 	defaultIgnorePatterns: string[];
 	instanceUUID: string;
+	// Log run msg after 2 minutes
+	LOG_BUFFER_HANDLER_RUN_AFTER = 5 * 60 * 1000;
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		this.statusBarItem = statusBarItem;
@@ -74,10 +75,11 @@ export class bufferHandler {
 
 	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
 
-	getDiffFiles = () => {
+	getDiffFiles = async () => {
+		const activeUser = getActiveUsers()[0];
 		const diffsBeingProcessed = getDiffsBeingProcessed();
 
-        const invalidDiffFiles = globSync("**", { 
+        const invalidDiffFiles = await glob("**", { 
 			ignore: "*.yml",
 			nodir: true,
 			dot: true,
@@ -90,14 +92,13 @@ export class bufferHandler {
 			removeFile(filePath, "cleaningInvalidDiffFiles");
 		});
 
-        const diffs = globSync("*.yml", { 
+        const diffs = await glob("*.yml", { 
             cwd: this.settings.DIFFS_REPO,
 			maxDepth: 1,
 			nodir: true,
 			dot: true,
 		});
 
-		if (diffs.length > ABNORMAL_DIFFS_COUNT) CodeSyncLogger.warning(`${diffs.length} diffs are present in buffer`);
 		let randomDiffFiles = [];
 		const usedIndices = <any>[];
 		let randomIndex = undefined;
@@ -118,18 +119,24 @@ export class bufferHandler {
 				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
+			const configRepo = this.configJSON.repos[diffData.repo_path];
 
-			if (!(diffData.repo_path in this.configJSON.repos)) {
+			if (!configRepo) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is not in config.yml`);
 				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
-			if (this.configJSON.repos[diffData.repo_path].is_disconnected) {
+
+			// If diff does not belong to user's repo, skip it
+			if (configRepo.email !== activeUser.email) return false;
+
+			// Remove diff is repo is disconnected
+			if (configRepo.is_disconnected) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is disconnected`);
 				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
-			// Skip diffs that are in being iterated
+			// Skip diffs that are already being iterated
 			if (diffsBeingProcessed.has(filePath)) return false;
 
 			// If rel_path is ignoreable, only delete event should be allowed for that
@@ -140,8 +147,6 @@ export class bufferHandler {
 				return false;
 			}
 			
-			const configRepo = this.configJSON.repos[diffData.repo_path];
-
 			if (!(diffData.branch in configRepo.branches)) {
 				// TODO: Look into syncing offline branch
 				// Removing diffs of non-synced branch if diff was created 5 days ago and plan limit is not reached
@@ -169,7 +174,10 @@ export class bufferHandler {
 			return true;
 		});
 
-		return randomDiffFiles;
+		return {
+			files: randomDiffFiles,
+			count: diffs.length
+		};
 	}
 
 	groupRepoDiffs = (diffFiles: string[]) => {
@@ -195,14 +203,37 @@ export class bufferHandler {
 	};
 
 	async run(canSendDiffs: boolean) {
+		const isRunning = CodeSyncState.get(CODESYNC_STATES.BUFFER_HANDLER_RUNNING);
+		const skipLog = CodeSyncState.canSkipRun(CODESYNC_STATES.BUFFER_HANDLER_LOGGED_AT, this.LOG_BUFFER_HANDLER_RUN_AFTER);
+		if (!skipLog) {
+			CodeSyncLogger.debug(`bufferHandler:run, uuid=${this.instanceUUID}`);
+			CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_LOGGED_AT, new Date().getTime());
+		}
+		if (isRunning) return;
+
+		let canConnect = true;
+		const errorOccurredAt = CodeSyncState.get(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT);
+		const lastConnectedAt = CodeSyncState.get(CODESYNC_STATES.SOCKET_CONNECTED_AT);
+
+		if (errorOccurredAt && lastConnectedAt) {
+			canConnect = (new Date().getTime() - lastConnectedAt) > FORCE_CONNECT_WEBSOCKET_AFTER;
+			if (!canConnect) {
+				canConnect = (new Date().getTime() - errorOccurredAt) > RETRY_WEBSOCKET_CONNECTION_AFTER;
+			}
+		}
+
+		if (!canConnect) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+
+		CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, true);
+		
 		try {
-			const diffFiles = this.getDiffFiles();
-			if (!diffFiles.length) return recallDaemon(this.statusBarItem);
-			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffFiles.length} diffs, uuid=${this.instanceUUID}`);
-			const repoDiffs = this.groupRepoDiffs(diffFiles);
 			// Check if we have an active user
 			const activeUser = getActiveUsers()[0];
-			if (!activeUser) return recallDaemon(this.statusBarItem);
+			if (!activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+			const diffs = await this.getDiffFiles();
+			if (!diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
+			const repoDiffs = this.groupRepoDiffs(diffs.files);
 			// Create Websocket client
 			const webSocketClient = new SocketClient(this.statusBarItem, activeUser.access_token, repoDiffs);
 			webSocketClient.connect(canSendDiffs);
@@ -211,7 +242,7 @@ export class bufferHandler {
 			// @ts-ignore
 			CodeSyncLogger.critical("bufferHandler exited", e.stack);
 			// recall daemon
-			return recallDaemon(this.statusBarItem);
+			return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 		}
 	}
 }

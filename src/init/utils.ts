@@ -1,10 +1,9 @@
 import fs from 'fs';
 import os from "os";
 import path from 'path';
-import { globSync } from 'glob';
+import { glob } from 'glob';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
-import parallel from "run-parallel";
 import { isBinaryFileSync } from 'isbinaryfile';
 
 import { CodeSyncLogger } from '../logger';
@@ -12,12 +11,14 @@ import { generateSettings } from "../settings";
 import { pathUtils } from '../utils/path_utils';
 import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload } from '../interface';
-import { trackRepoHandler } from '../handlers/commands_handler';
-import { uploadFileTos3, uploadRepoToServer } from '../utils/upload_utils';
-import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, RETRY_BRANCH_SYNC_AFTER } from '../constants';
+import { uploadRepoToServer } from '../utils/upload_utils';
+import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT, contextVariables } from '../constants';
 import { getGlobIgnorePatterns, isRepoActive, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
+import { s3UploaderUtils } from './s3_uploader';
+import { trackRepoHandler } from '../handlers/commands_handler';
+import gitCommitInfo from 'git-commit-info';
 
 export class initUtils {
 	repoPath: string;
@@ -34,20 +35,14 @@ export class initUtils {
 		this.defaultIgnorePatterns = getDefaultIgnorePatterns();
 	}
 
-	isBranchSyncInProcess (syncingBranchKey: string) {
-		const branchSyncStartedAt = CodeSyncState.get(syncingBranchKey);
-		const isSyncInProcess = branchSyncStartedAt && (new Date().getTime() - branchSyncStartedAt) < RETRY_BRANCH_SYNC_AFTER;
-		return isSyncInProcess;
-	}
-
-	getSyncablePaths () {
+	async getSyncablePaths () {
 		const itemPaths: IFileToUpload[] = [];
 		const globIgnorePatterns = getGlobIgnorePatterns(this.repoPath, this.syncIgnoreItems);
-		const globFiles = globSync("**", { 
+		const globFiles = await glob("**", { 
 			cwd: this.repoPath,
-			ignore: globIgnorePatterns, 
-			nodir: true, 
-			dot: true, 
+			ignore: globIgnorePatterns,
+			nodir: true,
+			dot: true,
 			stat: true,
 			withFileTypes: true
 		});
@@ -121,22 +116,7 @@ export class initUtils {
 		fs.writeFileSync(this.settings.USER_PATH, yaml.dump(users));
 	}
 
-	saveSequenceTokenFile (email: string) {
-		// Save email for sequence_token
-		if (!fs.existsSync(this.settings.SEQUENCE_TOKEN_PATH)) {
-			const users = <any>{};
-			users[email] = "";
-			fs.writeFileSync(this.settings.SEQUENCE_TOKEN_PATH, yaml.dump(users));
-		} else {
-			const users = readYML(this.settings.SEQUENCE_TOKEN_PATH) || {};
-			if (!(email in users)) {
-				users[email] = "";
-				fs.writeFileSync(this.settings.SEQUENCE_TOKEN_PATH, yaml.dump(users));
-			}
-		}
-	}
-
-	saveFileIds(branch: string, token: string, userEmail: string, uploadResponse: any) {
+	saveFileIds(branch: string, userEmail: string, uploadResponse: any) {
 		// Save file IDs, repoId and email against repo path
 		const repoId = uploadResponse.repo_id;
 		const filePathAndId = uploadResponse.file_path_and_id;
@@ -147,59 +127,30 @@ export class initUtils {
 		configRepo.id = repoId;
 		configRepo.email = userEmail;
 		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(configJSON));
+		CodeSyncLogger.debug(`Saved file IDs, branch=${branch} repo=${this.repoPath}`);
 	}
 
 	async uploadRepoToS3(branch: string, uploadResponse: any, syncingBranchKey: string) {
-		const viaDaemon = this.viaDaemon;
-		const s3Urls =  uploadResponse.urls;
-		const tasks: any[] = [];
-		const pathUtilsObj = new pathUtils(this.repoPath, branch);
-		const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-
-		Object.keys(s3Urls).forEach(relPath => {
-			const presignedUrl = s3Urls[relPath];
-			const absPath = path.join(originalsRepoBranchPath, relPath);
-			if (presignedUrl) {
-				tasks.push(async function (callback: any) {
-					const json = <any> await uploadFileTos3(absPath, presignedUrl);
-					callback(json.error, true);
-				});
-			}
-		});
-
-		parallel(
-			tasks,
-			// optional callback
-			function (err, results) {
-				CodeSyncLogger.debug(`Branch=${branch} upload completed`);
-				// the results array will equal ['one','two'] even though
-				// the second function had a shorter timeout.
-				// Reset key for syncingBranch
-				CodeSyncState.set(syncingBranchKey, false);
-				if (err) {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
-					CodeSyncLogger.error("uploadRepoToS3 failed: ", err);
-					return;
-				}
-				// delete .originals repo
-				if (fs.existsSync(originalsRepoBranchPath)) {
-					fs.rmSync(originalsRepoBranchPath, { recursive: true });
-				}
-				// Hide Connect Repo
-				vscode.commands.executeCommand('setContext', 'showConnectRepoView', false);
-				// Show success notification
-				if (!viaDaemon) {
-					vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
-						NOTIFICATION.TRACK_IT
-					]).then(selection => {
-						if (!selection) { return; }
-						if (selection === NOTIFICATION.TRACK_IT) {
-							trackRepoHandler();
-						}
-					});
-				}
-		});
+		/* 
+			Save URLs in YML file for s3Uploader
+		*/
+		const filePathAndURLs =  uploadResponse.urls;
+		const uploaderUtils = new s3UploaderUtils();
+		uploaderUtils.saveURLs(this.repoPath, branch, filePathAndURLs);
+		// Reset state values
+		CodeSyncState.set(syncingBranchKey, false);
+		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
+		// Hide Connect Repo
+		vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, false);
+		// Show success notification
+		if (!this.viaDaemon) {
+			vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
+				NOTIFICATION.TRACK_IT
+			]).then(selection => {
+				if (!selection) return;
+				if (selection === NOTIFICATION.TRACK_IT) return trackRepoHandler();
+			});
+		}
 	}
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
@@ -242,19 +193,23 @@ export class initUtils {
 		}
 
 		// Check if branch is already being synced, skip it
-		const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${repoName}:${branch}`;
-		const isSyncInProcess = this.isBranchSyncInProcess(syncingBranchKey);
+		const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${this.repoPath}:${branch}`;
+		const isSyncInProcess = CodeSyncState.canSkipRun(syncingBranchKey, BRANCH_SYNC_TIMEOUT);
 		if (isSyncInProcess) return false;
 
 		// Set key here that Branch is being synced
 		CodeSyncState.set(syncingBranchKey, new Date().getTime());
+		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, new Date().getTime());
 		const instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 		CodeSyncLogger.info(`Uploading branch=${branch}, repo=${this.repoPath}, uuid=${instanceUUID}`);
+
+		const commit_hash = gitCommitInfo({cwd: this.repoPath}).hash || null;
 
 		const data = {
 			name: repoName,
 			is_public: isPublic,
 			branch,
+			commit_hash,
 			files_data: JSON.stringify(filesData),
 			source: VSCODE,
 			platform: os.platform()
@@ -266,9 +221,7 @@ export class initUtils {
 			CodeSyncState.set(syncingBranchKey, false);
 			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
 			CodeSyncLogger.error(error, json.error, userEmail);
-			if (!this.viaDaemon) {
-				vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
-			}
+			if (!this.viaDaemon) vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			return false;
 		}
 		/*
@@ -291,13 +244,9 @@ export class initUtils {
 		// Save IAM credentials
 		this.saveIamUser(user);
 
-		// Save email for sequence_token
-		this.saveSequenceTokenFile(user.email);
+		// Save file paths and IDs in config
+		this.saveFileIds(branch, user.email, json.response);
 
-		// Save file paths and IDs
-		this.saveFileIds(branch, token, user.email, json.response);
-
-		CodeSyncLogger.debug(`Saved file IDs, uploading branch=${branch} to s3`);
 		// Upload to s3
 		await this.uploadRepoToS3(branch, json.response, syncingBranchKey);
 

@@ -1,10 +1,13 @@
 import fs from 'fs';
 import os from 'os';
-import yaml from 'js-yaml';
-import AWS from 'aws-sdk';
 import macaddress from "macaddress";
+import { 
+	CloudWatchLogsClient,
+	CloudWatchLogsClientConfig,
+	PutLogEventsCommand,
+	PutLogEventsRequest
+} from "@aws-sdk/client-cloudwatch-logs";
 
-import { PutLogEventsRequest } from 'aws-sdk/clients/cloudwatchlogs';
 import {
 	VSCODE,
 	LOG_AFTER_X_TIMES,
@@ -13,9 +16,10 @@ import {
 import { readYML, isEmpty, getActiveUsers } from './utils/common';
 import { generateSettings, LOGS_METADATA, PLUGIN_USER } from "./settings";
 
-let cloudwatchlogs = <AWS.CloudWatchLogs>{};
 let macAddress = "";
 macaddress.one().then(mac => macAddress = mac);
+
+let cloudWatchClient = <CloudWatchLogsClient>{};
 
 const logErrorMsgTypes = {
 	CRITICAL: "CRITICAL",
@@ -34,29 +38,29 @@ export class CodeSyncLogger {
 	  CRITICAL: Errors that are blocking for the normal operation of the plugin and should be fixed immediately.
 	*/
 
-	static debug (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.DEBUG, additionalMsg, logStream, retryCount);
+	static async debug (msg: string, additionalMsg="", logStream?: string) {
+		await putLogEvent(msg, logErrorMsgTypes.DEBUG, additionalMsg, logStream);
 	}
 
-	static info (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.INFO, additionalMsg, logStream, retryCount);
+	static async info (msg: string, additionalMsg="", logStream?: string) {
+		await putLogEvent(msg, logErrorMsgTypes.INFO, additionalMsg, logStream);
 	}
 
-	static warning (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.WARNING, additionalMsg, logStream, retryCount);
+	static async warning (msg: string, additionalMsg="", logStream?: string) {
+		await putLogEvent(msg, logErrorMsgTypes.WARNING, additionalMsg, logStream);
 	}
 
-	static error (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.ERROR, additionalMsg, logStream, retryCount);
+	static async error (msg: string, additionalMsg="", logStream?: string) {
+		await putLogEvent(msg, logErrorMsgTypes.ERROR, additionalMsg, logStream);
 	}
 
-	static critical (msg: string, additionalMsg="", logStream?: string, retryCount=0) {
-		putLogEvent(msg, logErrorMsgTypes.CRITICAL, additionalMsg, logStream, retryCount);
+	static async critical (msg: string, additionalMsg="", logStream?: string) {
+		await putLogEvent(msg, logErrorMsgTypes.CRITICAL, additionalMsg, logStream);
 	}
 
 }
 
-const putLogEvent = (msg: string, eventType: string, additionalMsg="", logStream?: string, retryCount=0) => {
+const putLogEvent = async (msg: string, eventType: string, additionalMsg="", logStream?: string) => {
 	let eventMsg = msg;
 	if (additionalMsg) {
 		eventMsg = `${msg}, ${additionalMsg}`;
@@ -69,10 +73,9 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", logStream
 
 	const settings = generateSettings();
 
-	if (!fs.existsSync(settings.USER_PATH) || !fs.existsSync(settings.SEQUENCE_TOKEN_PATH)) return;
+	if (!fs.existsSync(settings.USER_PATH)) return;
 
 	const users = readYML(settings.USER_PATH);
-	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
 
 	if (logStream) {
 		const user = users[logStream];
@@ -89,7 +92,7 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", logStream
 			secretKey = users[email].secret_key;
 		}
 	}
-
+	
 	// Set default user for logging
 	if (!(accessKey && secretKey && email)) {
 		email = PLUGIN_USER.logStream;
@@ -98,15 +101,15 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", logStream
 		accessKey = pluginUser.access_key;
 		secretKey = pluginUser.secret_key;
 	}
-	
-	const sequenceToken = email in sequenceTokenConfig ? sequenceTokenConfig[email] : "";
 
-	if (isEmpty(cloudwatchlogs)) {
-		cloudwatchlogs = new AWS.CloudWatchLogs({
-			accessKeyId: accessKey,
-			secretAccessKey: secretKey,
-			region: LOGS_METADATA.AWS_REGION
-		});
+	if (isEmpty(cloudWatchClient)) {
+		cloudWatchClient = __createClient(accessKey, secretKey);
+	} else {
+		// Recreate client if accessKey is changed
+		const credentials = await cloudWatchClient.config.credentials();
+		if (credentials.accessKeyId !== accessKey) {
+			cloudWatchClient = __createClient(accessKey, secretKey);
+		}
 	}
 
 	const logGroupName = LOGS_METADATA.GROUP;
@@ -130,53 +133,17 @@ const putLogEvent = (msg: string, eventType: string, additionalMsg="", logStream
 	const params = <PutLogEventsRequest>{
 		logEvents,
 		logGroupName,
-		logStreamName,
+		logStreamName
 	};
 
-	if (sequenceToken) {
-		params.sequenceToken = sequenceToken;
+	const command = new PutLogEventsCommand(params);
+	try {
+		await cloudWatchClient.send(command);
+	} catch (err) {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		console.log(`Failed to log: ${err}`);
 	}
-
-	cloudwatchlogs.putLogEvents(params as unknown as PutLogEventsRequest, function(err: any, data) {
-
-		if (!err) {
-			// successful response
-			updateSequenceToken(email, data.nextSequenceToken || "");
-			return;
-		}
-		// an error occurred
-		/*
-		DataAlreadyAcceptedException: The given batch of log events has already been accepted.
-		The next batch can be sent with sequenceToken: 49615429905286623782064446503967477603282951356289123634
-		*/
-		const errString = err.toString();
-		if (errString.includes('DataAlreadyAcceptedException') || errString.includes('InvalidSequenceTokenException')) {
-			const matches = errString.match(/(\d+)/);
-			if (matches[0]) {
-				sequenceTokenConfig[email] = matches[0];
-				fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.dump(sequenceTokenConfig));
-				if (retryCount) {
-					if (retryCount < 10) {
-						retryCount += 1;
-						putLogEvent(msg, eventType, additionalMsg, email, retryCount);
-					}
-				} else {
-					putLogEvent(msg, eventType, additionalMsg, email, 1);
-				}
-			} else {
-				console.log(`Logging failed: ${errString}`, err.stack);
-			}
-		} else {
-			console.log(`Failed to log: ${errString}`);
-		}
-	});
-};
-
-export const updateSequenceToken = (email: string, nextSequenceToken: string) => {
-	const settings = generateSettings();
-	const sequenceTokenConfig = readYML(settings.SEQUENCE_TOKEN_PATH);
-	sequenceTokenConfig[email] = nextSequenceToken;
-	fs.writeFileSync(settings.SEQUENCE_TOKEN_PATH, yaml.dump(sequenceTokenConfig));
 };
 
 
@@ -190,4 +157,17 @@ export const logErrorMsg = (msg: string, errCount: number) => {
 	}
 	errCount += 1;
 	return errCount;
+};
+
+
+const __createClient = (accessKeyId: string, secretAccessKey: string) => {
+	const config: CloudWatchLogsClientConfig =
+		{
+			region: LOGS_METADATA.AWS_REGION,
+			credentials: {
+				accessKeyId,
+				secretAccessKey
+			}
+		};
+	return new CloudWatchLogsClient(config);
 };

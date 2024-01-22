@@ -2,8 +2,8 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
+import isOnline from 'is-online';
 import untildify from 'untildify';
-
 import { DEFAULT_BRANCH, GITIGNORE, NOTIFICATION, SYNCIGNORE } from "../../src/constants";
 import fetchMock from "jest-fetch-mock";
 import { initHandler } from "../../src/init/init_handler";
@@ -11,28 +11,30 @@ import {
     Config,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
-    getSeqTokenFilePath,
     getUserFilePath,
     INVALID_TOKEN_JSON,
     randomBaseRepoPath,
     randomRepoPath,
-    TEST_EMAIL,
     TEST_REPO_RESPONSE,
     TEST_USER,
     waitFor,
     addUser,
-    writeTestRepoFiles
+    writeTestRepoFiles,
+    TEST_EMAIL
 } from "../helpers/helpers";
 import { SYNC_IGNORE_FILE_DATA } from "../../src/constants";
 import { pathUtils } from "../../src/utils/path_utils";
 import { readYML, readFile } from "../../src/utils/common";
-import {createSystemDirectories} from "../../src/utils/setup_utils";
+import { createSystemDirectories } from "../../src/utils/setup_utils";
+import { CodeSyncState, CODESYNC_STATES } from "../../src/utils/state_utils";
+import { s3UploaderUtils } from "../../src/init/s3_uploader";
+
 
 describe("initHandler: connectRepo", () => {
     let baseRepoPath;
     let repoPath;
     let configPath;
-    const user = { email: "dummy@email.cpm"};
+    const userResponse = {user: {email: "dummy@email.cpm"}};
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -60,7 +62,7 @@ describe("initHandler: connectRepo", () => {
 
     test("Server is down", async () => {
         fetchMock.mockResponseOnce(null);
-        const handler = new initHandler(repoPath, "ACCESS_TOKEN");
+        const handler = new initHandler(repoPath, "ACCESS_TOKEN", TEST_EMAIL);
         await handler.connectRepo();
         // Verify error msg
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
@@ -70,8 +72,8 @@ describe("initHandler: connectRepo", () => {
     test("Invalid access token", async () => {
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
-        const handler = new initHandler(repoPath, "ACCESS_TOKEN");
+            .mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON), { status: 401 });
+        const handler = new initHandler(repoPath, "ACCESS_TOKEN", TEST_EMAIL);
         await handler.connectRepo();
         // Verify error msg
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
@@ -83,8 +85,8 @@ describe("initHandler: connectRepo", () => {
     test("Repo already synced", async () => {
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user));
-        const handler = new initHandler(repoPath, "ACCESS_TOKEN");
+            .mockResponseOnce(JSON.stringify(userResponse));
+        const handler = new initHandler(repoPath, "ACCESS_TOKEN", TEST_EMAIL);
         // Add repo in config
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
@@ -99,12 +101,12 @@ describe("initHandler: connectRepo", () => {
         const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user));
+            .mockResponseOnce(JSON.stringify(userResponse));
         // Add repo in config
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo(true);
         addUser(baseRepoPath);
-        const handler = new initHandler(repoPath, "ACCESS_TOKEN");
+        const handler = new initHandler(repoPath, "ACCESS_TOKEN", TEST_EMAIL);
         await handler.connectRepo();
         // Verify error msg
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
@@ -117,10 +119,10 @@ describe("initHandler: connectRepo", () => {
         const subDir = path.join(repoPath, "directory");
         fs.mkdirSync(subDir);
         const syncIgnorePath = path.join(subDir, SYNCIGNORE);
-        const handler = new initHandler(subDir, "ACCESS_TOKEN");
+        const handler = new initHandler(subDir, "ACCESS_TOKEN", TEST_EMAIL);
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user));
+            .mockResponseOnce(JSON.stringify(userResponse));
         // Add repo in config
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo(true);
@@ -138,8 +140,8 @@ describe("initHandler: connectRepo", () => {
     test(".syncignore should be created", async () => {
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user));
-        const handler = new initHandler(repoPath, "ACCESS_TOKEN");
+            .mockResponseOnce(JSON.stringify(userResponse));
+        const handler = new initHandler(repoPath, "ACCESS_TOKEN", TEST_EMAIL);
         await handler.connectRepo();
         // Verify error msg
         const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
@@ -157,8 +159,8 @@ describe("initHandler: connectRepo", () => {
         fs.writeFileSync(gitignorePath, gitignoreData);
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user));
-        const handler = new initHandler(repoPath, "ACCESS_TOKEN");
+            .mockResponseOnce(JSON.stringify(userResponse));
+        const handler = new initHandler(repoPath, "ACCESS_TOKEN", TEST_EMAIL);
         await handler.connectRepo();
         // Verify error msg
         const syncIgnorePath = path.join(repoPath, SYNCIGNORE);
@@ -176,8 +178,8 @@ describe("initHandler: connectRepo", () => {
         fs.writeFileSync(syncIgnorePath, syncIgnoreData);
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user));
-        const handler = new initHandler(repoPath, "ACCESS_TOKEN");
+            .mockResponseOnce(JSON.stringify(userResponse));
+        const handler = new initHandler(repoPath, "ACCESS_TOKEN", TEST_EMAIL);
         await handler.connectRepo();
         expect(fs.existsSync(syncIgnorePath)).toBe(true);
         const _syncIgnoreData = readFile(syncIgnorePath);
@@ -193,8 +195,8 @@ describe("initHandler: connectRepo", () => {
         fs.writeFileSync(syncIgnorePath, syncIgnoreData);
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user));
-        const handler = new initHandler(repoPath, "ACCESS_TOKEN", true);
+            .mockResponseOnce(JSON.stringify(userResponse));
+        const handler = new initHandler(repoPath, "ACCESS_TOKEN", TEST_EMAIL, true);
         await handler.connectRepo();
         // Verify .syncignore has been created
         expect(fs.existsSync(syncIgnorePath)).toBe(true);
@@ -211,13 +213,12 @@ describe("initHandler: Syncing Branch", () => {
     let repoPath;
     let configPath;
     let userFilePath;
-    let sequenceTokenFilePath;
     const fileName = "file_1.js";
     let filePath;
     let pathUtilsObj;
     let shadowFilePath;
     let originalsFilePath;
-    const user = {email: "dummy@email.cpm"};
+    const userResponse = {user: {email: "dummy@email.cpm"}};
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -235,7 +236,6 @@ describe("initHandler: Syncing Branch", () => {
         const configData = { repos: {} };
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
         fs.writeFileSync(configPath, yaml.dump(configData));
         writeTestRepoFiles(repoPath);
     });
@@ -249,9 +249,9 @@ describe("initHandler: Syncing Branch", () => {
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user))
+            .mockResponseOnce(JSON.stringify(userResponse))
             .mockResponseOnce(JSON.stringify({ status: false }));
-        const handler = new initHandler(repoPath, "ACCESS_TOKEN", true);
+        const handler = new initHandler(repoPath, "ACCESS_TOKEN", TEST_EMAIL, true);
         await handler.connectRepo();
         // Verify error msg
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
@@ -267,13 +267,14 @@ describe("initHandler: Syncing Branch", () => {
     });
 
     test("Should sync branch", async () => {
+        isOnline.mockReturnValue(true);
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user))
+            .mockResponseOnce(JSON.stringify(userResponse))
             .mockResponseOnce(JSON.stringify({ status: true }))
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
-        const handler = new initHandler(repoPath, "ACCESS_TOKEN", true);
+        const handler = new initHandler(repoPath, "ACCESS_TOKEN", TEST_EMAIL, true);
         await handler.connectRepo();
         // Verify error msg
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
@@ -283,11 +284,8 @@ describe("initHandler: Syncing Branch", () => {
         expect(DEFAULT_BRANCH in config.repos[repoPath].branches).toBe(true);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH][fileName]).toBe(TEST_REPO_RESPONSE.file_path_and_id[fileName]);
-        // Verify sequence_token.yml
-        let users = readYML(sequenceTokenFilePath);
-        expect(users[TEST_EMAIL]).toStrictEqual("");
         // verify user.yml
-        users = readYML(userFilePath);
+        const users = readYML(userFilePath);
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
@@ -295,7 +293,13 @@ describe("initHandler: Syncing Branch", () => {
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(0);
         // Verify file added in .shadow but removed from .originals
         expect(fs.existsSync(shadowFilePath)).toBe(true);
+        const uploaderUtils = new s3UploaderUtils();
+        await uploaderUtils.runUploader();
         await waitFor(3);
         expect(fs.existsSync(originalsFilePath)).toBe(false);
+        const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${repoPath}:${DEFAULT_BRANCH}`;
+        expect(CodeSyncState.get(syncingBranchKey)).toBe(false);
+        expect(CodeSyncState.get(CODESYNC_STATES.IS_SYNCING_BRANCH)).toBe(false);
+        expect(fs.readdirSync(pathUtils.getS3UploaderRepo())).toHaveLength(0);
     });
 });

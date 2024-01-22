@@ -11,11 +11,11 @@ import {pathUtils} from "../../src/utils/path_utils";
 import {readYML} from "../../src/utils/common";
 import {initUtils} from "../../src/init/utils";
 import {detectBranchChange} from "../../src/codesyncd/populate_buffer";
+import {CodeSyncState, CODESYNC_STATES} from "../../src/utils/state_utils";
 
 import {
     addUser,
     getConfigFilePath,
-    getSeqTokenFilePath,
     getUserFilePath,
     randomBaseRepoPath,
     randomRepoPath,
@@ -33,7 +33,6 @@ describe("detectBranchChange", () => {
     let baseRepoPath;
     let repoPath;
     let configPath;
-    let sequenceTokenFilePath;
     let userFilePath;
     let pathUtilsObj;
     let originalsRepoBranchPath;
@@ -42,7 +41,7 @@ describe("detectBranchChange", () => {
     const configData = {repos: {}};
     const userData = {};    
 
-    beforeEach(() => {
+    beforeEach(async () => {
         fetch.resetMocks();
         jest.clearAllMocks();
         jest.spyOn(global.console, 'log');
@@ -59,16 +58,15 @@ describe("detectBranchChange", () => {
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
         userData[TEST_EMAIL] = {access_token: "ABC"};
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);    
         pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
             
         fs.writeFileSync(configPath, yaml.dump(configData));
         fs.writeFileSync(userFilePath, yaml.dump(userData));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
+        
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths();
+        const itemPaths = await initUtilsObj.getSyncablePaths();
         const filePaths = itemPaths.map(itemPath => itemPath.file_path);
         // copy files to .originals repo
         initUtilsObj.copyFilesTo(filePaths, originalsRepoBranchPath);
@@ -90,12 +88,8 @@ describe("detectBranchChange", () => {
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
 
-        // Verify sequence_token.yml
-        let users = readYML(sequenceTokenFilePath);
-        expect(users[TEST_EMAIL]).toStrictEqual("");
-
         // verify user.yml
-        users = readYML(userFilePath);
+        const users = readYML(userFilePath);
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         // Verify no notification is shown as it is run on daemon
@@ -200,10 +194,7 @@ describe("detectBranchChange", () => {
         };
         _configData.repos[repoPath].branches[DEFAULT_BRANCH] = TEST_REPO_RESPONSE.file_path_and_id;
         fs.writeFileSync(configPath, yaml.dump(_configData));
-        // Update sequence_token.yml
-        const users = {};
-        users[TEST_EMAIL] = "";
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(users));
+        
         const userData = {};
         userData[TEST_EMAIL] = {
             access_token: "ABC",
@@ -240,6 +231,7 @@ describe("detectBranchChange", () => {
     });
 
     test("Repo is not synced with given branch", async () => {
+        CodeSyncState.set(CODESYNC_STATES.UPLOADING_TO_S3, "");
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const _configData = {repos: {}};
@@ -253,6 +245,7 @@ describe("detectBranchChange", () => {
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
         const readyRepos = await detectBranchChange();
+        await waitFor(3);
         expect(assertValidUpload(readyRepos)).toBe(true);
     });
 
@@ -272,6 +265,7 @@ describe("detectBranchChange", () => {
             .mockResponseOnce(JSON.stringify(TEST_REPO_RESPONSE));
 
         const readyRepos = await detectBranchChange();
+        await waitFor(3);
         expect(assertValidUpload(readyRepos)).toBe(true);
     });
 
@@ -293,7 +287,7 @@ describe("detectBranchChange", () => {
             .mockResponseOnce(JSON.stringify({status: true}))
             .mockResponseOnce(() => new Promise(resolve => setTimeout(() => resolve(JSON.stringify(TEST_REPO_RESPONSE)), 3000)));
         const readyRepos = await detectBranchChange();
-        await waitFor(2);
+        await waitFor(3);
         expect(assertValidUpload(readyRepos)).toBe(true);
         // Should call healthCheck and Repo Init API
         expect(fetchMock).toHaveBeenCalledTimes(2);

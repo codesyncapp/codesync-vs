@@ -3,6 +3,7 @@ import os from "os";
 import path from "path";
 import yaml from "js-yaml";
 import vscode from "vscode";
+import isOnline from 'is-online';
 import untildify from 'untildify';
 import {initUtils} from "../../src/init/utils";
 
@@ -14,7 +15,7 @@ import {
     TEST_REPO_RESPONSE,
     TEST_USER,
     randomBaseRepoPath,
-    randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, getSeqTokenFilePath, Config, addUser, waitFor,
+    randomRepoPath, getConfigFilePath, getSyncIgnoreFilePath, getUserFilePath, Config, addUser, waitFor,
     writeTestRepoFiles,
     NESTED_PATH
 } from "../helpers/helpers";
@@ -23,6 +24,7 @@ import {readYML} from "../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {pathUtils} from "../../src/utils/path_utils";
 import { createSystemDirectories } from "../../src/utils/setup_utils";
+import { s3UploaderUtils } from "../../src/init/s3_uploader";
 
 
 describe("getSyncablePaths",  () => {
@@ -44,21 +46,22 @@ describe("getSyncablePaths",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("No .syncignore",  () => {
+    test("No .syncignore", async () => {
         fs.writeFileSync(filePath, "");
         const initUtilsObj = new initUtils(repoPath);
-        const paths = initUtilsObj.getSyncablePaths();
+        const paths = await initUtilsObj.getSyncablePaths();
         expect(paths).toHaveLength(1);
     });
 
-    test("Ignore file and match rest",  () => {
+    test("Ignore file and match rest", async () => {
         fs.writeFileSync(filePath, "");
         fs.writeFileSync(path.join(repoPath, "ignore.js"), DUMMY_FILE_CONTENT);
         fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
         const initUtilsObj = new initUtils(repoPath);
-        const paths = initUtilsObj.getSyncablePaths();
+        const paths = await initUtilsObj.getSyncablePaths();
         // 1 is .syncignore, other is file.js
         expect(paths).toHaveLength(2);
+        paths.sort((a, b) => a.size - b.size);
         expect(paths[0].rel_path).toStrictEqual("file.js");
         expect(paths[0].is_binary).toBe(false);
         expect(paths[0].file_path).toStrictEqual(filePath);
@@ -69,14 +72,14 @@ describe("getSyncablePaths",  () => {
         expect(paths[1].size).toBeTruthy();
     });
 
-    test("Dot files/directories",  () => {
+    test("Dot files/directories", async () => {
         // .directory should be ignored, .ignore file should be considered
         const dotRepoPath = path.join(repoPath, ".directory");
         const filePath = path.join(repoPath, ".ignore");
         fs.mkdirSync(dotRepoPath, {recursive: true});
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         const initUtilsObj = new initUtils(repoPath);
-        const paths = initUtilsObj.getSyncablePaths();
+        const paths = await initUtilsObj.getSyncablePaths();
         expect(paths).toHaveLength(1);
         expect(paths[0].rel_path).toStrictEqual(".ignore");
         expect(paths[0].is_binary).toBe(false);
@@ -84,11 +87,11 @@ describe("getSyncablePaths",  () => {
         expect(paths[0].size === 0).toBe(false);
     });
 
-    test("with symlink",  () => {
+    test("with symlink", async () => {
         const dotRepoPath = path.join(repoPath, ".directory");
         fs.symlinkSync(repoPath, dotRepoPath);
         const initUtilsObj = new initUtils(repoPath);
-        const paths = initUtilsObj.getSyncablePaths();
+        const paths = await initUtilsObj.getSyncablePaths();
         expect(paths).toHaveLength(0);
     });
 });
@@ -209,40 +212,6 @@ describe("saveIamUser",  () => {
     });
 });
 
-describe("saveSequenceTokenFile",  () => {
-    const baseRepoPath = randomBaseRepoPath();
-    const repoPath = randomRepoPath();
-    const sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-    const sequenceTokenFileData = {};
-    sequenceTokenFileData[TEST_EMAIL] = "";
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-        untildify.mockReturnValue(baseRepoPath);
-        fs.mkdirSync(baseRepoPath, {recursive: true});
-    });
-
-    afterEach(() => {
-        fs.rmSync(baseRepoPath, { recursive: true, force: true });
-    });
-
-    test("With no sequence_token.yml",  () => {
-        const initUtilsObj = new initUtils(repoPath);
-        initUtilsObj.saveSequenceTokenFile(TEST_EMAIL);
-        expect(fs.existsSync(sequenceTokenFilePath)).toBe(true);
-        const users = readYML(sequenceTokenFilePath);
-        expect(users[TEST_EMAIL]).toStrictEqual("");
-    });
-
-    test("User not in user.yml",  () => {
-        const initUtilsObj = new initUtils(repoPath);
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump(sequenceTokenFileData));
-        initUtilsObj.saveSequenceTokenFile(ANOTHER_TEST_EMAIL);
-        expect(fs.existsSync(sequenceTokenFilePath)).toBe(true);
-        const users = readYML(sequenceTokenFilePath);
-        expect(users[ANOTHER_TEST_EMAIL]).toStrictEqual("");
-    });
-});
 
 describe("saveFileIds",  () => {
     const baseRepoPath = randomBaseRepoPath();
@@ -266,7 +235,7 @@ describe("saveFileIds",  () => {
 
     test("Should save file IDs",  () => {
         const initUtilsObj = new initUtils(repoPath);
-        initUtilsObj.saveFileIds(DEFAULT_BRANCH, "ACCESS_TOKEN", TEST_EMAIL, TEST_REPO_RESPONSE);
+        initUtilsObj.saveFileIds(DEFAULT_BRANCH, TEST_EMAIL, TEST_REPO_RESPONSE);
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
     });
@@ -274,11 +243,11 @@ describe("saveFileIds",  () => {
 
 describe("uploadRepo",  () => {
     let baseRepoPath;
+    let s3UploaderRepo;
     let repoPath;
     let syncIgnorePath;
     let configPath;
     let userFilePath;
-    let sequenceTokenFilePath;
     const configData = {repos: {}};
 
     beforeEach(() => {
@@ -296,13 +265,13 @@ describe("uploadRepo",  () => {
         writeTestRepoFiles(repoPath);
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
         syncIgnorePath = getSyncIgnoreFilePath(repoPath);
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fs.writeFileSync(configPath, yaml.dump(configData));
         fs.writeFileSync(syncIgnorePath, SYNC_IGNORE_DATA+"\nignore.js");
         fs.writeFileSync(path.join(repoPath, "ignore.js"), DUMMY_FILE_CONTENT);
+        s3UploaderRepo = pathUtils.getS3UploaderRepo();
     });
 
     afterEach(() => {
@@ -313,7 +282,7 @@ describe("uploadRepo",  () => {
     test("Server Down",  async () => {
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths();
+        const itemPaths = await initUtilsObj.getSyncablePaths();
         // Files count from TEST_RESPONSE_DATA
         expect(itemPaths).toHaveLength(3);
         // Mock response for checkServerDown
@@ -334,9 +303,11 @@ describe("uploadRepo",  () => {
     });
 
     test("repo In Config",  async () => {
+        isOnline.mockReturnValue(true);
+
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths();
+        const itemPaths = await initUtilsObj.getSyncablePaths();
         // Files count from TEST_RESPONSE_DATA
         expect(itemPaths).toHaveLength(3);
         // Mock response for checkServerDown
@@ -352,38 +323,39 @@ describe("uploadRepo",  () => {
         // copy files to .shadow repo
         const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
         initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
-    
+
         await initUtilsObj.uploadRepo(DEFAULT_BRANCH, "ACCESS_TOKEN", itemPaths,
             TEST_EMAIL, false);
+        // Run s3Uploader
+        const uploaderUtils = new s3UploaderUtils();
+        await uploaderUtils.runUploader();
         await waitFor(3);
-
         // Verify file Ids have been added in config
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
 
-        // Verify sequence_token.yml
-        let users = readYML(sequenceTokenFilePath);
-        expect(users[TEST_EMAIL]).toStrictEqual("");
-
         // verify user.yml
-        users = readYML(userFilePath);
+        const users = readYML(userFilePath);
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_SYNCED);
+
         // Make sure files have been deleted from .originals
         filePaths.forEach(_filePath => {
             const relPath = _filePath.split(path.join(repoPath, path.sep))[1];
             const originalPath = path.join(originalsRepoBranchPath, relPath);
             expect(fs.existsSync(originalPath)).toBe(false);
         });
+        let diffFiles = fs.readdirSync(s3UploaderRepo);
+        expect(diffFiles).toHaveLength(0);
     });
 
     test("repo Not In Config",  async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.removeRepo();
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths();
+        const itemPaths = await initUtilsObj.getSyncablePaths();
         // Files count from TEST_RESPONSE_DATA
         expect(itemPaths).toHaveLength(3);
         // Mock response for checkServerDown
@@ -408,12 +380,8 @@ describe("uploadRepo",  () => {
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
 
-        // Verify sequence_token.yml
-        let users = readYML(sequenceTokenFilePath);
-        expect(users[TEST_EMAIL]).toStrictEqual("");
-
         // verify user.yml
-        users = readYML(userFilePath);
+        const users = readYML(userFilePath);
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         // Verify notification msg
@@ -443,10 +411,9 @@ describe("uploadRepo",  () => {
     test("Error in uploadRepoToServer",  async () => {
         // Write these files as putLogEvent is called when error occurs
         fs.writeFileSync(userFilePath, yaml.dump({}));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
 
         const initUtilsObj = new initUtils(repoPath);
-        const itemPaths = initUtilsObj.getSyncablePaths();
+        const itemPaths = await initUtilsObj.getSyncablePaths();
         // Files count from TEST_RESPONSE_DATA
         expect(itemPaths).toHaveLength(3);
         // Mock response for checkServerDown
@@ -461,9 +428,6 @@ describe("uploadRepo",  () => {
         const config = readYML(configPath);
         expect(DEFAULT_BRANCH in config.repos[repoPath].branches[DEFAULT_BRANCH]).toBe(false);
 
-        // Verify sequence_token.yml
-        const sequenceTokenUsers = readYML(sequenceTokenFilePath);
-        expect(TEST_EMAIL in sequenceTokenUsers).toBe(false);
         // verify user.yml
         const users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(false);

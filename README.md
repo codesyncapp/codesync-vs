@@ -1,23 +1,39 @@
-# CodeSync
+**CodeSync: Unravel the Story of Your Code in a Glance.**
 
-**Developer collaboration is hard.** 
+CodeSync for VS Code uniquely blends the power of playback technology with the convenience of modern IDEs, offering a groundbreaking approach to code management and review. Our advanced playback feature allows developers to navigate through the history of code changes visually, providing an unparalleled understanding of code evolution and enhancing the quality of code reviews.
 
-[CodeSync](https://www.codesync.com) allows your team to align with changes as they happen.
+**Key Features**
 
-It streams your code in real-time to the cloud, allowing you and your team to review and "play back" the entire history of the codebase.
+- **Innovative Code Playback**: Witness the progression of your codebase with our dynamic playback feature, visualizing each change in a user-friendly timeline.
+- **Collaboration Boost**: Facilitate team discussions and education by sharing visual code histories, promoting better understanding and teamwork.
+- **GitHub Pull Request Integration**: Elevate code reviews by replaying GitHub Pull Requests, gaining insight into the developer's reasoning and approach.
+- **Seamless IDE Integration**: Effortlessly merge CodeSync into your VS Code environment, complementing and enriching your existing coding workflow.
+- **Flexible Hosting Options**: Adapt CodeSync to your team's needs with cloud-based hosting or self-hosted options on your AWS account.
 
-* **Improve developer collaboration** without impacting their workflow. 
-* **Stop team miscommunications** before they happen. 
-* **Reduce throwaway code** and prevent tech debt.
+**Getting Started**
 
-CodeSync also helps solo developers!
+1. **Effortless Installation**: Click 'Install' to integrate CodeSync into your VS Code.
+2. **Customize Your Experience**: Choose your preferred hosting method and configure settings to suit your workflow.
+3. **Revitalize Code Reviews**: If you’re part of a team, utilize the GitHub PR integration and playback feature for more insightful and efficient code analysis.
 
-*   **Coding Performance:** Track your performance every day. What did you actually write today?
-*   **Never Lose Code Again:** All code changes are saved. "Rewind" to see all history.
-*   **Social Coding:** Watch developers around the world as they code, in real time.
+**Documentation and Support**
 
-Simply install the plugin in your IDE and follow the steps. CodeSync supports both public and private repos. Log in to [CodeSync](https://www.codesync.com) to review your daily snapshot, any past changes, team activity, and open source streaming.
+- Detailed [User Guides](https://www.codesync.com/install)
+- Helpful [Tutorials and FAQs](https://www.codesync.com/install)
+- Responsive [Customer Support](https://calendly.com/codesync/codesync-demo)
 
-### What does a Code Playback look like?
+**User Testimonials**
 
-![Example View (Replaying your changes)](https://codesync-images.s3.amazonaws.com/codesync-intro.gif)
+"CodeSync's playback feature has revolutionized how we approach code reviews and retrospectives." - *_Laura Nguyen, Software Engineer_*
+
+"Being able to visually track our code's evolution has greatly enhanced our team's understanding and collaboration." - *_Ryan Patel, DevOps Manager_*
+
+**Stay Informed**  
+- Connect with us on [Discord](https://discord.com/invite/3daCMNZNTa) and [LinkedIn](https://www.linkedin.com/company/codesyncapp/).
+- Reach out with questions, comments or feedback at <hello@codesync.com>.
+
+**Visuals**
+
+![Repo Playback (Replaying your changes)](https://codesync-images.s3.amazonaws.com/playback-dark-theme.gif)
+
+*_Discover the power of visual code analysis with CodeSync. Install now for a transformative coding experience!_*

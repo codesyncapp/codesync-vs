@@ -10,7 +10,7 @@ import {
     logout,
     redirectToBrowser
 } from "../../src/utils/auth_utils";
-import { Auth0URLs, NOTIFICATION } from "../../src/constants";
+import { Auth0URLs, contextVariables, NOTIFICATION } from "../../src/constants";
 import { createRedirectUri } from "../../src/utils/url_utils";
 import {
     addUser,
@@ -19,7 +19,9 @@ import {
     randomBaseRepoPath,
     randomRepoPath,
     TEST_EMAIL,
-    waitFor
+    waitFor,
+    AUTH0_TEST_ID_TOKEN,
+    setWorkspaceFolders
 } from "../helpers/helpers";
 import { readYML } from "../../src/utils/common";
 import { initExpressServer } from "../../src/server/server";
@@ -117,6 +119,7 @@ describe("createUser",  () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
+        setWorkspaceFolders(repoPath);
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
@@ -130,7 +133,7 @@ describe("createUser",  () => {
 
     test("with invalid token", async () => {
         fetchMock.mockResponseOnce(JSON.stringify(INVALID_TOKEN_JSON));
-        await createUser("TOKEN", repoPath);
+        await createUser("TOKEN", AUTH0_TEST_ID_TOKEN);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
     });
 
@@ -138,17 +141,20 @@ describe("createUser",  () => {
         const user = {"user": {"id": 1, "email": TEST_EMAIL}};
         fetchMock.mockResponseOnce(JSON.stringify(user));
         global.skipAskConnect = false;
-        await createUser("TOKEN", repoPath);
+        await createUser("TOKEN", AUTH0_TEST_ID_TOKEN);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         const users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(true);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
         expect(vscode.commands.executeCommand.mock.calls[0][2]).toBe(false);
         expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual("showConnectRepoView");
-        expect(vscode.commands.executeCommand.mock.calls[1][2]).toBe(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.showReactivateAccount);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toBe(false);
+        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual("setContext");
+        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.showConnectRepoView);
+        expect(vscode.commands.executeCommand.mock.calls[2][2]).toBe(true);
     });
 
     test("with user in user.yml", async () => {
@@ -157,17 +163,20 @@ describe("createUser",  () => {
         fs.writeFileSync(userFilePath, yaml.dump(users));
         const user = {"user": {"id": 1}};
         fetchMock.mockResponseOnce(JSON.stringify(user));
-        await createUser("TOKEN", repoPath);
+        await createUser("TOKEN", AUTH0_TEST_ID_TOKEN);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         users = readYML(userFilePath);
         expect(TEST_EMAIL in users).toBe(true);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
         expect(vscode.commands.executeCommand.mock.calls[0][2]).toBe(false);
         expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual("showConnectRepoView");
-        expect(vscode.commands.executeCommand.mock.calls[1][2]).toBe(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.showReactivateAccount);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toBe(false);
+        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual("setContext");
+        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.showConnectRepoView);
+        expect(vscode.commands.executeCommand.mock.calls[2][2]).toBe(true);
     });
 });
 

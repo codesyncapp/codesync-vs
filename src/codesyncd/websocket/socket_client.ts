@@ -3,14 +3,13 @@ import {client} from "websocket";
 
 import {IRepoDiffs} from "../../interface";
 import {CodeSyncLogger, logErrorMsg} from "../../logger";
-import {recallDaemon} from "../codesyncd";
 import {SocketEvents} from "./socket_events";
 import {
     CONNECTION_ERROR_MESSAGE,
     SOCKET_CONNECT_ERROR_CODES,
     SOCKET_ERRORS,
     API_ROUTES,
-    RETRY_WEBSOCKET_CONNECTION_AFTER
+    STATUS_BAR_MSGS
 } from "../../constants";
 import { getPlanLimitReached } from "../../utils/pricing_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
@@ -24,7 +23,6 @@ export class SocketClient {
     statusBarItem: vscode.StatusBarItem;
     accessToken: string;
     repoDiffs: IRepoDiffs[];
-    statusBarMsgsHandler: any;
 
     constructor(statusBarItem: vscode.StatusBarItem, accessToken: string, repoDiffs: IRepoDiffs[]) {
         this.statusBarItem = statusBarItem;
@@ -46,23 +44,22 @@ export class SocketClient {
         this.client = null;
         (global as any).client = null;
         (global as any).socketConnection = null;
+        return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
+
 
     connect = (canSendDiffs: boolean) => {
         // Check plan limits
         const { planLimitReached, canRetry } = getPlanLimitReached();
-		if (planLimitReached && !canRetry) return recallDaemon(this.statusBarItem);
+		if (planLimitReached && !canRetry) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 
-        const errorOccurredAt = CodeSyncState.get(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT);
-		const canConnect = !errorOccurredAt || (new Date().getTime() - errorOccurredAt) > RETRY_WEBSOCKET_CONNECTION_AFTER;
-		if (!canConnect) return recallDaemon(this.statusBarItem);
         if (!this.client) {
             this.client = new client();
             (global as any).client = this.client;
             this.registerEvents(canSendDiffs);
         } else {
             const socketConnection = (global as any).socketConnection;
-            if (!socketConnection) return;
+            if (!socketConnection) return this.resetGlobals();
             // Trigger onValidAuth for already connected socket
             const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs);
             webSocketEvents.onValidAuth();
@@ -74,16 +71,18 @@ export class SocketClient {
         const that = this;
 
         this.client.on('connectFailed', function (error: any) {
-            that.resetGlobals();
             const errStr = error.toString();
             if (!SOCKET_CONNECT_ERROR_CODES.filter(err => error.code === err).length) {
                 console.log(`Socket Connect Failed: ${error.code}, ${errStr}`);
             }
+            CodeSyncState.set(CODESYNC_STATES.DAEMON_ERROR, STATUS_BAR_MSGS.SERVER_DOWN);
             errorCount = logErrorMsg(CONNECTION_ERROR_MESSAGE, errorCount);
-            return recallDaemon(that.statusBarItem, true, true);
+            return that.resetGlobals();
         });
 
         this.client.on('connect', function (connection: any) {
+            CodeSyncState.set(CODESYNC_STATES.DAEMON_ERROR, "");
+            CodeSyncState.set(CODESYNC_STATES.SOCKET_CONNECTED_AT, new Date().getTime());
             errorCount = 0;
             that.registerConnectionEvents(connection, canSendDiffs);
         });
@@ -92,6 +91,7 @@ export class SocketClient {
         if (!canSendDiffs) {
             url += '&auth_only=1';
         }
+        console.log(`Socket Connecting... canSendDiffs=${canSendDiffs}`, );
         this.client.connect(url);
     };
 
@@ -110,6 +110,7 @@ export class SocketClient {
         });
 
         connection.on('close', function () {
+            console.log("Socket closed");
             that.resetGlobals();
         });
 

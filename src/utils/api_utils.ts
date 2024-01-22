@@ -15,32 +15,10 @@ export const checkServerDown = async () => {
 };
 
 
-export const getUserForToken = async (accessToken: string) => {
-	let isTokenValid = false;
-	const response = <any> await fetch(
-		API_ROUTES.USERS, {
-		headers: {
-			'Content-Type': 'application/json',
-			'Authorization': `Basic ${accessToken}`
-		},
-	})
-	.then(res => res.json())
-	.then(json => json)
-	.catch(err => {
-		isTokenValid = false;
-	});
-	if (response && !(response.error)) {
-		isTokenValid = true;
-	}
-	return {
-		isTokenValid,
-		response
-	};
-};
-
 export const createUserWithApi = async (accessToken: string) => {
 	let error = "";
 	let email = "";
+	let statusCode = 200;
 	const response = <any> await fetch(API_ROUTES.USERS, {
 			method: 'POST',
 			headers: {
@@ -49,7 +27,10 @@ export const createUserWithApi = async (accessToken: string) => {
 			}
 		}
 	)
-		.then(res => res.json())
+		.then(res => {
+			statusCode = res.status;
+			return res.json();
+		})
 		.then(json => json)
 		.catch(err => error = err);
 
@@ -63,7 +44,8 @@ export const createUserWithApi = async (accessToken: string) => {
 
 	return {
 		email,
-		error
+		error,
+		statusCode: statusCode
 	};
 };
 

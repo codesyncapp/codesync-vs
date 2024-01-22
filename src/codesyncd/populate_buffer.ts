@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import { globSync } from 'glob';
+import { glob } from 'glob';
 import {isBinaryFileSync} from "isbinaryfile";
 import stringSimilarity from "string-similarity";
 
@@ -23,27 +23,50 @@ import {
     shouldIgnorePath
 } from "../utils/common";
 import {
+    FORCE_UPLOAD_FROM_DAEMON,
     GLOB_TIME_TAKEN_THRESHOLD, 
+    BRANCH_SYNC_TIMEOUT, 
     RUN_DELETE_HANDLER_AFTER, 
     RUN_POPULATE_BUFFER_AFTER, 
     RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER, 
-    SEQUENCE_MATCHER_RATIO
+    SEQUENCE_MATCHER_RATIO,
+    S3_UPLOADER_TIMEOUT
  } from "../constants";
 import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { removeFile } from "../utils/file_utils";
+import { s3UploaderUtils } from "../init/s3_uploader";
 
+
+const shouldProceed = () => {
+    /* Process only if 
+        - s3Upload is not in progress
+        - branchSync is not in progress
+        - populateBuffer is not running already
+    */
+    // Return if any branch is being uploaded to s3
+    const s3UploaderRunning = CodeSyncState.canSkipRun(CODESYNC_STATES.UPLOADING_TO_S3, S3_UPLOADER_TIMEOUT);
+    if (s3UploaderRunning) return false;
+    CodeSyncState.set(CODESYNC_STATES.S3_UPLOADER_FILES_BEING_PROCESSED, new Set());
+    // Return if any branch is being synced
+    const isBranchSyncInProcess = CodeSyncState.canSkipRun(CODESYNC_STATES.IS_SYNCING_BRANCH, BRANCH_SYNC_TIMEOUT);
+    if (isBranchSyncInProcess) return false;
+    // Return if populateBuffer is already running
+    const isRunning = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_RUNNING);
+    if (isRunning) return false;    
+    return true; 
+};
 
 export const populateBuffer = async (viaDaemon=true) => {
-    if (!viaDaemon) return;
+    if (!viaDaemon || !shouldProceed()) return;
+    await new s3UploaderUtils().runUploader();
     const readyRepos = await detectBranchChange();
     await populateBufferForMissedEvents(readyRepos);
 };
 
 export const populateBufferForMissedEvents = async (readyRepos: any) => {
-    const isRunning = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_RUNNING);
-    if (isRunning) return;
+    if (!shouldProceed()) return;
     CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_RUNNING, true);
     const currentRepoPath = pathUtils.getRootPath();
     for (const repoPath of Object.keys(readyRepos)) {
@@ -59,6 +82,7 @@ export const populateBufferForMissedEvents = async (readyRepos: any) => {
         
         try {
             const populateBuffer = new PopulateBuffer(repoPath, branch);
+            await populateBuffer.init();
             if (!populateBuffer.modifiedInPast) {
                 await populateBuffer.run();
                 const t1 = new Date().getTime();
@@ -132,14 +156,11 @@ class PopulateBuffer {
         this.repoPath = repoPath;
         this.branch = branch;
         this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
-        CodeSyncLogger.debug(`PopulateBuffer:init repo=${this.repoPath}, branch=${this.branch}, uuid=${this.instanceUUID}`);
         this.lastSyncedAtKey = `${this.repoPath}:lastSyncedAt`;
         this.repoModifiedAt = -1;
         this.settings = generateSettings();
         this.repoBranchPath = path.join(this.repoPath, this.branch);
         this.initUtilsObj = new initUtils(this.repoPath, true);
-        this.itemPaths = this.initUtilsObj.getSyncablePaths();
-        this.modifiedInPast = this.getModifiedInPast();
         this.config = readYML(this.settings.CONFIG_PATH);
         const configRepo = this.config.repos[this.repoPath];
         this.configFiles = configRepo.branches[this.branch];
@@ -152,6 +173,15 @@ class PopulateBuffer {
         this.defaultIgnorePatterns = getDefaultIgnorePatterns();
         this.potentialMatchFiles = [];
         this.gotPotentialMatchFiles = false;
+        this.itemPaths = [];
+        this.modifiedInPast = false;
+    }
+
+    async init() {
+        CodeSyncLogger.debug(`PopulateBuffer:init repo=${this.repoPath}, branch=${this.branch}, uuid=${this.instanceUUID}`);
+        this.itemPaths = await this.initUtilsObj.getSyncablePaths();
+        this.modifiedInPast = this.getModifiedInPast();
+        CodeSyncLogger.debug(`PopulateBuffer:init:files files=${this.itemPaths.length}, repo=${this.repoPath}, branch=${this.branch}`);
     }
 
     getModifiedInPast() {
@@ -165,7 +195,7 @@ class PopulateBuffer {
     }
 
     async run() {
-        CodeSyncLogger.debug(`PopulateBuffer:run repo=${this.repoPath}, branch=${this.branch}, files=${this.itemPaths.length}`);
+        CodeSyncLogger.debug(`PopulateBuffer:run repo=${this.repoPath}, branch=${this.branch}`);
         const handler = new eventHandler(this.repoPath, "", true);
         for (const itemPath of this.itemPaths) {
             let isRename = false;
@@ -197,7 +227,7 @@ class PopulateBuffer {
             // If rel_path is not in configFiles and shadow does not exist, can be a new file OR a rename
             if (!shadowExists) {
                 if (!this.gotPotentialMatchFiles) {
-                    this.potentialMatchFiles = this.getPotentialRenamedFiles();
+                    this.potentialMatchFiles = await this.getPotentialRenamedFiles();
                     this.gotPotentialMatchFiles = true;
                 }
                 const renameResult = this.checkForRename(itemPath.file_path);
@@ -216,11 +246,12 @@ class PopulateBuffer {
                 }
             }
             // If not handled in changesHandler and renameHandler, it must be new file
-            handler.handleNewFile(itemPath.file_path);
+            const forceUpload = Boolean(itemPath.created_at && (new Date().getTime() - itemPath.created_at) > FORCE_UPLOAD_FROM_DAEMON);
+            handler.handleNewFile(itemPath.file_path, forceUpload);
         }
     }
 
-    getPotentialRenamedFiles() {
+    async getPotentialRenamedFiles() {
         /*
         If a file is renamed in actual repo, it will be present in the shadow repo with pervious name.
         So potential renamed files in the shadow repo should possess following properties
@@ -234,7 +265,7 @@ class PopulateBuffer {
         // These are shadow files whose actual files are present in the repo
         const skipShadowRelPaths = this.itemPaths.map(itemPath => itemPath.rel_path);
         const t0 = new Date().getTime();
-        const shadowRelPaths = globSync("**", { 
+        const shadowRelPaths = await glob("**", { 
             cwd: this.shadowRepoBranchPath,
             ignore: globIgnorePatterns, 
             nodir: true, 
@@ -338,10 +369,11 @@ export const detectBranchChange = async () => {
     * See if repo is in config.yml and is active
     * Check if associated user has an access token
     */
+    const readyRepos = <any>{};
+    if (!shouldProceed()) return readyRepos;
     const settings = generateSettings();
     const configJSON = readYML(settings.CONFIG_PATH);
     const users = readYML(settings.USER_PATH) || {};
-    const readyRepos = <any>{};
     for (const repoPath of Object.keys(configJSON.repos)) {
 
         if (configJSON.repos[repoPath].is_disconnected) continue;
@@ -362,6 +394,11 @@ export const detectBranchChange = async () => {
             continue;
         }
 
+		// Check if branch is already being synced, skip it
+		const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${repoPath}:${branch}`;
+		const isSyncInProcess = CodeSyncState.canSkipRun(syncingBranchKey, BRANCH_SYNC_TIMEOUT);
+		if (isSyncInProcess) continue;
+
         const initUtilsObj = new initUtils(repoPath, true);
         let uploaded = false; 
 
@@ -371,8 +408,8 @@ export const detectBranchChange = async () => {
             // If all files IDs are None in config.yml, we need to sync the branch
             const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
             if (shouldSyncBranch) {
-                const itemPaths = initUtilsObj.getSyncablePaths();
-                uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
+                const itemPaths = await initUtilsObj.getSyncablePaths();
+                uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email);
                 if (!uploaded) continue;    
             }
             // By default, add repo to readyRepos
@@ -381,14 +418,14 @@ export const detectBranchChange = async () => {
         }
         // Need to sync the branch
         const originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
-        const originalsRepoExists = fs.existsSync(originalsRepoBranchPath);
+        const originalsRepoBranchPathExists = fs.existsSync(originalsRepoBranchPath);
 
-        if (originalsRepoExists) {
+        if (originalsRepoBranchPathExists) {
             // init has been called, now see if we can upload the repo/branch
-            const itemPaths = initUtilsObj.getSyncablePaths();
-            uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false);
+            const itemPaths = await initUtilsObj.getSyncablePaths();
+            uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email);
         } else {
-            const handler = new initHandler(repoPath, accessToken, true);
+            const handler = new initHandler(repoPath, accessToken, configRepo.email, true);
             uploaded = await handler.connectRepo();
         }
         if (uploaded) {

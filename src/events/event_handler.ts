@@ -11,15 +11,18 @@ import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
 import { VSCODE } from "../constants";
-import { isRepoSynced } from './utils';
+import { isRepoConnected } from './utils';
 import { removeFile } from '../utils/file_utils';
+import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
+import gitCommitInfo from 'git-commit-info';
 
 
 export class eventHandler {
 	repoPath: string;
 	branch: string;
+	commitHash: string|null;
 	viaDaemon: boolean;
-	repoIsNotSynced: boolean;
+	repoIsNotConnected: boolean;
 	pathUtils: any;
 	shadowRepoBranchPath: string;
 	deletedRepoBranchPath: string;
@@ -38,7 +41,7 @@ export class eventHandler {
 		this.createdAt = createdAt || formatDatetime();
 		this.viaDaemon = viaDaemon;
 		this.repoPath = repoPath || pathUtils.getRootPath();
-		this.repoIsNotSynced = !isRepoSynced(this.repoPath, false);
+		this.repoIsNotConnected = !isRepoConnected(this.repoPath, false);
 		this.branch = getBranch(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
 		this.shadowRepoBranchPath = this.pathUtils.getShadowRepoBranchPath();
@@ -46,6 +49,16 @@ export class eventHandler {
 		this.originalsRepoBranchPath = this.pathUtils.getOriginalsRepoBranchPath();
 		this.syncIgnoreItems = getSyncIgnoreItems(this.repoPath);
 		this.defaultIgnorePatterns = getDefaultIgnorePatterns();
+		if (viaDaemon) {
+			const commitInfo = gitCommitInfo({cwd: this.repoPath});
+			this.commitHash = commitInfo.hash || null;
+		} else {
+			this.commitHash = CodeSyncState.get(CODESYNC_STATES.GIT_COMMIT_HASH) || null;
+			if (!this.commitHash) {
+				const commitInfo = gitCommitInfo({cwd: this.repoPath});
+				this.commitHash = commitInfo.hash || null;	
+			}
+		}
 	}
 
 	addDiff = (relPath: string, diffs="") => {
@@ -59,6 +72,7 @@ export class eventHandler {
 		newDiff.source = VSCODE;
 		newDiff.repo_path = this.repoPath;
 		newDiff.branch = this.branch;
+		newDiff.commit_hash = this.commitHash;
 		newDiff.file_relative_path = relPath;
 		newDiff.diff = diffs;
 		newDiff.is_new_file = this.isNewFile;
@@ -93,7 +107,7 @@ export class eventHandler {
 	}
 
 	handleChangeEvent = (changeEvent: vscode.TextDocumentChangeEvent) => {
-		if (this.repoIsNotSynced) return;
+		if (this.repoIsNotConnected) return;
 		// If you only care about changes to the active editor's text,
 		// just check to see if changeEvent.document matches the active editor's document.
 		const editor = vscode.window.activeTextEditor;
@@ -162,8 +176,8 @@ export class eventHandler {
 		});
 	}
 
-	handleNewFile = (_filePath: string) => {
-		if (this.repoIsNotSynced) return;
+	handleNewFile = (_filePath: string, forceUpload=false) => {
+		if (this.repoIsNotConnected) return;
 		const filePath = pathUtils.normalizePath(_filePath);
 		// Do not continue if file does not exist
 		if (!fs.existsSync(filePath)) return;
@@ -179,7 +193,7 @@ export class eventHandler {
 		const shadowPath = path.join(this.shadowRepoBranchPath, relPath);
 		const originalsPath = path.join(this.originalsRepoBranchPath, relPath);
 
-		if (!this.viaDaemon && fs.existsSync(shadowPath) || fs.existsSync(originalsPath)) return;
+		if (!forceUpload && (fs.existsSync(shadowPath) || fs.existsSync(originalsPath))) return;
 		
 		this.log(`FileCreated: ${filePath}`);
 
@@ -218,7 +232,7 @@ export class eventHandler {
 	}
 
 	handleDelete = (filePath: string) => {
-		if (this.repoIsNotSynced) return;
+		if (this.repoIsNotConnected) return;
 		const itemPath = pathUtils.normalizePath(filePath);
 		if (!itemPath.startsWith(this.repoPath)) return;
 
@@ -295,7 +309,7 @@ export class eventHandler {
                             path:"/Users/basit/projects/codesync/codesync/5.py"
                             scheme:"file
         */
-		if (this.repoIsNotSynced) return;
+		if (this.repoIsNotConnected) return;
 		event.files.forEach(_event => {
 			this.handleRename(_event.oldUri.fsPath, _event.newUri.fsPath);
 		});

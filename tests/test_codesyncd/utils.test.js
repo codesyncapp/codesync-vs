@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 import fetchMock from "jest-fetch-mock";
-
+import isOnline from 'is-online';
 import untildify from "untildify";
 
 import {
@@ -16,16 +16,22 @@ import {
     DIFF_DATA,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
-    getSeqTokenFilePath,
     getUserFilePath,
     INVALID_TOKEN_JSON,
+    FILE_UPLOAD_400,
+    FILE_UPLOAD_402,
+    FILE_UPLOAD_403,
+    FILE_UPLOAD_404,
+    INTERNAL_SERVER_ERROR,
     PRE_SIGNED_URL,
     randomBaseRepoPath,
-    randomRepoPath
+    randomRepoPath,
+    waitFor
 } from "../helpers/helpers";
 import {DEFAULT_BRANCH} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
 import {pathUtils} from "../../src/utils/path_utils";
+import {s3UploaderUtils} from "../../src/init/s3_uploader";
 
 
 describe("isValidDiff",  () => {
@@ -93,7 +99,6 @@ describe("handleNewFileUpload",  () => {
     const configData = {repos: {}};
     let configPath;
     let userFilePath;
-    let sequenceTokenFilePath;
 
     let repoPath;
     let filePath;
@@ -104,8 +109,10 @@ describe("handleNewFileUpload",  () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
+        isOnline.mockReturnValue(true);
         baseRepoPath = randomBaseRepoPath("handleNewFileUpload");
         repoPath = randomRepoPath();
+        untildify.mockReturnValue(baseRepoPath);
 
         fs.mkdirSync(repoPath, {recursive: true});
         fs.mkdirSync(baseRepoPath, {recursive: true});
@@ -113,15 +120,12 @@ describe("handleNewFileUpload",  () => {
         createSystemDirectories();
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
-        sequenceTokenFilePath = getSeqTokenFilePath(baseRepoPath);
-        untildify.mockReturnValue(baseRepoPath);
         
         filePath = path.join(repoPath, "file.js");
         pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
 
         fs.writeFileSync(userFilePath, yaml.dump({}));
-        fs.writeFileSync(sequenceTokenFilePath, yaml.dump({}));
         configData.repos[repoPath] = {branches: {}};
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = {};
         fs.writeFileSync(configPath, yaml.dump(configData));
@@ -136,6 +140,7 @@ describe("handleNewFileUpload",  () => {
         const result = await handleNewFileUpload("TOKEN", repoPath, DEFAULT_BRANCH, "",
             fileRelPath, 1234, configData);
         expect(result.uploaded).toBe(false);
+        expect(result.deleteDiff).toBe(true);
         expect(result.config).toStrictEqual(configData);
     });
 
@@ -146,6 +151,62 @@ describe("handleNewFileUpload",  () => {
         const result = await handleNewFileUpload("TOKEN", repoPath, DEFAULT_BRANCH, "",
             fileRelPath, 1234, configData);
         expect(result.uploaded).toBe(false);
+        expect(result.deleteDiff).toBe(false);
+        expect(result.config).toStrictEqual(configData);
+    });
+
+    test("syncignored File Path",  async () => {
+        fs.mkdirSync(originalsRepoBranchPath, {recursive: true});
+        fs.writeFileSync(path.join(originalsRepoBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
+        fetchMock.mockResponseOnce(JSON.stringify(FILE_UPLOAD_400), { status: 400 });
+        const result = await handleNewFileUpload("TOKEN", repoPath, DEFAULT_BRANCH, "",
+            fileRelPath, 1234, configData);
+        expect(result.uploaded).toBe(false);
+        expect(result.deleteDiff).toBe(true);
+        expect(result.config).toStrictEqual(configData);
+    });
+
+    test("Unauthorized Repo",  async () => {
+        fs.mkdirSync(originalsRepoBranchPath, {recursive: true});
+        fs.writeFileSync(path.join(originalsRepoBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
+        fetchMock.mockResponseOnce(JSON.stringify(FILE_UPLOAD_403), { status: 403 });
+        const result = await handleNewFileUpload("TOKEN", repoPath, DEFAULT_BRANCH, "",
+            fileRelPath, 1234, configData);
+        expect(result.uploaded).toBe(false);
+        expect(result.deleteDiff).toBe(true);
+        expect(result.config).toStrictEqual(configData);
+    });
+
+    test("Branch not found",  async () => {
+        fs.mkdirSync(originalsRepoBranchPath, {recursive: true});
+        fs.writeFileSync(path.join(originalsRepoBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
+        fetchMock.mockResponseOnce(JSON.stringify(FILE_UPLOAD_404), { status: 404 });
+        const result = await handleNewFileUpload("TOKEN", repoPath, DEFAULT_BRANCH, "",
+            fileRelPath, 1234, configData);
+        expect(result.uploaded).toBe(false);
+        expect(result.deleteDiff).toBe(true);
+        expect(result.config).toStrictEqual(configData);
+    });
+
+    test("Diffs Limit Reached",  async () => {
+        fs.mkdirSync(originalsRepoBranchPath, {recursive: true});
+        fs.writeFileSync(path.join(originalsRepoBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
+        fetchMock.mockResponseOnce(JSON.stringify(FILE_UPLOAD_402), { status: 402 });
+        const result = await handleNewFileUpload("TOKEN", repoPath, DEFAULT_BRANCH, "",
+            fileRelPath, 1234, configData);
+        expect(result.uploaded).toBe(false);
+        expect(result.deleteDiff).toBe(false);
+        expect(result.config).toStrictEqual(configData);
+    });
+
+    test("Server Error",  async () => {
+        fs.mkdirSync(originalsRepoBranchPath, {recursive: true});
+        fs.writeFileSync(path.join(originalsRepoBranchPath, fileRelPath), DUMMY_FILE_CONTENT);
+        fetchMock.mockResponseOnce(JSON.stringify(INTERNAL_SERVER_ERROR), { status: 500 });
+        const result = await handleNewFileUpload("TOKEN", repoPath, DEFAULT_BRANCH, "",
+            fileRelPath, 1234, configData);
+        expect(result.uploaded).toBe(false);
+        expect(result.deleteDiff).toBe(false);
         expect(result.config).toStrictEqual(configData);
     });
 
@@ -164,11 +225,16 @@ describe("handleNewFileUpload",  () => {
         const result = await handleNewFileUpload("TOKEN", repoPath, DEFAULT_BRANCH, "",
             fileRelPath, 1234, configData);
         expect(result.uploaded).toBe(true);
+        expect(result.deleteDiff).toBe(true);
         expect(fileRelPath in result.config.repos[repoPath].branches[DEFAULT_BRANCH]).toBe(true);
+        // File should not be deleted from .originals
+        expect(fs.existsSync(originalsFilePath)).toBe(true);
+        const uploaderUtils = new s3UploaderUtils();
+        await uploaderUtils.runUploader();
+        await waitFor(2);
         // File should be deleted from .originals
         expect(fs.existsSync(originalsFilePath)).toBe(false);
     });
-
 });
 
 describe("cleanUpDeleteDiff",  () => {

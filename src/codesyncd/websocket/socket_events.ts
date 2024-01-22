@@ -1,10 +1,9 @@
 import vscode from "vscode";
 
-import {STATUS_BAR_MSGS} from "../../constants";
+import {contextVariables, ERROR_SENDING_DIFFS, STATUS_BAR_MSGS} from "../../constants";
 import {CodeSyncLogger, logErrorMsg} from "../../logger";
 import {IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffHandler} from "../handlers/diff_handler";
-import {recallDaemon} from "../codesyncd";
 import {DiffsHandler} from "../handlers/diffs_handler";
 import {getDiffsBeingProcessed, setDiffsBeingProcessed, statusBarMsgs} from "../utils";
 import {markUsersInactive} from "../../utils/auth_utils";
@@ -38,23 +37,25 @@ export class SocketEvents {
     }
 
     onInvalidAuth() {
-        errorCount = logErrorMsg(STATUS_BAR_MSGS.AUTH_FAILED_SENDING_DIFF, errorCount);
+        errorCount = logErrorMsg(ERROR_SENDING_DIFFS.AUTH_FAILED_SENDING_DIFF, errorCount);
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
         // Mark user as inactive in user.yml
         markUsersInactive(false);
-        return recallDaemon(this.statusBarItem);
+        CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+        this.connection.close();
+    }
+
+    onDeactivatedAccount() {
+        errorCount = logErrorMsg(ERROR_SENDING_DIFFS.DEACTIVATED_ACCOUNT_FOUND, errorCount);
+        this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED);
+        CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, true);
+        CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+        vscode.commands.executeCommand('setContext', contextVariables.showReactivateAccount, true);
+        this.connection.close();
     }
 
     async onRepoSizeLimitReached() {
-        CodeSyncLogger.error("Failed sending diff, Repo-Size Limit has been reached");
-        await setPlanLimitReached(this.accessToken);
-        const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
-        const msg = canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
-        this.statusBarMsgsHandler.update(msg);
-    }
-
-    async onDiffsLimitReached() {
-        CodeSyncLogger.error("Failed sending diff, Limit has been reached");
+        CodeSyncLogger.error(ERROR_SENDING_DIFFS.REPO_SIZE_LIMIT_REACHED);
         await setPlanLimitReached(this.accessToken);
         const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
         const msg = canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
@@ -63,9 +64,10 @@ export class SocketEvents {
 
     async onValidAuth() {
         this.connection.send(JSON.stringify({"auth": 200}));
-        const statusBarMsg =  this.statusBarMsgsHandler.getMsg();
+        CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
+        const statusBarMsg = this.statusBarMsgsHandler.getMsg();
         this.statusBarMsgsHandler.update(statusBarMsg);
-        if (!this.canSendDiffs) return recallDaemon(this.statusBarItem);
+        if (!this.canSendDiffs) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
         // Send diffs
         let validDiffs: IDiffToSend[] = [];
         errorCount = 0;
@@ -88,8 +90,7 @@ export class SocketEvents {
             }
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
         }
-        // Recall daemon
-        return recallDaemon(this.statusBarItem);
+        CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
     onSyncSuccess(diffFilePath: string) {
@@ -114,6 +115,9 @@ export class SocketEvents {
                     case 200:
                         await this.onValidAuth();
                         return true;
+                    case ErrorCodes.USER_ACCOUNT_DEACTIVATED:
+                        this.onDeactivatedAccount();
+                        return true;    
                     default:
                         this.onInvalidAuth();
                         return true;
@@ -123,9 +127,6 @@ export class SocketEvents {
                     case 200:
                         this.onSyncSuccess(resp.diff_file_path);
                         return true;
-                    case ErrorCodes.DIFFS_LIMIT_REACHED:
-                        await this.onDiffsLimitReached();
-                        return true;    
                     case ErrorCodes.REPO_SIZE_LIMIT_REACHED:
                         await this.onRepoSizeLimitReached(); 
                         return true;    

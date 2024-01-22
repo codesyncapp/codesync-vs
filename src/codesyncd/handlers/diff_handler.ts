@@ -3,7 +3,7 @@ import os from "os";
 import path from "path";
 
 import {IDiff, IDiffToSend} from "../../interface";
-import {cleanUpDeleteDiff, getDIffForDeletedFile, handleNewFileUpload} from "../utils";
+import {cleanUpDeleteDiff, getDIffForDeletedFile, getDiffsBeingProcessed, handleNewFileUpload, setDiffsBeingProcessed} from "../utils";
 import {generateSettings} from "../../settings";
 import {readYML} from "../../utils/common";
 import {CodeSyncLogger} from "../../logger";
@@ -20,6 +20,7 @@ export class DiffHandler {
 
     repoPath: string;
     branch: string;
+    commitHash: string|null;
     createdAt: string;
     addedAt: string;
 
@@ -31,6 +32,7 @@ export class DiffHandler {
         this.diffData = diffData;
         this.repoPath = diffData.repo_path;
         this.branch = diffData.branch;
+        this.commitHash = diffData.commit_hash;
         this.createdAt = diffData.created_at;
         this.addedAt = diffData.added_at;
         this.diffFilePath = diffFilePath;
@@ -48,11 +50,19 @@ export class DiffHandler {
         */
         const json = await handleNewFileUpload(
             this.accessToken, this.repoPath, this.branch, this.addedAt,
-            this.fileRelPath, this.configRepo.id, this.configJSON, deleteDiff
+            this.fileRelPath, this.configRepo.id, this.configJSON, this.commitHash, 
+            deleteDiff
         );
 
         // Clean up diff file
-        if (json.deleteDiff) this.cleanDiffFile();
+        if (json.deleteDiff) {
+            this.cleanDiffFile();
+            // Remove diff from diffsBeingProcessed
+            const diffsBeingProcessed = getDiffsBeingProcessed();
+            if (!diffsBeingProcessed.size) return;
+            diffsBeingProcessed.delete(this.diffFilePath);
+            setDiffsBeingProcessed(diffsBeingProcessed);
+        }
         
         if (!json.uploaded) return this.configJSON;
         
@@ -92,6 +102,7 @@ export class DiffHandler {
     createDiffToSend(fileId: number) {
         return {
             'file_id': fileId,
+            'commit_hash': this.diffData.commit_hash,
             'path': this.fileRelPath,
             'diff': this.diffData.diff,
             'is_deleted': this.diffData.is_deleted,

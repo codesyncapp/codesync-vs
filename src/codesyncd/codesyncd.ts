@@ -10,17 +10,24 @@ import { Alerts } from "./alert_utils";
 import { CodeSyncLogger } from "../logger";
 
 
-
-export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true, isServerDown=false) => {
+export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true) => {
     /*
     There are two types of locks we are using.
     1- POPULATE_BUFFER_LOCK (Overall across all IDEs)
     2- DIFFS_SEND_LOCK (Per IDE type)
 
-    Whenever a lock is acquired, we set following states in global
+    We are using Locks for sending diffs and populating buffer
+    - checkLock() returns true if lock is acquired by any process. It does not specifies the instance/process
+    - acqurieLock() acquires the lock first time but then returns false
+    
+    So, to keep track which instance of the IDE acquired the locks, whenever a lock is acquired, we set following 
+    states in global State:
+    
     1- POPULATE_BUFFER_LOCK_ACQUIRED
     2- DIFFS_SEND_LOCK_ACQUIRED
     respectively
+
+    By checking the state variable, we decide to run both components of Daemon i.e. populateBuffer and bufferHandler.
 
     Case 1:
         If both locks have been acquired by this instance, Daemon runs both populateBuffer and bufferHandler
@@ -39,11 +46,7 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
     */
     const statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
     let statusBarMsg = "";
-    if (isServerDown) {
-        statusBarMsg = STATUS_BAR_MSGS.SERVER_DOWN;
-    } else {
-        statusBarMsg = viaDaemon ? statusBarMsgsHandler.getMsg() : STATUS_BAR_MSGS.GETTING_READY;
-    }
+    statusBarMsg = viaDaemon ? statusBarMsgsHandler.getMsg() : STATUS_BAR_MSGS.GETTING_READY;
     statusBarMsgsHandler.update(statusBarMsg);
 
     // Do not proceed if no active user is found OR no config is found
@@ -65,9 +68,10 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
         CodeSyncLogger.error("Activity alert failed", e.stack);    
     }
 
-    // Check permissions to run populateBuffer and bufferHandler
+    // Checking permissions here to run populateBuffer and bufferHandler
     const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
     const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+
     // Check Locks availability
     const lockUtils = new LockUtils();
     const isPopulateBufferLockAcquired = lockUtils.checkPopulateBufferLock();
@@ -92,13 +96,18 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
 
     // Do not re-run daemon in case of tests
     if ((global as any).IS_CODESYNC_TEST_MODE) return;
-    return setTimeout(() => {
-        // Populate Buffer
+
+    // Recall daemon after 5s
+    setTimeout(() => {
+        // Get updated states
         const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
-        if (canPopulateBuffer) populateBuffer(viaDaemon);
-        // Buffer Handler
         const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
+        // Populate Buffer
+        if (canPopulateBuffer) populateBuffer();
+        // Buffer Handler
         const handler = new bufferHandler(statusBarItem);
         handler.run(canSendDiffs);
+        // recall Daemon
+        recallDaemon(statusBarItem);
     }, RESTART_DAEMON_AFTER);
 };

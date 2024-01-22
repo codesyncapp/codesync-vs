@@ -8,7 +8,6 @@ import {getPublicPrivateMsg, NOTIFICATION} from "../../src/constants";
 import {
     addUser,
     getConfigFilePath,
-    getUserFilePath,
     randomBaseRepoPath,
     randomRepoPath,
     TEST_EMAIL
@@ -50,16 +49,14 @@ describe("showChooseAccount",  () => {
 
     test("with valid user",  async () => {
         addUser(baseRepoPath);
-        const user = {
-            "email": TEST_EMAIL,
-            "plan": {
-                REPO_COUNT: 5
-            },
-            "repo_count": 4
+        const userResponse = {
+            user: {
+                "email": TEST_EMAIL                
+            }
         };
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
-            .mockResponseOnce(JSON.stringify(user));
+            .mockResponseOnce(JSON.stringify(userResponse));
         const handler = await showChooseAccount(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
