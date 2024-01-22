@@ -10,7 +10,7 @@ import { generateSettings } from "../settings";
 import { CodeSyncLogger } from '../logger';
 
 
-export const isRepoSynced = (repoPath: string, checkFileIds=true) => {
+export const isRepoConnected = (repoPath: string, checkFileIds=true) => {
 	if (!repoPath) return false;
 	const settings = generateSettings();
 	const configPath = settings.CONFIG_PATH;
@@ -28,7 +28,7 @@ export const isRepoSynced = (repoPath: string, checkFileIds=true) => {
 		if (checkFileIds) {
 			const branch = getBranch(repoPath);
 			const configRepo = config.repos[repoPath];
-			// If branch is not synced, daemon will take care of that
+			// If branch is not uploaded, daemon will take care of that
 			if (!(branch in configRepo.branches)) return true;
 			const configFiles = configRepo.branches[branch];
 			const invalidFiles = Object.keys(configFiles).filter(relPath => configFiles[relPath] === null);
@@ -39,7 +39,7 @@ export const isRepoSynced = (repoPath: string, checkFileIds=true) => {
 	} catch (e) {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		CodeSyncLogger.critical("Failed to check isRepoSynced", e.stack);
+		CodeSyncLogger.critical("Failed to check isRepoConnected", e.stack);
 		return false;
 	}
 };

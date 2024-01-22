@@ -18,6 +18,7 @@ import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { s3UploaderUtils } from './s3_uploader';
 import { trackRepoHandler } from '../handlers/commands_handler';
+import gitCommitInfo from 'git-commit-info';
 
 export class initUtils {
 	repoPath: string;
@@ -202,10 +203,13 @@ export class initUtils {
 		const instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 		CodeSyncLogger.info(`Uploading branch=${branch}, repo=${this.repoPath}, uuid=${instanceUUID}`);
 
+		const commit_hash = gitCommitInfo({cwd: this.repoPath}).hash || null;
+
 		const data = {
 			name: repoName,
 			is_public: isPublic,
 			branch,
+			commit_hash,
 			files_data: JSON.stringify(filesData),
 			source: VSCODE,
 			platform: os.platform()
