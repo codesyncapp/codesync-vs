@@ -280,7 +280,7 @@
   "devDependencies": {
     "@babel/core": "^7.20.7",
     "@babel/preset-env": "^7.15.0",
-    "@babel/preset-typescript": "^7.22.5",
+    "@babel/preset-typescript": "^7.23.3",
     "@types/current-git-branch": "^1.1.1",
     "@types/dateformat": "3.0.1",
     "@types/diff-match-patch": "^1.0.32",
