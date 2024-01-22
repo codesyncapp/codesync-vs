@@ -159,7 +159,7 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 
 
 export const uploadFileToServer = async (accessToken: string, repoId: number, branch: string, filePath: string,
-										relPath: string, addedAt: string, repoPath: string) => {
+										relPath: string, addedAt: string, repoPath: string, commitHash: string|null) => {
 	/*
 	Uploads new file to server returns its ID
 	*/
@@ -169,6 +169,7 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 	const data = {
 		repo_id: repoId,
 		branch: branch,
+		commit_hash: commitHash,
 		is_binary: isBinary,
 		size: fileInfo.size,
 		file_path: relPath,

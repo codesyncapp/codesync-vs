@@ -6,7 +6,7 @@ import yaml from 'js-yaml';
 import detectPort from "detect-port";
 
 import {ErrorCodes, readYML} from './common';
-import {isRepoSynced} from "../events/utils";
+import {isRepoConnected} from "../events/utils";
 import {showConnectRepo} from "./notifications";
 import {createUserWithApi} from "./api_utils";
 import {generateSettings} from "../settings";
@@ -59,9 +59,9 @@ export const postSuccessLogin = (userEmail: string, accessToken: string) => {
     CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
     const repoPath = pathUtils.getRootPath() || "";
     if (!repoPath) return;
-    const repoInSync = isRepoSynced(repoPath);
-    vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, !repoInSync);
-	if (!repoInSync) {
+    const repoIsConnected = isRepoConnected(repoPath, false);
+    vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, !repoIsConnected);
+	if (!repoIsConnected) {
         // Show notification to user to Sync the repo
         return showConnectRepo(repoPath, userEmail, accessToken);
     }

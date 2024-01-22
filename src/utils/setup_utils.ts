@@ -12,7 +12,7 @@ import {
 	SYNCIGNORE,
 	UPDATE_SYNCIGNORE_AFTER
 } from "../constants";
-import { isRepoSynced } from '../events/utils';
+import { isRepoConnected } from '../events/utils';
 import { isAccountActive, isPortAvailable, logout } from './auth_utils';
 import { showConnectRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
 import { checkSubDir, getActiveUsers, readYML } from './common';
@@ -21,7 +21,7 @@ import {
 	openSyncIgnoreHandler, 
 	reactivateAccountHandler, 
 	SignUpHandler, 
-	SyncHandler, 
+	connectRepoHandler, 
 	trackFileHandler, 
 	trackRepoHandler, 
 	upgradePlanHandler, 
@@ -230,7 +230,7 @@ export const showRepoStatusMsg = (repoPath: string, port?: number) => {
 
 export const showConnectRepoView = (repoPath: string) => {
 	if (!repoPath) return false;
-	return !isRepoSynced(repoPath);
+	return !isRepoConnected(repoPath, false);
 };
 
 export const showRepoIsSyncIgnoredView = (repoPath: string) => {
@@ -300,7 +300,7 @@ export const setInitialContext = () => {
 export const registerCommands = (context: vscode.ExtensionContext) => {
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, SignUpHandler));	
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerLogout, logout));
-	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSync, SyncHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSync, connectRepoHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerDisconnectRepo, disconnectRepoHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackRepo, trackRepoHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.trackFile, trackFileHandler));

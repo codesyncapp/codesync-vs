@@ -51,7 +51,7 @@ export const isValidDiff = (diffData: IDiff) => {
 };
 
 export const handleNewFileUpload = async (accessToken: string, repoPath: string, branch: string, addedAt: string,
-	relPath: string, repoId: number, configJSON: any, deleteDiff = true) => {
+	relPath: string, repoId: number, configJSON: any, commitHash: string|null, deleteDiff = true) => {
 	/*
 		Uploads new file to server and adds it in config
 		Ignores if file is not present in .originals repo
@@ -74,7 +74,10 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		config: configJSON
 	};
 
-	const response = await uploadFileToServer(accessToken, repoId, branch, originalsFilePath, relPath, addedAt, repoPath);
+	const response = await uploadFileToServer(
+			accessToken, repoId, branch, originalsFilePath,
+			relPath, addedAt, repoPath, commitHash
+		);
 	if (response.error) {
 		CodeSyncLogger.error(`Error uploading file=${relPath}, repoPath=${repoPath}, branch=${branch} error=${response.error}`);
 		const isClientError = [HTTP_STATUS_CODES.INVALID_USAGE, HTTP_STATUS_CODES.FORBIDDEN, HTTP_STATUS_CODES.NOT_FOUND].includes(response.statusCode);
