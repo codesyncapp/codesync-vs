@@ -9,7 +9,7 @@ import getBranchName from "current-git-branch";
 import {
     postSelectionDisconnectRepo,
     SignUpHandler,
-    SyncHandler,
+    connectRepoHandler,
     trackFileHandler,
     trackRepoHandler,
     disconnectRepoHandler
@@ -41,7 +41,7 @@ describe("SignUpHandler",  () => {
     });
 });
 
-describe("SyncHandler",  () => {
+describe("connectRepoHandler",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
@@ -67,7 +67,7 @@ describe("SyncHandler",  () => {
     });
 
     test("No Repo Path",  async () => {
-        await SyncHandler();
+        await connectRepoHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
@@ -76,7 +76,7 @@ describe("SyncHandler",  () => {
         fetchMock
             .mockResponseOnce(JSON.stringify({ status: true }))
             .mockResponseOnce(JSON.stringify(userResponse));
-        await SyncHandler();
+        await connectRepoHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
         // TODO: In case we activate choose account option
         // expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -88,7 +88,7 @@ describe("SyncHandler",  () => {
     test("repo In Config", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-        await SyncHandler();
+        await connectRepoHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const repoInSyncMsg = getRepoInSyncMsg(repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(repoInSyncMsg);

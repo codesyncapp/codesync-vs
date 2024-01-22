@@ -15,7 +15,7 @@ import { askPublicPrivate } from '../utils/notifications';
 import { askAndTriggerSignUp, isAccountActive } from '../utils/auth_utils';
 import { checkServerDown } from "../utils/api_utils";
 import { getBranch, readFile } from "../utils/common";
-import { isRepoSynced } from '../events/utils';
+import { isRepoConnected } from '../events/utils';
 import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
 
 
@@ -52,7 +52,7 @@ export class initHandler {
 			if (!success) return false;	
 		}
 
-		const repoSynced = isRepoSynced(this.repoPath);
+		const repoSynced = isRepoConnected(this.repoPath);
 
 		if (repoSynced && !this.viaDaemon) {
 			vscode.window.showWarningMessage(`Repo is already in sync with branch: ${this.branch}`);
