@@ -75,7 +75,6 @@ export const createSystemDirectories = () => {
 	});
 	// Reset file if it contains invalid data
 	[
-		settings.CONFIG_PATH,
 		settings.USER_PATH,
 		settings.ALERTS
 	].forEach(filePath => {
@@ -85,7 +84,10 @@ export const createSystemDirectories = () => {
 	});
 	// Clean content of config.yml
 	const config = readYML(settings.CONFIG_PATH);
-	if (!config.repos) fs.writeFileSync(settings.CONFIG_PATH, defaultData[settings.CONFIG_PATH]);
+	if (!config || !config.repos) {
+		CodeSyncLogger.critical("Removing contents of the config file");
+		fs.writeFileSync(settings.CONFIG_PATH, defaultData[settings.CONFIG_PATH]);
+	}
 	
 	// TODO: Remove deprecated files, Not doing until Intellij handles this as well
 	// settings.deprecatedFiles.forEach(filePath => {
