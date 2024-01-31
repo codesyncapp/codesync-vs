@@ -38,6 +38,7 @@ export class Alerts {
 	activeUser: IUser;
 	alertConfig: any;
 	statusBarMsgsHandler: any;
+	isDeactivatedAccount = false;
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		const now = new Date();
@@ -52,10 +53,11 @@ export class Alerts {
 		this.activeUser = getActiveUsers()[0];
 		this.alertConfig = {};
 		this.statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
+		this.isDeactivatedAccount = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);
 	}
 
 	checkActivityAlerts = async () => {
-		if (!this.activeUser) return;
+		if (!this.activeUser || this.isDeactivatedAccount) return;
 		const accessToken = this.activeUser.access_token;
 		const userEmail = this.activeUser.email;
 		await this.checkTeamAlert(accessToken, userEmail);

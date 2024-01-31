@@ -23,7 +23,7 @@ export const readFile = (filePath: string) => {
 
 export const readYML = (filePath: string) => {
 	try {
-		return yaml.load(readFile(filePath));
+		return <any>yaml.load(readFile(filePath));
 	} catch (e) {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
