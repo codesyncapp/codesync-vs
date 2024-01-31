@@ -21,12 +21,14 @@ import {
     showRepoIsSyncIgnoredView,
     createOrUpdateSyncignore
 } from "../../src/utils/setup_utils";
+import { readYML } from "../../src/utils/common";
 import { generateSettings } from "../../src/settings";
 import {getRepoInSyncMsg, getDirectorySyncIgnoredMsg, getDirectoryIsSyncedMsg, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 
 
 describe("createSystemDirectories",  () => {
     const baseRepoPath = randomBaseRepoPath();
+    const configPath = path.join(baseRepoPath, "config.yml");
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -38,7 +40,7 @@ describe("createSystemDirectories",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test('createSystemDirectories',  () => {
+    test('createSystemDirectories', () => {
         createSystemDirectories();
         const lsResult = fs.readdirSync(baseRepoPath);
         expect(lsResult.includes(".diffs")).toBe(true);
@@ -47,6 +49,26 @@ describe("createSystemDirectories",  () => {
         expect(lsResult.includes(".deleted")).toBe(true);
         expect(lsResult.includes(".locks")).toBe(true);
         expect(lsResult.includes("config.yml")).toBe(true);
+        const config = readYML(configPath);
+        expect("repos" in config).toBe(true);
+    });
+
+    test('createSystemDirectories with invalid config file', () => {
+        const dummyText = "dummy text";
+        fs.writeFileSync(configPath, dummyText);
+        let config = readYML(configPath);
+        expect(config).toStrictEqual(dummyText);
+        expect(config.repos).toStrictEqual(undefined);
+        createSystemDirectories();
+        const lsResult = fs.readdirSync(baseRepoPath);
+        expect(lsResult.includes(".diffs")).toBe(true);
+        expect(lsResult.includes(".originals")).toBe(true);
+        expect(lsResult.includes(".shadow")).toBe(true);
+        expect(lsResult.includes(".deleted")).toBe(true);
+        expect(lsResult.includes(".locks")).toBe(true);
+        expect(lsResult.includes("config.yml")).toBe(true);
+        config = readYML(configPath);
+        expect(config.repos).toStrictEqual({});
     });
 });
 

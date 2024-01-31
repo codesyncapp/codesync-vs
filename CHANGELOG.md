@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Packages Upgraded
 - Stop generating diffs for the deactivated accounts
 - Team Activity skip deactivated users
+- Added a log in VSCode when we reset the config file
 
 ## [3.38.0] - 2024-01-12
 - Sending commit_hash for new files 
