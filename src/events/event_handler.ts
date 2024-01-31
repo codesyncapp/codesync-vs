@@ -36,11 +36,13 @@ export class eventHandler {
 	isDelete = false;
 	createdAt = '';
 	settings = generateSettings();
+	isDeactivatedAccount = false;
 
 	constructor(repoPath="", createdAt="", viaDaemon=false) {
 		this.createdAt = createdAt || formatDatetime();
 		this.viaDaemon = viaDaemon;
 		this.repoPath = repoPath || pathUtils.getRootPath();
+		this.isDeactivatedAccount = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);
 		this.repoIsNotConnected = !isRepoConnected(this.repoPath, false);
 		this.branch = getBranch(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
@@ -107,7 +109,7 @@ export class eventHandler {
 	}
 
 	handleChangeEvent = (changeEvent: vscode.TextDocumentChangeEvent) => {
-		if (this.repoIsNotConnected) return;
+		if (this.isDeactivatedAccount || this.repoIsNotConnected) return;
 		// If you only care about changes to the active editor's text,
 		// just check to see if changeEvent.document matches the active editor's document.
 		const editor = vscode.window.activeTextEditor;
@@ -177,7 +179,7 @@ export class eventHandler {
 	}
 
 	handleNewFile = (_filePath: string, forceUpload=false) => {
-		if (this.repoIsNotConnected) return;
+		if (this.isDeactivatedAccount || this.repoIsNotConnected) return;
 		const filePath = pathUtils.normalizePath(_filePath);
 		// Do not continue if file does not exist
 		if (!fs.existsSync(filePath)) return;
@@ -232,7 +234,7 @@ export class eventHandler {
 	}
 
 	handleDelete = (filePath: string) => {
-		if (this.repoIsNotConnected) return;
+		if (this.isDeactivatedAccount || this.repoIsNotConnected) return;
 		const itemPath = pathUtils.normalizePath(filePath);
 		if (!itemPath.startsWith(this.repoPath)) return;
 
@@ -309,7 +311,7 @@ export class eventHandler {
                             path:"/Users/basit/projects/codesync/codesync/5.py"
                             scheme:"file
         */
-		if (this.repoIsNotConnected) return;
+		if (this.isDeactivatedAccount || this.repoIsNotConnected) return;
 		event.files.forEach(_event => {
 			this.handleRename(_event.oldUri.fsPath, _event.newUri.fsPath);
 		});
