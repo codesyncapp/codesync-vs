@@ -34,8 +34,7 @@ export const isValidDiff = (diffData: IDiff) => {
 	if (diff && diff.length > DIFF_SIZE_LIMIT) return false;
 	if (isRename || isDirRename) {
 		if (!diff) return false;
-		let diffJSON = {};
-		diffJSON = yaml.load(diff);
+		const diffJSON = <any> yaml.load(diff);
 		if (typeof diffJSON !== "object") return false;
 		if (isRename && isDirRename) return false;
 		if (isRename) {
