@@ -12,11 +12,11 @@ import { initUtils } from './utils';
 import { IUser } from '../interface';
 import { pathUtils } from "../utils/path_utils";
 import { askPublicPrivate } from '../utils/notifications';
-import { askAndTriggerSignUp, isAccountActive } from '../utils/auth_utils';
+import { isAccountActive } from '../utils/auth_utils';
 import { checkServerDown } from "../utils/api_utils";
 import { getBranch, readFile } from "../utils/common";
-import { isRepoConnected } from '../events/utils';
 import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
+import { RepoUtils } from '../utils/repo_utils';
 
 
 export class initHandler {
@@ -51,10 +51,8 @@ export class initHandler {
 			const success = await isAccountActive(this.userEmail, this.accessToken);
 			if (!success) return false;	
 		}
-
-		const repoSynced = isRepoConnected(this.repoPath);
-
-		if (repoSynced && !this.viaDaemon) {
+		const isRepoConnected = new RepoUtils(this.repoPath).isRepoConnected();
+		if (isRepoConnected && !this.viaDaemon) {
 			vscode.window.showWarningMessage(`Repo is already in sync with branch: ${this.branch}`);
 			return false;
 		}

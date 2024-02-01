@@ -13,12 +13,13 @@ import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload } from '../interface';
 import { uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT, contextVariables } from '../constants';
-import { getGlobIgnorePatterns, isRepoActive, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
+import { getGlobIgnorePatterns, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { s3UploaderUtils } from './s3_uploader';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import gitCommitInfo from 'git-commit-info';
+import { RepoUtils } from '../utils/repo_utils';
 
 export class initUtils {
 	repoPath: string;
@@ -160,8 +161,9 @@ export class initUtils {
 		if (planLimitReached && !canRetry) return false;
 					
 		const repoName = path.basename(this.repoPath);
-		const configJSON = readYML(this.settings.CONFIG_PATH);
-		const repoInConfig = isRepoActive(configJSON, this.repoPath);
+		const repoUtils = new RepoUtils(this.repoPath);
+		const isRepoConnected = repoUtils.isRepoConnected();
+		const configJSON = repoUtils.config;
 		const branchFiles = <any>{};
 		const filesData = <any>{};
 
@@ -174,7 +176,7 @@ export class initUtils {
 			};
 		});
 		
-		if (!repoInConfig) {
+		if (!isRepoConnected) {
 			configJSON.repos[this.repoPath] = {
 				branches: {},
 				email: userEmail

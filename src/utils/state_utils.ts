@@ -26,7 +26,8 @@ export const CODESYNC_STATES = {
     SOCKET_CONNECTED_AT: "socketConnectedAt",
     INTERNET_DOWN_AT: "internetDownAt",
     GIT_COMMIT_HASH: "gitCommitHash",
-    ACCOUNT_DEACTIVATED: "accountDeactivated"
+    ACCOUNT_DEACTIVATED: "accountDeactivated",
+    REPO_STATE: "repoState"
 };
 
 export class CodeSyncState {

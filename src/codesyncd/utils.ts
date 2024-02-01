@@ -19,10 +19,11 @@ import { uploadFileToServer } from '../utils/upload_utils';
 import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
-import { checkSubDir, getActiveUsers, isRepoActive, readFile, readYML } from '../utils/common';
+import { checkSubDir, getActiveUsers, readFile, readYML } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { removeFile } from '../utils/file_utils';
+import { RepoUtils } from '../utils/repo_utils';
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -221,7 +222,8 @@ export class statusBarMsgs {
 			return defaultMsg;
 		}
 		// Repo is not synced
-		if (!isRepoActive(this.configJSON, repoPath)) return STATUS_BAR_MSGS.CONNECT_REPO;
+		const isRepoConnected = new RepoUtils(repoPath).isRepoConnected();
+		if (!isRepoConnected) return STATUS_BAR_MSGS.CONNECT_REPO;
 		return defaultMsg;
 	}
 }

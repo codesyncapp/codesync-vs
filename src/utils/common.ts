@@ -32,11 +32,6 @@ export const readYML = (filePath: string) => {
 	}
 };
 
-export const isRepoActive = (config: any, repoPath: string) => {
-	return repoPath in config.repos && !config.repos[repoPath].is_disconnected &&
-		!isEmpty(config.repos[repoPath].branches) && Boolean(config.repos[repoPath].email);
-};
-
 export const checkSubDir = (currentRepoPath: string) => {
 	const settings = generateSettings();
 	const configPath = settings.CONFIG_PATH;

@@ -18,10 +18,10 @@ import {
     setupCodeSync,
     showConnectRepoView, 
     showLogIn,
-    showRepoIsSyncIgnoredView,
     createOrUpdateSyncignore
 } from "../../src/utils/setup_utils";
 import { readYML } from "../../src/utils/common";
+import { RepoUtils, RepoState } from "../../src/utils/repo_utils";
 import { generateSettings } from "../../src/settings";
 import {getRepoInSyncMsg, getDirectorySyncIgnoredMsg, getDirectoryIsSyncedMsg, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 
@@ -169,7 +169,7 @@ describe("setupCodeSync",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test('with user and repo not synced', async () => {
+    test('with user and repo not connected', async () => {
         fs.writeFileSync(userFilePath, yaml.dump(userData));
         const port = await setupCodeSync(repoPath);
         // should return port number
@@ -180,14 +180,17 @@ describe("setupCodeSync",  () => {
         fs.rmSync(userFilePath);
     });
 
-    test('with synced repo',  async () => {
+    test('with connected repo',  async () => {
         fs.writeFileSync(userFilePath, yaml.dump(userData));
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
         const port = await setupCodeSync(repoPath);
         // should return port number
-        expect(port).toBeFalsy();
+        expect(port).toBeTruthy();
+        const repoUtils = new RepoUtils(repoPath);
+        expect(repoUtils.isRepoConnected()).toBe(true);
+        expect(repoUtils.getState()).toStrictEqual(RepoState.CONNECTED);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const msg = getRepoInSyncMsg(repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
@@ -201,12 +204,6 @@ describe("setupCodeSync",  () => {
         expect(shouldShowConnectRepoView).toBe(true);
     });
 
-    test('showRepoIsSyncIgnoredView',  async () => {
-        fs.writeFileSync(configPath, yaml.dump({repos: {}}));
-        const shouldShow = showRepoIsSyncIgnoredView(repoPath);
-        expect(shouldShow).toBe(false);
-    });
-
     test('with sub directory',  async () => {
         fs.writeFileSync(userFilePath, yaml.dump(userData));
         const configUtil = new Config(repoPath, configPath);
@@ -215,7 +212,10 @@ describe("setupCodeSync",  () => {
         const subDir = path.join(repoPath, "directory");
         const port = await setupCodeSync(subDir);
         // should return port number
-        expect(port).toBeFalsy();
+        expect(port).toBeTruthy();
+        const repoUtils = new RepoUtils(repoPath);
+        expect(repoUtils.isRepoConnected()).toBe(true);
+        expect(repoUtils.getState()).toStrictEqual(RepoState.CONNECTED);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const msg = getDirectoryIsSyncedMsg(subDir, repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
