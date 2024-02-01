@@ -12,7 +12,6 @@ import {
 	SYNCIGNORE,
 	UPDATE_SYNCIGNORE_AFTER
 } from "../constants";
-import { isRepoConnected } from '../events/utils';
 import { isAccountActive, isPortAvailable, logout } from './auth_utils';
 import { showConnectRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
 import { checkSubDir, getActiveUsers, readYML } from './common';
@@ -35,6 +34,7 @@ import { pathUtils } from './path_utils';
 import { CodeSyncLogger } from '../logger';
 import { GitExtension } from '../git';
 import { CODESYNC_STATES, CodeSyncState } from './state_utils';
+import { RepoUtils } from './repo_utils';
 
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
@@ -169,48 +169,37 @@ export const setupCodeSync = async (repoPath: string) => {
 		showSignUpButtons();
 		return port;
 	}
-
 	// Check if there is valid user present
 	const activeUser = getActiveUsers()[0];
 	if (!activeUser) {
 		showSignUpButtons();
 		return port;
 	}
+	// Show Repo Status
+	showRepoStatusMsg(repoPath);
 	// Check is accessToken is valid 
 	const success = await isAccountActive(activeUser.email, activeUser.access_token);
 	if (success) {
-		CodeSyncLogger.debug(`User's access toekn is active, user=${activeUser.email}`);
+		CodeSyncLogger.debug(`User's access toekn is active, user=${activeUser.email}`);		
 	}
-	// Check if repo is connected
-	return showRepoStatusMsg(repoPath, port);
+	return port;
 };
 
-export const showLogIn = () => {
-	const settings = generateSettings();
-	if (!fs.existsSync(settings.USER_PATH)) {
-		return true;
-	}
-	// Check if access token is present against users
-	const validUsers = getActiveUsers();
-	return validUsers.length === 0;
-};
-
-export const showRepoStatusMsg = (repoPath: string, port?: number) => {
+export const showRepoStatusMsg = (repoPath: string) => {
 	if (!repoPath) return;
+	registerSyncIgnoreSaveEvent(repoPath);
 
 	const subDirResult = checkSubDir(repoPath);
-
-	registerSyncIgnoreSaveEvent(repoPath);
 	
-	if (showRepoIsSyncIgnoredView(repoPath)) {
+	if (subDirResult.isSubDir && subDirResult.isSyncIgnored) {
 		showSyncIgnoredRepo(repoPath, subDirResult.parentRepo);
-		return port;
+		return;
 	}
 
 	if (showConnectRepoView(repoPath)) {
 		// Show notification to user to Sync the repo
 		showConnectRepo(repoPath);
-		return port;
+		return;
 	}
 
 	let msg = getRepoInSyncMsg(repoPath);
@@ -232,13 +221,8 @@ export const showRepoStatusMsg = (repoPath: string, port?: number) => {
 
 export const showConnectRepoView = (repoPath: string) => {
 	if (!repoPath) return false;
-	return !isRepoConnected(repoPath, false);
-};
-
-export const showRepoIsSyncIgnoredView = (repoPath: string) => {
-	if (!repoPath) return false;
-	const result = checkSubDir(repoPath);
-	return result.isSubDir && result.isSyncIgnored;
+	const isRepoConnected = new RepoUtils(repoPath).isRepoConnected(false);
+	return !isRepoConnected;
 };
 
 const registerSyncIgnoreSaveEvent = (repoPath: string) => {
@@ -286,6 +270,16 @@ export const registerGitListener = async (repoPath: string) => {
 		if (!newCommitHash) return;
 		CodeSyncState.set(CODESYNC_STATES.GIT_COMMIT_HASH, newCommitHash);
 	});
+};
+
+export const showLogIn = () => {
+	const settings = generateSettings();
+	if (!fs.existsSync(settings.USER_PATH)) {
+		return true;
+	}
+	// Check if access token is present against users
+	const validUsers = getActiveUsers();
+	return validUsers.length === 0;
 };
 
 export const setInitialContext = () => {

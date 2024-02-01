@@ -11,24 +11,24 @@ import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
 import { VSCODE } from "../constants";
-import { isRepoConnected } from './utils';
 import { removeFile } from '../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
 import gitCommitInfo from 'git-commit-info';
+import { RepoUtils } from '../utils/repo_utils';
 
 
 export class eventHandler {
-	repoPath: string;
-	branch: string;
-	commitHash: string|null;
-	viaDaemon: boolean;
-	repoIsNotConnected: boolean;
+	repoPath = "";
+	branch = "";
+	commitHash: string|null = null;
+	viaDaemon = false;
+	repoIsNotConnected = false;
 	pathUtils: any;
-	shadowRepoBranchPath: string;
-	deletedRepoBranchPath: string;
-	originalsRepoBranchPath: string;
-	syncIgnoreItems: string[];
-	defaultIgnorePatterns: string[];
+	shadowRepoBranchPath = "";
+	deletedRepoBranchPath = "";
+	originalsRepoBranchPath = "";
+	syncIgnoreItems: string[] = [];
+	defaultIgnorePatterns: string[] = [];
 
 	// Diff props
 	isNewFile = false;
@@ -39,11 +39,13 @@ export class eventHandler {
 	isDeactivatedAccount = false;
 
 	constructor(repoPath="", createdAt="", viaDaemon=false) {
+		this.isDeactivatedAccount = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);
+		if (this.isDeactivatedAccount) return;
 		this.createdAt = createdAt || formatDatetime();
 		this.viaDaemon = viaDaemon;
 		this.repoPath = repoPath || pathUtils.getRootPath();
-		this.isDeactivatedAccount = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);
-		this.repoIsNotConnected = !isRepoConnected(this.repoPath, false);
+		const repoUtis = new RepoUtils(this.repoPath);
+		this.repoIsNotConnected = !repoUtis.isRepoConnected(false);
 		this.branch = getBranch(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
 		this.shadowRepoBranchPath = this.pathUtils.getShadowRepoBranchPath();

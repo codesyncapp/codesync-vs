@@ -10,8 +10,7 @@ import {
 	NOTIFICATION,
 	SYNCIGNORE
 } from '../constants';
-import { checkSubDir, getActiveUsers, getBranch, isRepoActive, readYML } from '../utils/common';
-import { isRepoConnected } from '../events/utils';
+import { checkSubDir, getActiveUsers, getBranch, readYML } from '../utils/common';
 import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
 import { updateRepo } from '../utils/sync_repo_utils';
@@ -19,6 +18,7 @@ import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
 import { createRedirectUri, generateWebUrl } from "../utils/url_utils";
+import { RepoUtils } from "../utils/repo_utils";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
@@ -36,7 +36,8 @@ export const reactivateAccountHandler = () => {
 export const connectRepoHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
-	if (isRepoConnected(repoPath)) {
+	const isRepoConnected = new RepoUtils(repoPath).isRepoConnected();
+	if (isRepoConnected) {
 		// Show notification that repo is in sync
 		vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
 		return;
@@ -65,10 +66,11 @@ export const postSelectionDisconnectRepo = async (repoPath: string, selection?: 
 	if (!selection || selection !== NOTIFICATION.YES) {
 		return;
 	}
+	const repoUtils = new RepoUtils(repoPath);
+	const isRepoConnected = repoUtils.isRepoConnected();
+	if (!isRepoConnected) return;
 	const settings = generateSettings();
-	const config = readYML(settings.CONFIG_PATH);
-	if (!isRepoActive(config, repoPath)) { return; }
-	const configRepo = config.repos[repoPath];
+	const configRepo = repoUtils.config.repos[repoPath];
 	const users = readYML(settings.USER_PATH);
 	const accessToken = users[configRepo.email].access_token;
 	const json = await updateRepo(accessToken, configRepo.id, { is_in_sync: false });
@@ -76,10 +78,10 @@ export const postSelectionDisconnectRepo = async (repoPath: string, selection?: 
 		vscode.window.showErrorMessage(NOTIFICATION.REPO_DISCONNECT_FAILED);
 		return;
 	}
-	// Show notification that repo is not in sync
+	// Show notification that repo is disconnected
 	configRepo.is_disconnected = true;
-	fs.writeFileSync(settings.CONFIG_PATH, yaml.dump(config));
-	// TODO: Maybe should delete repo from .shadow and .originals,
+	fs.writeFileSync(settings.CONFIG_PATH, yaml.dump(repoUtils.config));
+	// TODO: Maybe should delete repo from .shadow and .originals?
 	vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, true);
 	vscode.commands.executeCommand('setContext', contextVariables.isSubDir, false);
 	vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, false);

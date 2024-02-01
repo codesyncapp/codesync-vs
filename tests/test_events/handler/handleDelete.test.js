@@ -87,7 +87,7 @@ describe("handleDeletedEvent",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("Repo is not synced",  () => {
+    test("Repo is not connected",  () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.removeRepo();
         const event = {
