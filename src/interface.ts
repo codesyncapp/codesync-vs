@@ -82,3 +82,11 @@ export interface IS3UploaderPreProcess {
 	content: IS3UploaderFile;
 }
 
+export interface IRepoState {
+	IS_OPENED: boolean;
+	IS_CONNECTED: boolean;
+	IS_DISCONNECTED: boolean;
+	IS_SUB_DIR: boolean;
+	IS_SYNC_IGNORED: boolean;
+	PARENT_REPO_PATH: string;
+}

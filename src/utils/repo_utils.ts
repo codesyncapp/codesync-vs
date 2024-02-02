@@ -1,12 +1,13 @@
 import fs from 'fs';
 import { generateSettings } from "../settings";
-import { checkSubDir, getBranch, isEmpty, isUserActive, readYML } from "./common";
-import { CODESYNC_STATES, CodeSyncState } from './state_utils';
+import { checkSubDir, getBranch, isUserActive, readYML } from "./common";
+import { IRepoState } from '../interface';
 
 export const RepoState = {
 	CONNECTED: "CONNECTED",
 	NOT_CONNECTED: "NOT_CONNECTED",
-	DISCONNECTED: "DISCONNECTED"
+	DISCONNECTED: "DISCONNECTED",
+	NOT_OPENED: "NOT_OPENED"
 };
 
 export class RepoUtils {
@@ -34,7 +35,7 @@ export class RepoUtils {
 		return isUserActive(user);
 	};
 	
-	isRepoConnected (checkFileIds=true) {
+	getState (checkFileIds=true) : IRepoState {
 		/*
 		Returns true if follwing conditions exist, and returns false otherwise 
 		- if repoPath exists in config.yml 
@@ -43,41 +44,43 @@ export class RepoUtils {
 		- Repo is assoicated with a user
 		*/
 		// Set RepoState to be NOT_CONNCECTED by default
-		this.setState(RepoState.NOT_CONNECTED);
-		if (!this.isConfigValid()) return false;
+		const repoState: IRepoState = {
+			IS_CONNECTED: false,
+			IS_DISCONNECTED: false,
+			IS_SUB_DIR: false,
+			IS_SYNC_IGNORED: false,
+			IS_OPENED: !!this.repoPath,
+			PARENT_REPO_PATH: ""
+		};
+		if (!this.isConfigValid()) return repoState;
+		repoState.IS_OPENED = true;
 		const result = checkSubDir(this.repoPath);
+		repoState.IS_SUB_DIR = result.isSubDir;
+		repoState.IS_SYNC_IGNORED = result.isSyncIgnored;
 		if (result.isSubDir) {
-			if (result.isSyncIgnored) return false;
-			this.repoPath = result.parentRepo;
+			repoState.PARENT_REPO_PATH = result.parentRepo;
+			if (result.isSyncIgnored) return repoState;
+			this.repoPath = repoState.PARENT_REPO_PATH;
 		}
 		const repoConfig = this.config.repos[this.repoPath];
-		if (!repoConfig) return false;
+		if (!repoConfig) return repoState;
 		if (repoConfig.is_disconnected) {
-			this.setState(RepoState.DISCONNECTED);
-			return false;
+			repoState.IS_DISCONNECTED = true;
+			return repoState;
 		}
-		if (!repoConfig.email || !this.isRepoUserActive(repoConfig.email)) return false;
-		this.setState(RepoState.CONNECTED);
-		if (!checkFileIds) return true;
+		if (!repoConfig.email || !this.isRepoUserActive(repoConfig.email)) return repoState;
+		repoState.IS_CONNECTED = true;
+		if (!checkFileIds) return repoState;
 		const branch = getBranch(this.repoPath);
 		// If branch is not uploaded, daemon will take care of that
-		if (!(branch in repoConfig.branches)) return true;
+		if (!(branch in repoConfig.branches)) return repoState;
 		const configFiles = repoConfig.branches[branch];
 		const invalidFiles = Object.keys(configFiles).filter(relPath => configFiles[relPath] === null);
 		const hasNullIds = invalidFiles.length && invalidFiles.length === Object.keys(configFiles).length;
 		if (hasNullIds) {
-			this.setState(RepoState.NOT_CONNECTED);
-			return false; 
+			repoState.IS_CONNECTED = false;
+			return repoState; 
 		}
-		return true;
+		return repoState;
 	}
-
-	setState(state: string) {
-		CodeSyncState.set(CODESYNC_STATES.REPO_STATE, state);
-	}
-
-	getState() {
-		return CodeSyncState.get(CODESYNC_STATES.REPO_STATE);
-	}
-
 }

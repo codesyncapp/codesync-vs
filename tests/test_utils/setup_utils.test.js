@@ -16,12 +16,11 @@ import {
 import {
     createSystemDirectories,
     setupCodeSync,
-    showConnectRepoView, 
     showLogIn,
     createOrUpdateSyncignore
 } from "../../src/utils/setup_utils";
 import { readYML } from "../../src/utils/common";
-import { RepoUtils, RepoState } from "../../src/utils/repo_utils";
+import { RepoUtils } from "../../src/utils/repo_utils";
 import { generateSettings } from "../../src/settings";
 import {getRepoInSyncMsg, getDirectorySyncIgnoredMsg, getDirectoryIsSyncedMsg, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 
@@ -126,7 +125,7 @@ describe("setupCodeSync",  () => {
     });
 
     test('with no user.yml', async () => {
-        const port = await setupCodeSync(undefined);
+        await setupCodeSync(undefined);
         const lsResult = fs.readdirSync(baseRepoPath);
         expect(lsResult.includes(".diffs")).toBe(true);
         expect(lsResult.includes(".originals")).toBe(true);
@@ -134,8 +133,6 @@ describe("setupCodeSync",  () => {
         expect(lsResult.includes(".deleted")).toBe(true);
         expect(lsResult.includes(".locks")).toBe(true);
         expect(lsResult.includes("config.yml")).toBe(true);
-        // should return port number
-        expect(port).toBeTruthy();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.JOIN);
@@ -143,9 +140,7 @@ describe("setupCodeSync",  () => {
 
     test('with empty user.yml', async () => {
         fs.writeFileSync(userFilePath, yaml.dump({}));
-        const port = await setupCodeSync(undefined);
-        // should return port number
-        expect(port).toBeTruthy();
+        await setupCodeSync(undefined);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.JOIN);
@@ -154,9 +149,7 @@ describe("setupCodeSync",  () => {
 
     test('with no active user', async () => {
         addUser(baseRepoPath, false);
-        const port = await setupCodeSync(repoPath);
-        // should return port number
-        expect(port).toBeTruthy();
+        await setupCodeSync(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.JOIN);
@@ -171,9 +164,7 @@ describe("setupCodeSync",  () => {
 
     test('with user and repo not connected', async () => {
         fs.writeFileSync(userFilePath, yaml.dump(userData));
-        const port = await setupCodeSync(repoPath);
-        // should return port number
-        expect(port).toBeTruthy();
+        await setupCodeSync(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.CONNECT_REPO);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.CONNECT);
@@ -185,23 +176,15 @@ describe("setupCodeSync",  () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
-        const port = await setupCodeSync(repoPath);
-        // should return port number
-        expect(port).toBeTruthy();
+        await setupCodeSync(repoPath);
         const repoUtils = new RepoUtils(repoPath);
-        expect(repoUtils.isRepoConnected()).toBe(true);
-        expect(repoUtils.getState()).toStrictEqual(RepoState.CONNECTED);
+        const repoState = repoUtils.getState();
+        expect(repoState.IS_CONNECTED).toBe(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const msg = getRepoInSyncMsg(repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_IT);
         fs.rmSync(userFilePath);
-    });
-
-    test('showConnectRepoView',  async () => {
-        fs.writeFileSync(configPath, yaml.dump({repos: {}}));
-        const shouldShowConnectRepoView = showConnectRepoView(repoPath);
-        expect(shouldShowConnectRepoView).toBe(true);
     });
 
     test('with sub directory',  async () => {
@@ -210,12 +193,10 @@ describe("setupCodeSync",  () => {
         configUtil.addRepo();
         addUser(baseRepoPath);
         const subDir = path.join(repoPath, "directory");
-        const port = await setupCodeSync(subDir);
-        // should return port number
-        expect(port).toBeTruthy();
+        await setupCodeSync(subDir);
         const repoUtils = new RepoUtils(repoPath);
-        expect(repoUtils.isRepoConnected()).toBe(true);
-        expect(repoUtils.getState()).toStrictEqual(RepoState.CONNECTED);
+        const repoState = repoUtils.getState();
+        expect(repoState.IS_CONNECTED).toBe(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const msg = getDirectoryIsSyncedMsg(subDir, repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
@@ -233,9 +214,7 @@ describe("setupCodeSync",  () => {
         const syncignorePath = path.join(repoPath, SYNCIGNORE);
         fs.writeFileSync(syncignorePath, subDirName);
         const subDir = path.join(repoPath, subDirName);
-        const port = await setupCodeSync(subDir);
-        // should return port number
-        expect(port).toBeTruthy();
+        await setupCodeSync(subDir);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const msg = getDirectorySyncIgnoredMsg(subDir, repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
@@ -251,10 +230,7 @@ describe("setupCodeSync",  () => {
         configUtil.addRepo(true);
         addUser(baseRepoPath);
         const subDir = path.join(repoPath, "directory");
-        const port = await setupCodeSync(subDir);
-        // should return port number
-        // should return port number
-        expect(port).toBeTruthy();
+        await setupCodeSync(subDir);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.CONNECT_REPO);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.CONNECT);

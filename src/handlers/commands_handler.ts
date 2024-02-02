@@ -36,8 +36,9 @@ export const reactivateAccountHandler = () => {
 export const connectRepoHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
-	const isRepoConnected = new RepoUtils(repoPath).isRepoConnected();
-	if (isRepoConnected) {
+	const repoUtils = new RepoUtils(repoPath);
+	const repoState = repoUtils.getState();
+	if (repoState.IS_CONNECTED) {
 		// Show notification that repo is in sync
 		vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
 		return;
@@ -67,8 +68,8 @@ export const postSelectionDisconnectRepo = async (repoPath: string, selection?: 
 		return;
 	}
 	const repoUtils = new RepoUtils(repoPath);
-	const isRepoConnected = repoUtils.isRepoConnected();
-	if (!isRepoConnected) return;
+	const repoState = repoUtils.getState();
+	if (repoState.IS_DISCONNECTED) return;
 	const settings = generateSettings();
 	const configRepo = repoUtils.config.repos[repoPath];
 	const users = readYML(settings.USER_PATH);
@@ -90,7 +91,7 @@ export const postSelectionDisconnectRepo = async (repoPath: string, selection?: 
 
 export const trackRepoHandler = () => {
 	let repoPath = pathUtils.getRootPath();
-	if (!repoPath) { return; }
+	if (!repoPath) return;
 	const settings = generateSettings();
 	const config = readYML(settings.CONFIG_PATH);
 	const result = checkSubDir(repoPath);

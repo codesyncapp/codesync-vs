@@ -162,7 +162,7 @@ export class initUtils {
 					
 		const repoName = path.basename(this.repoPath);
 		const repoUtils = new RepoUtils(this.repoPath);
-		const isRepoConnected = repoUtils.isRepoConnected();
+		const repoState = repoUtils.getState();
 		const configJSON = repoUtils.config;
 		const branchFiles = <any>{};
 		const filesData = <any>{};
@@ -176,7 +176,7 @@ export class initUtils {
 			};
 		});
 		
-		if (!isRepoConnected) {
+		if (!repoState.IS_CONNECTED) {
 			configJSON.repos[this.repoPath] = {
 				branches: {},
 				email: userEmail

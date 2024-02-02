@@ -2,7 +2,7 @@ import vscode from 'vscode';
 import { initHandler } from '../init/init_handler';
 import { getActiveUsers } from './common';
 import { redirectToBrowser } from './auth_utils';
-import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin } from '../constants';
+import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON } from '../constants';
 import { trackRepoHandler, disconnectRepoHandler, openSyncIgnoreHandler } from '../handlers/commands_handler';
 
 
@@ -42,6 +42,18 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 		}
 	});
 };
+
+export const showDisconnectedRepo = (repoPath: string) => {
+	const msg = getDisconnectedRepoMsg(repoPath);
+	vscode.window.showErrorMessage(msg, ...[
+		NOTIFICATION_BUTTON.RECONNECT_REPO,
+	]).then(async selection => {
+		if (selection === NOTIFICATION_BUTTON.RECONNECT_REPO) {
+			redirectToBrowser();
+		}
+	});
+};
+
 
 // TODO: Probably add a separate function
 export const showChooseAccount = async (repoPath: string) => {

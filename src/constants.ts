@@ -61,7 +61,8 @@ export const SEQUENCE_MATCHER_RATIO = 0.8;
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
 
 export const NOTIFICATION_BUTTON = {
-	REACTIVATE_ACCOUNT: "Reactivate Account"
+	REACTIVATE_ACCOUNT: "Reactivate Account",
+	RECONNECT_REPO: "Reconnect Repo",
 };
 
 // Notification Messages
@@ -101,6 +102,7 @@ export const NOTIFICATION = {
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
 	REPO_IN_SYNC: "is in sync with CodeSync.",
+	REPO_IS_DISCONNECTED: "is disconnected.",
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again",
 	ERROR_SYNCING_REPO: "Error syncing repo.",
 	ERROR_SYNCING_BRANCH: "Error syncing branch",
@@ -118,6 +120,11 @@ export const NOTIFICATION = {
 export const getRepoInSyncMsg = (repoPath: string) => {
     const repoName = path.basename(repoPath);
     return `Repo ${repoName} ${NOTIFICATION.REPO_IN_SYNC}`;
+};
+
+export const getDisconnectedRepoMsg = (repoPath: string) => {
+	const repoName = path.basename(repoPath);
+	return `Repo ${repoName} ${NOTIFICATION.REPO_IS_DISCONNECTED}`;
 };
 
 export const getConnectRepoMsgAfterJoin = (email: string) => {
@@ -154,6 +161,7 @@ export const STATUS_BAR_MSGS = {
 	GETTING_READY: ' CodeSync $(loading~spin)',
 	NO_REPO_OPEN: ' CodeSync => No project is open',
 	CONNECT_REPO: ' CodeSync ❌, Click to connect repo!',
+	RECONNECT_REPO: ' CodeSync ❌, Click to reconnect repo!',
 	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
 	NO_CONFIG: ' CodeSync ❌, Reload required!',
 	UPGRADE_PRICING_PLAN: ' CodeSync ❌, Click to upgrade pricing plan!',
@@ -185,7 +193,8 @@ export const contextVariables = {
 	isSyncIgnored: "isSyncIgnored",
 	upgradePricingPlan: "upgradePricingPlan",
 	canAvailTrial: "canAvailTrial",
-	codesyncActivated: "CodeSyncActivated"
+	codesyncActivated: "CodeSyncActivated",
+	setContext: "setContext"
 };
 
 export class staticFiles {
