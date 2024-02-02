@@ -51,8 +51,9 @@ export class initHandler {
 			const success = await isAccountActive(this.userEmail, this.accessToken);
 			if (!success) return false;	
 		}
-		const isRepoConnected = new RepoUtils(this.repoPath).isRepoConnected();
-		if (isRepoConnected && !this.viaDaemon) {
+		const repoUtils = new RepoUtils(this.repoPath);
+		const repoState = repoUtils.getState();
+		if (repoState.IS_CONNECTED && !this.viaDaemon) {
 			vscode.window.showWarningMessage(`Repo is already in sync with branch: ${this.branch}`);
 			return false;
 		}

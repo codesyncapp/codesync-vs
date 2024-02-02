@@ -23,18 +23,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	CodeSyncState.set(CODESYNC_STATES.INSTANCE_UUID, uuid);
 
 	try {
-		let repoPath = pathUtils.getRootPath();
-		await setupCodeSync(repoPath);
-		await registerGitListener(repoPath);
-		const subDirResult = checkSubDir(repoPath);
-		
 		// vscode.commands.executeCommand
 		setInitialContext();
 		// vscode.commands.registerCommand
 		registerCommands(context);
+		let repoPath = pathUtils.getRootPath();
+		await setupCodeSync(repoPath);
+		await registerGitListener(repoPath);
+		const subDirResult = checkSubDir(repoPath);
 		// Create status bar item
 		const statusBarItem = createStatusBarItem(context);
-
 		if (repoPath) {
 			CodeSyncLogger.info(`Configured repo: ${repoPath}, uuid=${uuid}`);
 			if (subDirResult.isSubDir) {

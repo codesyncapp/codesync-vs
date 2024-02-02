@@ -19,7 +19,7 @@ import { uploadFileToServer } from '../utils/upload_utils';
 import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
-import { checkSubDir, getActiveUsers, readFile, readYML } from '../utils/common';
+import { getActiveUsers, readFile, readYML } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { removeFile } from '../utils/file_utils';
@@ -206,7 +206,6 @@ export class statusBarMsgs {
 			return canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
 		}
 		const activityAlertMsg = CodeSyncState.get(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG);
-
 		// No repo is opened
 		if (!repoPath) return activityAlertMsg || STATUS_BAR_MSGS.NO_REPO_OPEN;
 		// Branch is being uploaded
@@ -214,16 +213,18 @@ export class statusBarMsgs {
 		if (isSyncingBranch) return STATUS_BAR_MSGS.UPLOADING_BRANCH;
 		// Get default msg
 		const defaultMsg = daemonError || activityAlertMsg || STATUS_BAR_MSGS.DEFAULT;
-		const subDirResult = checkSubDir(repoPath);
-		if (subDirResult.isSubDir) {
-			if (subDirResult.isSyncIgnored) {
+
+		// Check Repo State
+		const repoUtils = new RepoUtils(repoPath);
+		const repoState = repoUtils.getState();
+		if (repoState.IS_SUB_DIR) {
+			if (repoState.IS_SYNC_IGNORED) {
 				return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
 			}
 			return defaultMsg;
 		}
-		// Repo is not synced
-		const isRepoConnected = new RepoUtils(repoPath).isRepoConnected();
-		if (!isRepoConnected) return STATUS_BAR_MSGS.CONNECT_REPO;
+		if (repoState.IS_DISCONNECTED) return STATUS_BAR_MSGS.RECONNECT_REPO;
+		if (!repoState.IS_CONNECTED) return STATUS_BAR_MSGS.CONNECT_REPO;
 		return defaultMsg;
 	}
 }

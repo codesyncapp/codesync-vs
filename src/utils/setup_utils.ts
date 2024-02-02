@@ -13,8 +13,8 @@ import {
 	UPDATE_SYNCIGNORE_AFTER
 } from "../constants";
 import { isAccountActive, isPortAvailable, logout } from './auth_utils';
-import { showConnectRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
-import { checkSubDir, getActiveUsers, readYML } from './common';
+import { showConnectRepo, showDisconnectedRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
+import { getActiveUsers, readYML } from './common';
 import { 
 	disconnectRepoHandler, 
 	openSyncIgnoreHandler, 
@@ -167,62 +167,46 @@ export const setupCodeSync = async (repoPath: string) => {
 
 	if (!fs.existsSync(userFilePath)) {
 		showSignUpButtons();
-		return port;
+		return;
 	}
 	// Check if there is valid user present
 	const activeUser = getActiveUsers()[0];
 	if (!activeUser) {
 		showSignUpButtons();
-		return port;
+		return;
 	}
-	// Show Repo Status
-	showRepoStatusMsg(repoPath);
 	// Check is accessToken is valid 
 	const success = await isAccountActive(activeUser.email, activeUser.access_token);
-	if (success) {
-		CodeSyncLogger.debug(`User's access toekn is active, user=${activeUser.email}`);		
-	}
-	return port;
+	if (!success) return;
+	CodeSyncLogger.debug(`User's access toekn is active, user=${activeUser.email}`);		
+	// Show Repo Status
+	showRepoStatusMsg(repoPath);
 };
 
 export const showRepoStatusMsg = (repoPath: string) => {
 	if (!repoPath) return;
 	registerSyncIgnoreSaveEvent(repoPath);
-
-	const subDirResult = checkSubDir(repoPath);
-	
-	if (subDirResult.isSubDir && subDirResult.isSyncIgnored) {
-		showSyncIgnoredRepo(repoPath, subDirResult.parentRepo);
+	const repoUtils = new RepoUtils(repoPath);
+	const repoState = repoUtils.getState(false);
+	if (repoState.IS_SUB_DIR && repoState.IS_SYNC_IGNORED) {
+		showSyncIgnoredRepo(repoPath, repoState.PARENT_REPO_PATH);
 		return;
 	}
-
-	if (showConnectRepoView(repoPath)) {
-		// Show notification to user to Sync the repo
-		showConnectRepo(repoPath);
-		return;
-	}
-
+	if (repoState.IS_DISCONNECTED) return showDisconnectedRepo(repoPath);
+	if (!repoState.IS_CONNECTED) return showConnectRepo(repoPath);
 	let msg = getRepoInSyncMsg(repoPath);
 	let button = NOTIFICATION.TRACK_IT;
-
-	if (subDirResult.isSubDir) {
+	if (repoState.IS_SUB_DIR) {
 		button = NOTIFICATION.TRACK_PARENT_REPO;
-		msg = getDirectoryIsSyncedMsg(repoPath, subDirResult.parentRepo);
+		msg = getDirectoryIsSyncedMsg(repoPath, repoState.PARENT_REPO_PATH);
 	}
-
 	// Show notification that repo is in sync
 	vscode.window.showInformationMessage(msg, button).then(selection => {
-		if (!selection) { return; }
+		if (!selection) return;
 		if (selection === NOTIFICATION.TRACK_IT) {
 			trackRepoHandler();
 		}
 	});
-};
-
-export const showConnectRepoView = (repoPath: string) => {
-	if (!repoPath) return false;
-	const isRepoConnected = new RepoUtils(repoPath).isRepoConnected(false);
-	return !isRepoConnected;
 };
 
 const registerSyncIgnoreSaveEvent = (repoPath: string) => {
@@ -284,11 +268,13 @@ export const showLogIn = () => {
 
 export const setInitialContext = () => {
 	const repoPath = pathUtils.getRootPath();
-	const subDirResult = checkSubDir(repoPath);
+	const repoUtils = new RepoUtils(repoPath);
+	const repoState = repoUtils.getState(false);
+	const showConnectRepoView = repoState.IS_OPENED && !repoState.IS_CONNECTED;
 	vscode.commands.executeCommand('setContext', contextVariables.showLogIn, showLogIn());
-	vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, showConnectRepoView(repoPath));
-	vscode.commands.executeCommand('setContext', contextVariables.isSubDir, subDirResult.isSubDir);
-	vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, subDirResult.isSyncIgnored);
+	vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, showConnectRepoView);
+	vscode.commands.executeCommand('setContext', contextVariables.isSubDir, repoState.IS_SUB_DIR);
+	vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, repoState.IS_SYNC_IGNORED);
 	vscode.commands.executeCommand('setContext', contextVariables.codesyncActivated, true);
 	vscode.commands.executeCommand('setContext', contextVariables.upgradePricingPlan, false);
 };

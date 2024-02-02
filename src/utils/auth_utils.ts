@@ -59,9 +59,11 @@ export const postSuccessLogin = (userEmail: string, accessToken: string) => {
     CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
     const repoPath = pathUtils.getRootPath() || "";
     if (!repoPath) return;
-    const isRepoConnected = new RepoUtils(repoPath).isRepoConnected(false);
-    vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, !isRepoConnected);
-	if (!isRepoConnected) {
+    const repoUtils = new RepoUtils(repoPath);
+    const repoState = repoUtils.getState();
+    const repoIsNotConnected = !repoState.IS_CONNECTED;
+    vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, repoIsNotConnected);
+	if (repoIsNotConnected) {
         // Show notification to user to Sync the repo
         return showConnectRepo(repoPath, userEmail, accessToken);
     }
