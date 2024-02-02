@@ -3,7 +3,7 @@ import { initHandler } from '../init/init_handler';
 import { getActiveUsers } from './common';
 import { redirectToBrowser } from './auth_utils';
 import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON } from '../constants';
-import { trackRepoHandler, disconnectRepoHandler, openSyncIgnoreHandler } from '../handlers/commands_handler';
+import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
 
 
 export const showSignUpButtons = () => {
@@ -49,7 +49,7 @@ export const showDisconnectedRepo = (repoPath: string) => {
 		NOTIFICATION_BUTTON.RECONNECT_REPO,
 	]).then(async selection => {
 		if (selection === NOTIFICATION_BUTTON.RECONNECT_REPO) {
-			redirectToBrowser();
+			reconnectRepoHandler();
 		}
 	});
 };
@@ -100,7 +100,7 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 		NOTIFICATION.OPEN_SYNCIGNORE, 
 		NOTIFICATION.TRACK_PARENT_REPO, 
 		NOTIFICATION.DISCONNECT_PARENT_REPO).then(async selection => {
-		if (!selection) { return; }
+		if (!selection) return;
 		switch (selection) {
 			case NOTIFICATION.TRACK_PARENT_REPO:
 				trackRepoHandler();
@@ -108,7 +108,7 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 			case NOTIFICATION.OPEN_SYNCIGNORE:
 				openSyncIgnoreHandler();
 				break;
-			case NOTIFICATION.DISCONNECT_PARENT_REPO:
+			case NOTIFICATION.DISCONNECT_PARENT_REPO: 
 				disconnectRepoHandler();
 				break;
 			default:

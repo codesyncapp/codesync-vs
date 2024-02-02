@@ -168,6 +168,9 @@ export class statusBarMsgs {
 				case STATUS_BAR_MSGS.CONNECT_REPO:
 					command = COMMAND.triggerSync;
 					break;
+				case STATUS_BAR_MSGS.RECONNECT_REPO:
+					command = COMMAND.triggerReconnectRepo;
+					break;
 				case STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN:
 					command = COMMAND.upgradePlan;
 					break;

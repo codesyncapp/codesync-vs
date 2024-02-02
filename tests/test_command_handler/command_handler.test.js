@@ -7,13 +7,12 @@ import fetchMock from "jest-fetch-mock";
 import getBranchName from "current-git-branch";
 
 import {
-    postSelectionDisconnectRepo,
     SignUpHandler,
     connectRepoHandler,
     trackFileHandler,
     trackRepoHandler,
-    disconnectRepoHandler
 } from "../../src/handlers/commands_handler";
+import {RepoDisconnectHandler} from "../../src/handlers/repo_commands";
 import {
     Config,
     getConfigFilePath,
@@ -96,7 +95,7 @@ describe("connectRepoHandler",  () => {
 
 });
 
-describe("disconnectRepoHandler",  () => {
+describe("RepoDisconnectHandler.run",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
@@ -121,12 +120,12 @@ describe("disconnectRepoHandler",  () => {
     });
 
     test("No Repo Path", () => {
-        disconnectRepoHandler();
+        new RepoDisconnectHandler().run();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
     test("Ask Dicsonnect confirmation", () => {
-        disconnectRepoHandler();
+        new RepoDisconnectHandler().run();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECT_CONFIRMATION);
         expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
@@ -138,7 +137,7 @@ describe("disconnectRepoHandler",  () => {
         configUtil.addRepo();
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
-        disconnectRepoHandler();
+        new RepoDisconnectHandler().run();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECT_PARENT_CONFIRMATION);
         expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
@@ -147,7 +146,7 @@ describe("disconnectRepoHandler",  () => {
 });
 
 
-describe("postSelectionDisconnectRepo",  () => {
+describe("RepoDisconnectHandler.postSelection",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
@@ -160,6 +159,7 @@ describe("postSelectionDisconnectRepo",  () => {
         fetch.resetMocks();
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
+        setWorkspaceFolders(repoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.dump(configData));
@@ -172,14 +172,16 @@ describe("postSelectionDisconnectRepo",  () => {
     });
 
     test("No Selection",  async () => {
-        await postSelectionDisconnectRepo(repoPath, undefined);
+        const commandHandler = new RepoDisconnectHandler();
+        await commandHandler.postSelection(undefined);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
     test("Clicked Cancel",  async () => {
-        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.CANCEL);
+        const commandHandler = new RepoDisconnectHandler();
+        await commandHandler.postSelection(NOTIFICATION.CANCEL);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
@@ -191,7 +193,8 @@ describe("postSelectionDisconnectRepo",  () => {
             branches: {}
         };
         fs.writeFileSync(configPath, yaml.dump(configData));
-        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.YES);
+        const commandHandler = new RepoDisconnectHandler();
+        await commandHandler.postSelection(NOTIFICATION.YES);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
@@ -202,7 +205,8 @@ describe("postSelectionDisconnectRepo",  () => {
         configUtil.addRepo();
         const errJSON = {error: {message: "NOT SO FAST"}};
         fetchMock.mockResponseOnce(JSON.stringify(errJSON));
-        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.YES);
+        const commandHandler = new RepoDisconnectHandler();
+        await commandHandler.postSelection(NOTIFICATION.YES);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECT_FAILED);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
@@ -213,9 +217,8 @@ describe("postSelectionDisconnectRepo",  () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({}));
-
-        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.YES);
-
+        const commandHandler = new RepoDisconnectHandler();
+        await commandHandler.postSelection(NOTIFICATION.YES);
         // Read config
         const config = readYML(configPath);
         expect(config.repos[repoPath].is_disconnected).toBe(true);
