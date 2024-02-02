@@ -3,12 +3,6 @@ import { generateSettings } from "../settings";
 import { checkSubDir, getBranch, isUserActive, readYML } from "./common";
 import { IRepoState } from '../interface';
 
-export const RepoState = {
-	CONNECTED: "CONNECTED",
-	NOT_CONNECTED: "NOT_CONNECTED",
-	DISCONNECTED: "DISCONNECTED",
-	NOT_OPENED: "NOT_OPENED"
-};
 
 export class RepoUtils {
 
@@ -43,7 +37,6 @@ export class RepoUtils {
 		- Repo has at least 1 branch uploaded
 		- Repo is assoicated with a user
 		*/
-		// Set RepoState to be NOT_CONNCECTED by default
 		const repoState: IRepoState = {
 			IS_CONNECTED: false,
 			IS_DISCONNECTED: false,

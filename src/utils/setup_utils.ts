@@ -15,8 +15,7 @@ import {
 import { isAccountActive, isPortAvailable, logout } from './auth_utils';
 import { showConnectRepo, showDisconnectedRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
 import { getActiveUsers, readYML } from './common';
-import { 
-	disconnectRepoHandler, 
+import {
 	openSyncIgnoreHandler, 
 	reactivateAccountHandler, 
 	SignUpHandler, 
@@ -25,7 +24,9 @@ import {
 	trackRepoHandler, 
 	upgradePlanHandler, 
 	viewActivityHandler, 
-	viewDashboardHandler
+	viewDashboardHandler,
+	disconnectRepoHandler,
+	reconnectRepoHandler
  } from '../handlers/commands_handler';
 import { generateSettings, PLUGIN_USER } from "../settings";
 import { initExpressServer } from "../server/server";
@@ -291,6 +292,7 @@ export const registerCommands = (context: vscode.ExtensionContext) => {
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.viewDashboard, viewDashboardHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.viewActivity, viewActivityHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.reactivateAccount, reactivateAccountHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerReconnectRepo, reconnectRepoHandler));
 };
 
 export const createStatusBarItem = (context: vscode.ExtensionContext) => {

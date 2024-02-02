@@ -21,12 +21,13 @@ import {
     connectRepoHandler,
     trackFileHandler,
     trackRepoHandler,
-    disconnectRepoHandler,
     openSyncIgnoreHandler,
     upgradePlanHandler,
     viewDashboardHandler,
     viewActivityHandler,
-    reactivateAccountHandler
+    reactivateAccountHandler,
+    disconnectRepoHandler,
+    reconnectRepoHandler
 } from "../src/handlers/commands_handler";
 import {
     createSystemDirectories, 
@@ -140,6 +141,8 @@ describe("Extension: activate",() => {
         expect(vscode.commands.registerCommand.mock.calls[9][1]).toStrictEqual(viewActivityHandler);
         expect(vscode.commands.registerCommand.mock.calls[10][0]).toStrictEqual(COMMAND.reactivateAccount);
         expect(vscode.commands.registerCommand.mock.calls[10][1]).toStrictEqual(reactivateAccountHandler);
+        expect(vscode.commands.registerCommand.mock.calls[11][0]).toStrictEqual(COMMAND.triggerReconnectRepo);
+        expect(vscode.commands.registerCommand.mock.calls[11][1]).toStrictEqual(reconnectRepoHandler);
         // createStatusBarItem
         expect(vscode.window.createStatusBarItem).toHaveBeenCalledTimes(1);
         // Verify events listeners are registered just fine
@@ -183,7 +186,7 @@ describe("Extension: activate",() => {
         expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(false);
         // CodeSyncActivated should be true
         expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual("CodeSyncActivated");
+        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
         expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
     });
 
@@ -214,6 +217,8 @@ describe("Extension: activate",() => {
         expect(vscode.commands.registerCommand.mock.calls[9][1]).toStrictEqual(viewActivityHandler);
         expect(vscode.commands.registerCommand.mock.calls[10][0]).toStrictEqual(COMMAND.reactivateAccount);
         expect(vscode.commands.registerCommand.mock.calls[10][1]).toStrictEqual(reactivateAccountHandler);
+        expect(vscode.commands.registerCommand.mock.calls[11][0]).toStrictEqual(COMMAND.triggerReconnectRepo);
+        expect(vscode.commands.registerCommand.mock.calls[11][1]).toStrictEqual(reconnectRepoHandler);
     });
 
     test("createStatusBarItem: Fresh Setup, no user, no repo opened", async () => {
