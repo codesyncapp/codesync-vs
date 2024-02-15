@@ -20,10 +20,9 @@ import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { readFile, readYML } from '../utils/common';
-import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { removeFile } from '../utils/file_utils';
-import { RepoUtils } from '../utils/repo_utils';
+import { RepoPlanLimitsUtils, RepoUtils } from '../utils/repo_utils';
 import { UserUtils } from '../utils/user_utils';
 
 
@@ -68,8 +67,9 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		};
 	}
 	// Check plan limits
-	const { planLimitReached, canRetry } = getPlanLimitReached();
-	if (planLimitReached && !canRetry) return {
+	const repoPlanLimitUtils = new RepoPlanLimitsUtils(repoPath);
+	const repoLimitsState = repoPlanLimitUtils.getState();
+	if (repoLimitsState.planLimitReached && !repoLimitsState.canRetry) return {
 		uploaded: false,
 		deleteDiff: false,
 		config: configJSON
@@ -205,8 +205,9 @@ export class statusBarMsgs {
 		const activeUser = userUtils.getActiveUser();
 		if (!activeUser) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
 		// Check plan limits
-		const { planLimitReached } = getPlanLimitReached();
-		if (planLimitReached) {
+		const repoPlanLimitUtils = new RepoPlanLimitsUtils(repoPath);
+		const repoLimitsState = repoPlanLimitUtils.getState();
+		if (repoLimitsState.planLimitReached) {
 			const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
 			return canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
 		}

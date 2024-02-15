@@ -14,12 +14,11 @@ import { IFileToUpload } from '../interface';
 import { uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT, contextVariables } from '../constants';
 import { getGlobIgnorePatterns, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
-import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { s3UploaderUtils } from './s3_uploader';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import gitCommitInfo from 'git-commit-info';
-import { RepoUtils } from '../utils/repo_utils';
+import { RepoPlanLimitsUtils, RepoUtils } from '../utils/repo_utils';
 
 export class initUtils {
 	repoPath: string;
@@ -157,16 +156,15 @@ export class initUtils {
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
 					userEmail: string, isPublic=false, repoId=null) {
 		// Check plan limits
-		const { planLimitReached, canRetry } = getPlanLimitReached();
-		if (planLimitReached && !canRetry) return false;
-					
+		const planLimitsUtils = new RepoPlanLimitsUtils(this.repoPath);
+        const repoLimitsState = planLimitsUtils.getState();
+		if (repoLimitsState.planLimitReached && !repoLimitsState.canRetry) return false;
 		const repoName = path.basename(this.repoPath);
 		const repoUtils = new RepoUtils(this.repoPath);
 		const repoState = repoUtils.getState();
 		const configJSON = repoUtils.config;
 		const branchFiles = <any>{};
 		const filesData = <any>{};
-
 		itemPaths.forEach((fileToUpload) => {
 			branchFiles[fileToUpload.rel_path] = null;
 			filesData[fileToUpload.rel_path] = {
@@ -175,7 +173,6 @@ export class initUtils {
 				created_at: fileToUpload.created_at ? fileToUpload.created_at / 1000 : ""
 			};
 		});
-		
 		if (!repoState.IS_CONNECTED) {
 			configJSON.repos[this.repoPath] = {
 				branches: {},
@@ -208,6 +205,7 @@ export class initUtils {
 		const commit_hash = gitCommitInfo({cwd: this.repoPath}).hash || null;
 
 		const data = {
+			repo_path: this.repoPath,
 			name: repoName,
 			is_public: isPublic,
 			branch,

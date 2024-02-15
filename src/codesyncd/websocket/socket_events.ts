@@ -1,15 +1,17 @@
+import fs from "fs";
 import vscode from "vscode";
 
 import {contextVariables, ERROR_SENDING_DIFFS, STATUS_BAR_MSGS} from "../../constants";
 import {CodeSyncLogger, logErrorMsg} from "../../logger";
-import {IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
+import {IDiff, IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffHandler} from "../handlers/diff_handler";
 import {DiffsHandler} from "../handlers/diffs_handler";
 import {getDiffsBeingProcessed, setDiffsBeingProcessed, statusBarMsgs} from "../utils";
 import {markUsersInactive} from "../../utils/auth_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
-import { getPlanLimitReached, PlanLimitsHandler, resetPlanLimitReached } from "../../utils/pricing_utils";
-import { ErrorCodes } from "../../utils/common";
+import { PlanLimitsHandler } from "../../utils/pricing_utils";
+import { ErrorCodes, readYML } from "../../utils/common";
+import { RepoPlanLimitsUtils } from "../../utils/repo_utils";
 
 
 const EVENT_TYPES = {
@@ -56,8 +58,8 @@ export class SocketEvents {
 
     async onRepoSizeLimitReached(repoId: number) {
         CodeSyncLogger.error(ERROR_SENDING_DIFFS.REPO_SIZE_LIMIT_REACHED);
-        const limitsHandler = new PlanLimitsHandler(this.accessToken);
-        await limitsHandler.set(repoId);
+        const limitsHandler = new PlanLimitsHandler(this.accessToken, repoId);
+        await limitsHandler.run();
         const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
         const msg = canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
         this.statusBarMsgsHandler.update(msg);
@@ -95,9 +97,12 @@ export class SocketEvents {
     }
 
     onSyncSuccess(diffFilePath: string) {
-        const { planLimitReached } = getPlanLimitReached();
-        if (planLimitReached) resetPlanLimitReached();
         if (!this.canSendDiffs) return;
+        if (!fs.existsSync(diffFilePath)) return;
+        // Reset Plan Limits
+        const diffData = <IDiff>readYML(diffFilePath);
+        const planLimitsUtils = new RepoPlanLimitsUtils(diffData.repo_path);
+        planLimitsUtils.resetState();
         DiffHandler.removeDiffFile(diffFilePath);
         // Remove diff from diffsBeingProcessed
         const diffsBeingProcessed = getDiffsBeingProcessed();

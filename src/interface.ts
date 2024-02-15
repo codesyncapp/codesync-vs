@@ -90,3 +90,15 @@ export interface IRepoState {
 	IS_SYNC_IGNORED: boolean;
 	PARENT_REPO_PATH: string;
 }
+
+export interface IRepoPlanLimitState {
+	canRetry: boolean;
+	planLimitReached: boolean;
+	canAvailTrial: boolean;
+}
+
+export interface IRepoPlanInfo {
+	isOrgRepo: boolean;
+	pricingUrl: string;
+	canAvailTrial: boolean;
+}

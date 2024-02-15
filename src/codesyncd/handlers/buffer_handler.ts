@@ -10,10 +10,10 @@ import {DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBS
 import {generateSettings} from "../../settings";
 import {getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
-import { getPlanLimitReached } from '../../utils/pricing_utils';
 import { removeFile } from '../../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../../utils/state_utils';
 import { UserUtils } from '../../utils/user_utils';
+import { RepoPlanLimitsUtils } from '../../utils/repo_utils';
 
 
 export class bufferHandler {
@@ -127,19 +127,20 @@ export class bufferHandler {
 				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
-
 			// If diff does not belong to user's repo, skip it
 			if (activeUser && configRepo.email !== activeUser.email) return false;
-
 			// Remove diff is repo is disconnected
 			if (configRepo.is_disconnected) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is disconnected`);
 				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
+			// Skip the diff if repo's limit has been reached and retry after allowed time
+			const repoPlanLimitUtils = new RepoPlanLimitsUtils(diffData.repo_path);
+			const state = repoPlanLimitUtils.getState();
+			if (state.planLimitReached && !state.canRetry) return false;
 			// Skip diffs that are already being iterated
 			if (diffsBeingProcessed.has(filePath)) return false;
-
 			// If rel_path is ignoreable, only delete event should be allowed for that
 			const isIgnorablePath = shouldIgnorePath(diffData.file_relative_path, this.defaultIgnorePatterns, []);
 			if (isIgnorablePath && !diffData.is_deleted) {
@@ -154,8 +155,7 @@ export class bufferHandler {
 				// We want to keep data in case plan limit is reached so that user can access it when plan is upgraded
 				const fileInfo = fs.lstatSync(filePath);
 				if (new Date().getTime() - fileInfo.ctimeMs > (DAY * 5)) {
-					const { planLimitReached } = getPlanLimitReached();
-					if (planLimitReached) {
+					if (state.planLimitReached) {
 						CodeSyncLogger.error(
 							`Keeping diff: Branch=${diffData.branch} is not synced. Repo=${diffData.repo_path}`,
 							"", 

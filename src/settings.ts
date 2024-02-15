@@ -77,8 +77,7 @@ export const generateSettings = () => {
     // Lock Files
     const lockFiles = {
         POPULATE_BUFFER_LOCK_FILE: path.join(rootRepo, ".locks", "daemon.lock"),
-        DIFFS_SEND_LOCK_FILE: path.join(rootRepo, ".locks", "vscode.lock"),
-        UPGRADE_PLAN_ALERT: path.join(rootRepo, ".locks", "pricing.lock"),
+        DIFFS_SEND_LOCK_FILE: path.join(rootRepo, ".locks", "vscode.lock")
     };
     const alerts = {
         /*
