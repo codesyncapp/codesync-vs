@@ -11,7 +11,6 @@ export class LockUtils {
 	settings: any;
 	lockOptionsPopulateBuffer: LockOptions;
 	lockOptionsDiffsSend: LockOptions;
-	lockOptionsPricing: LockOptions;
 	checkSyncOptions: CheckOptions;
 	instanceUUID: string;
 
@@ -20,7 +19,6 @@ export class LockUtils {
         this.settings = generateSettings();
 		this.lockOptionsPopulateBuffer = {update:1000, onCompromised: this.onCompromisedPopulateBuffer};
 		this.lockOptionsDiffsSend = {update:1000, onCompromised: this.onCompromisedDiffsSend};
-		this.lockOptionsPricing = {update:1000, onCompromised: this.onCompromisedPricing};
 		this.checkSyncOptions = {stale: 10000};
 		this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 	}
@@ -41,11 +39,6 @@ export class LockUtils {
 		if (canIgnore) return;
 		CodeSyncLogger.debug(`diffsSendLock: Resetting state value, uuid=${this.instanceUUID}`);
 		CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
-	};
-	
-	onCompromisedPricing = (err: any) => {
-		if (this.isTestMode) return;
-		CodeSyncLogger.debug(`pricingLock compromised, uuid=${this.instanceUUID}, error=${err}`);
 	};
 	
 	checkPopulateBufferLock () {
@@ -87,28 +80,4 @@ export class LockUtils {
 			CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, false);
 		}
 	};
-
-	acquirePricingAlertLock () {
-		try {
-			lockFile.lockSync(this.settings.UPGRADE_PLAN_ALERT, this.lockOptionsPricing);
-		} catch (e) {
-			// 
-		}
-	}
-
-	releasePricingAlertLock () {
-		try {
-			lockFile.unlockSync(this.settings.UPGRADE_PLAN_ALERT);
-		} catch (e) {
-			// 
-		}
-	}
-
-	checkPricingAlertLock () {
-		try {
-			return lockFile.checkSync(this.settings.UPGRADE_PLAN_ALERT);
-		} catch (e) {
-			return false;
-		}
-	}
 }

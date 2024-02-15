@@ -19,11 +19,12 @@ import { uploadFileToServer } from '../utils/upload_utils';
 import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
-import { getActiveUsers, readFile, readYML } from '../utils/common';
+import { readFile, readYML } from '../utils/common';
 import { getPlanLimitReached } from '../utils/pricing_utils';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { removeFile } from '../utils/file_utils';
 import { RepoUtils } from '../utils/repo_utils';
+import { UserUtils } from '../utils/user_utils';
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -200,8 +201,9 @@ export class statusBarMsgs {
 		const isDeactivated = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);
 		if (isDeactivated) return STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED;
 		// No Valid account found
-		const activeUsers = getActiveUsers();
-		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
+		const userUtils = new UserUtils();
+		const activeUser = userUtils.getActiveUser();
+		if (!activeUser) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
 		// Check plan limits
 		const { planLimitReached } = getPlanLimitReached();
 		if (planLimitReached) {
@@ -220,15 +222,9 @@ export class statusBarMsgs {
 		// Check Repo State
 		const repoUtils = new RepoUtils(repoPath);
 		const repoState = repoUtils.getState();
-		if (repoState.IS_SUB_DIR) {
-			if (repoState.IS_SYNC_IGNORED) {
-				return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
-			}
-			return defaultMsg;
-		}
 		if (repoState.IS_DISCONNECTED) return STATUS_BAR_MSGS.RECONNECT_REPO;
-		if (!repoState.IS_CONNECTED) return STATUS_BAR_MSGS.CONNECT_REPO;
-		return defaultMsg;
+		if (repoState.IS_SUB_DIR && repoState.IS_SYNC_IGNORED) return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
+		return repoState.IS_CONNECTED ? defaultMsg : STATUS_BAR_MSGS.CONNECT_REPO;
 	}
 }
 

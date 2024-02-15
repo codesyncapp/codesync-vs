@@ -14,7 +14,7 @@ import {
 } from "../constants";
 import { isAccountActive, isPortAvailable, logout } from './auth_utils';
 import { showConnectRepo, showDisconnectedRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
-import { getActiveUsers, readYML } from './common';
+import { readYML } from './common';
 import {
 	openSyncIgnoreHandler, 
 	reactivateAccountHandler, 
@@ -36,6 +36,7 @@ import { CodeSyncLogger } from '../logger';
 import { GitExtension } from '../git';
 import { CODESYNC_STATES, CodeSyncState } from './state_utils';
 import { RepoUtils } from './repo_utils';
+import { UserUtils } from './user_utils';
 
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
@@ -60,7 +61,6 @@ export const createSystemDirectories = () => {
 	defaultData[settings.ALERTS] = yaml.dump({ team_activity: {} });
 	defaultData[settings.POPULATE_BUFFER_LOCK_FILE] = "";
 	defaultData[settings.DIFFS_SEND_LOCK_FILE] = "";
-	defaultData[settings.UPGRADE_PLAN_ALERT] = "";
 	// Create file if does not exist
 	[
 		// System Files
@@ -69,8 +69,7 @@ export const createSystemDirectories = () => {
 		settings.ALERTS,
 		// Lock Files
 		settings.POPULATE_BUFFER_LOCK_FILE, 
-		settings.DIFFS_SEND_LOCK_FILE, 
-		settings.UPGRADE_PLAN_ALERT
+		settings.DIFFS_SEND_LOCK_FILE
 	].forEach(filePath => {
 		if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, defaultData[filePath]);
 	});
@@ -171,7 +170,8 @@ export const setupCodeSync = async (repoPath: string) => {
 		return;
 	}
 	// Check if there is valid user present
-	const activeUser = getActiveUsers()[0];
+	const userUtils = new UserUtils();
+	const activeUser = userUtils.getActiveUser();
 	if (!activeUser) {
 		showSignUpButtons();
 		return;
@@ -179,7 +179,7 @@ export const setupCodeSync = async (repoPath: string) => {
 	// Check is accessToken is valid 
 	const success = await isAccountActive(activeUser.email, activeUser.access_token);
 	if (!success) return;
-	CodeSyncLogger.debug(`User's access toekn is active, user=${activeUser.email}`);		
+	CodeSyncLogger.debug(`User's access token is active, user=${activeUser.email}`);		
 	// Show Repo Status
 	showRepoStatusMsg(repoPath);
 };
@@ -258,13 +258,9 @@ export const registerGitListener = async (repoPath: string) => {
 };
 
 export const showLogIn = () => {
-	const settings = generateSettings();
-	if (!fs.existsSync(settings.USER_PATH)) {
-		return true;
-	}
-	// Check if access token is present against users
-	const validUsers = getActiveUsers();
-	return validUsers.length === 0;
+	const userUtils = new UserUtils();
+	const activeUser = userUtils.getActiveUser();
+	return !activeUser;
 };
 
 export const setInitialContext = () => {
@@ -278,6 +274,7 @@ export const setInitialContext = () => {
 	vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, repoState.IS_SYNC_IGNORED);
 	vscode.commands.executeCommand('setContext', contextVariables.codesyncActivated, true);
 	vscode.commands.executeCommand('setContext', contextVariables.upgradePricingPlan, false);
+	vscode.commands.executeCommand('setContext', contextVariables.isDisconnectedRepo, repoState.IS_DISCONNECTED);
 };
 
 export const registerCommands = (context: vscode.ExtensionContext) => {

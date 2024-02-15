@@ -47,7 +47,6 @@ export class SocketClient {
         return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
-
     connect = (canSendDiffs: boolean) => {
         // Check plan limits
         const { planLimitReached, canRetry } = getPlanLimitReached();

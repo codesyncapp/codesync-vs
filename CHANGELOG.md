@@ -8,9 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.39.0] - 2024-01-31
 - Packages Upgraded
 - Stop generating diffs for the deactivated accounts
-- Team Activity skip deactivated users
-- Added a log in VSCode when we reset the config file
-- Update notification messages for a disconnected repository
+- Team Activity alert skips deactivated accounts
+- Dropping a log when we reset the config file
+- Updated messages for a disconnected repository in menus, left panel and notifications
+- Repo based plan limits implemented, improved button text to upgrade pricing plans, removed pricing_lock file
 
 ## [3.38.0] - 2024-01-12
 - Sending commit_hash for new files 

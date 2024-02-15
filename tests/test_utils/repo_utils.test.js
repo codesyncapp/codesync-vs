@@ -127,8 +127,8 @@ describe("RepoUtils:getState", () => {
         const subDir = path.join(repoPath, "directory");
         const repoUtils = new RepoUtils(subDir);
         const repoState = repoUtils.getState();
-        expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(false);
+        expect(repoState.IS_CONNECTED).toBe(true);
         expect(repoState.IS_SUB_DIR).toBe(true);
         expect(repoState.IS_SYNC_IGNORED).toBe(true);
     });

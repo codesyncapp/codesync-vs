@@ -155,7 +155,7 @@ export class initUtils {
 	}
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
-					userEmail: string, isPublic=false) {
+					userEmail: string, isPublic=false, repoId=null) {
 		// Check plan limits
 		const { planLimitReached, canRetry } = getPlanLimitReached();
 		if (planLimitReached && !canRetry) return false;
@@ -217,11 +217,12 @@ export class initUtils {
 			platform: os.platform()
 		};
 
-		const json = await uploadRepoToServer(token, data);
+		const json = await uploadRepoToServer(token, data, repoId);
 		if (json.error) {
 			// Reset the key here and try again in next attempt
 			CodeSyncState.set(syncingBranchKey, false);
-			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
+			let error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
+			error = `${error}, branch=${branch}, repo=${this.repoPath}`;
 			CodeSyncLogger.error(error, json.error, userEmail);
 			if (!this.viaDaemon) vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
 			return false;
