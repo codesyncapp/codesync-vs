@@ -67,6 +67,7 @@ export class RepoDisconnectHandler extends RepoCommandsHandler {
 		vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, true);
 		vscode.commands.executeCommand('setContext', contextVariables.isSubDir, false);
 		vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, false);
+		vscode.commands.executeCommand('setContext', contextVariables.isDisconnectedRepo, true);
 		vscode.window.showInformationMessage(NOTIFICATION.REPO_DISCONNECTED);
 	};
 }
@@ -88,6 +89,7 @@ export class RepoReconnectHandler extends RepoCommandsHandler {
 		configRepo.is_disconnected = false;
 		this.writeToConfig();
 		vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, false);
+		vscode.commands.executeCommand('setContext', contextVariables.isDisconnectedRepo, false);
 		vscode.window.showInformationMessage(NOTIFICATION.REPO_RECONNECTED);
 	};
 }

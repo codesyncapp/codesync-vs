@@ -60,6 +60,7 @@ export class SocketEvents {
         CodeSyncLogger.error(ERROR_SENDING_DIFFS.REPO_SIZE_LIMIT_REACHED);
         const limitsHandler = new PlanLimitsHandler(this.accessToken, repoId);
         await limitsHandler.run();
+        if (!limitsHandler.isCurrentRepo) return;
         const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
         const msg = canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
         this.statusBarMsgsHandler.update(msg);
