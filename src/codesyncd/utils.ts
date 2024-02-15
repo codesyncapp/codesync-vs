@@ -219,7 +219,6 @@ export class statusBarMsgs {
 		if (isSyncingBranch) return STATUS_BAR_MSGS.UPLOADING_BRANCH;
 		// Get default msg
 		const defaultMsg = daemonError || activityAlertMsg || STATUS_BAR_MSGS.DEFAULT;
-
 		// Check Repo State
 		const repoUtils = new RepoUtils(repoPath);
 		const repoState = repoUtils.getState();

@@ -15,12 +15,14 @@ export class PlanLimitsHandler {
 	repoId: number; // Required
 	repoPath: string; // Optional
 	currentRepoPath: string; // Custom
+	isCurrentRepo: boolean;
 	
 	constructor(accessToken: string, repoId: number, repoPath="") {
 		this.accessToken = accessToken;
 		this.repoId = repoId;
 		this.repoPath = repoPath;
 		this.currentRepoPath = pathUtils.getRootPath();
+		this.isCurrentRepo = false;
 	}
 
 	_getRepoPlanInfo = async () : Promise<IRepoPlanInfo> => {
@@ -39,7 +41,6 @@ export class PlanLimitsHandler {
 	}
 
 	async run() {
-		console.log("planLimitsHandler:run");
 		const configUtils = new ConfigUtils();
 		const config = configUtils.config;
 		if (!config) return;
@@ -50,7 +51,8 @@ export class PlanLimitsHandler {
 		const repoPlanLimitUtils = new RepoPlanLimitsUtils(repoPath);
 		repoPlanLimitUtils.setState(repoPlanInfo.canAvailTrial);
 		// Mark upgradePricingPlan to show button in left panel only if it is currently opened repo
-		if (this.currentRepoPath === repoPath) {
+		this.isCurrentRepo = this.currentRepoPath === repoPath;
+		if (this.isCurrentRepo) {
 			vscode.commands.executeCommand('setContext', contextVariables.upgradePricingPlan, true);
 			vscode.commands.executeCommand('setContext', contextVariables.canAvailTrial, repoPlanInfo.canAvailTrial);
 			CodeSyncState.set(CODESYNC_STATES.PRICING_URL, repoPlanInfo.pricingUrl);

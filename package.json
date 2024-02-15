@@ -110,7 +110,7 @@
         {
           "id": "codesync-repo-connected",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && !isSubDir && CodeSyncActivated && !upgradePricingPlan"
+          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && ! isDisconnectedRepo && !isSubDir && CodeSyncActivated && !upgradePricingPlan"
         },
         {
           "id": "codesync-repo-is-disconnected",
@@ -163,7 +163,7 @@
       },
       {
         "view": "codesync-repo-is-disconnected",
-        "contents": "Respository is disconnected.\nReconnect your repo.\n[Connect](command:codesync.reconnectRepo)\n[Logout](command:codesync.logout)"
+        "contents": "Respository is disconnected.\nReconnect your repo.\n[Reconnect](command:codesync.reconnectRepo)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-repo-connected",
