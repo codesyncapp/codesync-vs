@@ -3,9 +3,11 @@ import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
 import { API_ROUTES, HTTP_STATUS_CODES } from "../constants";
-import { PlanLimitsHandler, getPlanLimitReached, resetPlanLimitReached } from './pricing_utils';
+import { PlanLimitsHandler } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
 import { s3UploaderUtils } from '../init/s3_uploader';
+import { RepoPlanLimitsUtils } from './repo_utils';
+import { showFreeTierLimitReached } from './notifications';
 
 
 export const uploadRepoToServer = async (accessToken: string, data: any, repoId=null) => {
@@ -53,14 +55,19 @@ export const uploadRepoToServer = async (accessToken: string, data: any, repoId=
 		}
 	})
 	.catch(err => error = err);
-
 	if (statusCode === HTTP_STATUS_CODES.PRICING_PLAN_LIMIT_REACHED) {
-
-		const limitsHandler = new PlanLimitsHandler(accessToken);
-		await limitsHandler.set(repoId || 0);
+		// No need to set state for Connecting Repo since it is performed by User Action
+		if (repoId) {
+			// This is "Branch Upload"
+			const limitsHandler = new PlanLimitsHandler(accessToken, repoId, data.repo_path);
+			await limitsHandler.run();	
+		} else {
+			// This is "Connect Repo"
+			showFreeTierLimitReached(data.repo_path);
+		}
 	} else {
-		const { planLimitReached } = getPlanLimitReached();
-		if (planLimitReached) resetPlanLimitReached();
+		const planLimitsUtils = new RepoPlanLimitsUtils(data.repo_path);
+		planLimitsUtils.resetState();
 	}
 	if (response.error) {
 		error = response.error.message;
@@ -75,7 +82,7 @@ export const uploadRepoToServer = async (accessToken: string, data: any, repoId=
 	};
 };
 
-export const uploadFile = async (accessToken: string, data: any) => {
+export const uploadFile = async (accessToken: string, data: any, repoPath: string) => {
 	/*
 	Response from server looks like
 
@@ -111,11 +118,11 @@ export const uploadFile = async (accessToken: string, data: any) => {
 
 	if (statusCode === HTTP_STATUS_CODES.PRICING_PLAN_LIMIT_REACHED) {
 		// Check if key is set or not
-		const limitsHandler = new PlanLimitsHandler(accessToken);
-        await limitsHandler.set(data.repo_id);
+		const limitsHandler = new PlanLimitsHandler(accessToken, data.repo_id, repoPath);
+        await limitsHandler.run();
 	} else {
-		const { planLimitReached } = getPlanLimitReached();
-		if (planLimitReached) resetPlanLimitReached();
+		const planLimitsUtils = new RepoPlanLimitsUtils(repoPath);
+        planLimitsUtils.resetState();
 	}
 
 	if (response.error) {
@@ -178,7 +185,7 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 		created_at: formatDatetime(fileInfo.ctimeMs),
 		added_at: addedAt
 	};
-	const json = await uploadFile(accessToken, data);
+	const json = await uploadFile(accessToken, data, repoPath);
 	if (json.error) {
 		return {
 			error: `serverError: ${json.error}`,

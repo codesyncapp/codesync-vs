@@ -1,9 +1,10 @@
 import vscode from 'vscode';
 import { initHandler } from '../init/init_handler';
 import { redirectToBrowser } from './auth_utils';
-import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON } from '../constants';
+import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON, PRICING_URL_PATH } from '../constants';
 import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
 import { UserUtils } from './user_utils';
+import { generateWebUrl } from './url_utils';
 
 
 export const showSignUpButtons = () => {
@@ -115,4 +116,18 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 			default:
 			}
 		});
+};
+
+export const showFreeTierLimitReached = (repoPath: string) => {
+	let msg = NOTIFICATION.FREE_TIER_LIMIT_REACHED;
+	const subMsg = NOTIFICATION.UPGRADE_PRICING_PLAN;
+	msg = `${msg} ${repoPath}. ${subMsg}`;
+	// TODO: get canAvailTrial from /users/pricing/subscription API call
+	const button = NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
+	const pricingUrl = generateWebUrl(PRICING_URL_PATH);
+	// Show alert msg
+	vscode.window.showErrorMessage(msg, button).then(async selection => {
+		if (!selection) return;
+		vscode.env.openExternal(vscode.Uri.parse(pricingUrl));
+	});
 };

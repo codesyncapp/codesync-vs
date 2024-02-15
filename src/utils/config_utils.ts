@@ -14,12 +14,12 @@ export class ConfigUtils {
 		return this.config && this.config.repos;
 	}
 
-	getRepoPathByRepoId = (repoId: number) => {
+	getRepoPathByRepoId = (repoId: number) : string => {
 		if (!this.isConfigValid()) return "";
 		const repoPath = Object.keys(this.config.repos).find(repoPath => {
 			const _repoConfig = this.config.repos[repoPath];
 			return _repoConfig.id == repoId;
 		});
-		return repoPath;
+		return repoPath || "";
 	}
 }

@@ -1,7 +1,11 @@
+import vscode from 'vscode';
 import { checkSubDir, getBranch } from "./common";
-import { IRepoState } from '../interface';
+import { IRepoPlanLimitState, IRepoState } from '../interface';
 import { ConfigUtils } from './config_utils';
 import { UserUtils } from './user_utils';
+import { CODESYNC_STATES, CodeSyncState } from "./state_utils";
+import { RETRY_REQUEST_AFTER, contextVariables } from "../constants";
+import { pathUtils } from './path_utils';
 
 
 export class RepoUtils {
@@ -11,6 +15,8 @@ export class RepoUtils {
 
 	constructor(repoPath: string) {
 		this.repoPath = repoPath;
+		const configUtils = new ConfigUtils();
+		this.config = configUtils.config;
 	}
 	
 	getState (checkFileIds=true) : IRepoState {
@@ -29,8 +35,6 @@ export class RepoUtils {
 			IS_OPENED: !!this.repoPath,
 			PARENT_REPO_PATH: ""
 		};
-		const configUtils = new ConfigUtils();
-		this.config = configUtils.config;
 		if (!this.config) return repoState;
 		const result = checkSubDir(this.repoPath);
 		repoState.IS_SUB_DIR = result.isSubDir;
@@ -62,5 +66,49 @@ export class RepoUtils {
 			return repoState; 
 		}
 		return repoState;
+	}
+}
+
+export class RepoPlanLimitsUtils {
+
+	repoPath: string;
+	planLimitKey: string;
+	requestSentAtKey: string;
+	canAvailTrailKey: string;
+
+	constructor(repoPath: string) {
+		this.repoPath = repoPath;
+		this.planLimitKey = `${this.repoPath}:planLimitReached`;
+		this.requestSentAtKey = `${this.repoPath}:requestSentAt`;
+		this.canAvailTrailKey = `${this.repoPath}:canAvailTrial`;
+	}
+	
+	getState = (): IRepoPlanLimitState => {
+		const state = <IRepoPlanLimitState>{};
+		state.planLimitReached = CodeSyncState.get(this.planLimitKey);
+		const requestSentAt = CodeSyncState.get(this.requestSentAtKey);
+		state.canRetry = requestSentAt && (new Date().getTime() - requestSentAt) > RETRY_REQUEST_AFTER;
+		return state;
+	}
+
+	setState = (canAvailTrial: boolean): void => {
+		CodeSyncState.set(this.planLimitKey, true);
+		CodeSyncState.set(this.requestSentAtKey, new Date().getTime());
+		CodeSyncState.set(this.canAvailTrailKey, canAvailTrial);
+	}
+
+	resetState = (): void => {
+		// Reset state for given repoPath
+		CodeSyncState.set(this.planLimitKey, false);
+		CodeSyncState.set(this.requestSentAtKey, "");
+		CodeSyncState.set(this.canAvailTrailKey, false);
+		const currentRepoPath = pathUtils.getRootPath();
+		// Reset state for currently opened repo
+		if (this.repoPath === currentRepoPath) {
+			vscode.commands.executeCommand('setContext', contextVariables.upgradePricingPlan, false);
+			vscode.commands.executeCommand('setContext', contextVariables.canAvailTrial, false);
+			CodeSyncState.set(CODESYNC_STATES.PRICING_URL, "");
+			CodeSyncState.set(CODESYNC_STATES.CAN_AVAIL_TRIAL, false);	
+		}
 	}
 }
