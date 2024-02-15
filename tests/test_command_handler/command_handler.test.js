@@ -25,7 +25,8 @@ import {
 import {
     NOTIFICATION,
     DEFAULT_BRANCH,
-    getRepoInSyncMsg
+    getRepoInSyncMsg,
+    contextVariables
 } from "../../src/constants";
 import {WEB_APP_URL} from "../../src/settings";
 import {readYML} from "../../src/utils/common";
@@ -213,7 +214,7 @@ describe("RepoDisconnectHandler.postSelection",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Should Dicsonnect",  async () => {
+    test("Should Disconnect",  async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({}));
@@ -223,16 +224,19 @@ describe("RepoDisconnectHandler.postSelection",  () => {
         const config = readYML(configPath);
         expect(config.repos[repoPath].is_disconnected).toBe(true);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
-        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showConnectRepoView");
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(4);
+        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showConnectRepoView);
         expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(true);
-        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual("isSubDir");
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.isSubDir);
         expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
-        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual("isSyncIgnored");
+        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.isSyncIgnored);
         expect(vscode.commands.executeCommand.mock.calls[2][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[3][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[3][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECTED);
     });

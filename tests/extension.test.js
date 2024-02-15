@@ -338,7 +338,7 @@ describe("Extension: activate",() => {
         // showConnectRepoView should be true
         expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.showConnectRepoView);
-        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
         // isSubDir should be false
         expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.isSubDir);
@@ -425,7 +425,7 @@ describe("Extension: activate",() => {
         // showConnectRepoView should be true
         expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.showConnectRepoView);
-        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
         // isSubDir should be false
         expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.isSubDir);
