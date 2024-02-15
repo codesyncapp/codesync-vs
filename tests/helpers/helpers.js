@@ -147,12 +147,10 @@ export class Config {
         const config = {repos: {}};
         config.repos[this.repoPath] = {
             branches: {},
-            email: TEST_EMAIL
+            email: TEST_EMAIL,
+            is_disconnected: isDisconnected
         };
         config.repos[this.repoPath].branches[DEFAULT_BRANCH] = TEST_REPO_RESPONSE.file_path_and_id;
-        if (isDisconnected) {
-            config.repos[this.repoPath].is_disconnected = true;
-        }
         fs.writeFileSync(this.configPath, yaml.dump(config));
     }
 
