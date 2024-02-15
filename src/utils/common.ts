@@ -15,6 +15,7 @@ import {
 import { IUserProfile } from "../interface";
 import { generateSettings } from "../settings";
 import { CodeSyncLogger } from '../logger';
+import { UserUtils } from './user_utils';
 
 
 export const readFile = (filePath: string) => {
@@ -33,12 +34,12 @@ export const readYML = (filePath: string) => {
 };
 
 export const checkSubDir = (currentRepoPath: string) => {
+	let isSyncIgnored = false;
 	const settings = generateSettings();
 	const configPath = settings.CONFIG_PATH;
-	let isSyncIgnored = false;
-
-	const user = getActiveUsers()[0];
-	if (!user) return {
+	const userUtils = new UserUtils();
+	const activeUser = userUtils.getActiveUser();
+	if (!activeUser) return {
 		isSubDir: false,
 		parentRepo: "",
 		isSyncIgnored
@@ -65,7 +66,7 @@ export const checkSubDir = (currentRepoPath: string) => {
 	for (const _repoPath of repoPaths) {
 		const configRepo = config.repos[_repoPath];
 		// Verify connected repo is of current user's repo
-		if (configRepo.email !== user.email) continue;
+		if (configRepo.email !== activeUser.email) continue;
 		// Skip disconnected repos
 		if (configRepo.is_disconnected) continue;
 		const relative = path.relative(_repoPath, currentRepoPath);
@@ -170,24 +171,10 @@ export const formatDatetime = (datetime?: number) => {
 
 export const isUserActive = (user: IUserProfile) => {
 	const isActive = 'is_active' in user ? user.is_active : true;
-	return isActive && "access_token" in user && user.access_token !== "";
+	return Boolean(isActive && "access_token" in user && user.access_token !== "");
 };
-
-export const getActiveUsers = () => {
-	const settings = generateSettings();
-	const users = readYML(settings.USER_PATH) || {};
-	const validUsers: any[] = [];
-	Object.keys(users).forEach(email => {
-		const user = users[email];
-		if (isUserActive(user)) {
-			validUsers.push({ email, access_token: user.access_token });
-		}
-	});
-	return validUsers;
-};
-
 
 export const ErrorCodes  = {
-    REPO_SIZE_LIMIT_REACHED: 402,
+    PAYMENT_REQUIRED: 402,
 	USER_ACCOUNT_DEACTIVATED: 403
 };

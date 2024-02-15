@@ -411,7 +411,7 @@ export const detectBranchChange = async () => {
             const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
             if (shouldSyncBranch) {
                 const itemPaths = await initUtilsObj.getSyncablePaths();
-                uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email);
+                uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, configRepo.id);
                 if (!uploaded) continue;    
             }
             // By default, add repo to readyRepos
@@ -425,7 +425,7 @@ export const detectBranchChange = async () => {
         if (originalsRepoBranchPathExists) {
             // init has been called, now see if we can upload the repo/branch
             const itemPaths = await initUtilsObj.getSyncablePaths();
-            uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email);
+            uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, configRepo.id);
         } else {
             const handler = new initHandler(repoPath, accessToken, configRepo.email, true);
             uploaded = await handler.connectRepo();

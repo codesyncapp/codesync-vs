@@ -49,10 +49,9 @@ export class RepoDisconnectHandler extends RepoCommandsHandler {
 	};
 	
 	postSelection = async (selection?: string) => {
-		if (!selection || selection !== NOTIFICATION.YES) {
+		if (!selection || selection !== NOTIFICATION.YES || this.repoState.IS_DISCONNECTED) {
 			return;
 		}
-		if (this.repoState.IS_DISCONNECTED) return;
 		const configRepo = this.repoUtils.config.repos[this.repoPath];
 		const users = readYML(this.settings.USER_PATH);
 		const accessToken = users[configRepo.email].access_token;

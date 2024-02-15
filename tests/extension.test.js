@@ -90,9 +90,8 @@ describe("Extension: activate",() => {
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.JOIN);
         expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.IGNORE);
-
         // Output of setInitialContext
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
@@ -113,10 +112,12 @@ describe("Extension: activate",() => {
         expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
         expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
-        // CodeSyncActivated should be true
         expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
         expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(false);
         // Output of registerCommands
         expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(Object.keys(COMMAND).length);
         expect(vscode.commands.registerCommand.mock.calls[0][0]).toStrictEqual(COMMAND.triggerSignUp);
@@ -167,7 +168,7 @@ describe("Extension: activate",() => {
     test("setInitialContext: Fresh Setup, no user, no repo opened", async () => {
         setWorkspaceFolders("");
         setInitialContext();
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
@@ -188,6 +189,12 @@ describe("Extension: activate",() => {
         expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
         expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(false);
     });
 
     test("registerCommands: Fresh Setup, no user, no repo opened", async () => {
@@ -234,7 +241,7 @@ describe("Extension: activate",() => {
         setWorkspaceFolders(repoPath);
         await activate(vscode.ExtensionContext);
         await waitFor(1);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
@@ -267,7 +274,7 @@ describe("Extension: activate",() => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.CONNECT_REPO);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.CONNECT);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
@@ -292,7 +299,7 @@ describe("Extension: activate",() => {
         configUtil.addRepo();
         addUser(baseRepoPath);
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
@@ -323,7 +330,7 @@ describe("Extension: activate",() => {
         _configData.repos[repoPath].is_disconnected = true;
         fs.writeFileSync(configPath, yaml.dump(_configData));
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
@@ -340,6 +347,15 @@ describe("Extension: activate",() => {
         expect(vscode.commands.executeCommand.mock.calls[3][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[3][1]).toStrictEqual(contextVariables.isSyncIgnored);
         expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
+        expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(true);
 
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
         // Should show Reconnect Msg
@@ -356,8 +372,7 @@ describe("Extension: activate",() => {
         configUtil.addRepo();
         addUser(baseRepoPath);
         await activate(vscode.ExtensionContext);
-        console.log(vscode.commands.executeCommand.mock.calls);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(9);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(10);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
@@ -378,14 +393,17 @@ describe("Extension: activate",() => {
         expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
         expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
         expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.showLogIn);
+        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
         expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(false);
         expect(vscode.commands.executeCommand.mock.calls[7][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[7][1]).toStrictEqual(contextVariables.showReactivateAccount);
-        expect(vscode.commands.executeCommand.mock.calls[7][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[7][1]).toStrictEqual(contextVariables.showLogIn);
+        expect(vscode.commands.executeCommand.mock.calls[7][2]).toStrictEqual(false);
         expect(vscode.commands.executeCommand.mock.calls[8][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[8][1]).toStrictEqual(contextVariables.showConnectRepoView);
-        expect(vscode.commands.executeCommand.mock.calls[8][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[8][1]).toStrictEqual(contextVariables.showReactivateAccount);
+        expect(vscode.commands.executeCommand.mock.calls[8][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[9][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[9][1]).toStrictEqual(contextVariables.showConnectRepoView);
+        expect(vscode.commands.executeCommand.mock.calls[9][2]).toStrictEqual(false);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.ACCOUNT_DEACTIVATED);
@@ -399,7 +417,7 @@ describe("Extension: activate",() => {
         _configData.repos[repoPath].is_disconnected = true;
         fs.writeFileSync(configPath, yaml.dump(_configData));
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
@@ -416,7 +434,25 @@ describe("Extension: activate",() => {
         expect(vscode.commands.executeCommand.mock.calls[3][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[3][1]).toStrictEqual(contextVariables.isSyncIgnored);
         expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
+        expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
+        expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
+        expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(true);
         // Should show Reconnect Msg
         const msg = getDisconnectedRepoMsg(repoPath);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
@@ -431,7 +467,7 @@ describe("Extension: activate",() => {
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
         // showLogin should be false
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
@@ -448,7 +484,15 @@ describe("Extension: activate",() => {
         expect(vscode.commands.executeCommand.mock.calls[3][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[3][1]).toStrictEqual(contextVariables.isSyncIgnored);
         expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(false);
-
+        expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
+        expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(false);
         const msg = getDirectoryIsSyncedMsg(subDir, repoPath);
         // Should show Welcome msg
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -467,7 +511,7 @@ describe("Extension: activate",() => {
         const subDir = path.join(repoPath, subDirName);
         setWorkspaceFolders(subDir);
         await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(6);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
         // showLogin should be true
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
@@ -475,7 +519,7 @@ describe("Extension: activate",() => {
         // showConnectRepoView should be true
         expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.showConnectRepoView);
-        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
         // isSubDir should be true
         expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.isSubDir);
@@ -484,6 +528,15 @@ describe("Extension: activate",() => {
         expect(vscode.commands.executeCommand.mock.calls[3][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[3][1]).toStrictEqual(contextVariables.isSyncIgnored);
         expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
+        expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(false);
         const msg = getDirectorySyncIgnoredMsg(subDir, repoPath);
         // Should show Welcome msg
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);

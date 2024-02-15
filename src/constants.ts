@@ -63,6 +63,10 @@ export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Pleas
 export const NOTIFICATION_BUTTON = {
 	REACTIVATE_ACCOUNT: "Reactivate Account",
 	RECONNECT_REPO: "Reconnect Repo",
+	TRY_PRO_FOR_FREE: "Try Pro plan for free",
+	TRY_TEAM_FOR_FREE: "Try Team plan for free",
+	UPGRADE_TO_PRO: "Upgrade to Pro plan",
+	UPGRADE_TO_TEAM: "Upgrade to Team plan"
 };
 
 // Notification Messages
@@ -77,8 +81,6 @@ export const NOTIFICATION = {
 	OK: "OK!",
 	CONTINUE: "Continue",
 	UPGRADE: "Upgrade",
-	TRY_PRO_FOR_FREE: "Try Pro plan for free",
-	TRY_TEAM_FOR_FREE: "Try Team plan for free ",
 	VIEW_DASHBOARD: "View Dashboard",
 	REVIEW_TEAM_PLAYBACK: "Review Team Playback",
 	REVIEW_PLAYBACK: "Review Playback",
@@ -116,7 +118,8 @@ export const NOTIFICATION = {
 	TEAM_ACTIVITY_ALERT: "Hope you had a great day! It's time to get in sync with your team's code.",
 	USER_ACTIVITY_ALERT: "Hope you had a great day! Shall we review today's code playback?",
 	SIGNUP_FAILED: "Sign up to CodeSync failed!",
-	ACCOUNT_DEACTIVATED: "Your account has been deactivated. Please click 'Reactivate Account' below to resume syncing."
+	ACCOUNT_DEACTIVATED: "Your account has been deactivated. Please click 'Reactivate Account' below to resume syncing.",
+	FREE_TIER_LIMIT_REACHED: "We hope you've found CodeSync useful. You'have hit the limit of Free tier for repo"
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {
@@ -194,6 +197,7 @@ export const contextVariables = {
 	showReactivateAccount: "showReactivateAccount",
 	isSubDir: "isSubDir",
 	isSyncIgnored: "isSyncIgnored",
+	isDisconnectedRepo: "isDisconnectedRepo",
 	upgradePricingPlan: "upgradePricingPlan",
 	canAvailTrial: "canAvailTrial",
 	codesyncActivated: "CodeSyncActivated",

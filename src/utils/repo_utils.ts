@@ -1,7 +1,7 @@
-import fs from 'fs';
-import { generateSettings } from "../settings";
-import { checkSubDir, getBranch, isUserActive, readYML } from "./common";
+import { checkSubDir, getBranch } from "./common";
 import { IRepoState } from '../interface';
+import { ConfigUtils } from './config_utils';
+import { UserUtils } from './user_utils';
 
 
 export class RepoUtils {
@@ -9,25 +9,9 @@ export class RepoUtils {
 	repoPath: string;
 	config: any;
 
-	constructor(repoPath: string, setConfig=true) {
+	constructor(repoPath: string) {
 		this.repoPath = repoPath;
-		if (!setConfig) return;
-		const settings = generateSettings();
-		this.config = fs.existsSync(settings.CONFIG_PATH) ? readYML(settings.CONFIG_PATH) : null;
 	}
-	
-	isConfigValid () {
-		return this.repoPath && this.config && this.config.repos;
-	}
-
-	isRepoUserActive = (email: string) => {
-		const settings = generateSettings();
-		if (!fs.existsSync(settings.USER_PATH)) return false;
-		// Return if user hasn't synced the repo
-		const users = readYML(settings.USER_PATH) || {};
-		const user = users[email];
-		return isUserActive(user);
-	};
 	
 	getState (checkFileIds=true) : IRepoState {
 		/*
@@ -45,12 +29,14 @@ export class RepoUtils {
 			IS_OPENED: !!this.repoPath,
 			PARENT_REPO_PATH: ""
 		};
-		if (!this.isConfigValid()) return repoState;
-		repoState.IS_OPENED = true;
+		const configUtils = new ConfigUtils();
+		this.config = configUtils.config;
+		if (!this.config) return repoState;
 		const result = checkSubDir(this.repoPath);
 		repoState.IS_SUB_DIR = result.isSubDir;
 		repoState.IS_SYNC_IGNORED = result.isSyncIgnored;
 		if (result.isSubDir) {
+			repoState.IS_CONNECTED = true;
 			repoState.PARENT_REPO_PATH = result.parentRepo;
 			if (result.isSyncIgnored) return repoState;
 			this.repoPath = repoState.PARENT_REPO_PATH;
@@ -61,7 +47,8 @@ export class RepoUtils {
 			repoState.IS_DISCONNECTED = true;
 			return repoState;
 		}
-		if (!repoConfig.email || !this.isRepoUserActive(repoConfig.email)) return repoState;
+		const userUtils = new UserUtils();
+		if (!repoConfig.email || !userUtils.isUserActive(repoConfig.email)) return repoState;
 		repoState.IS_CONNECTED = true;
 		if (!checkFileIds) return repoState;
 		const branch = getBranch(this.repoPath);

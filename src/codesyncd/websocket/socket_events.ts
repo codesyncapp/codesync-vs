@@ -8,7 +8,7 @@ import {DiffsHandler} from "../handlers/diffs_handler";
 import {getDiffsBeingProcessed, setDiffsBeingProcessed, statusBarMsgs} from "../utils";
 import {markUsersInactive} from "../../utils/auth_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
-import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from "../../utils/pricing_utils";
+import { getPlanLimitReached, PlanLimitsHandler, resetPlanLimitReached } from "../../utils/pricing_utils";
 import { ErrorCodes } from "../../utils/common";
 
 
@@ -54,9 +54,10 @@ export class SocketEvents {
         this.connection.close();
     }
 
-    async onRepoSizeLimitReached() {
+    async onRepoSizeLimitReached(repoId: number) {
         CodeSyncLogger.error(ERROR_SENDING_DIFFS.REPO_SIZE_LIMIT_REACHED);
-        await setPlanLimitReached(this.accessToken);
+        const limitsHandler = new PlanLimitsHandler(this.accessToken);
+        await limitsHandler.set(repoId);
         const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
         const msg = canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
         this.statusBarMsgsHandler.update(msg);
@@ -127,8 +128,8 @@ export class SocketEvents {
                     case 200:
                         this.onSyncSuccess(resp.diff_file_path);
                         return true;
-                    case ErrorCodes.REPO_SIZE_LIMIT_REACHED:
-                        await this.onRepoSizeLimitReached(); 
+                    case ErrorCodes.PAYMENT_REQUIRED:
+                        await this.onRepoSizeLimitReached(resp.repo_id); 
                         return true;    
                     default:
                         return false;

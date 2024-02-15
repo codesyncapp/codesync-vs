@@ -3,12 +3,12 @@ import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
 import { API_ROUTES, HTTP_STATUS_CODES } from "../constants";
-import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from './pricing_utils';
+import { PlanLimitsHandler, getPlanLimitReached, resetPlanLimitReached } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
 import { s3UploaderUtils } from '../init/s3_uploader';
 
 
-export const uploadRepoToServer = async (token: string, data: any) => {
+export const uploadRepoToServer = async (accessToken: string, data: any, repoId=null) => {
 	/*
     Response from server looks like
         {
@@ -37,7 +37,7 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 			body: JSON.stringify(data),
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': `Basic ${token}`
+				'Authorization': `Basic ${accessToken}`
 			},
 		}
 	)
@@ -55,8 +55,9 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 	.catch(err => error = err);
 
 	if (statusCode === HTTP_STATUS_CODES.PRICING_PLAN_LIMIT_REACHED) {
-		// Check if key is set or not
-		await setPlanLimitReached(token);
+
+		const limitsHandler = new PlanLimitsHandler(accessToken);
+		await limitsHandler.set(repoId || 0);
 	} else {
 		const { planLimitReached } = getPlanLimitReached();
 		if (planLimitReached) resetPlanLimitReached();
@@ -74,7 +75,7 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 	};
 };
 
-export const uploadFile = async (token: string, data: any) => {
+export const uploadFile = async (accessToken: string, data: any) => {
 	/*
 	Response from server looks like
 
@@ -91,7 +92,7 @@ export const uploadFile = async (token: string, data: any) => {
 			body: JSON.stringify(data),
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': `Basic ${token}`
+				'Authorization': `Basic ${accessToken}`
 			},
 		}
 	)
@@ -110,7 +111,8 @@ export const uploadFile = async (token: string, data: any) => {
 
 	if (statusCode === HTTP_STATUS_CODES.PRICING_PLAN_LIMIT_REACHED) {
 		// Check if key is set or not
-		await setPlanLimitReached(token);
+		const limitsHandler = new PlanLimitsHandler(accessToken);
+        await limitsHandler.set(data.repo_id);
 	} else {
 		const { planLimitReached } = getPlanLimitReached();
 		if (planLimitReached) resetPlanLimitReached();

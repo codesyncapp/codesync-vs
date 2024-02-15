@@ -1,32 +1,30 @@
-import fs from "fs";
 import path from "path";
 import vscode from 'vscode';
-import yaml from "js-yaml";
 
 import {
 	Auth0URLs,
-	contextVariables,
 	getRepoInSyncMsg,
 	NOTIFICATION,
 	SYNCIGNORE
 } from '../constants';
-import { checkSubDir, getActiveUsers, getBranch, readYML } from '../utils/common';
+import { checkSubDir, getBranch, readYML } from '../utils/common';
 import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
-import { updateRepo } from '../utils/sync_repo_utils';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
 import { createRedirectUri, generateWebUrl } from "../utils/url_utils";
 import { RepoUtils } from "../utils/repo_utils";
 import { RepoDisconnectHandler, RepoReconnectHandler } from "./repo_commands";
+import { UserUtils } from "../utils/user_utils";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
 };
 
 export const reactivateAccountHandler = () => {
-	const activeUser = getActiveUsers()[0];
+	const userUtils = new UserUtils();
+	const activeUser = userUtils.getActiveUser();
 	if (!activeUser) return vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
 	const webUrl = generateWebUrl("/settings");
 	const redirectURI = createRedirectUri(Auth0URLs.REACTIVATE_CALLBACK_PATH);

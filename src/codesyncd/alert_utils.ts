@@ -7,9 +7,10 @@ import { IRepoInfo, IUser } from "../interface";
 import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { getTeamActivity } from "../utils/api_utils";
-import { getActiveUsers, readYML } from "../utils/common";
+import { readYML } from "../utils/common";
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { statusBarMsgs } from './utils';
+import { UserUtils } from '../utils/user_utils';
 
 
 export class Alerts {
@@ -35,7 +36,7 @@ export class Alerts {
 	checkFor: Date;
 	checkForDate: string;
 	alertsData: any;
-	activeUser: IUser;
+	activeUser: IUser|null;
 	alertConfig: any;
 	statusBarMsgsHandler: any;
 	isDeactivatedAccount = false;
@@ -50,7 +51,8 @@ export class Alerts {
 		this.alertsData = readYML(this.settings.ALERTS);
 		this.checkFor = new Date();
 		this.checkForDate = "";
-		this.activeUser = getActiveUsers()[0];
+		const userUtils = new UserUtils();
+		this.activeUser = userUtils.getActiveUser();
 		this.alertConfig = {};
 		this.statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
 		this.isDeactivatedAccount = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);

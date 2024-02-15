@@ -8,12 +8,12 @@ import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs} from '../../interface';
 import {DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER} from "../../constants";
 import {generateSettings} from "../../settings";
-import {getActiveUsers, getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
+import {getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
 import { getPlanLimitReached } from '../../utils/pricing_utils';
 import { removeFile } from '../../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../../utils/state_utils';
-
+import { UserUtils } from '../../utils/user_utils';
 
 
 export class bufferHandler {
@@ -76,7 +76,8 @@ export class bufferHandler {
 	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
 
 	getDiffFiles = async () => {
-		const activeUser = getActiveUsers()[0];
+		const userUtils = new UserUtils();
+		const activeUser = userUtils.getActiveUser();
 		const diffsBeingProcessed = getDiffsBeingProcessed();
 
         const invalidDiffFiles = await glob("**", { 
@@ -128,7 +129,7 @@ export class bufferHandler {
 			}
 
 			// If diff does not belong to user's repo, skip it
-			if (configRepo.email !== activeUser.email) return false;
+			if (activeUser && configRepo.email !== activeUser.email) return false;
 
 			// Remove diff is repo is disconnected
 			if (configRepo.is_disconnected) {
@@ -228,7 +229,8 @@ export class bufferHandler {
 		
 		try {
 			// Check if we have an active user
-			const activeUser = getActiveUsers()[0];
+			const userUtils = new UserUtils();
+			const activeUser = userUtils.getActiveUser();	
 			if (!activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			const diffs = await this.getDiffFiles();
 			if (!diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
