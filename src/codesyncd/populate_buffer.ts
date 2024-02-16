@@ -378,24 +378,21 @@ export const detectBranchChange = async () => {
     const users = readYML(settings.USER_PATH) || {};
     for (const repoPath of Object.keys(configJSON.repos)) {
 
-        if (configJSON.repos[repoPath].is_disconnected) continue;
-
         const configRepo = configJSON.repos[repoPath];
+        // Do not process Non-Connected Repos
+        if (!configRepo.id) continue;
+        if (configRepo.is_disconnected) continue;
         if (!(configRepo.email in users)) continue;
-
         const user = users[configRepo.email];
         if (!isUserActive(user)) continue;
-
         const accessToken = user.access_token;
         const branch = getBranch(repoPath);
         const pathUtilsObj = new pathUtils(repoPath, branch);
         const shadowRepo = pathUtilsObj.getShadowRepoPath();
-
         if (!fs.existsSync(repoPath) || !fs.existsSync(shadowRepo)) {
             // TODO: Handle out of sync repo
             continue;
         }
-
 		// Check if branch is already being synced, skip it
 		const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${repoPath}:${branch}`;
 		const isSyncInProcess = CodeSyncState.canSkipRun(syncingBranchKey, BRANCH_SYNC_TIMEOUT);

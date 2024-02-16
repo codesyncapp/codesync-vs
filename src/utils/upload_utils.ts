@@ -2,12 +2,11 @@ import fs from 'fs';
 import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
-import { API_ROUTES, HTTP_STATUS_CODES } from "../constants";
+import { API_ROUTES, HttpStatusCodes } from "../constants";
 import { PlanLimitsHandler } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
 import { s3UploaderUtils } from '../init/s3_uploader';
 import { RepoPlanLimitsUtils } from './repo_utils';
-import { showFreeTierLimitReached } from './notifications';
 
 
 export const uploadRepoToServer = async (accessToken: string, data: any, repoId=null) => {
@@ -31,8 +30,9 @@ export const uploadRepoToServer = async (accessToken: string, data: any, repoId=
             }
         }
 	*/
-	let error = '';
-	let statusCode = null;
+	let error = "";
+	let errorCode = 0;
+	let statusCode = 200;
 	let response = await fetch(
 		API_ROUTES.REPO_INIT, {
 			method: 'POST',
@@ -55,30 +55,21 @@ export const uploadRepoToServer = async (accessToken: string, data: any, repoId=
 		}
 	})
 	.catch(err => error = err);
-	if (statusCode === HTTP_STATUS_CODES.PRICING_PLAN_LIMIT_REACHED) {
-		// No need to set state for Connecting Repo since it is performed by User Action
-		if (repoId) {
-			// This is "Branch Upload"
-			const limitsHandler = new PlanLimitsHandler(accessToken, repoId, data.repo_path);
-			await limitsHandler.run();	
-		} else {
-			// This is "Connect Repo"
-			showFreeTierLimitReached(data.repo_path);
-		}
-	} else {
-		const planLimitsUtils = new RepoPlanLimitsUtils(data.repo_path);
-		planLimitsUtils.resetState();
-	}
+
 	if (response.error) {
 		error = response.error.message;
+		errorCode = response.error.error_code;
 	}
 	if (error) {
 		response = {};
 	}
+	const limitsHandler = new PlanLimitsHandler(accessToken, repoId||0, data.repo_path);
+	const msgShown = await limitsHandler.uploadRepo(statusCode, errorCode);
 
 	return {
 		response,
-		error
+		error,
+		msgShown
 	};
 };
 
@@ -116,7 +107,7 @@ export const uploadFile = async (accessToken: string, data: any, repoPath: strin
 	})
 	.catch(err => error = err);
 
-	if (statusCode === HTTP_STATUS_CODES.PRICING_PLAN_LIMIT_REACHED) {
+	if (statusCode === HttpStatusCodes.PAYMENT_REQUIRED) {
 		// Check if key is set or not
 		const limitsHandler = new PlanLimitsHandler(accessToken, data.repo_id, repoPath);
         await limitsHandler.run();

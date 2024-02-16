@@ -175,6 +175,5 @@ export const isUserActive = (user: IUserProfile) => {
 };
 
 export const ErrorCodes  = {
-    PAYMENT_REQUIRED: 402,
-	USER_ACCOUNT_DEACTIVATED: 403
+    PRIVATE_REPO_COUNT_LIMIT_REACHED: 4006
 };

@@ -96,8 +96,8 @@ export const NOTIFICATION = {
 	USE_DIFFERENT_ACCOUNT: "Use different account",
 	PUBLIC: "Public",
 	PRIVATE: "Private",
-	REPO_SYNCED: "Repo synced successfully!",
-	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later",
+	REPO_SYNCED: "Repo connected successfully!",
+	REPO_CONNECTE_FAILED: "Repo could not be connected. Please try again a moment later",
 	SERVICE_NOT_AVAILABLE: "CodeSync service is unavailable. Please try again in a moment.",
 	UPGRADE_PRICING_PLAN: "Please upgrade your plan to continue using CodeSync",
 	UPGRADE_ORG_PLAN: "Please upgrade your Organization's plan to continue using CodeSync",
@@ -119,7 +119,8 @@ export const NOTIFICATION = {
 	USER_ACTIVITY_ALERT: "Hope you had a great day! Shall we review today's code playback?",
 	SIGNUP_FAILED: "Sign up to CodeSync failed!",
 	ACCOUNT_DEACTIVATED: "Your account has been deactivated. Please click 'Reactivate Account' below to resume syncing.",
-	FREE_TIER_LIMIT_REACHED: "We hope you've found CodeSync useful. You'have hit the limit of Free tier for repo"
+	FREE_TIER_LIMIT_REACHED: "We hope you've found CodeSync useful. You'have hit the limit of Free tier for repo",
+	PRIVATE_REPO_COUNT_LIMIT_REACHED: "In the Free plan, you can have just one Private Repository"
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {
@@ -130,6 +131,10 @@ export const getRepoInSyncMsg = (repoPath: string) => {
 export const getDisconnectedRepoMsg = (repoPath: string) => {
 	const repoName = path.basename(repoPath);
 	return `Repo ${repoName} ${NOTIFICATION.REPO_IS_DISCONNECTED}`;
+};
+
+export const getUpgradePlanMsg = (title: string) => {
+	return `${title}. ${NOTIFICATION.UPGRADE_PRICING_PLAN}`;
 };
 
 export const getConnectRepoMsgAfterJoin = (email: string) => {
@@ -253,11 +258,13 @@ export const IGNORE_ACQUIRED_LOCK_TIMEOUT = 5 * 1000;
 export const FORCE_UPLOAD_FROM_DAEMON = DAY;  // 1 day
 export const FORCE_CONNECT_WEBSOCKET_AFTER = 30 * 60 * 1000; // 1000 is for ms;
 
-export const HTTP_STATUS_CODES = {
+export const HttpStatusCodes = {
+	OK: 200,
 	INVALID_USAGE: 400,
 	UNAUTHORIZED: 401,
-	PRICING_PLAN_LIMIT_REACHED: 402,
+	PAYMENT_REQUIRED: 402,
 	FORBIDDEN: 403,
 	NOT_FOUND: 404,
-	SERVER_ERROR: 500
+	SERVER_ERROR: 500,
+	USER_ACCOUNT_DEACTIVATED: 403
 };

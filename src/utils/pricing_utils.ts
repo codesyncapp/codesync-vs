@@ -1,6 +1,6 @@
 import vscode from 'vscode';
-import { contextVariables, NOTIFICATION, NOTIFICATION_BUTTON, PRICING_URL_PATH, RETRY_REQUEST_AFTER } from '../constants';
-import { checkSubDir } from './common';
+import { contextVariables, HttpStatusCodes, NOTIFICATION, NOTIFICATION_BUTTON, PRICING_URL_PATH } from '../constants';
+import { ErrorCodes } from './common';
 import { pathUtils } from './path_utils';
 import { CodeSyncState, CODESYNC_STATES } from "./state_utils";
 import { getRepoPlanInfo } from './sync_repo_utils';
@@ -8,6 +8,7 @@ import { generateWebUrl } from './url_utils';
 import { ConfigUtils } from './config_utils';
 import { RepoPlanLimitsUtils } from './repo_utils';
 import { IRepoPlanInfo } from '../interface';
+import { showFreeTierLimitReached } from './notifications';
 
 export class PlanLimitsHandler {
 
@@ -72,4 +73,22 @@ export class PlanLimitsHandler {
 			vscode.env.openExternal(vscode.Uri.parse(repoPlanInfo.pricingUrl));
 		});
 	}
+	
+	uploadRepo = async (statusCode: number, errorCode: number) => {
+		if (statusCode === HttpStatusCodes.OK){
+			const planLimitsUtils = new RepoPlanLimitsUtils(this.repoPath);
+			planLimitsUtils.resetState();
+			return true;
+		}
+		if (statusCode === HttpStatusCodes.PAYMENT_REQUIRED) {
+			// No need to set state for Connecting Repo since it is performed by User Action
+			// This is "Branch Upload"
+			if (this.repoId) return await this.run();
+			// This is "Connect Repo"
+			const isNewPrivateRepo = errorCode === ErrorCodes.PRIVATE_REPO_COUNT_LIMIT_REACHED;
+			showFreeTierLimitReached(this.repoPath, isNewPrivateRepo);
+			return true;
+		}
+		return false;
+	}	
 }
