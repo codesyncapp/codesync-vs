@@ -14,7 +14,8 @@ import {
     NOTIFICATION_BUTTON,
     getDisconnectedRepoMsg,
     getDirectoryIsSyncedMsg,
-    getDirectorySyncIgnoredMsg
+    getDirectorySyncIgnoredMsg,
+    HttpStatusCodes
 } from "../src/constants";
 import {
     SignUpHandler,
@@ -34,7 +35,8 @@ import {
     setInitialContext,
     registerCommands,
     setupCodeSync,
-    createStatusBarItem
+    createStatusBarItem,
+    generateRandomNumber
 } from "../src/utils/setup_utils";
 import { ErrorCodes } from "../src/utils/common";
 import {
@@ -66,7 +68,7 @@ describe("Extension: activate",() => {
         baseRepoPath = randomBaseRepoPath("activate");
         repoPath = randomRepoPath();
         configPath = getConfigFilePath(baseRepoPath);
-        configData.repos[repoPath] = {branches: {}};
+        configData.repos[repoPath] = {id: generateRandomNumber(1, 100000), branches: {}};
         setWorkspaceFolders(repoPath);
         untildify.mockReturnValue(baseRepoPath);
         global.IS_CODESYNC_TEST_MODE = true;
@@ -367,7 +369,7 @@ describe("Extension: activate",() => {
 
     test("With deactivated user, repo is connected", async () => {
         fetch.resetMocks();
-        fetchMock.mockResponse(JSON.stringify({error: {message: "INVALID_ACCESS_TOKEN"}}), {status: ErrorCodes.USER_ACCOUNT_DEACTIVATED});
+        fetchMock.mockResponse(JSON.stringify({error: {message: "INVALID_ACCESS_TOKEN"}}), {status: HttpStatusCodes.USER_ACCOUNT_DEACTIVATED});
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);

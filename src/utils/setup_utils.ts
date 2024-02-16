@@ -134,16 +134,8 @@ export const addPluginUser = async () => {
     fs.writeFileSync(settings.USER_PATH, yaml.dump(users));
 };
 
-const generateRandom = (min = 0, max = 100)  => {
-	// find diff
-	const difference = max - min;
-	// generate random number
-	let rand = Math.random();
-	// multiply with difference
-	rand = Math.floor( rand * difference);
-	// add with min value
-	rand = rand + min;
-	return rand;
+export const generateRandomNumber = (min = 0, max = 100)  => {
+	return Math.floor(Math.random() * (max - min) ) + min;
 };
 
 export const setupCodeSync = async (repoPath: string) => {
@@ -153,7 +145,7 @@ export const setupCodeSync = async (repoPath: string) => {
 	const userFilePath = settings.USER_PATH;
 	let port = 0;
 	while (!port) {
-		const randomPort = generateRandom(MIN_PORT, MAX_PORT);
+		const randomPort = generateRandomNumber(MIN_PORT, MAX_PORT);
 		const isAvailable = await isPortAvailable(randomPort);
 		if (isAvailable) {
 			port = randomPort;
