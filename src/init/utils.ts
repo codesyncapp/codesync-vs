@@ -222,7 +222,7 @@ export class initUtils {
 			let error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
 			error = `${error}, branch=${branch}, repo=${this.repoPath}`;
 			CodeSyncLogger.error(error, json.error, userEmail);
-			if (!this.viaDaemon) vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
+			if (!this.viaDaemon && !json.msgShown) vscode.window.showErrorMessage(NOTIFICATION.REPO_CONNECTE_FAILED);
 			return false;
 		}
 		/*

@@ -266,9 +266,8 @@ export const showLogIn = () => {
 export const setInitialContext = () => {
 	const repoPath = pathUtils.getRootPath();
 	const repoUtils = new RepoUtils(repoPath);
-	const repoState = repoUtils.getState(false);
+	const repoState = repoUtils.getState();
 	const showConnectRepoView = repoState.IS_OPENED && !repoState.IS_CONNECTED && !repoState.IS_DISCONNECTED;
-	console.log("IS_DISCONNECTED", repoState.IS_DISCONNECTED, showConnectRepoView);
 	vscode.commands.executeCommand('setContext', contextVariables.showLogIn, showLogIn());
 	vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, showConnectRepoView);
 	vscode.commands.executeCommand('setContext', contextVariables.isSubDir, repoState.IS_SUB_DIR);

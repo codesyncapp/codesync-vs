@@ -5,12 +5,12 @@ import vscode from 'vscode';
 import yaml from 'js-yaml';
 import detectPort from "detect-port";
 
-import {ErrorCodes, readYML} from './common';
+import {readYML} from './common';
 import {showConnectRepo} from "./notifications";
 import {createUserWithApi} from "./api_utils";
 import {generateSettings} from "../settings";
 import {reactivateAccountHandler, trackRepoHandler} from "../handlers/commands_handler";
-import {Auth0URLs, contextVariables, ECONNREFUSED, getRepoInSyncMsg, HTTP_STATUS_CODES, NOTIFICATION, NOTIFICATION_BUTTON} from "../constants";
+import {Auth0URLs, contextVariables, ECONNREFUSED, getRepoInSyncMsg, HttpStatusCodes, NOTIFICATION, NOTIFICATION_BUTTON} from "../constants";
 import { CodeSyncLogger } from "../logger";
 import { generateAuthUrl } from "./url_utils";
 import { CODESYNC_STATES, CodeSyncState } from "./state_utils";
@@ -87,7 +87,7 @@ const postDeactivatedAccount = (userEmail: string, accessToken: string) => {
 };
 
 const checkDeactivatedAccount = (email: string, accessToken: string, statusCode: number) => {
-    if (statusCode !== ErrorCodes.USER_ACCOUNT_DEACTIVATED) return false;
+    if (statusCode !== HttpStatusCodes.USER_ACCOUNT_DEACTIVATED) return false;
     postDeactivatedAccount(email, accessToken);
     vscode.window.showErrorMessage(NOTIFICATION.ACCOUNT_DEACTIVATED, NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT).then(selection => {
         if (!selection) return;
@@ -102,7 +102,7 @@ export const isAccountActive = async (email: string, accessToken: string) => {
     const isValidAccount = true;
     const userResponse = await createUserWithApi(accessToken);
     if (!userResponse.error) return isValidAccount;
-    if (userResponse.statusCode === HTTP_STATUS_CODES.UNAUTHORIZED) {
+    if (userResponse.statusCode === HttpStatusCodes.UNAUTHORIZED) {
         askAndTriggerSignUp();
         return false;
     }

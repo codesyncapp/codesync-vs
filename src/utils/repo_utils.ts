@@ -46,7 +46,7 @@ export class RepoUtils {
 			this.repoPath = repoState.PARENT_REPO_PATH;
 		}
 		const repoConfig = this.config.repos[this.repoPath];
-		if (!repoConfig) return repoState;
+		if (!repoConfig || !repoConfig.id) return repoState;
 		if (repoConfig.is_disconnected) {
 			repoState.IS_DISCONNECTED = true;
 			return repoState;

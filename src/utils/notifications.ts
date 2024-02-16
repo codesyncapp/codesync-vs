@@ -1,7 +1,7 @@
 import vscode from 'vscode';
 import { initHandler } from '../init/init_handler';
 import { redirectToBrowser } from './auth_utils';
-import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON, PRICING_URL_PATH } from '../constants';
+import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON, PRICING_URL_PATH, getUpgradePlanMsg } from '../constants';
 import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
 import { UserUtils } from './user_utils';
 import { generateWebUrl } from './url_utils';
@@ -118,10 +118,9 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 		});
 };
 
-export const showFreeTierLimitReached = (repoPath: string) => {
-	let msg = NOTIFICATION.FREE_TIER_LIMIT_REACHED;
-	const subMsg = NOTIFICATION.UPGRADE_PRICING_PLAN;
-	msg = `${msg} ${repoPath}. ${subMsg}`;
+export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=false) => {
+	const title = isNewPrivateRepo ? NOTIFICATION.PRIVATE_REPO_COUNT_LIMIT_REACHED: `${NOTIFICATION.FREE_TIER_LIMIT_REACHED} ${repoPath}`;
+	const msg = getUpgradePlanMsg(title);
 	// TODO: get canAvailTrial from /users/pricing/subscription API call
 	const button = NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
 	const pricingUrl = generateWebUrl(PRICING_URL_PATH);

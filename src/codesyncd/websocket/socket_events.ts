@@ -1,7 +1,7 @@
 import fs from "fs";
 import vscode from "vscode";
 
-import {contextVariables, ERROR_SENDING_DIFFS, STATUS_BAR_MSGS} from "../../constants";
+import {contextVariables, ERROR_SENDING_DIFFS, HttpStatusCodes, STATUS_BAR_MSGS} from "../../constants";
 import {CodeSyncLogger, logErrorMsg} from "../../logger";
 import {IDiff, IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffHandler} from "../handlers/diff_handler";
@@ -10,7 +10,7 @@ import {getDiffsBeingProcessed, setDiffsBeingProcessed, statusBarMsgs} from "../
 import {markUsersInactive} from "../../utils/auth_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
 import { PlanLimitsHandler } from "../../utils/pricing_utils";
-import { ErrorCodes, readYML } from "../../utils/common";
+import { readYML } from "../../utils/common";
 import { RepoPlanLimitsUtils } from "../../utils/repo_utils";
 
 
@@ -122,7 +122,7 @@ export class SocketEvents {
                     case 200:
                         await this.onValidAuth();
                         return true;
-                    case ErrorCodes.USER_ACCOUNT_DEACTIVATED:
+                    case HttpStatusCodes.USER_ACCOUNT_DEACTIVATED:
                         this.onDeactivatedAccount();
                         return true;    
                     default:
@@ -134,7 +134,7 @@ export class SocketEvents {
                     case 200:
                         this.onSyncSuccess(resp.diff_file_path);
                         return true;
-                    case ErrorCodes.PAYMENT_REQUIRED:
+                    case HttpStatusCodes.PAYMENT_REQUIRED:
                         await this.onRepoSizeLimitReached(resp.repo_id); 
                         return true;    
                     default:
