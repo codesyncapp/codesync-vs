@@ -37,11 +37,9 @@ export const createUserWithApi = async (accessToken: string) => {
 	if (response.error) {
 		error = response.error.message;
 	}
-
 	if (!error) {
 		email = response.user.email;
 	}
-
 	return {
 		email,
 		error,

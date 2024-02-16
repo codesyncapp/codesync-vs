@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs, { stat } from 'fs';
 import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
@@ -51,7 +51,8 @@ export const uploadRepoToServer = async (accessToken: string, data: any, repoId=
 		try {
 			return JSON.parse(text); // Try to parse the response as JSON
 		} catch(err) {
-			return {error: {message: text ? text : "Failed to parse to JSON response"}};
+			statusCode = 500;
+			return {error: {message: text ? text : "Failed to parse to JSON response"}, statusCode};
 		}
 	})
 	.catch(err => error = err);
@@ -102,6 +103,7 @@ export const uploadFile = async (accessToken: string, data: any, repoPath: strin
 		try {
 			return {...JSON.parse(text), statusCode}; // Try to parse the response as JSON
 		} catch(err) {
+			statusCode = 500;
 			return {error: {message: text ? text : "Failed to parse to JSON response", statusCode}};
 		}
 	})

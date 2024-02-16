@@ -219,7 +219,7 @@ export class initUtils {
 		if (json.error) {
 			// Reset the key here and try again in next attempt
 			CodeSyncState.set(syncingBranchKey, false);
-			let error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
+			let error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_CONNECTING_REPO;
 			error = `${error}, branch=${branch}, repo=${this.repoPath}`;
 			CodeSyncLogger.error(error, json.error, userEmail);
 			if (!this.viaDaemon && !json.msgShown) vscode.window.showErrorMessage(NOTIFICATION.REPO_CONNECTE_FAILED);

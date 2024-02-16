@@ -377,7 +377,6 @@ export const detectBranchChange = async () => {
     const configJSON = readYML(settings.CONFIG_PATH);
     const users = readYML(settings.USER_PATH) || {};
     for (const repoPath of Object.keys(configJSON.repos)) {
-
         const configRepo = configJSON.repos[repoPath];
         // Do not process Non-Connected Repos
         if (!configRepo.id) continue;

@@ -66,7 +66,7 @@ describe("connectRepoHandler",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("No Repo Path",  async () => {
+    test("No Repo Path", async () => {
         await connectRepoHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
@@ -172,7 +172,7 @@ describe("RepoDisconnectHandler.postSelection",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("No Selection",  async () => {
+    test("No Selection", async () => {
         const commandHandler = new RepoDisconnectHandler();
         await commandHandler.postSelection(undefined);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
@@ -180,7 +180,7 @@ describe("RepoDisconnectHandler.postSelection",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Clicked Cancel",  async () => {
+    test("Clicked Cancel", async () => {
         const commandHandler = new RepoDisconnectHandler();
         await commandHandler.postSelection(NOTIFICATION.CANCEL);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
@@ -188,12 +188,9 @@ describe("RepoDisconnectHandler.postSelection",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Repo is already inactive",  async () => {
-        configData.repos[repoPath] = {
-            is_disconnected: true,
-            branches: {}
-        };
-        fs.writeFileSync(configPath, yaml.dump(configData));
+    test("Repo is already disconnected", async () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo(true);
         const commandHandler = new RepoDisconnectHandler();
         await commandHandler.postSelection(NOTIFICATION.YES);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
@@ -201,7 +198,7 @@ describe("RepoDisconnectHandler.postSelection",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Disconnecting error from server",  async () => {
+    test("Disconnecting error from server", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         const errJSON = {error: {message: "NOT SO FAST"}};
@@ -214,7 +211,7 @@ describe("RepoDisconnectHandler.postSelection",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Should Disconnect",  async () => {
+    test("Should Disconnect", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({}));
@@ -267,7 +264,7 @@ describe("RepoReconnectHandler.run",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("Reconnect Repo",  async () => {
+    test("Reconnect Repo", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo(true);
         fetchMock.mockResponseOnce(JSON.stringify({}));
@@ -289,7 +286,7 @@ describe("RepoReconnectHandler.run",  () => {
         expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
     });
 
-    test("Try to reconnect Repo already connected repo",  async () => {
+    test("Try to reconnect Repo already connected repo", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({}));
@@ -304,7 +301,7 @@ describe("RepoReconnectHandler.run",  () => {
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
     });
 
-    test("API error while reconnecting repo",  async () => {
+    test("API error while reconnecting repo", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo(true);
         fetchMock.mockResponseOnce(JSON.stringify({error: {message: "Error Msg"}}));
@@ -352,7 +349,7 @@ describe("trackRepoHandler",  () => {
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(0);
     });
 
-    test("Repo in config",  async () => {
+    test("Repo in config", async () => {
         setWorkspaceFolders(repoPath);
         configData.repos[repoPath] = {
             id: 1234,
@@ -364,7 +361,7 @@ describe("trackRepoHandler",  () => {
         expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
     });
 
-    test("With nested directory",  async () => {
+    test("With nested directory", async () => {
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
     

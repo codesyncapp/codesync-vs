@@ -106,7 +106,7 @@ export const NOTIFICATION = {
 	REPO_IN_SYNC: "is in sync with CodeSync.",
 	REPO_IS_DISCONNECTED: "is disconnected.",
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again",
-	ERROR_SYNCING_REPO: "Error syncing repo.",
+	ERROR_CONNECTING_REPO: "Error connecting repo.",
 	ERROR_SYNCING_BRANCH: "Error syncing branch",
 	REPO_DISCONNECTED: "Repo disconnected successfully",
 	REPO_RECONNECTED: "Repo reconnected successfully",

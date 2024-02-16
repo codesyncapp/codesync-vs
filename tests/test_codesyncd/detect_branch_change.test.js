@@ -24,9 +24,10 @@ import {
     TEST_USER,
     writeTestRepoFiles,
     NESTED_PATH,
-    waitFor
+    waitFor,
+    Config
 } from "../helpers/helpers";
-import {createSystemDirectories} from "../../src/utils/setup_utils";
+import {createSystemDirectories, generateRandomNumber} from "../../src/utils/setup_utils";
 
 
 describe("detectBranchChange", () => {
@@ -99,30 +100,21 @@ describe("detectBranchChange", () => {
         return true;
     };
 
-    test("No repo synced", async () => {
+    test("No repo connected", async () => {
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
     });
 
-    test("Repo is synced, but is_disconnected", async () => {
-        const _configData = {repos: {}};
-        _configData.repos[repoPath] = {
-            branches: {},
-            email: TEST_EMAIL,
-            is_disconnected: true
-        };
-        fs.writeFileSync(configPath, yaml.dump(_configData));
+    test("Repo is disconnected", async () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo(true);
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
     });
 
-    test("Repo is synced with account not in user.yml", async () => {
-        const _configData = {repos: {}};
-        _configData.repos[repoPath] = {
-            branches: {},
-            email: `another-${TEST_EMAIL}`
-        };
-        fs.writeFileSync(configPath, yaml.dump(_configData));
+    test("Repo is connected with account not in user.yml", async () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo(false, `another-${TEST_EMAIL}`);
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
     });
@@ -130,24 +122,17 @@ describe("detectBranchChange", () => {
     test("No active user", async () => {
         addUser(baseRepoPath, false);
         jest.spyOn(global.console, 'log');
-        const _configData = {repos: {}};
-        _configData.repos[repoPath] = {
-            branches: {},
-            email: TEST_EMAIL
-        };
-        fs.writeFileSync(configPath, yaml.dump(_configData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
     });
 
-    test("Actual repo exists, Shadow repo does not exist", async () => {
+    test("Repo exists but shadow repo does not exist", async () => {
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
-        const _configData = {repos: {}};
-        _configData.repos[repoPath] = {
-            branches: {},
-            email: TEST_EMAIL
-        };
-        fs.writeFileSync(configPath, yaml.dump(_configData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+        fs.rmSync(pathUtilsObj.getShadowRepoPath(), {recursive: true, force: true});
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
         expect(console.log).toHaveBeenCalledTimes(0);
@@ -156,14 +141,9 @@ describe("detectBranchChange", () => {
     test("Actual repo has been deleted but shadow exists", async () => {
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
-        const _configData = {repos: {}};
-        _configData.repos[repoPath] = {
-            branches: {},
-            email: TEST_EMAIL
-        };
-        fs.writeFileSync(configPath, yaml.dump(_configData));
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         fs.rmSync(repoPath, {recursive: true, force: true});
-
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
         expect(console.log).toHaveBeenCalledTimes(0);
@@ -174,6 +154,7 @@ describe("detectBranchChange", () => {
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const _configData = {repos: {}};
         _configData.repos[repoPath] = {
+            id: generateRandomNumber(1, 100000),
             branches: {},
             email: TEST_EMAIL
         };
@@ -187,14 +168,8 @@ describe("detectBranchChange", () => {
     test("Repo is synced with same branch with valid file IDs", async () => {
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
-        const _configData = {repos: {}};
-        _configData.repos[repoPath] = {
-            branches: {},
-            email: TEST_EMAIL
-        };
-        _configData.repos[repoPath].branches[DEFAULT_BRANCH] = TEST_REPO_RESPONSE.file_path_and_id;
-        fs.writeFileSync(configPath, yaml.dump(_configData));
-        
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();        
         const userData = {};
         userData[TEST_EMAIL] = {
             access_token: "ABC",
@@ -211,6 +186,7 @@ describe("detectBranchChange", () => {
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const _configData = {repos: {}};
         _configData.repos[repoPath] = {
+            id: generateRandomNumber(1, 100000),
             branches: {},
             email: TEST_EMAIL
         };
@@ -236,6 +212,7 @@ describe("detectBranchChange", () => {
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const _configData = {repos: {}};
         _configData.repos[repoPath] = {
+            id: generateRandomNumber(1, 100000),
             branches: {},
             email: TEST_EMAIL
         };
@@ -255,6 +232,7 @@ describe("detectBranchChange", () => {
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const _configData = {repos: {}};
         _configData.repos[repoPath] = {
+            id: generateRandomNumber(1, 100000),
             branches: {},
             email: TEST_EMAIL
         };
@@ -278,6 +256,7 @@ describe("detectBranchChange", () => {
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const _configData = {repos: {}};
         _configData.repos[repoPath] = {
+            id: generateRandomNumber(1, 100000),
             branches: {},
             email: TEST_EMAIL
         };
