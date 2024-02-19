@@ -204,8 +204,7 @@ export class statusBarMsgs {
 		const activeUser = userUtils.getActiveUser();
 		if (!activeUser) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
 		// Check plan limits
-		const repoLimitsState = new RepoPlanLimitsState(repoPath);
-		const repoLimitsState = repoLimitsState.get();
+		const repoLimitsState = new RepoPlanLimitsState(repoPath).get();
 		if (repoLimitsState.planLimitReached) {
 			const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
 			return canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
