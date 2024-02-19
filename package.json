@@ -302,7 +302,7 @@
     "@types/express": "^4.17.21",
     "@types/node-fetch": "^2.5.12",
     "@types/proper-lockfile": "^4.1.4",
-    "@types/run-parallel": "^1.1.0",
+    "@types/run-parallel": "^1.1.2",
     "@types/string-similarity": "^4.0.0",
     "current-git-branch": "^1.1.0",
     "dateformat": "3.0.1",

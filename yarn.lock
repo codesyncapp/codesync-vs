@@ -2519,10 +2519,10 @@
   resolved "https://registry.yarnpkg.com/@types/retry/-/retry-0.12.2.tgz#ed279a64fa438bb69f2480eda44937912bb7480a"
   integrity sha512-XISRgDJ2Tc5q4TRqvgJtzsRkFYNJzZrhTdtMoGVBttwzzQJkPnS3WWTFc7kuDRoPtPakl+T+OfdEUjYJj7Jbow==
 
-"@types/run-parallel@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@types/run-parallel/-/run-parallel-1.1.0.tgz#642f8b350961d7d59c5bfc2fa885fe7cd47a0eb9"
-  integrity sha512-Pq/gMWP/mQO3fQIQ7KXe5YKuyhxcUl3ArrIoYUSaCmoeLlftjwNotD24MdkpJPwY8vvEq4vnC0rVXwT5ry3Rlg==
+"@types/run-parallel@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@types/run-parallel/-/run-parallel-1.1.2.tgz#b9b9b741e496e198e301393d985335ec90f0ea8e"
+  integrity sha512-VTfcfGokDmgvrrDyq4gXv8Psv0NJCTk2dVYP3PSskghSYljtEuX2LUF6rWGg1fZP/BXxt/4urZl6arSx1b/Sgw==
 
 "@types/semver@^7.3.12":
   version "7.5.0"
