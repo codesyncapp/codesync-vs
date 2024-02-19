@@ -20,7 +20,8 @@ import {
     randomBaseRepoPath,
     randomRepoPath,
     setWorkspaceFolders,
-    TEST_EMAIL
+    TEST_EMAIL,
+    addUser
 } from "../helpers/helpers";
 import {
     NOTIFICATION,
@@ -111,6 +112,7 @@ describe("RepoDisconnectHandler.run",  () => {
         setWorkspaceFolders(repoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
+        addUser(baseRepoPath);
         fs.writeFileSync(configPath, yaml.dump(configData));
         fs.writeFileSync(userFilePath, yaml.dump(userData));
     });

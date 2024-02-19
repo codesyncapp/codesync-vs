@@ -15,7 +15,7 @@ import {
 import { IUserProfile } from "../interface";
 import { generateSettings } from "../settings";
 import { CodeSyncLogger } from '../logger';
-import { UserUtils } from './user_utils';
+import { UserState } from './user_utils';
 
 
 export const readFile = (filePath: string) => {
@@ -37,8 +37,8 @@ export const checkSubDir = (currentRepoPath: string) => {
 	let isSyncIgnored = false;
 	const settings = generateSettings();
 	const configPath = settings.CONFIG_PATH;
-	const userUtils = new UserUtils();
-	const activeUser = userUtils.getActiveUser();
+	const userState = new UserState();
+	const activeUser = userState.getUser();
 	if (!activeUser) return {
 		isSubDir: false,
 		parentRepo: "",

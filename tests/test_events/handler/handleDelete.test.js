@@ -304,6 +304,7 @@ describe("handleDirectoryDeleteDiffs", () => {
         baseRepoPath = randomBaseRepoPath();
         repoPath = randomRepoPath();
         untildify.mockReturnValue(baseRepoPath);
+        const configPath = getConfigFilePath(baseRepoPath);
         pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         diffsRepo = pathUtilsObj.getDiffsRepo();
         shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
@@ -314,7 +315,11 @@ describe("handleDirectoryDeleteDiffs", () => {
         relFilePath = path.join("directory", fileRelPath);
         cacheFilePath = path.join(cacheRepoBranchPath, relFilePath);
     
-
+        fs.mkdirSync(baseRepoPath, { recursive: true });
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+        // Add user
+        addUser(baseRepoPath);
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(diffsRepo, { recursive: true });
         fs.mkdirSync(shadowDirectoryPath, { recursive: true });

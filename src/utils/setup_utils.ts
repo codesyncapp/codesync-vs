@@ -36,7 +36,7 @@ import { CodeSyncLogger } from '../logger';
 import { GitExtension } from '../git';
 import { CODESYNC_STATES, CodeSyncState } from './state_utils';
 import { RepoState } from './repo_state_utils';
-import { UserUtils } from './user_utils';
+import { UserState } from './user_utils';
 
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
@@ -162,15 +162,15 @@ export const setupCodeSync = async (repoPath: string) => {
 		return;
 	}
 	// Check if there is valid user present
-	const userUtils = new UserUtils();
-	const activeUser = userUtils.getActiveUser();
+	const userUtils = new UserState();
+	const activeUser = userUtils.getUser(false);
 	if (!activeUser) {
 		showSignUpButtons();
 		return;
 	}
 	// Check is accessToken is valid 
-	const success = await isAccountActive(activeUser.email, activeUser.access_token);
-	if (!success) return;
+	const isUserActive = await isAccountActive(activeUser.email, activeUser.access_token);
+	if (!isUserActive) return;
 	CodeSyncLogger.debug(`User's access token is active, user=${activeUser.email}`);		
 	// Show Repo Status
 	showRepoStatusMsg(repoPath);
@@ -249,8 +249,8 @@ export const registerGitListener = async (repoPath: string) => {
 };
 
 export const showLogIn = () => {
-	const userUtils = new UserUtils();
-	const activeUser = userUtils.getActiveUser();
+	const userState = new UserState();
+	const activeUser = userState.getUser(false);
 	return !activeUser;
 };
 

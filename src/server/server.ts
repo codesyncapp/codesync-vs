@@ -11,7 +11,7 @@ import {
 import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { createUserWithApi } from "../utils/api_utils";
-import { UserUtils } from "../utils/user_utils";
+import { UserState } from "../utils/user_utils";
 
 export const initExpressServer = () => {
     const msgs = {
@@ -59,11 +59,11 @@ export const initExpressServer = () => {
         const userResponse = await createUserWithApi(accessToken);
         if (userResponse.error) return res.send(msgs.TOKEN_VERIFICATION_FAILED);
         // Verify that accessToken's user is same as logged-in user
-        const userUtils = new UserUtils();
-		const activeUser = userUtils.getActiveUser();
+        const userState = new UserState();
+		const activeUser = userState.getUser();
         if (activeUser && activeUser.email !== userResponse.email) return res.send(msgs.TOKEN_VERIFICATION_FAILED);
         vscode.window.showInformationMessage(NOTIFICATION.REACTIVATED_SUCCESS);
-        CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
+        userState.setValidAccount();
         CodeSyncState.set(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT, false);
         vscode.commands.executeCommand('setContext', contextVariables.showLogIn, false);
         vscode.commands.executeCommand('setContext', contextVariables.showReactivateAccount, false);

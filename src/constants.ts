@@ -96,7 +96,7 @@ export const NOTIFICATION = {
 	USE_DIFFERENT_ACCOUNT: "Use different account",
 	PUBLIC: "Public",
 	PRIVATE: "Private",
-	REPO_SYNCED: "Repo connected successfully!",
+	REPO_CONNECTED: "Repo connected successfully!",
 	REPO_CONNECTE_FAILED: "Repo could not be connected. Please try again a moment later",
 	SERVICE_NOT_AVAILABLE: "CodeSync service is unavailable. Please try again in a moment.",
 	UPGRADE_PRICING_PLAN: "Please upgrade your plan to continue using CodeSync",
@@ -238,6 +238,7 @@ export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .sy
 // Log after 5 min, as daemon restarts after 5s so it will log after 60 iterations
 export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
 export const RETRY_REQUEST_AFTER = 3 * 60 * 1000; // 1000 is for ms;
+export const SHOW_PLAN_UPGRADE_MSG_AFTER = 5 * RETRY_REQUEST_AFTER;
 export const RETRY_TEAM_ACTIVITY_REQUEST_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const BRANCH_SYNC_TIMEOUT = 3 * 60 * 1000; // 1000 is for ms
 export const S3_UPLOADER_TIMEOUT = 10 * 60 * 1000; // 1000 is for ms

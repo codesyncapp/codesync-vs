@@ -37,6 +37,7 @@ import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { removeFile } from "../utils/file_utils";
 import { s3UploaderUtils } from "../init/s3_uploader";
+import { UserState } from "../utils/user_utils";
 
 
 const shouldProceed = () => {
@@ -45,8 +46,9 @@ const shouldProceed = () => {
         - branchSync is not in progress
         - populateBuffer is not running already
     */
-    const isDeactivatedAccount = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);
-    if (isDeactivatedAccount) return false;
+    const userState = new UserState();
+    const isValidAccount = userState.isValidAccount();
+    if (!isValidAccount) return false;
     // Return if any branch is being uploaded to s3
     const s3UploaderRunning = CodeSyncState.canSkipRun(CODESYNC_STATES.UPLOADING_TO_S3, S3_UPLOADER_TIMEOUT);
     if (s3UploaderRunning) return false;

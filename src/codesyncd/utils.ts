@@ -23,7 +23,7 @@ import { readFile, readYML } from '../utils/common';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { removeFile } from '../utils/file_utils';
 import { RepoPlanLimitsState, RepoState } from '../utils/repo_state_utils';
-import { UserUtils } from '../utils/user_utils';
+import { UserState } from '../utils/user_utils';
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -197,12 +197,11 @@ export class statusBarMsgs {
 		if (!fs.existsSync(this.settings.CONFIG_PATH)) return STATUS_BAR_MSGS.NO_CONFIG;
 		const repoPath = pathUtils.getRootPath();
 		const daemonError = CodeSyncState.get(CODESYNC_STATES.DAEMON_ERROR);
-		const isDeactivated = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);
-		if (isDeactivated) return STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED;
+		const userState = new UserState().get();
 		// No Valid account found
-		const userUtils = new UserUtils();
-		const activeUser = userUtils.getActiveUser();
-		if (!activeUser) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
+		if (!userState.isActive) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
+		// Account is deactivated
+		if (userState.isDeactivated) return STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED;
 		// Check plan limits
 		const repoLimitsState = new RepoPlanLimitsState(repoPath).get();
 		if (repoLimitsState.planLimitReached) {

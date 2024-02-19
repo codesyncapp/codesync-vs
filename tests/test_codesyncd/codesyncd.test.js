@@ -6,6 +6,7 @@ import untildify from "untildify";
 import {generateSettings} from "../../src/settings";
 import {recallDaemon} from "../../src/codesyncd/codesyncd";
 import {CodeSyncState, CODESYNC_STATES} from "../../src/utils/state_utils";
+import { UserState } from "../../src/utils/user_utils";
 import {
     randomBaseRepoPath,
     getConfigFilePath,
@@ -111,6 +112,8 @@ describe("codesyncd: recallDaemon", () => {
 
     test("No valid user", () => {
         fs.rmSync(userFilePath);
+        const userState = new UserState();
+        userState.set(false, false);
         recallDaemon(statusBarItem);
         expect(assertCommon(STATUS_BAR_MSGS.AUTHENTICATION_FAILED, COMMAND.triggerSignUp)).toBe(true);
     });

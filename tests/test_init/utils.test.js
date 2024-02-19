@@ -342,7 +342,7 @@ describe("uploadRepo",  () => {
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_SYNCED);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_CONNECTED);
 
         // Make sure files have been deleted from .originals
         filePaths.forEach(_filePath => {
@@ -389,7 +389,7 @@ describe("uploadRepo",  () => {
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         // Verify notification msg
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_SYNCED);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_CONNECTED);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         // Assert API call
         expect(fetch.mock.calls[1][0]).toStrictEqual(API_ROUTES.REPO_INIT);

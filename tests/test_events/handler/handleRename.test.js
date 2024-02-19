@@ -23,7 +23,7 @@ import {
     DEFAULT_SYNCIGNORE_TEST_DATA
 } from "../../helpers/helpers";
 import {populateBuffer} from "../../../src/codesyncd/populate_buffer";
-import { createSystemDirectories, createOrUpdateSyncignore } from "../../../src/utils/setup_utils";
+import { createSystemDirectories, createOrUpdateSyncignore, generateRandomNumber } from "../../../src/utils/setup_utils";
 
 describe("handleRenameFile",  () => {
     /*
@@ -345,16 +345,15 @@ describe("handleRenameFile",  () => {
         const renamedFilePath = path.join(repoPath, directoryNewRelPath);
         const config = {repos: {}};
         config.repos[repoPath] = {
+            id: generateRandomNumber(1, 1000000),
             branches: {},
             email: TEST_EMAIL
         };
         config.repos[repoPath].branches[DEFAULT_BRANCH] = {};
         config.repos[repoPath].branches[DEFAULT_BRANCH][directoryOldRelPath] = FILE_ID;
         fs.writeFileSync(configPath, yaml.dump(config));
-
         // Write data to new file
         fs.writeFileSync(renamedFilePath, "use babel;");
-
         const handler = new eventHandler();
         handler.handleRename(oldDirectoryPath, newDirectoryPath);
         await waitFor(1);
@@ -369,6 +368,7 @@ describe("handleRenameFile",  () => {
         const renamedFilePath = path.join(newDirectoryPath, fileRelPath);
         const config = {repos: {}};
         config.repos[repoPath] = {
+            id: generateRandomNumber(1, 1000000),
             branches: {},
             email: TEST_EMAIL
         };

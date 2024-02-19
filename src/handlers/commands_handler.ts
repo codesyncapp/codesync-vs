@@ -16,15 +16,15 @@ import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
 import { createRedirectUri, generateWebUrl } from "../utils/url_utils";
 import { RepoState } from "../utils/repo_state_utils";
 import { RepoDisconnectHandler, RepoReconnectHandler } from "./repo_commands";
-import { UserUtils } from "../utils/user_utils";
+import { UserState } from "../utils/user_utils";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
 };
 
 export const reactivateAccountHandler = () => {
-	const userUtils = new UserUtils();
-	const activeUser = userUtils.getActiveUser();
+	const userState = new UserState();
+	const activeUser = userState.getUser();
 	if (!activeUser) return vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
 	const webUrl = generateWebUrl("/settings");
 	const redirectURI = createRedirectUri(Auth0URLs.REACTIVATE_CALLBACK_PATH);

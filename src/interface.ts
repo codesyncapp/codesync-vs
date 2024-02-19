@@ -95,10 +95,16 @@ export interface IRepoPlanLimitState {
 	canRetry: boolean;
 	planLimitReached: boolean;
 	canAvailTrial: boolean;
+	canShowNotification: boolean;
 }
 
 export interface IRepoPlanInfo {
 	isOrgRepo: boolean;
 	pricingUrl: string;
 	canAvailTrial: boolean;
+}
+
+export interface IUserState {
+	isActive: boolean;
+	isDeactivated: boolean;
 }

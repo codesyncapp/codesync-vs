@@ -6,6 +6,7 @@ import vscode from "vscode";
 import {readYML, readFile} from "../../src/utils/common";
 import {diff_match_patch} from "diff-match-patch";
 import {pathUtils} from "../../src/utils/path_utils";
+import {UserState} from "../../src/utils/user_utils";
 import {generateRandomNumber} from "../../src/utils/setup_utils";
 import {DEFAULT_BRANCH, VSCODE} from "../../src/constants";
 
@@ -283,6 +284,8 @@ export const addUser = (baseRepoPath, isActive=true) => {
     // Add user
     const userFilePath = getUserFilePath(baseRepoPath);
     const userFileData = {};
+    const userState = new UserState();
+    userState.set(isActive, false);
     userFileData[TEST_USER.email] = {
         access_key: TEST_USER.iam_access_key,
         secret_key: TEST_USER.iam_secret_key,

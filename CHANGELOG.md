@@ -13,7 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated messages for a disconnected repository in menus, left panel and notifications
 - Repo based plan limits implemented, improved button text to upgrade pricing plans, removed pricing_lock file
 - Skipping Diffs for the repository for which limit is reached. We try sending diffs after allowed wait time
+- Added 15m delay in showing Upgrade Plan Notification per repo
 - Added error handling if PrivateRepoCountLimit is reached
+- Managing user from State to avoid read/write in user config file
 
 ## [3.38.0] - 2024-01-12
 - Sending commit_hash for new files 
