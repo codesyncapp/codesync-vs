@@ -64,7 +64,7 @@ export class RepoDisconnectHandler extends RepoCommandsHandler {
 		configRepo.is_disconnected = true;
 		this.writeToConfig();
 		// TODO: Maybe should delete repo from .shadow and .originals?
-		vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, true);
+		vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, false);
 		vscode.commands.executeCommand('setContext', contextVariables.isSubDir, false);
 		vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, false);
 		vscode.commands.executeCommand('setContext', contextVariables.isDisconnectedRepo, true);

@@ -179,7 +179,7 @@ export const setupCodeSync = async (repoPath: string) => {
 export const showRepoStatusMsg = (repoPath: string) => {
 	if (!repoPath) return;
 	registerSyncIgnoreSaveEvent(repoPath);
-	const repoState = new RepoState(repoPath).get(false);
+	const repoState = new RepoState(repoPath).get();
 	if (repoState.IS_SUB_DIR && repoState.IS_SYNC_IGNORED) {
 		showSyncIgnoredRepo(repoPath, repoState.PARENT_REPO_PATH);
 		return;

@@ -1,5 +1,5 @@
 import vscode from 'vscode';
-import { checkSubDir, getBranch } from "./common";
+import { checkSubDir } from "./common";
 import { IRepoPlanLimitState, IRepoState } from '../interface';
 import { ConfigUtils } from './config_utils';
 import { CODESYNC_STATES, CodeSyncState } from "./state_utils";
@@ -18,7 +18,7 @@ export class RepoState {
 		this.config = configUtils.config;
 	}
 	
-	get (checkFileIds=true) : IRepoState {
+	get () : IRepoState {
 		/*
 		Returns true if follwing conditions exist, and returns false otherwise 
 		- if repoPath exists in config.yml 
@@ -52,17 +52,6 @@ export class RepoState {
 		}
 		if (!repoConfig.email) return repoState;
 		repoState.IS_CONNECTED = true;
-		if (!checkFileIds) return repoState;
-		const branch = getBranch(this.repoPath);
-		// If branch is not uploaded, daemon will take care of that
-		if (!(branch in repoConfig.branches)) return repoState;
-		const configFiles = repoConfig.branches[branch];
-		const invalidFiles = Object.keys(configFiles).filter(relPath => configFiles[relPath] === null);
-		const hasNullIds = invalidFiles.length && invalidFiles.length === Object.keys(configFiles).length;
-		if (hasNullIds) {
-			repoState.IS_CONNECTED = false;
-			return repoState; 
-		}
 		return repoState;
 	}
 }

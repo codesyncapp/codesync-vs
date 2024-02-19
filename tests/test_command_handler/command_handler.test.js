@@ -226,7 +226,7 @@ describe("RepoDisconnectHandler.postSelection",  () => {
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(4);
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showConnectRepoView);
-        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(false);
         expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
         expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.isSubDir);
         expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
