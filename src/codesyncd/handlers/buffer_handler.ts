@@ -13,7 +13,7 @@ import {SocketClient} from "../websocket/socket_client";
 import { removeFile } from '../../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../../utils/state_utils';
 import { UserUtils } from '../../utils/user_utils';
-import { RepoPlanLimitsUtils } from '../../utils/repo_utils';
+import { RepoPlanLimitsState } from '../../utils/repo_utils';
 
 
 export class bufferHandler {
@@ -136,9 +136,8 @@ export class bufferHandler {
 				return false;
 			}
 			// Skip the diff if repo's limit has been reached and retry after allowed time
-			const repoPlanLimitUtils = new RepoPlanLimitsUtils(diffData.repo_path);
-			const state = repoPlanLimitUtils.getState();
-			if (state.planLimitReached && !state.canRetry) return false;
+			const repoLimitsState = new RepoPlanLimitsState(diffData.repo_path).get();
+			if (repoLimitsState.planLimitReached && !repoLimitsState.canRetry) return false;
 			// Skip diffs that are already being iterated
 			if (diffsBeingProcessed.has(filePath)) return false;
 			// If rel_path is ignoreable, only delete event should be allowed for that
@@ -155,7 +154,7 @@ export class bufferHandler {
 				// We want to keep data in case plan limit is reached so that user can access it when plan is upgraded
 				const fileInfo = fs.lstatSync(filePath);
 				if (new Date().getTime() - fileInfo.ctimeMs > (DAY * 5)) {
-					if (state.planLimitReached) {
+					if (repoLimitsState.planLimitReached) {
 						CodeSyncLogger.error(
 							`Keeping diff: Branch=${diffData.branch} is not synced. Repo=${diffData.repo_path}`,
 							"", 

@@ -6,7 +6,7 @@ import { CodeSyncState, CODESYNC_STATES } from "./state_utils";
 import { getRepoPlanInfo } from './sync_repo_utils';
 import { generateWebUrl } from './url_utils';
 import { ConfigUtils } from './config_utils';
-import { RepoPlanLimitsUtils } from './repo_utils';
+import { RepoPlanLimitsState } from './repo_utils';
 import { IRepoPlanInfo } from '../interface';
 import { showFreeTierLimitReached } from './notifications';
 
@@ -49,8 +49,8 @@ export class PlanLimitsHandler {
 		if (!repoPath) return;
 		const repoPlanInfo = await this._getRepoPlanInfo();
 		// Set RepoPlanLimitsState
-		const repoPlanLimitUtils = new RepoPlanLimitsUtils(repoPath);
-		repoPlanLimitUtils.setState(repoPlanInfo.canAvailTrial);
+		const repoPlanLimitsState = new RepoPlanLimitsState(repoPath);
+		repoPlanLimitsState.set(repoPlanInfo.canAvailTrial);
 		// Mark upgradePricingPlan to show button in left panel only if it is currently opened repo
 		this.isCurrentRepo = this.currentRepoPath === repoPath;
 		if (this.isCurrentRepo) {
@@ -76,8 +76,8 @@ export class PlanLimitsHandler {
 	
 	uploadRepo = async (statusCode: number, errorCode: number) => {
 		if (statusCode === HttpStatusCodes.OK){
-			const planLimitsUtils = new RepoPlanLimitsUtils(this.repoPath);
-			planLimitsUtils.resetState();
+			const repoLimitsState = new RepoPlanLimitsState(this.repoPath);
+			repoLimitsState.reset();
 			return true;
 		}
 		if (statusCode === HttpStatusCodes.PAYMENT_REQUIRED) {

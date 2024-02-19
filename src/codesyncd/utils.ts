@@ -22,7 +22,7 @@ import { pathUtils } from "../utils/path_utils";
 import { readFile, readYML } from '../utils/common';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { removeFile } from '../utils/file_utils';
-import { RepoPlanLimitsUtils, RepoUtils } from '../utils/repo_utils';
+import { RepoPlanLimitsState, RepoUtils } from '../utils/repo_utils';
 import { UserUtils } from '../utils/user_utils';
 
 
@@ -67,8 +67,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		};
 	}
 	// Check plan limits
-	const repoPlanLimitUtils = new RepoPlanLimitsUtils(repoPath);
-	const repoLimitsState = repoPlanLimitUtils.getState();
+	const repoLimitsState = new RepoPlanLimitsState(repoPath).get();
 	if (repoLimitsState.planLimitReached && !repoLimitsState.canRetry) return {
 		uploaded: false,
 		deleteDiff: false,
@@ -205,8 +204,8 @@ export class statusBarMsgs {
 		const activeUser = userUtils.getActiveUser();
 		if (!activeUser) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
 		// Check plan limits
-		const repoPlanLimitUtils = new RepoPlanLimitsUtils(repoPath);
-		const repoLimitsState = repoPlanLimitUtils.getState();
+		const repoPlanLimitsState = new RepoPlanLimitsState(repoPath);
+		const repoLimitsState = repoPlanLimitsState.get();
 		if (repoLimitsState.planLimitReached) {
 			const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
 			return canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
@@ -221,7 +220,7 @@ export class statusBarMsgs {
 		const defaultMsg = daemonError || activityAlertMsg || STATUS_BAR_MSGS.DEFAULT;
 		// Check Repo State
 		const repoUtils = new RepoUtils(repoPath);
-		const repoState = repoUtils.getState();
+		const repoState = repoUtils.get();
 		if (repoState.IS_DISCONNECTED) return STATUS_BAR_MSGS.RECONNECT_REPO;
 		if (repoState.IS_SUB_DIR && repoState.IS_SYNC_IGNORED) return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
 		return repoState.IS_CONNECTED ? defaultMsg : STATUS_BAR_MSGS.CONNECT_REPO;

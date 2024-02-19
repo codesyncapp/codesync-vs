@@ -36,7 +36,7 @@ export const connectRepoHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
 	const repoUtils = new RepoUtils(repoPath);
-	const repoState = repoUtils.getState();
+	const repoState = repoUtils.get();
 	if (repoState.IS_CONNECTED) {
 		// Show notification that repo is in sync
 		vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
