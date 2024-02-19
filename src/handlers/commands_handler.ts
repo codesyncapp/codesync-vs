@@ -35,8 +35,7 @@ export const reactivateAccountHandler = () => {
 export const connectRepoHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
-	const repoUtils = new RepoState(repoPath);
-	const repoState = repoUtils.get();
+	const repoState = new RepoState(repoPath).get();
 	if (repoState.IS_CONNECTED) {
 		// Show notification that repo is in sync
 		vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
