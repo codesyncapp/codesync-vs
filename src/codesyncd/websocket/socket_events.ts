@@ -11,7 +11,7 @@ import {markUsersInactive} from "../../utils/auth_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
 import { PlanLimitsHandler } from "../../utils/pricing_utils";
 import { readYML } from "../../utils/common";
-import { RepoPlanLimitsState } from "../../utils/repo_utils";
+import { RepoPlanLimitsState } from "../../utils/repo_state_utils";
 
 
 const EVENT_TYPES = {

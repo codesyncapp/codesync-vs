@@ -18,7 +18,7 @@ import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { s3UploaderUtils } from './s3_uploader';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import gitCommitInfo from 'git-commit-info';
-import { RepoPlanLimitsState, RepoUtils } from '../utils/repo_utils';
+import { RepoPlanLimitsState, RepoState } from '../utils/repo_state_utils';
 
 export class initUtils {
 	repoPath: string;
@@ -159,7 +159,7 @@ export class initUtils {
 		const repoLimitsState = new RepoPlanLimitsState(this.repoPath).get();
 		if (repoLimitsState.planLimitReached && !repoLimitsState.canRetry) return false;
 		const repoName = path.basename(this.repoPath);
-		const repoUtils = new RepoUtils(this.repoPath);
+		const repoUtils = new RepoState(this.repoPath);
 		const repoState = repoUtils.get();
 		const configJSON = repoUtils.config;
 		const branchFiles = <any>{};

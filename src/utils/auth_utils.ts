@@ -15,7 +15,7 @@ import { CodeSyncLogger } from "../logger";
 import { generateAuthUrl } from "./url_utils";
 import { CODESYNC_STATES, CodeSyncState } from "./state_utils";
 import { pathUtils } from "./path_utils";
-import { RepoUtils } from "./repo_utils";
+import { RepoState } from "./repo_state_utils";
 
 
 export const isPortAvailable = async (port: number) => {
@@ -59,7 +59,7 @@ export const postSuccessLogin = (userEmail: string, accessToken: string) => {
     CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
     const repoPath = pathUtils.getRootPath() || "";
     if (!repoPath) return;
-    const repoUtils = new RepoUtils(repoPath);
+    const repoUtils = new RepoState(repoPath);
     const repoState = repoUtils.get();
     const repoIsNotConnected = !repoState.IS_CONNECTED;
     vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, repoIsNotConnected);

@@ -2,11 +2,11 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 import untildify from "untildify";
-import { RepoUtils } from "../../src/utils/repo_utils";
+import { RepoState } from "../../src/utils/repo_state_utils";
 import {addUser, Config, getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../helpers/helpers";
 import {DEFAULT_BRANCH, SYNCIGNORE} from "../../src/constants";
 
-describe("RepoUtils:get", () => {
+describe("RepoState:get", () => {
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
     const configData = {repos: {}};
@@ -28,7 +28,7 @@ describe("RepoUtils:get", () => {
     });
 
     test("with no config.yml", () => {
-        const repoUtils = new RepoUtils(repoPath);
+        const repoUtils = new RepoState(repoPath);
         const repoState = repoUtils.get();
         expect(repoState.IS_OPENED).toBe(true);
         expect(repoState.IS_CONNECTED).toBe(false);
@@ -39,14 +39,14 @@ describe("RepoUtils:get", () => {
 
     test("with invalid config.yml", () => {
         fs.writeFileSync(configPath, "");
-        const repoUtils = new RepoUtils(repoPath);
+        const repoUtils = new RepoState(repoPath);
         const repoState = repoUtils.get();
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(false);
     });
 
     test("With no repo opened", () => {
-        const repoUtils = new RepoUtils("");
+        const repoUtils = new RepoState("");
         const repoState = repoUtils.get();
         expect(repoState.IS_OPENED).toBe(false);
         expect(repoState.IS_CONNECTED).toBe(false);
@@ -55,7 +55,7 @@ describe("RepoUtils:get", () => {
 
     test("with repo not in config.yml", () => {
         fs.writeFileSync(configPath, yaml.dump({'repos': {}}));
-        const repoUtils = new RepoUtils(repoPath);
+        const repoUtils = new RepoState(repoPath);
         const repoState = repoUtils.get();
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(false);
@@ -64,7 +64,7 @@ describe("RepoUtils:get", () => {
     test("Non Synced Branch",  () => {
         configData.repos[repoPath] = {branches: {}};
         fs.writeFileSync(configPath, yaml.dump(configData));
-        const repoUtils = new RepoUtils(repoPath);
+        const repoUtils = new RepoState(repoPath);
         const repoState = repoUtils.get();
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(false);
@@ -74,7 +74,7 @@ describe("RepoUtils:get", () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
-        const repoUtils = new RepoUtils(repoPath);
+        const repoUtils = new RepoState(repoPath);
         const repoState = repoUtils.get();
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(repoState.IS_DISCONNECTED).toBe(false);
@@ -88,7 +88,7 @@ describe("RepoUtils:get", () => {
         };
         fs.writeFileSync(configPath, yaml.dump(configData));
         addUser(baseRepoPath);
-        const repoUtils = new RepoUtils(repoPath);
+        const repoUtils = new RepoState(repoPath);
         const repoState = repoUtils.get();
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(false);
@@ -98,7 +98,7 @@ describe("RepoUtils:get", () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo(true);
         addUser(baseRepoPath);
-        const repoUtils = new RepoUtils(repoPath);
+        const repoUtils = new RepoState(repoPath);
         const repoState = repoUtils.get();
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(true);
@@ -109,7 +109,7 @@ describe("RepoUtils:get", () => {
         configUtil.addRepo();
         addUser(baseRepoPath);
         const subDir = path.join(repoPath, "directory");
-        const repoUtils = new RepoUtils(subDir);
+        const repoUtils = new RepoState(subDir);
         const repoState = repoUtils.get();
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(repoState.IS_DISCONNECTED).toBe(false);
@@ -125,7 +125,7 @@ describe("RepoUtils:get", () => {
         const syncignorePath = path.join(repoPath, SYNCIGNORE);
         fs.writeFileSync(syncignorePath, "directory");        
         const subDir = path.join(repoPath, "directory");
-        const repoUtils = new RepoUtils(subDir);
+        const repoUtils = new RepoState(subDir);
         const repoState = repoUtils.get();
         expect(repoState.IS_DISCONNECTED).toBe(false);
         expect(repoState.IS_CONNECTED).toBe(true);

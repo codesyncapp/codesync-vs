@@ -16,7 +16,7 @@ import { isAccountActive } from '../utils/auth_utils';
 import { checkServerDown } from "../utils/api_utils";
 import { getBranch, readFile } from "../utils/common";
 import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
-import { RepoUtils } from '../utils/repo_utils';
+import { RepoState } from '../utils/repo_state_utils';
 
 
 export class initHandler {
@@ -51,7 +51,7 @@ export class initHandler {
 			const success = await isAccountActive(this.userEmail, this.accessToken);
 			if (!success) return false;	
 		}
-		const repoUtils = new RepoUtils(this.repoPath);
+		const repoUtils = new RepoState(this.repoPath);
 		const repoState = repoUtils.get();
 		if (repoState.IS_CONNECTED && !this.viaDaemon) {
 			vscode.window.showWarningMessage(`Repo is already in sync with branch: ${this.branch}`);

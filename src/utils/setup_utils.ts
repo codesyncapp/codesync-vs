@@ -35,7 +35,7 @@ import { pathUtils } from './path_utils';
 import { CodeSyncLogger } from '../logger';
 import { GitExtension } from '../git';
 import { CODESYNC_STATES, CodeSyncState } from './state_utils';
-import { RepoUtils } from './repo_utils';
+import { RepoState } from './repo_state_utils';
 import { UserUtils } from './user_utils';
 
 export const createSystemDirectories = () => {
@@ -179,7 +179,7 @@ export const setupCodeSync = async (repoPath: string) => {
 export const showRepoStatusMsg = (repoPath: string) => {
 	if (!repoPath) return;
 	registerSyncIgnoreSaveEvent(repoPath);
-	const repoUtils = new RepoUtils(repoPath);
+	const repoUtils = new RepoState(repoPath);
 	const repoState = repoUtils.get(false);
 	if (repoState.IS_SUB_DIR && repoState.IS_SYNC_IGNORED) {
 		showSyncIgnoredRepo(repoPath, repoState.PARENT_REPO_PATH);
@@ -257,7 +257,7 @@ export const showLogIn = () => {
 
 export const setInitialContext = () => {
 	const repoPath = pathUtils.getRootPath();
-	const repoUtils = new RepoUtils(repoPath);
+	const repoUtils = new RepoState(repoPath);
 	const repoState = repoUtils.get();
 	const showConnectRepoView = repoState.IS_OPENED && !repoState.IS_CONNECTED && !repoState.IS_DISCONNECTED;
 	vscode.commands.executeCommand('setContext', contextVariables.showLogIn, showLogIn());

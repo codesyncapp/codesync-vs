@@ -20,7 +20,7 @@ import {
     createOrUpdateSyncignore
 } from "../../src/utils/setup_utils";
 import { readYML } from "../../src/utils/common";
-import { RepoUtils } from "../../src/utils/repo_utils";
+import { RepoState } from "../../src/utils/repo_state_utils";
 import { generateSettings } from "../../src/settings";
 import {getRepoInSyncMsg, getDirectorySyncIgnoredMsg, getDirectoryIsSyncedMsg, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 
@@ -177,7 +177,7 @@ describe("setupCodeSync",  () => {
         configUtil.addRepo();
         addUser(baseRepoPath);
         await setupCodeSync(repoPath);
-        const repoUtils = new RepoUtils(repoPath);
+        const repoUtils = new RepoState(repoPath);
         const repoState = repoUtils.get();
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -194,7 +194,7 @@ describe("setupCodeSync",  () => {
         addUser(baseRepoPath);
         const subDir = path.join(repoPath, "directory");
         await setupCodeSync(subDir);
-        const repoUtils = new RepoUtils(repoPath);
+        const repoUtils = new RepoState(repoPath);
         const repoState = repoUtils.get();
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);

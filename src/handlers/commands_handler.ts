@@ -14,7 +14,7 @@ import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
 import { createRedirectUri, generateWebUrl } from "../utils/url_utils";
-import { RepoUtils } from "../utils/repo_utils";
+import { RepoState } from "../utils/repo_state_utils";
 import { RepoDisconnectHandler, RepoReconnectHandler } from "./repo_commands";
 import { UserUtils } from "../utils/user_utils";
 
@@ -35,7 +35,7 @@ export const reactivateAccountHandler = () => {
 export const connectRepoHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
-	const repoUtils = new RepoUtils(repoPath);
+	const repoUtils = new RepoState(repoPath);
 	const repoState = repoUtils.get();
 	if (repoState.IS_CONNECTED) {
 		// Show notification that repo is in sync

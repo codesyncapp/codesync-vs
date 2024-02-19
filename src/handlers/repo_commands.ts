@@ -11,7 +11,7 @@ import { updateRepo } from '../utils/sync_repo_utils';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 
-import { RepoUtils } from "../utils/repo_utils";
+import { RepoState } from "../utils/repo_state_utils";
 import { IRepoState } from "../interface";
 
 export class RepoCommandsHandler {
@@ -22,7 +22,7 @@ export class RepoCommandsHandler {
 
 	constructor() {
 		this.repoPath = pathUtils.getRootPath();
-		this.repoUtils = new RepoUtils(this.repoPath);
+		this.repoUtils = new RepoState(this.repoPath);
 		this.repoState = this.repoUtils.get();
 		this.settings = generateSettings();
 	}

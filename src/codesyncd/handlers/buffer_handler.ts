@@ -13,7 +13,7 @@ import {SocketClient} from "../websocket/socket_client";
 import { removeFile } from '../../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../../utils/state_utils';
 import { UserUtils } from '../../utils/user_utils';
-import { RepoPlanLimitsState } from '../../utils/repo_utils';
+import { RepoPlanLimitsState } from '../../utils/repo_state_utils';
 
 
 export class bufferHandler {
