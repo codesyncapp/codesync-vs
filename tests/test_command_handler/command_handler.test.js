@@ -27,7 +27,9 @@ import {
     NOTIFICATION,
     DEFAULT_BRANCH,
     getRepoInSyncMsg,
-    contextVariables
+    contextVariables,
+    getRepoDisconnectedMsg,
+    getRepoReconnectedMsg
 } from "../../src/constants";
 import {WEB_APP_URL} from "../../src/settings";
 import {readYML} from "../../src/utils/common";
@@ -237,7 +239,8 @@ describe("RepoDisconnectHandler.postSelection",  () => {
         expect(vscode.commands.executeCommand.mock.calls[3][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
         expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECTED);
+        const msg = getRepoDisconnectedMsg(repoPath);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(msg);
     });
 });
 
@@ -273,8 +276,9 @@ describe("RepoReconnectHandler.run",  () => {
         // Reconnect
         const reconnectHandler = new RepoReconnectHandler();
         await reconnectHandler.run();
+        const msg = getRepoReconnectedMsg(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_RECONNECTED);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(msg);
         // verify config
         const config = readYML(configPath);
         expect(config.repos[repoPath].is_disconnected).toBe(false);

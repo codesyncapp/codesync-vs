@@ -119,8 +119,7 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 };
 
 export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=false) => {
-	const title = isNewPrivateRepo ? NOTIFICATION.PRIVATE_REPO_COUNT_LIMIT_REACHED: `${NOTIFICATION.FREE_TIER_LIMIT_REACHED} ${repoPath}`;
-	const msg = getUpgradePlanMsg(title);
+	const msg = getUpgradePlanMsg(repoPath, isNewPrivateRepo);
 	// TODO: get canAvailTrial from /users/pricing/subscription API call
 	const button = NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
 	const pricingUrl = generateWebUrl(PRICING_URL_PATH);

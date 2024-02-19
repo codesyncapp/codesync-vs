@@ -4,6 +4,8 @@ import yaml from "js-yaml";
 
 import {
 	contextVariables,
+	getRepoDisconnectedMsg,
+	getRepoReconnectedMsg,
 	NOTIFICATION
 } from '../constants';
 import { checkSubDir, readYML } from '../utils/common';
@@ -68,7 +70,8 @@ export class RepoDisconnectHandler extends RepoCommandsHandler {
 		vscode.commands.executeCommand('setContext', contextVariables.isSubDir, false);
 		vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, false);
 		vscode.commands.executeCommand('setContext', contextVariables.isDisconnectedRepo, true);
-		vscode.window.showInformationMessage(NOTIFICATION.REPO_DISCONNECTED);
+		const msg = getRepoDisconnectedMsg(this.repoPath);
+		vscode.window.showInformationMessage(msg);
 	};
 }
 
@@ -90,6 +93,7 @@ export class RepoReconnectHandler extends RepoCommandsHandler {
 		this.writeToConfig();
 		vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, false);
 		vscode.commands.executeCommand('setContext', contextVariables.isDisconnectedRepo, false);
-		vscode.window.showInformationMessage(NOTIFICATION.REPO_RECONNECTED);
+		const msg = getRepoReconnectedMsg(this.repoPath);
+		vscode.window.showInformationMessage(msg);
 	};
 }

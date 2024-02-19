@@ -108,8 +108,6 @@ export const NOTIFICATION = {
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again",
 	ERROR_CONNECTING_REPO: "Error connecting repo.",
 	ERROR_SYNCING_BRANCH: "Error syncing branch",
-	REPO_DISCONNECTED: "Repo disconnected successfully",
-	REPO_RECONNECTED: "Repo reconnected successfully",
 	REPO_DISCONNECT_FAILED: "Could not disconnect the repo",
 	REPO_RECONNECT_FAILED: "Could not reconnect the repo",
 	REPO_DISCONNECT_CONFIRMATION: "Are you sure to continue? Your changes won't sync anymore!",
@@ -125,15 +123,26 @@ export const NOTIFICATION = {
 
 export const getRepoInSyncMsg = (repoPath: string) => {
     const repoName = path.basename(repoPath);
-    return `Repo ${repoName} ${NOTIFICATION.REPO_IN_SYNC}`;
+    return `Repo "${repoName}" ${NOTIFICATION.REPO_IN_SYNC}`;
 };
 
 export const getDisconnectedRepoMsg = (repoPath: string) => {
 	const repoName = path.basename(repoPath);
-	return `Repo ${repoName} ${NOTIFICATION.REPO_IS_DISCONNECTED}`;
+	return `Repo "${repoName}" ${NOTIFICATION.REPO_IS_DISCONNECTED}`;
 };
 
-export const getUpgradePlanMsg = (title: string) => {
+export const getRepoDisconnectedMsg = (repoPath: string) => {
+    const repoName = path.basename(repoPath);
+    return `Repo "${repoName}" disconnected successfully`;
+};
+
+export const getRepoReconnectedMsg = (repoPath: string) => {
+    const repoName = path.basename(repoPath);
+    return `Repo "${repoName}" reconnected successfully`;
+};
+
+export const getUpgradePlanMsg = (repoPath: string, isNewPrivateRepo: boolean) => {
+	const title = isNewPrivateRepo ? NOTIFICATION.PRIVATE_REPO_COUNT_LIMIT_REACHED: `${NOTIFICATION.FREE_TIER_LIMIT_REACHED} ${repoPath}`;
 	return `${title}. ${NOTIFICATION.UPGRADE_PRICING_PLAN}`;
 };
 
