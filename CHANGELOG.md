@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [3.39.0] - 2024-02-16
+## [3.39.0] - 2024-02-19
 - Packages Upgraded
 - Stop generating diffs for the deactivated accounts
 - Team Activity alert skips deactivated accounts
