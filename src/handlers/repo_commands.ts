@@ -16,19 +16,19 @@ import { IRepoState } from "../interface";
 
 export class RepoCommandsHandler {
 	repoPath: string;
-	repoUtils: any;
+	repoStateUtils: any;
 	repoState: IRepoState;
 	settings: any;
 
 	constructor() {
 		this.repoPath = pathUtils.getRootPath();
-		this.repoUtils = new RepoState(this.repoPath);
-		this.repoState = this.repoUtils.get();
+		this.repoStateUtils = new RepoState(this.repoPath);
+		this.repoState = this.repoStateUtils.get();
 		this.settings = generateSettings();
 	}
 
 	writeToConfig = () => {
-		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(this.repoUtils.config));
+		fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(this.repoStateUtils.config));
 	}
 }
 
@@ -52,7 +52,7 @@ export class RepoDisconnectHandler extends RepoCommandsHandler {
 		if (!selection || selection !== NOTIFICATION.YES || this.repoState.IS_DISCONNECTED) {
 			return;
 		}
-		const configRepo = this.repoUtils.config.repos[this.repoPath];
+		const configRepo = this.repoStateUtils.config.repos[this.repoPath];
 		const users = readYML(this.settings.USER_PATH);
 		const accessToken = users[configRepo.email].access_token;
 		const json = await updateRepo(accessToken, configRepo.id, { is_in_sync: false });
@@ -77,7 +77,7 @@ export class RepoReconnectHandler extends RepoCommandsHandler {
 	run = async () => {
 		if (!this.repoPath) return;
 		if (this.repoState.IS_CONNECTED) return;
-		const configRepo = this.repoUtils.config.repos[this.repoPath];
+		const configRepo = this.repoStateUtils.config.repos[this.repoPath];
 		const users = readYML(this.settings.USER_PATH);
 		const accessToken = users[configRepo.email].access_token;
 		const json = await updateRepo(accessToken, configRepo.id, { is_in_sync: true });

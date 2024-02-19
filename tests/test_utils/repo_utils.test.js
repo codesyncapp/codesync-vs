@@ -44,8 +44,7 @@ describe("RepoState:get", () => {
     });
 
     test("With no repo opened", () => {
-        const repoUtils = new RepoState("");
-        const repoState = repoUtils.get();
+        const repoState = new RepoState("").get();
         expect(repoState.IS_OPENED).toBe(false);
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(false);
@@ -102,8 +101,7 @@ describe("RepoState:get", () => {
         configUtil.addRepo();
         addUser(baseRepoPath);
         const subDir = path.join(repoPath, "directory");
-        const repoUtils = new RepoState(subDir);
-        const repoState = repoUtils.get();
+        const repoState = new RepoState(subDir).get();
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(repoState.IS_DISCONNECTED).toBe(false);
         expect(repoState.IS_SUB_DIR).toBe(true);
@@ -118,8 +116,7 @@ describe("RepoState:get", () => {
         const syncignorePath = path.join(repoPath, SYNCIGNORE);
         fs.writeFileSync(syncignorePath, "directory");        
         const subDir = path.join(repoPath, "directory");
-        const repoUtils = new RepoState(subDir);
-        const repoState = repoUtils.get();
+        const repoState = new RepoState(subDir).get();
         expect(repoState.IS_DISCONNECTED).toBe(false);
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(repoState.IS_SUB_DIR).toBe(true);

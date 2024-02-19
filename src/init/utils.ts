@@ -159,9 +159,9 @@ export class initUtils {
 		const repoLimitsState = new RepoPlanLimitsState(this.repoPath).get();
 		if (repoLimitsState.planLimitReached && !repoLimitsState.canRetry) return false;
 		const repoName = path.basename(this.repoPath);
-		const repoUtils = new RepoState(this.repoPath);
-		const repoState = repoUtils.get();
-		const configJSON = repoUtils.config;
+		const repoStateUtils = new RepoState(this.repoPath);
+		const repoState = repoStateUtils.get();
+		const configJSON = repoStateUtils.config;
 		const branchFiles = <any>{};
 		const filesData = <any>{};
 		itemPaths.forEach((fileToUpload) => {

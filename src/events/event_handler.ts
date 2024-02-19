@@ -44,8 +44,8 @@ export class eventHandler {
 		this.createdAt = createdAt || formatDatetime();
 		this.viaDaemon = viaDaemon;
 		this.repoPath = repoPath || pathUtils.getRootPath();
-		const repoUtis = new RepoState(this.repoPath);
-		this.repoIsNotConnected = !repoUtis.get(false).IS_CONNECTED;
+		const repoState = new RepoState(this.repoPath).get();
+		this.repoIsNotConnected = !repoState.IS_CONNECTED;
 		this.branch = getBranch(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
 		this.shadowRepoBranchPath = this.pathUtils.getShadowRepoBranchPath();
