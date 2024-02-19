@@ -82,3 +82,29 @@ export interface IS3UploaderPreProcess {
 	content: IS3UploaderFile;
 }
 
+export interface IRepoState {
+	IS_OPENED: boolean;
+	IS_CONNECTED: boolean;
+	IS_DISCONNECTED: boolean;
+	IS_SUB_DIR: boolean;
+	IS_SYNC_IGNORED: boolean;
+	PARENT_REPO_PATH: string;
+}
+
+export interface IRepoPlanLimitState {
+	canRetry: boolean;
+	planLimitReached: boolean;
+	canAvailTrial: boolean;
+	canShowNotification: boolean;
+}
+
+export interface IRepoPlanInfo {
+	isOrgRepo: boolean;
+	pricingUrl: string;
+	canAvailTrial: boolean;
+}
+
+export interface IUserState {
+	isActive: boolean;
+	isDeactivated: boolean;
+}

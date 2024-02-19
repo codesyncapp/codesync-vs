@@ -13,8 +13,9 @@ import {
 	LOG_AFTER_X_TIMES,
 	VERSION
 } from './constants';
-import { readYML, isEmpty, getActiveUsers } from './utils/common';
+import { readYML, isEmpty } from './utils/common';
 import { generateSettings, LOGS_METADATA, PLUGIN_USER } from "./settings";
+import { UserState } from './utils/user_utils';
 
 let macAddress = "";
 macaddress.one().then(mac => macAddress = mac);
@@ -85,7 +86,8 @@ const putLogEvent = async (msg: string, eventType: string, additionalMsg="", log
 			secretKey = user.secret_key;
 		}
 	} else {
-		const activeUser = getActiveUsers()[0];
+		const userState = new UserState();
+		const activeUser = userState.getUser();
 		if (activeUser) {
 			email = activeUser.email;
 			accessKey = users[email].access_key;

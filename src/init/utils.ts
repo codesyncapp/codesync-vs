@@ -13,12 +13,12 @@ import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload } from '../interface';
 import { uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT, contextVariables } from '../constants';
-import { getGlobIgnorePatterns, isRepoActive, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
-import { getPlanLimitReached } from '../utils/pricing_utils';
+import { getGlobIgnorePatterns, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { s3UploaderUtils } from './s3_uploader';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import gitCommitInfo from 'git-commit-info';
+import { RepoPlanLimitsState, RepoState } from '../utils/repo_state_utils';
 
 export class initUtils {
 	repoPath: string;
@@ -144,7 +144,7 @@ export class initUtils {
 		vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, false);
 		// Show success notification
 		if (!this.viaDaemon) {
-			vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
+			vscode.window.showInformationMessage(NOTIFICATION.REPO_CONNECTED, ...[
 				NOTIFICATION.TRACK_IT
 			]).then(selection => {
 				if (!selection) return;
@@ -154,17 +154,16 @@ export class initUtils {
 	}
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
-					userEmail: string, isPublic=false) {
+					userEmail: string, isPublic=false, repoId=null) {
 		// Check plan limits
-		const { planLimitReached, canRetry } = getPlanLimitReached();
-		if (planLimitReached && !canRetry) return false;
-					
+		const repoLimitsState = new RepoPlanLimitsState(this.repoPath).get();
+		if (repoLimitsState.planLimitReached && !repoLimitsState.canRetry) return false;
 		const repoName = path.basename(this.repoPath);
-		const configJSON = readYML(this.settings.CONFIG_PATH);
-		const repoInConfig = isRepoActive(configJSON, this.repoPath);
+		const repoStateUtils = new RepoState(this.repoPath);
+		const repoState = repoStateUtils.get();
+		const configJSON = repoStateUtils.config;
 		const branchFiles = <any>{};
 		const filesData = <any>{};
-
 		itemPaths.forEach((fileToUpload) => {
 			branchFiles[fileToUpload.rel_path] = null;
 			filesData[fileToUpload.rel_path] = {
@@ -173,8 +172,7 @@ export class initUtils {
 				created_at: fileToUpload.created_at ? fileToUpload.created_at / 1000 : ""
 			};
 		});
-		
-		if (!repoInConfig) {
+		if (!repoState.IS_CONNECTED) {
 			configJSON.repos[this.repoPath] = {
 				branches: {},
 				email: userEmail
@@ -206,6 +204,7 @@ export class initUtils {
 		const commit_hash = gitCommitInfo({cwd: this.repoPath}).hash || null;
 
 		const data = {
+			repo_path: this.repoPath,
 			name: repoName,
 			is_public: isPublic,
 			branch,
@@ -215,13 +214,15 @@ export class initUtils {
 			platform: os.platform()
 		};
 
-		const json = await uploadRepoToServer(token, data);
+		const json = await uploadRepoToServer(token, data, repoId);
 		if (json.error) {
 			// Reset the key here and try again in next attempt
 			CodeSyncState.set(syncingBranchKey, false);
-			const error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_SYNCING_REPO;
+			CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
+			let error = this.viaDaemon ? NOTIFICATION.ERROR_SYNCING_BRANCH : NOTIFICATION.ERROR_CONNECTING_REPO;
+			error = `${error}, branch=${branch}, repo=${this.repoPath}`;
 			CodeSyncLogger.error(error, json.error, userEmail);
-			if (!this.viaDaemon) vscode.window.showErrorMessage(NOTIFICATION.SYNC_FAILED);
+			if (!this.viaDaemon && !json.msgShown) vscode.window.showErrorMessage(NOTIFICATION.REPO_CONNECTE_FAILED);
 			return false;
 		}
 		/*

@@ -37,6 +37,7 @@ import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { removeFile } from "../utils/file_utils";
 import { s3UploaderUtils } from "../init/s3_uploader";
+import { UserState } from "../utils/user_utils";
 
 
 const shouldProceed = () => {
@@ -45,6 +46,9 @@ const shouldProceed = () => {
         - branchSync is not in progress
         - populateBuffer is not running already
     */
+    const userState = new UserState();
+    const isValidAccount = userState.isValidAccount();
+    if (!isValidAccount) return false;
     // Return if any branch is being uploaded to s3
     const s3UploaderRunning = CodeSyncState.canSkipRun(CODESYNC_STATES.UPLOADING_TO_S3, S3_UPLOADER_TIMEOUT);
     if (s3UploaderRunning) return false;
@@ -375,25 +379,21 @@ export const detectBranchChange = async () => {
     const configJSON = readYML(settings.CONFIG_PATH);
     const users = readYML(settings.USER_PATH) || {};
     for (const repoPath of Object.keys(configJSON.repos)) {
-
-        if (configJSON.repos[repoPath].is_disconnected) continue;
-
         const configRepo = configJSON.repos[repoPath];
+        // Do not process Non-Connected Repos
+        if (!configRepo.id) continue;
+        if (configRepo.is_disconnected) continue;
         if (!(configRepo.email in users)) continue;
-
         const user = users[configRepo.email];
         if (!isUserActive(user)) continue;
-
         const accessToken = user.access_token;
         const branch = getBranch(repoPath);
         const pathUtilsObj = new pathUtils(repoPath, branch);
         const shadowRepo = pathUtilsObj.getShadowRepoPath();
-
         if (!fs.existsSync(repoPath) || !fs.existsSync(shadowRepo)) {
             // TODO: Handle out of sync repo
             continue;
         }
-
 		// Check if branch is already being synced, skip it
 		const syncingBranchKey = `${CODESYNC_STATES.SYNCING_BRANCH}:${repoPath}:${branch}`;
 		const isSyncInProcess = CodeSyncState.canSkipRun(syncingBranchKey, BRANCH_SYNC_TIMEOUT);
@@ -409,8 +409,9 @@ export const detectBranchChange = async () => {
             const shouldSyncBranch = Object.values(configFiles).every(element => element === null);
             if (shouldSyncBranch) {
                 const itemPaths = await initUtilsObj.getSyncablePaths();
-                uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email);
-                if (!uploaded) continue;    
+                uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, 
+                    false, configRepo.id);
+                if (!uploaded) continue;
             }
             // By default, add repo to readyRepos
             readyRepos[repoPath] = branch;
@@ -423,7 +424,7 @@ export const detectBranchChange = async () => {
         if (originalsRepoBranchPathExists) {
             // init has been called, now see if we can upload the repo/branch
             const itemPaths = await initUtilsObj.getSyncablePaths();
-            uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email);
+            uploaded = await initUtilsObj.uploadRepo(branch, accessToken, itemPaths, configRepo.email, false, configRepo.id);
         } else {
             const handler = new initHandler(repoPath, accessToken, configRepo.email, true);
             uploaded = await handler.connectRepo();

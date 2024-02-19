@@ -7,9 +7,10 @@ import { IRepoInfo, IUser } from "../interface";
 import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { getTeamActivity } from "../utils/api_utils";
-import { getActiveUsers, readYML } from "../utils/common";
+import { readYML } from "../utils/common";
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { statusBarMsgs } from './utils';
+import { UserState } from '../utils/user_utils';
 
 
 export class Alerts {
@@ -35,9 +36,10 @@ export class Alerts {
 	checkFor: Date;
 	checkForDate: string;
 	alertsData: any;
-	activeUser: IUser;
 	alertConfig: any;
 	statusBarMsgsHandler: any;
+	isValidAccount: boolean;
+	activeUser: IUser|null;
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		const now = new Date();
@@ -49,13 +51,15 @@ export class Alerts {
 		this.alertsData = readYML(this.settings.ALERTS);
 		this.checkFor = new Date();
 		this.checkForDate = "";
-		this.activeUser = getActiveUsers()[0];
+		const userState = new UserState();
+		this.isValidAccount = userState.isValidAccount();
+		this.activeUser = userState.getUser();
 		this.alertConfig = {};
 		this.statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
 	}
 
 	checkActivityAlerts = async () => {
-		if (!this.activeUser) return;
+		if (!this.isValidAccount || !this.activeUser) return;
 		const accessToken = this.activeUser.access_token;
 		const userEmail = this.activeUser.email;
 		await this.checkTeamAlert(accessToken, userEmail);

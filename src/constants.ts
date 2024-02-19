@@ -61,7 +61,12 @@ export const SEQUENCE_MATCHER_RATIO = 0.8;
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
 
 export const NOTIFICATION_BUTTON = {
-	REACTIVATE_ACCOUNT: "Reactivate Account"
+	REACTIVATE_ACCOUNT: "Reactivate Account",
+	RECONNECT_REPO: "Reconnect Repo",
+	TRY_PRO_FOR_FREE: "Try Pro plan for free",
+	TRY_TEAM_FOR_FREE: "Try Team plan for free",
+	UPGRADE_TO_PRO: "Upgrade to Pro plan",
+	UPGRADE_TO_TEAM: "Upgrade to Team plan"
 };
 
 // Notification Messages
@@ -76,8 +81,6 @@ export const NOTIFICATION = {
 	OK: "OK!",
 	CONTINUE: "Continue",
 	UPGRADE: "Upgrade",
-	TRY_PRO_FOR_FREE: "Try Pro plan for free",
-	TRY_TEAM_FOR_FREE: "Try Team plan for free ",
 	VIEW_DASHBOARD: "View Dashboard",
 	REVIEW_TEAM_PLAYBACK: "Review Team Playback",
 	REVIEW_PLAYBACK: "Review Playback",
@@ -93,31 +96,54 @@ export const NOTIFICATION = {
 	USE_DIFFERENT_ACCOUNT: "Use different account",
 	PUBLIC: "Public",
 	PRIVATE: "Private",
-	REPO_SYNCED: "Repo synced successfully!",
-	SYNC_FAILED: "Ouch! Sync failed. Please try again a moment later",
+	REPO_CONNECTED: "Repo connected successfully!",
+	REPO_CONNECTE_FAILED: "Repo could not be connected. Please try again a moment later",
 	SERVICE_NOT_AVAILABLE: "CodeSync service is unavailable. Please try again in a moment.",
 	UPGRADE_PRICING_PLAN: "Please upgrade your plan to continue using CodeSync",
 	UPGRADE_ORG_PLAN: "Please upgrade your Organization's plan to continue using CodeSync",
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
 	REPO_IN_SYNC: "is in sync with CodeSync.",
+	REPO_IS_DISCONNECTED: "is disconnected.",
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again",
-	ERROR_SYNCING_REPO: "Error syncing repo.",
+	ERROR_CONNECTING_REPO: "Error connecting repo.",
 	ERROR_SYNCING_BRANCH: "Error syncing branch",
-	REPO_DISCONNECTED: "Repo disconnected successfully",
 	REPO_DISCONNECT_FAILED: "Could not disconnect the repo",
-	REPO_DISCONNECT_CONFIRMATION: "Are you sure to continue? You won't be able to revert this!",
-	REPO_DISCONNECT_PARENT_CONFIRMATION: "Are you sure to disconnect parent repo? You won't be able to revert this!",
+	REPO_RECONNECT_FAILED: "Could not reconnect the repo",
+	REPO_DISCONNECT_CONFIRMATION: "Are you sure to continue? Your changes won't sync anymore!",
+	REPO_DISCONNECT_PARENT_CONFIRMATION: "Are you sure to disconnect parent repo? Your changes won't sync anymore!",
 	LOGGED_OUT_SUCCESSFULLY: "Successfully logged out!",
 	TEAM_ACTIVITY_ALERT: "Hope you had a great day! It's time to get in sync with your team's code.",
 	USER_ACTIVITY_ALERT: "Hope you had a great day! Shall we review today's code playback?",
 	SIGNUP_FAILED: "Sign up to CodeSync failed!",
-	ACCOUNT_DEACTIVATED: "Your account has been deactivated. Please click 'Reactivate Account' below to resume syncing."
+	ACCOUNT_DEACTIVATED: "Your account has been deactivated. Please click 'Reactivate Account' below to resume syncing.",
+	FREE_TIER_LIMIT_REACHED: "We hope you've found CodeSync useful. You'have hit the limit of Free tier for repo",
+	PRIVATE_REPO_COUNT_LIMIT_REACHED: "In the Free plan, you can have just one Private Repository"
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {
     const repoName = path.basename(repoPath);
-    return `Repo ${repoName} ${NOTIFICATION.REPO_IN_SYNC}`;
+    return `Repo "${repoName}" ${NOTIFICATION.REPO_IN_SYNC}`;
+};
+
+export const getDisconnectedRepoMsg = (repoPath: string) => {
+	const repoName = path.basename(repoPath);
+	return `Repo "${repoName}" ${NOTIFICATION.REPO_IS_DISCONNECTED}`;
+};
+
+export const getRepoDisconnectedMsg = (repoPath: string) => {
+    const repoName = path.basename(repoPath);
+    return `Repo "${repoName}" disconnected successfully`;
+};
+
+export const getRepoReconnectedMsg = (repoPath: string) => {
+    const repoName = path.basename(repoPath);
+    return `Repo "${repoName}" reconnected successfully`;
+};
+
+export const getUpgradePlanMsg = (repoPath: string, isNewPrivateRepo: boolean) => {
+	const title = isNewPrivateRepo ? NOTIFICATION.PRIVATE_REPO_COUNT_LIMIT_REACHED: `${NOTIFICATION.FREE_TIER_LIMIT_REACHED} ${repoPath}`;
+	return `${title}. ${NOTIFICATION.UPGRADE_PRICING_PLAN}`;
 };
 
 export const getConnectRepoMsgAfterJoin = (email: string) => {
@@ -154,6 +180,7 @@ export const STATUS_BAR_MSGS = {
 	GETTING_READY: ' CodeSync $(loading~spin)',
 	NO_REPO_OPEN: ' CodeSync => No project is open',
 	CONNECT_REPO: ' CodeSync ❌, Click to connect repo!',
+	RECONNECT_REPO: ' CodeSync ❌, Click to reconnect repo!',
 	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
 	NO_CONFIG: ' CodeSync ❌, Reload required!',
 	UPGRADE_PRICING_PLAN: ' CodeSync ❌, Click to upgrade pricing plan!',
@@ -169,6 +196,7 @@ export const COMMAND = {
 	triggerLogout: 'codesync.logout',
 	triggerSync: 'codesync.sync',
 	triggerDisconnectRepo: 'codesync.disconnectRepo',
+	triggerReconnectRepo: 'codesync.reconnectRepo',
 	trackRepo: 'codesync.trackRepo',
 	trackFile: 'codesync.trackFile',
 	openSyncIgnore: 'codesync.openSyncIgnore',
@@ -183,9 +211,11 @@ export const contextVariables = {
 	showReactivateAccount: "showReactivateAccount",
 	isSubDir: "isSubDir",
 	isSyncIgnored: "isSyncIgnored",
+	isDisconnectedRepo: "isDisconnectedRepo",
 	upgradePricingPlan: "upgradePricingPlan",
 	canAvailTrial: "canAvailTrial",
-	codesyncActivated: "CodeSyncActivated"
+	codesyncActivated: "CodeSyncActivated",
+	setContext: "setContext"
 };
 
 export class staticFiles {
@@ -217,6 +247,7 @@ export const SYNC_IGNORE_FILE_DATA = "# CodeSync won't sync the files in the .sy
 // Log after 5 min, as daemon restarts after 5s so it will log after 60 iterations
 export const LOG_AFTER_X_TIMES = (5 * 60) / 5;
 export const RETRY_REQUEST_AFTER = 3 * 60 * 1000; // 1000 is for ms;
+export const SHOW_PLAN_UPGRADE_MSG_AFTER = 5 * RETRY_REQUEST_AFTER;
 export const RETRY_TEAM_ACTIVITY_REQUEST_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const BRANCH_SYNC_TIMEOUT = 3 * 60 * 1000; // 1000 is for ms
 export const S3_UPLOADER_TIMEOUT = 10 * 60 * 1000; // 1000 is for ms
@@ -237,11 +268,13 @@ export const IGNORE_ACQUIRED_LOCK_TIMEOUT = 5 * 1000;
 export const FORCE_UPLOAD_FROM_DAEMON = DAY;  // 1 day
 export const FORCE_CONNECT_WEBSOCKET_AFTER = 30 * 60 * 1000; // 1000 is for ms;
 
-export const HTTP_STATUS_CODES = {
+export const HttpStatusCodes = {
+	OK: 200,
 	INVALID_USAGE: 400,
 	UNAUTHORIZED: 401,
-	PRICING_PLAN_LIMIT_REACHED: 402,
+	PAYMENT_REQUIRED: 402,
 	FORBIDDEN: 403,
 	NOT_FOUND: 404,
-	SERVER_ERROR: 500
+	SERVER_ERROR: 500,
+	USER_ACCOUNT_DEACTIVATED: 403
 };

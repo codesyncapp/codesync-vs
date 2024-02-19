@@ -2,13 +2,14 @@ import fs from 'fs';
 import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
-import { API_ROUTES, HTTP_STATUS_CODES } from "../constants";
-import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from './pricing_utils';
+import { API_ROUTES, HttpStatusCodes } from "../constants";
+import { PlanLimitsHandler } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
 import { s3UploaderUtils } from '../init/s3_uploader';
+import { RepoPlanLimitsState } from './repo_state_utils';
 
 
-export const uploadRepoToServer = async (token: string, data: any) => {
+export const uploadRepoToServer = async (accessToken: string, data: any, repoId=null) => {
 	/*
     Response from server looks like
         {
@@ -29,15 +30,16 @@ export const uploadRepoToServer = async (token: string, data: any) => {
             }
         }
 	*/
-	let error = '';
-	let statusCode = null;
+	let error = "";
+	let errorCode = 0;
+	let statusCode = 200;
 	let response = await fetch(
 		API_ROUTES.REPO_INIT, {
 			method: 'POST',
 			body: JSON.stringify(data),
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': `Basic ${token}`
+				'Authorization': `Basic ${accessToken}`
 			},
 		}
 	)
@@ -49,32 +51,30 @@ export const uploadRepoToServer = async (token: string, data: any) => {
 		try {
 			return JSON.parse(text); // Try to parse the response as JSON
 		} catch(err) {
-			return {error: {message: text ? text : "Failed to parse to JSON response"}};
+			statusCode = 500;
+			return {error: {message: text ? text : "Failed to parse to JSON response"}, statusCode};
 		}
 	})
 	.catch(err => error = err);
 
-	if (statusCode === HTTP_STATUS_CODES.PRICING_PLAN_LIMIT_REACHED) {
-		// Check if key is set or not
-		await setPlanLimitReached(token);
-	} else {
-		const { planLimitReached } = getPlanLimitReached();
-		if (planLimitReached) resetPlanLimitReached();
-	}
 	if (response.error) {
 		error = response.error.message;
+		errorCode = response.error.error_code;
 	}
 	if (error) {
 		response = {};
 	}
+	const limitsHandler = new PlanLimitsHandler(accessToken, repoId||0, data.repo_path);
+	const msgShown = await limitsHandler.uploadRepo(statusCode, errorCode);
 
 	return {
 		response,
-		error
+		error,
+		msgShown
 	};
 };
 
-export const uploadFile = async (token: string, data: any) => {
+export const uploadFile = async (accessToken: string, data: any, repoPath: string) => {
 	/*
 	Response from server looks like
 
@@ -91,7 +91,7 @@ export const uploadFile = async (token: string, data: any) => {
 			body: JSON.stringify(data),
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': `Basic ${token}`
+				'Authorization': `Basic ${accessToken}`
 			},
 		}
 	)
@@ -103,17 +103,19 @@ export const uploadFile = async (token: string, data: any) => {
 		try {
 			return {...JSON.parse(text), statusCode}; // Try to parse the response as JSON
 		} catch(err) {
+			statusCode = 500;
 			return {error: {message: text ? text : "Failed to parse to JSON response", statusCode}};
 		}
 	})
 	.catch(err => error = err);
 
-	if (statusCode === HTTP_STATUS_CODES.PRICING_PLAN_LIMIT_REACHED) {
+	if (statusCode === HttpStatusCodes.PAYMENT_REQUIRED) {
 		// Check if key is set or not
-		await setPlanLimitReached(token);
+		const limitsHandler = new PlanLimitsHandler(accessToken, data.repo_id, repoPath);
+        await limitsHandler.run();
 	} else {
-		const { planLimitReached } = getPlanLimitReached();
-		if (planLimitReached) resetPlanLimitReached();
+		const repoLimitsState = new RepoPlanLimitsState(repoPath);
+        repoLimitsState.reset();
 	}
 
 	if (response.error) {
@@ -176,7 +178,7 @@ export const uploadFileToServer = async (accessToken: string, repoId: number, br
 		created_at: formatDatetime(fileInfo.ctimeMs),
 		added_at: addedAt
 	};
-	const json = await uploadFile(accessToken, data);
+	const json = await uploadFile(accessToken, data, repoPath);
 	if (json.error) {
 		return {
 			error: `serverError: ${json.error}`,

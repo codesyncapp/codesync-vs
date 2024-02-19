@@ -1,91 +1,107 @@
 import vscode from 'vscode';
-import { contextVariables, NOTIFICATION, PRICING_URL_PATH, RETRY_REQUEST_AFTER } from '../constants';
-import { generateSettings } from '../settings';
-import { checkSubDir, readYML } from './common';
-import { LockUtils } from './lock_utils';
+import { contextVariables, HttpStatusCodes, NOTIFICATION, NOTIFICATION_BUTTON, PRICING_URL_PATH } from '../constants';
+import { ErrorCodes } from './common';
 import { pathUtils } from './path_utils';
 import { CodeSyncState, CODESYNC_STATES } from "./state_utils";
 import { getRepoPlanInfo } from './sync_repo_utils';
 import { generateWebUrl } from './url_utils';
+import { ConfigUtils } from './config_utils';
+import { RepoPlanLimitsState } from './repo_state_utils';
+import { IRepoPlanInfo } from '../interface';
+import { showFreeTierLimitReached } from './notifications';
 
+export class PlanLimitsHandler {
 
-export const setPlanLimitReached = async (accessToken: string) => {
-	/*
-		Checks from server if repo is a User's repo or an Organization's repo
-		- Sets alert msg and pricing URL accordingly
-		- Sets REQUEST_SENT_AT in CodeSyncState after which we retry syncing data
-	*/
-	const loctUtils = new LockUtils();
-	loctUtils.acquirePricingAlertLock();
+	accessToken: string; // Required
+	repoId: number; // Required
+	repoPath: string; // Optional
+	currentRepoPath: string; // Custom
+	isCurrentRepo: boolean;
+	repoPlanInfo: IRepoPlanInfo;
+	
+	constructor(accessToken: string, repoId: number, repoPath="") {
+		this.accessToken = accessToken;
+		this.repoId = repoId;
+		this.repoPath = repoPath;
+		this.currentRepoPath = pathUtils.getRootPath();
+		this.isCurrentRepo = false;
+		this.repoPlanInfo = <IRepoPlanInfo>{};
+	}
 
-	let pricingUrl = generateWebUrl(PRICING_URL_PATH);
-	let isOrgRepo = false;
-	let canAvailTrial = false;
-
-	// Set time when request is sent
-	CodeSyncState.set(CODESYNC_STATES.REQUEST_SENT_AT, new Date().getTime());
-
-	let repoPath = pathUtils.getRootPath();
-	if (repoPath) {
-		const settings = generateSettings();
-		const config = readYML(settings.CONFIG_PATH);
-		const result = checkSubDir(repoPath);
-		if (result.isSubDir) {
-			repoPath = result.parentRepo;
+	_getRepoPlanInfo = async () : Promise<IRepoPlanInfo> => {
+		// Get Repo Plan Info from server
+		const planInfo = <IRepoPlanInfo>{};
+		planInfo.pricingUrl = generateWebUrl(PRICING_URL_PATH);
+		planInfo.isOrgRepo = false;
+		planInfo.canAvailTrial = false;
+		const json = <any> await getRepoPlanInfo(this.accessToken, this.repoId);
+		if (!json.error) {
+			planInfo.pricingUrl = generateWebUrl("", json.response.url);
+			planInfo.isOrgRepo = json.response.is_org_repo;
+			planInfo.canAvailTrial = json.response.can_avail_trial;
 		}
-		const configRepo = config.repos[repoPath];
-		if (configRepo) {
-			const json = <any> await getRepoPlanInfo(accessToken, configRepo.id);
-			if (!json.error) {
-				pricingUrl = generateWebUrl("", json.response.url);
-				isOrgRepo = json.response.is_org_repo;
-				canAvailTrial = json.response.can_avail_trial;
-			}	
+		return planInfo;
+	}
+
+	showNotification = () => {
+		const isOrgRepo = this.repoPlanInfo.isOrgRepo;
+		// Create msg for the notification
+		let msg = NOTIFICATION.FREE_TIER_LIMIT_REACHED;
+		const subMsg = isOrgRepo ? NOTIFICATION.UPGRADE_ORG_PLAN : NOTIFICATION.UPGRADE_PRICING_PLAN;
+		msg = `${msg} ${this.repoPath}. ${subMsg}`;
+		let button = isOrgRepo ? NOTIFICATION_BUTTON.UPGRADE_TO_TEAM : NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
+		if (this.repoPlanInfo.canAvailTrial) {
+			button = isOrgRepo ? NOTIFICATION_BUTTON.TRY_TEAM_FOR_FREE : NOTIFICATION_BUTTON.TRY_PRO_FOR_FREE;
+		}
+		// Show alert msg
+		vscode.window.showErrorMessage(msg, button).then(async selection => {
+			if (!selection) return;
+			vscode.env.openExternal(vscode.Uri.parse(this.repoPlanInfo.pricingUrl));
+		});
+	}
+
+	setStateAndContext = () => {
+		// Mark upgradePricingPlan to show button in left panel only if it is currently opened repo
+		this.isCurrentRepo = this.currentRepoPath === this.repoPath;
+		if (this.isCurrentRepo) {
+			vscode.commands.executeCommand('setContext', contextVariables.upgradePricingPlan, true);
+			vscode.commands.executeCommand('setContext', contextVariables.canAvailTrial, this.repoPlanInfo.canAvailTrial);
+			CodeSyncState.set(CODESYNC_STATES.PRICING_URL, this.repoPlanInfo.pricingUrl);
+			CodeSyncState.set(CODESYNC_STATES.CAN_AVAIL_TRIAL, this.repoPlanInfo.canAvailTrial);	
 		}
 	}
 
-	// Mark upgradePricingPlan to show button in left panel
-	vscode.commands.executeCommand('setContext', contextVariables.upgradePricingPlan, true);
-	vscode.commands.executeCommand('setContext', contextVariables.canAvailTrial, canAvailTrial);
-
-	const msg = isOrgRepo ? NOTIFICATION.UPGRADE_ORG_PLAN : NOTIFICATION.UPGRADE_PRICING_PLAN;
-	let button = NOTIFICATION.UPGRADE;
-	if (canAvailTrial) {
-		button = isOrgRepo ? NOTIFICATION.TRY_TEAM_FOR_FREE : NOTIFICATION.TRY_PRO_FOR_FREE;
+	async run() {
+		const configUtils = new ConfigUtils();
+		const config = configUtils.config;
+		if (!config) return;
+		this.repoPath = this.repoPath || configUtils.getRepoPathByRepoId(this.repoId);
+		if (!this.repoPath) return;
+		const repoPlanInfo = await this._getRepoPlanInfo();
+		const repoPlanLimits = new RepoPlanLimitsState(this.repoPath);
+		const repoLimitsState = repoPlanLimits.get();
+		this.setStateAndContext();
+		if (repoLimitsState.canShowNotification) {
+			this.showNotification();
+		}
+		repoPlanLimits.set(repoPlanInfo.canAvailTrial, repoLimitsState.canShowNotification);
 	}
-	CodeSyncState.set(CODESYNC_STATES.PRICING_URL, pricingUrl);
-	CodeSyncState.set(CODESYNC_STATES.CAN_AVAIL_TRIAL, canAvailTrial);
-	// Show alert msg
-	vscode.window.showErrorMessage(msg, button).then(async selection => {
-		if (!selection) return;
-		vscode.env.openExternal(vscode.Uri.parse(pricingUrl));
-	});	
-};
-
-
-export const getPlanLimitReached = () => {
-	/*
-		If pricingAlertlock is acquried by any IDE instance, means pricing limit has been reached. 
-	*/
-	const lockUtils = new LockUtils();
-	const planLimitReached = lockUtils.checkPricingAlertLock();
-	const requestSentAt = CodeSyncState.get(CODESYNC_STATES.REQUEST_SENT_AT);
-	const canRetry = requestSentAt && (new Date().getTime() - requestSentAt) > RETRY_REQUEST_AFTER;
-	return {
-		planLimitReached,
-		canRetry
-	};
-};
-
-export const resetPlanLimitReached = () => {
-	/*
-		Checks from server if repo is a User's repo or an Organization's repo
-		- Sets alert msg and pricing URL accordingly
-		- Sets REQUEST_SENT_AT in CodeSyncState after which we retry syncing data
-	*/
-	const lockUtils = new LockUtils();
-	lockUtils.releasePricingAlertLock();
-	vscode.commands.executeCommand('setContext', contextVariables.upgradePricingPlan, false);
-	// Set time to "" when request is sent
-	CodeSyncState.set(CODESYNC_STATES.REQUEST_SENT_AT, "");
-};
+	
+	uploadRepo = async (statusCode: number, errorCode: number) => {
+		if (statusCode === HttpStatusCodes.OK){
+			const repoLimitsState = new RepoPlanLimitsState(this.repoPath);
+			repoLimitsState.reset();
+			return true;
+		}
+		if (statusCode === HttpStatusCodes.PAYMENT_REQUIRED) {
+			// No need to set state for Connecting Repo since it is performed by User Action
+			// This is "Branch Upload"
+			if (this.repoId) return await this.run();
+			// This is "Connect Repo"
+			const isNewPrivateRepo = errorCode === ErrorCodes.PRIVATE_REPO_COUNT_LIMIT_REACHED;
+			showFreeTierLimitReached(this.repoPath, isNewPrivateRepo);
+			return true;
+		}
+		return false;
+	}	
+}

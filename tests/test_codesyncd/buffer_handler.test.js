@@ -8,7 +8,7 @@ import getBranchName from "current-git-branch";
 import fetchMock from "jest-fetch-mock";
 
 import {pathUtils} from "../../src/utils/path_utils";
-import {createSystemDirectories} from "../../src/utils/setup_utils";
+import {createSystemDirectories, generateRandomNumber} from "../../src/utils/setup_utils";
 import {CODESYNC_STATES, CodeSyncState} from "../../src/utils/state_utils";
 import {DEFAULT_BRANCH} from "../../src/constants";
 import {
@@ -102,6 +102,7 @@ describe("bufferHandler", () => {
         getBranchName.mockReturnValue(DEFAULT_BRANCH);
         const configData = {repos: {}};
         configData.repos[repoPath] = {
+            id: generateRandomNumber(1, 100000),
             branches: {},
             email: TEST_EMAIL
         };

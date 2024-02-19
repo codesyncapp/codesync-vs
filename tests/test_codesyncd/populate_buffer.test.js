@@ -8,7 +8,7 @@ import {pathUtils} from "../../src/utils/path_utils";
 import {CodeSyncState} from "../../src/utils/state_utils";
 import {readYML} from "../../src/utils/common";
 import {populateBuffer} from "../../src/codesyncd/populate_buffer";
-import {createSystemDirectories} from "../../src/utils/setup_utils";
+import {createSystemDirectories, generateRandomNumber} from "../../src/utils/setup_utils";
 import {DEFAULT_BRANCH} from "../../src/constants";
 import {
     assertChangeEvent,
@@ -75,6 +75,7 @@ describe("populateBuffer", () => {
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const configData = {repos: {}};
         configData.repos[repoPath] = {
+            id: generateRandomNumber(1, 100000),
             branches: {},
             email: TEST_EMAIL
         };
