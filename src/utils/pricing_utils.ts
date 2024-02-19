@@ -49,8 +49,8 @@ export class PlanLimitsHandler {
 		if (!repoPath) return;
 		const repoPlanInfo = await this._getRepoPlanInfo();
 		// Set RepoPlanLimitsState
-		const repoPlanLimitsState = new RepoPlanLimitsState(repoPath);
-		repoPlanLimitsState.set(repoPlanInfo.canAvailTrial);
+		const repoLimitsState = new RepoPlanLimitsState(repoPath);
+		repoLimitsState.set(repoPlanInfo.canAvailTrial);
 		// Mark upgradePricingPlan to show button in left panel only if it is currently opened repo
 		this.isCurrentRepo = this.currentRepoPath === repoPath;
 		if (this.isCurrentRepo) {

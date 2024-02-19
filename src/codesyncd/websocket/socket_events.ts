@@ -102,8 +102,8 @@ export class SocketEvents {
         if (!fs.existsSync(diffFilePath)) return;
         // Reset Plan Limits
         const diffData = <IDiff>readYML(diffFilePath);
-        const repoPlanLimitsState = new RepoPlanLimitsState(diffData.repo_path);
-        repoPlanLimitsState.reset();
+        const repoLimitsState = new RepoPlanLimitsState(diffData.repo_path);
+        repoLimitsState.reset();
         DiffHandler.removeDiffFile(diffFilePath);
         // Remove diff from diffsBeingProcessed
         const diffsBeingProcessed = getDiffsBeingProcessed();
