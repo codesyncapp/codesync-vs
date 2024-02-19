@@ -144,7 +144,7 @@ export class initUtils {
 		vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, false);
 		// Show success notification
 		if (!this.viaDaemon) {
-			vscode.window.showInformationMessage(NOTIFICATION.REPO_SYNCED, ...[
+			vscode.window.showInformationMessage(NOTIFICATION.REPO_CONNECTED, ...[
 				NOTIFICATION.TRACK_IT
 			]).then(selection => {
 				if (!selection) return;

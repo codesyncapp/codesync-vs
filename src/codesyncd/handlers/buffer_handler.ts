@@ -5,14 +5,14 @@ import { glob } from 'glob';
 
 import {getDiffsBeingProcessed, isValidDiff} from '../utils';
 import {CodeSyncLogger} from '../../logger';
-import {IFileToDiff, IRepoDiffs} from '../../interface';
+import {IFileToDiff, IRepoDiffs, IUser} from '../../interface';
 import {DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER} from "../../constants";
 import {generateSettings} from "../../settings";
 import {getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
 import { removeFile } from '../../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../../utils/state_utils';
-import { UserUtils } from '../../utils/user_utils';
+import { UserState } from '../../utils/user_utils';
 import { RepoPlanLimitsState } from '../../utils/repo_state_utils';
 
 
@@ -62,8 +62,10 @@ export class bufferHandler {
 	configJSON: any;
 	defaultIgnorePatterns: string[];
 	instanceUUID: string;
+	activeUser: IUser|null;
 	// Log run msg after 2 minutes
 	LOG_BUFFER_HANDLER_RUN_AFTER = 5 * 60 * 1000;
+	
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		this.statusBarItem = statusBarItem;
@@ -71,15 +73,13 @@ export class bufferHandler {
 		this.configJSON = readYML(this.settings.CONFIG_PATH);
         this.defaultIgnorePatterns = getDefaultIgnorePatterns();
 		this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
+		this.activeUser = null;
 	}
 
 	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
 
 	getDiffFiles = async () => {
-		const userUtils = new UserUtils();
-		const activeUser = userUtils.getActiveUser();
 		const diffsBeingProcessed = getDiffsBeingProcessed();
-
         const invalidDiffFiles = await glob("**", { 
 			ignore: "*.yml",
 			nodir: true,
@@ -128,7 +128,7 @@ export class bufferHandler {
 				return false;
 			}
 			// If diff does not belong to user's repo, skip it
-			if (activeUser && configRepo.email !== activeUser.email) return false;
+			if (this.activeUser && configRepo.email !== this.activeUser.email) return false;
 			// Remove diff is repo is disconnected
 			if (configRepo.is_disconnected) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is disconnected`);
@@ -228,15 +228,14 @@ export class bufferHandler {
 		
 		try {
 			// Check if we have an active user
-			const userUtils = new UserUtils();
-			const activeUser = userUtils.getActiveUser();	
-			if (!activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+			this.activeUser = new UserState().getUser();
+			if (!this.activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			const diffs = await this.getDiffFiles();
 			if (!diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			const repoDiffs = this.groupRepoDiffs(diffs.files);
 			// Create Websocket client
-			const webSocketClient = new SocketClient(this.statusBarItem, activeUser.access_token, repoDiffs);
+			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs);
 			webSocketClient.connect(canSendDiffs);
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment

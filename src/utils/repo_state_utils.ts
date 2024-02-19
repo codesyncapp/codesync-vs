@@ -2,9 +2,8 @@ import vscode from 'vscode';
 import { checkSubDir, getBranch } from "./common";
 import { IRepoPlanLimitState, IRepoState } from '../interface';
 import { ConfigUtils } from './config_utils';
-import { UserUtils } from './user_utils';
 import { CODESYNC_STATES, CodeSyncState } from "./state_utils";
-import { RETRY_REQUEST_AFTER, contextVariables } from "../constants";
+import { RETRY_REQUEST_AFTER, SHOW_PLAN_UPGRADE_MSG_AFTER, contextVariables } from "../constants";
 import { pathUtils } from './path_utils';
 
 
@@ -51,8 +50,7 @@ export class RepoState {
 			repoState.IS_DISCONNECTED = true;
 			return repoState;
 		}
-		const userUtils = new UserUtils();
-		if (!repoConfig.email || !userUtils.isUserActive(repoConfig.email)) return repoState;
+		if (!repoConfig.email) return repoState;
 		repoState.IS_CONNECTED = true;
 		if (!checkFileIds) return repoState;
 		const branch = getBranch(this.repoPath);
@@ -75,26 +73,33 @@ export class RepoPlanLimitsState {
 	planLimitKey: string;
 	requestSentAtKey: string;
 	canAvailTrailKey: string;
+	alertShownAtKey: string;
 
 	constructor(repoPath: string) {
 		this.repoPath = repoPath;
 		this.planLimitKey = `${this.repoPath}:planLimitReached`;
 		this.requestSentAtKey = `${this.repoPath}:requestSentAt`;
 		this.canAvailTrailKey = `${this.repoPath}:canAvailTrial`;
+		this.alertShownAtKey = `${this.repoPath}:planUpgradeAlertShownAt`;
 	}
 	
 	get = (): IRepoPlanLimitState => {
 		const state = <IRepoPlanLimitState>{};
 		state.planLimitReached = CodeSyncState.get(this.planLimitKey);
 		const requestSentAt = CodeSyncState.get(this.requestSentAtKey);
-		state.canRetry = requestSentAt && (new Date().getTime() - requestSentAt) > RETRY_REQUEST_AFTER;
+		const alertShownAt = CodeSyncState.get(this.alertShownAtKey);
+		state.canRetry = !requestSentAt || (new Date().getTime() - requestSentAt) > RETRY_REQUEST_AFTER;
+		state.canShowNotification = !alertShownAt || (new Date().getTime() - alertShownAt) > SHOW_PLAN_UPGRADE_MSG_AFTER;
 		return state;
 	}
 
-	set = (canAvailTrial: boolean): void => {
+	set = (canAvailTrial: boolean, alertShown=false): void => {
 		CodeSyncState.set(this.planLimitKey, true);
 		CodeSyncState.set(this.requestSentAtKey, new Date().getTime());
 		CodeSyncState.set(this.canAvailTrailKey, canAvailTrial);
+		if (alertShown) {
+			CodeSyncState.set(this.alertShownAtKey, new Date().getTime());
+		}
 	}
 
 	reset = (): void => {

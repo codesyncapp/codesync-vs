@@ -39,9 +39,6 @@ describe("detectBranchChange", () => {
     let originalsRepoBranchPath;
     let shadowRepoBranchPath;
 
-    const configData = {repos: {}};
-    const userData = {};    
-
     beforeEach(async () => {
         fetch.resetMocks();
         jest.clearAllMocks();
@@ -58,14 +55,12 @@ describe("detectBranchChange", () => {
 
         configPath = getConfigFilePath(baseRepoPath);
         userFilePath = getUserFilePath(baseRepoPath);
-        userData[TEST_EMAIL] = {access_token: "ABC"};
         pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
         originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
-            
-        fs.writeFileSync(configPath, yaml.dump(configData));
-        fs.writeFileSync(userFilePath, yaml.dump(userData));
-        
+        addUser(baseRepoPath);
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
         const initUtilsObj = new initUtils(repoPath);
         const itemPaths = await initUtilsObj.getSyncablePaths();
         const filePaths = itemPaths.map(itemPath => itemPath.file_path);
@@ -101,11 +96,14 @@ describe("detectBranchChange", () => {
     };
 
     test("No repo connected", async () => {
+        const _configData = {repos: {}};
+        fs.writeFileSync(configPath, yaml.dump(_configData));
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
     });
 
     test("Repo is disconnected", async () => {
+        fs.rmSync(configPath);
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo(true);
         const readyRepos = await detectBranchChange();
@@ -120,18 +118,15 @@ describe("detectBranchChange", () => {
     });
 
     test("No active user", async () => {
+        fs.rmSync(userFilePath);
         addUser(baseRepoPath, false);
         jest.spyOn(global.console, 'log');
-        const configUtil = new Config(repoPath, configPath);
-        configUtil.addRepo();
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
     });
 
     test("Repo exists but shadow repo does not exist", async () => {
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
-        const configUtil = new Config(repoPath, configPath);
-        configUtil.addRepo();
         fs.rmSync(pathUtilsObj.getShadowRepoPath(), {recursive: true, force: true});
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
@@ -141,15 +136,13 @@ describe("detectBranchChange", () => {
     test("Actual repo has been deleted but shadow exists", async () => {
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
-        const configUtil = new Config(repoPath, configPath);
-        configUtil.addRepo();
         fs.rmSync(repoPath, {recursive: true, force: true});
         const readyRepos = await detectBranchChange();
         expect(readyRepos).toStrictEqual({});
         expect(console.log).toHaveBeenCalledTimes(0);
     });
 
-    test("Repo is synced with same branch", async () => {
+    test("Repo is connected with same branch", async () => {
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const _configData = {repos: {}};
@@ -165,23 +158,14 @@ describe("detectBranchChange", () => {
         expect(console.log).toHaveBeenCalledTimes(0);
     });
 
-    test("Repo is synced with same branch with valid file IDs", async () => {
+    test("Repo is connected with same branch with valid file IDs", async () => {
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
-        const configUtil = new Config(repoPath, configPath);
-        configUtil.addRepo();        
-        const userData = {};
-        userData[TEST_EMAIL] = {
-            access_token: "ABC",
-            access_key: TEST_USER.iam_access_key,
-            secret_key: TEST_USER.iam_secret_key
-        };
-        fs.writeFileSync(userFilePath, yaml.dump(userData));
         const readyRepos = await detectBranchChange();
         expect(assertValidUpload(readyRepos)).toBe(true);
     });
 
-    test("Repo is synced with same branch with null file IDs", async () => {
+    test("Repo is connected with same branch with null file IDs", async () => {
         fs.mkdirSync(shadowRepoBranchPath, {recursive: true});
         getBranchName.mockReturnValueOnce(DEFAULT_BRANCH);
         const _configData = {repos: {}};
@@ -194,9 +178,7 @@ describe("detectBranchChange", () => {
             "file_1.js": null
         };
         _configData.repos[repoPath].branches[DEFAULT_BRANCH][NESTED_PATH] = null;
-
         fs.writeFileSync(configPath, yaml.dump(_configData));
-
         // Mock response for checkServerDown and uploadRepo
         fetchMock
             .mockResponseOnce(JSON.stringify({status: true}))

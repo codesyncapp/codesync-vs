@@ -3,7 +3,7 @@ import { initHandler } from '../init/init_handler';
 import { redirectToBrowser } from './auth_utils';
 import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON, PRICING_URL_PATH, getUpgradePlanMsg } from '../constants';
 import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
-import { UserUtils } from './user_utils';
+import { UserState } from './user_utils';
 import { generateWebUrl } from './url_utils';
 
 
@@ -59,8 +59,8 @@ export const showDisconnectedRepo = (repoPath: string) => {
 // TODO: Probably add a separate function
 export const showChooseAccount = async (repoPath: string) => {
 	// Check if access token is present against users
-	const userUtils = new UserUtils();
-	const activeUser = userUtils.getActiveUser();
+	const userState = new UserState();
+	const activeUser = userState.getUser();
 	if (!activeUser) {
 		vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
 		return;

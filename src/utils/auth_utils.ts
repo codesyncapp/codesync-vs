@@ -13,9 +13,9 @@ import {reactivateAccountHandler, trackRepoHandler} from "../handlers/commands_h
 import {Auth0URLs, contextVariables, ECONNREFUSED, getRepoInSyncMsg, HttpStatusCodes, NOTIFICATION, NOTIFICATION_BUTTON} from "../constants";
 import { CodeSyncLogger } from "../logger";
 import { generateAuthUrl } from "./url_utils";
-import { CODESYNC_STATES, CodeSyncState } from "./state_utils";
 import { pathUtils } from "./path_utils";
 import { RepoState } from "./repo_state_utils";
+import { UserState } from "./user_utils";
 
 
 export const isPortAvailable = async (port: number) => {
@@ -56,7 +56,8 @@ export const postSuccessLogin = (userEmail: string, accessToken: string) => {
     postSuccessLoginAddUser(userEmail, accessToken);
     vscode.commands.executeCommand('setContext', contextVariables.showLogIn, false);
     vscode.commands.executeCommand('setContext', contextVariables.showReactivateAccount, false);
-    CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
+    const userState = new UserState();
+    userState.setValidAccount();
     const repoPath = pathUtils.getRootPath() || "";
     if (!repoPath) return;
     const repoState = new RepoState(repoPath).get();
@@ -82,7 +83,8 @@ const postDeactivatedAccount = (userEmail: string, accessToken: string) => {
     vscode.commands.executeCommand('setContext', contextVariables.showLogIn, false);
     vscode.commands.executeCommand('setContext', contextVariables.showReactivateAccount, true);
     vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, false);
-    CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, true);
+    const userState = new UserState();
+    userState.setDeactivated();
 };
 
 const checkDeactivatedAccount = (email: string, accessToken: string, statusCode: number) => {
@@ -99,13 +101,17 @@ const checkDeactivatedAccount = (email: string, accessToken: string, statusCode:
 
 export const isAccountActive = async (email: string, accessToken: string) => {
     const isValidAccount = true;
+    const userState = new UserState();
+    userState.set(isValidAccount, false);
     const userResponse = await createUserWithApi(accessToken);
     if (!userResponse.error) return isValidAccount;
     if (userResponse.statusCode === HttpStatusCodes.UNAUTHORIZED) {
+        userState.set(false, false);
         askAndTriggerSignUp();
         return false;
     }
     const isDeactivated = checkDeactivatedAccount(email, accessToken, userResponse.statusCode);
+	userState.set(isValidAccount, isDeactivated);
     if (isDeactivated) return false;
     return !userResponse.error.toString().includes(ECONNREFUSED);
 };
@@ -149,6 +155,8 @@ export const markUsersInactive = (notify=true) => {
         users[email].is_active = false;
     });
     fs.writeFileSync(settings.USER_PATH, yaml.dump(users));
+    const userState = new UserState();
+	userState.set(false, false);
     if (!notify) return;
     setTimeout(() => {
         vscode.window.showInformationMessage(NOTIFICATION.LOGGED_OUT_SUCCESSFULLY);
@@ -167,7 +175,6 @@ export const askAndTriggerSignUp = () => {
         }
     });
 };
-
 
 const parseJwt = (token: string) => {
     return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());

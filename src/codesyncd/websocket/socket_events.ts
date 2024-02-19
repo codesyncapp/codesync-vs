@@ -12,6 +12,7 @@ import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
 import { PlanLimitsHandler } from "../../utils/pricing_utils";
 import { readYML } from "../../utils/common";
 import { RepoPlanLimitsState } from "../../utils/repo_state_utils";
+import { UserState } from "../../utils/user_utils";
 
 
 const EVENT_TYPES = {
@@ -50,7 +51,8 @@ export class SocketEvents {
     onDeactivatedAccount() {
         errorCount = logErrorMsg(ERROR_SENDING_DIFFS.DEACTIVATED_ACCOUNT_FOUND, errorCount);
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED);
-        CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, true);
+        const userState = new UserState();
+        userState.setDeactivated();
         CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
         vscode.commands.executeCommand('setContext', contextVariables.showReactivateAccount, true);
         this.connection.close();
@@ -68,7 +70,8 @@ export class SocketEvents {
 
     async onValidAuth() {
         this.connection.send(JSON.stringify({"auth": 200}));
-        CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
+        const userState = new UserState();
+        userState.setValidAccount();
         const statusBarMsg = this.statusBarMsgsHandler.getMsg();
         this.statusBarMsgsHandler.update(statusBarMsg);
         if (!this.canSendDiffs) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
