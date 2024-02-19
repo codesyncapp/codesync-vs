@@ -178,7 +178,7 @@ describe("setupCodeSync",  () => {
         addUser(baseRepoPath);
         await setupCodeSync(repoPath);
         const repoUtils = new RepoUtils(repoPath);
-        const repoState = repoUtils.getState();
+        const repoState = repoUtils.get();
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const msg = getRepoInSyncMsg(repoPath);
@@ -195,7 +195,7 @@ describe("setupCodeSync",  () => {
         const subDir = path.join(repoPath, "directory");
         await setupCodeSync(subDir);
         const repoUtils = new RepoUtils(repoPath);
-        const repoState = repoUtils.getState();
+        const repoState = repoUtils.get();
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const msg = getDirectoryIsSyncedMsg(subDir, repoPath);

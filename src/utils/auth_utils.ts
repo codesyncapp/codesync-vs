@@ -60,7 +60,7 @@ export const postSuccessLogin = (userEmail: string, accessToken: string) => {
     const repoPath = pathUtils.getRootPath() || "";
     if (!repoPath) return;
     const repoUtils = new RepoUtils(repoPath);
-    const repoState = repoUtils.getState();
+    const repoState = repoUtils.get();
     const repoIsNotConnected = !repoState.IS_CONNECTED;
     vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, repoIsNotConnected);
 	if (repoIsNotConnected) {

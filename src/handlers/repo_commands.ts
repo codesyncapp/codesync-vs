@@ -23,7 +23,7 @@ export class RepoCommandsHandler {
 	constructor() {
 		this.repoPath = pathUtils.getRootPath();
 		this.repoUtils = new RepoUtils(this.repoPath);
-		this.repoState = this.repoUtils.getState();
+		this.repoState = this.repoUtils.get();
 		this.settings = generateSettings();
 	}
 

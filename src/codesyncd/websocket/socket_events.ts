@@ -11,7 +11,7 @@ import {markUsersInactive} from "../../utils/auth_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
 import { PlanLimitsHandler } from "../../utils/pricing_utils";
 import { readYML } from "../../utils/common";
-import { RepoPlanLimitsUtils } from "../../utils/repo_utils";
+import { RepoPlanLimitsState } from "../../utils/repo_utils";
 
 
 const EVENT_TYPES = {
@@ -102,8 +102,8 @@ export class SocketEvents {
         if (!fs.existsSync(diffFilePath)) return;
         // Reset Plan Limits
         const diffData = <IDiff>readYML(diffFilePath);
-        const planLimitsUtils = new RepoPlanLimitsUtils(diffData.repo_path);
-        planLimitsUtils.resetState();
+        const repoPlanLimitsState = new RepoPlanLimitsState(diffData.repo_path);
+        repoPlanLimitsState.reset();
         DiffHandler.removeDiffFile(diffFilePath);
         // Remove diff from diffsBeingProcessed
         const diffsBeingProcessed = getDiffsBeingProcessed();

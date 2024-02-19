@@ -6,7 +6,7 @@ import { API_ROUTES, HttpStatusCodes } from "../constants";
 import { PlanLimitsHandler } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
 import { s3UploaderUtils } from '../init/s3_uploader';
-import { RepoPlanLimitsUtils } from './repo_utils';
+import { RepoPlanLimitsState } from './repo_utils';
 
 
 export const uploadRepoToServer = async (accessToken: string, data: any, repoId=null) => {
@@ -114,8 +114,8 @@ export const uploadFile = async (accessToken: string, data: any, repoPath: strin
 		const limitsHandler = new PlanLimitsHandler(accessToken, data.repo_id, repoPath);
         await limitsHandler.run();
 	} else {
-		const planLimitsUtils = new RepoPlanLimitsUtils(repoPath);
-        planLimitsUtils.resetState();
+		const repoLimitsState = new RepoPlanLimitsState(repoPath);
+        repoLimitsState.reset();
 	}
 
 	if (response.error) {

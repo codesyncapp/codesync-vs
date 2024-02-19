@@ -19,7 +19,7 @@ export class RepoUtils {
 		this.config = configUtils.config;
 	}
 	
-	getState (checkFileIds=true) : IRepoState {
+	get (checkFileIds=true) : IRepoState {
 		/*
 		Returns true if follwing conditions exist, and returns false otherwise 
 		- if repoPath exists in config.yml 
@@ -69,7 +69,7 @@ export class RepoUtils {
 	}
 }
 
-export class RepoPlanLimitsUtils {
+export class RepoPlanLimitsState {
 
 	repoPath: string;
 	planLimitKey: string;
@@ -83,7 +83,7 @@ export class RepoPlanLimitsUtils {
 		this.canAvailTrailKey = `${this.repoPath}:canAvailTrial`;
 	}
 	
-	getState = (): IRepoPlanLimitState => {
+	get = (): IRepoPlanLimitState => {
 		const state = <IRepoPlanLimitState>{};
 		state.planLimitReached = CodeSyncState.get(this.planLimitKey);
 		const requestSentAt = CodeSyncState.get(this.requestSentAtKey);
@@ -91,13 +91,13 @@ export class RepoPlanLimitsUtils {
 		return state;
 	}
 
-	setState = (canAvailTrial: boolean): void => {
+	set = (canAvailTrial: boolean): void => {
 		CodeSyncState.set(this.planLimitKey, true);
 		CodeSyncState.set(this.requestSentAtKey, new Date().getTime());
 		CodeSyncState.set(this.canAvailTrailKey, canAvailTrial);
 	}
 
-	resetState = (): void => {
+	reset = (): void => {
 		// Reset state for given repoPath
 		CodeSyncState.set(this.planLimitKey, false);
 		CodeSyncState.set(this.requestSentAtKey, "");
