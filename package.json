@@ -98,37 +98,42 @@
           "when": "workbenchState != empty && showLogIn && CodeSyncActivated"
         },
         {
-          "id": "codesync-signed-up-deactivated-account",
+          "id": "codesync-deactivated-account",
           "name": "CodeSync",
           "when": "workbenchState != empty && !showLogIn && CodeSyncActivated && showReactivateAccount"
         },
         {
-          "id": "codesync-signed-up-not-synced",
+          "id": "codesync-repo-not-connected",
           "name": "CodeSync",
           "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && CodeSyncActivated && showConnectRepoView && !isSubDir && CodeSyncActivated"
         },
         {
-          "id": "codesync-signed-up-and-synced",
+          "id": "codesync-repo-connected",
           "name": "CodeSync",
-          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && !isSubDir && CodeSyncActivated && !upgradePricingPlan"
+          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && ! isDisconnectedRepo && !isSubDir && CodeSyncActivated && !upgradePricingPlan"
         },
         {
-          "id": "codesync-signed-up-and-synced-and-pricing-plan-limit-reached",
+          "id": "codesync-repo-is-disconnected",
+          "name": "CodeSync",
+          "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && isDisconnectedRepo && !showConnectRepoView && !isSubDir && CodeSyncActivated && !upgradePricingPlan"
+        },
+        {
+          "id": "codesync-upgrade-to-pro-plan",
           "name": "CodeSync",
           "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && !isSubDir && CodeSyncActivated && upgradePricingPlan && !canAvailTrial"
         },
         {
-          "id": "codesync-signed-up-and-synced-and-upgrade-plan-for-free",
+          "id": "codesync-try-pro-for-free",
           "name": "CodeSync",
           "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && !isSubDir && CodeSyncActivated && upgradePricingPlan && canAvailTrial"
         },
         {
-          "id": "codesync-signed-up-is-sub-dir",
+          "id": "codesync-opened-repo-is-sub-dir-of-connected-repo",
           "name": "CodeSync",
           "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && isSubDir && !isSyncIgnored && CodeSyncActivated"
         },
         {
-          "id": "codesync-signed-up-is-sub-dir-syncignored",
+          "id": "codesync-sub-dir-is-syncignored",
           "name": "CodeSync",
           "when": "workbenchState != empty && !showLogIn && !showReactivateAccount && !showConnectRepoView && isSubDir && isSyncIgnored && CodeSyncActivated"
         },
@@ -149,31 +154,35 @@
         "contents": "Login to CodeSync.\n[Join](command:codesync.signup)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
       },
       {
-        "view": "codesync-signed-up-deactivated-account",
-        "contents": "You are conneced with CodeSync. Reactivate your account to resume syncing.\n[Reactivate account](command:codesync.accountReactivate)\n[Logout](command:codesync.logout)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
+        "view": "codesync-deactivated-account",
+        "contents": "You are connected with CodeSync. Reactivate your account to resume syncing.\n[Reactivate account](command:codesync.accountReactivate)\n[Logout](command:codesync.logout)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
       },
       {
-        "view": "codesync-signed-up-not-synced",
-        "contents": "You are conneced with CodeSync.\nConnect your repo.\n[Connect](command:codesync.sync)\n[Logout](command:codesync.logout)"
+        "view": "codesync-repo-not-connected",
+        "contents": "You are connected with CodeSync.\nConnect your repo.\n[Connect](command:codesync.sync)\n[Logout](command:codesync.logout)"
       },
       {
-        "view": "codesync-signed-up-and-synced",
+        "view": "codesync-repo-is-disconnected",
+        "contents": "Respository is disconnected.\nReconnect your repo.\n[Reconnect](command:codesync.reconnectRepo)\n[Logout](command:codesync.logout)"
+      },
+      {
+        "view": "codesync-repo-connected",
         "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
-        "view": "codesync-signed-up-and-synced-and-pricing-plan-limit-reached",
+        "view": "codesync-upgrade-to-pro-plan",
         "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[Upgrade plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
-        "view": "codesync-signed-up-and-synced-and-upgrade-plan-for-free",
+        "view": "codesync-try-pro-for-free",
         "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[Upgrade plan for free](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
-        "view": "codesync-signed-up-is-sub-dir",
+        "view": "codesync-opened-repo-is-sub-dir-of-connected-repo",
         "contents": "You are good to go ✅.\nCurrent directory is in sync with CodeSync because a parent repo is in sync.\n[View parent repo on web](command:codesync.trackRepo)\n[Disconnect parent repo](command:codesync.disconnectRepo)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
-        "view": "codesync-signed-up-is-sub-dir-syncignored",
+        "view": "codesync-sub-dir-is-syncignored",
         "contents": "Current directory is syncignored by a parent repo. To sync this directory, remove it from .syncignore.\n[Open .syncignore](command:codesync.openSyncIgnore)\n[View parent repo on web](command:codesync.trackRepo)\n[Disconnect parent repo](command:codesync.disconnectRepo)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {

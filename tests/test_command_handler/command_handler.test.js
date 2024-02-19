@@ -7,13 +7,12 @@ import fetchMock from "jest-fetch-mock";
 import getBranchName from "current-git-branch";
 
 import {
-    postSelectionDisconnectRepo,
     SignUpHandler,
     connectRepoHandler,
     trackFileHandler,
     trackRepoHandler,
-    disconnectRepoHandler
 } from "../../src/handlers/commands_handler";
+import {RepoDisconnectHandler, RepoReconnectHandler} from "../../src/handlers/repo_commands";
 import {
     Config,
     getConfigFilePath,
@@ -21,12 +20,16 @@ import {
     randomBaseRepoPath,
     randomRepoPath,
     setWorkspaceFolders,
-    TEST_EMAIL
+    TEST_EMAIL,
+    addUser
 } from "../helpers/helpers";
 import {
     NOTIFICATION,
     DEFAULT_BRANCH,
-    getRepoInSyncMsg
+    getRepoInSyncMsg,
+    contextVariables,
+    getRepoDisconnectedMsg,
+    getRepoReconnectedMsg
 } from "../../src/constants";
 import {WEB_APP_URL} from "../../src/settings";
 import {readYML} from "../../src/utils/common";
@@ -66,7 +69,7 @@ describe("connectRepoHandler",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("No Repo Path",  async () => {
+    test("No Repo Path", async () => {
         await connectRepoHandler();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
@@ -96,7 +99,7 @@ describe("connectRepoHandler",  () => {
 
 });
 
-describe("disconnectRepoHandler",  () => {
+describe("RepoDisconnectHandler.run",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
@@ -111,6 +114,7 @@ describe("disconnectRepoHandler",  () => {
         setWorkspaceFolders(repoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
+        addUser(baseRepoPath);
         fs.writeFileSync(configPath, yaml.dump(configData));
         fs.writeFileSync(userFilePath, yaml.dump(userData));
     });
@@ -121,24 +125,24 @@ describe("disconnectRepoHandler",  () => {
     });
 
     test("No Repo Path", () => {
-        disconnectRepoHandler();
+        new RepoDisconnectHandler().run();
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Ask Dicsonnect confirmation", () => {
-        disconnectRepoHandler();
+    test("Ask Disconnect confirmation", () => {
+        new RepoDisconnectHandler().run();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECT_CONFIRMATION);
         expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
         expect(vscode.window.showWarningMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.CANCEL);
     });
 
-    test("Ask Dicsonnect parent confirmation; Sub Dir of synced repo", () => {
+    test("Ask Disconnect parent confirmation; Sub Dir of synced repo", () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
-        disconnectRepoHandler();
+        new RepoDisconnectHandler().run();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECT_PARENT_CONFIRMATION);
         expect(vscode.window.showWarningMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION.YES);
@@ -147,7 +151,7 @@ describe("disconnectRepoHandler",  () => {
 });
 
 
-describe("postSelectionDisconnectRepo",  () => {
+describe("RepoDisconnectHandler.postSelection",  () => {
     const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
@@ -160,6 +164,7 @@ describe("postSelectionDisconnectRepo",  () => {
         fetch.resetMocks();
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
+        setWorkspaceFolders(repoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.dump(configData));
@@ -171,68 +176,153 @@ describe("postSelectionDisconnectRepo",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("No Selection",  async () => {
-        await postSelectionDisconnectRepo(repoPath, undefined);
+    test("No Selection", async () => {
+        const commandHandler = new RepoDisconnectHandler();
+        await commandHandler.postSelection(undefined);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Clicked Cancel",  async () => {
-        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.CANCEL);
+    test("Clicked Cancel", async () => {
+        const commandHandler = new RepoDisconnectHandler();
+        await commandHandler.postSelection(NOTIFICATION.CANCEL);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Repo is already inactive",  async () => {
-        configData.repos[repoPath] = {
-            is_disconnected: true,
-            branches: {}
-        };
-        fs.writeFileSync(configPath, yaml.dump(configData));
-        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.YES);
+    test("Repo is already disconnected", async () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo(true);
+        const commandHandler = new RepoDisconnectHandler();
+        await commandHandler.postSelection(NOTIFICATION.YES);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Disconnecting error from server",  async () => {
+    test("Disconnecting error from server", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         const errJSON = {error: {message: "NOT SO FAST"}};
         fetchMock.mockResponseOnce(JSON.stringify(errJSON));
-        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.YES);
+        const commandHandler = new RepoDisconnectHandler();
+        await commandHandler.postSelection(NOTIFICATION.YES);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECT_FAILED);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("Should Dicsonnect",  async () => {
+    test("Should Disconnect", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         fetchMock.mockResponseOnce(JSON.stringify({}));
-
-        await postSelectionDisconnectRepo(repoPath, NOTIFICATION.YES);
-
+        const commandHandler = new RepoDisconnectHandler();
+        await commandHandler.postSelection(NOTIFICATION.YES);
         // Read config
         const config = readYML(configPath);
         expect(config.repos[repoPath].is_disconnected).toBe(true);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(3);
-        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showConnectRepoView");
-        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(true);
-        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual("isSubDir");
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(4);
+        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showConnectRepoView);
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.isSubDir);
         expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
-        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual("setContext");
-        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual("isSyncIgnored");
+        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.isSyncIgnored);
         expect(vscode.commands.executeCommand.mock.calls[2][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[3][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[3][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECTED);
+        const msg = getRepoDisconnectedMsg(repoPath);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(msg);
     });
+});
+
+describe("RepoReconnectHandler.run",  () => {
+    const repoPath = randomRepoPath();
+    const baseRepoPath = randomBaseRepoPath();
+    const configPath = getConfigFilePath(baseRepoPath);
+    const configData = {repos: {}};
+    const userFilePath = getUserFilePath(baseRepoPath);
+    const userData = {};
+    userData[TEST_EMAIL] = {access_token: "ABC"};
+
+    beforeEach(() => {
+        fetch.resetMocks();
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
+        setWorkspaceFolders(repoPath);
+        fs.mkdirSync(baseRepoPath, {recursive: true});
+        fs.mkdirSync(repoPath, {recursive: true});
+        fs.writeFileSync(configPath, yaml.dump(configData));
+        fs.writeFileSync(userFilePath, yaml.dump(userData));
+    });
+
+    afterEach(() => {
+        fs.rmSync(repoPath, { recursive: true, force: true });
+        fs.rmSync(baseRepoPath, { recursive: true, force: true });
+    });
+
+    test("Reconnect Repo", async () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo(true);
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        // Reconnect
+        const reconnectHandler = new RepoReconnectHandler();
+        await reconnectHandler.run();
+        const msg = getRepoReconnectedMsg(repoPath);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(msg);
+        // verify config
+        const config = readYML(configPath);
+        expect(config.repos[repoPath].is_disconnected).toBe(false);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
+        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showConnectRepoView);
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
+    });
+
+    test("Try to reconnect Repo already connected repo", async () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        // Reconnect
+        const reconnectHandler = new RepoReconnectHandler();
+        await reconnectHandler.run();
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
+        // verify config
+        const config = readYML(configPath);
+        expect(config.repos[repoPath].is_disconnected).toBe(false);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
+    });
+
+    test("API error while reconnecting repo", async () => {
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo(true);
+        fetchMock.mockResponseOnce(JSON.stringify({error: {message: "Error Msg"}}));
+        // Reconnect
+        const reconnectHandler = new RepoReconnectHandler();
+        await reconnectHandler.run();
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_RECONNECT_FAILED);
+        // verify config
+        const config = readYML(configPath);
+        expect(config.repos[repoPath].is_disconnected).toBe(true);
+    });
+
 });
 
 describe("trackRepoHandler",  () => {
@@ -265,7 +355,7 @@ describe("trackRepoHandler",  () => {
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(0);
     });
 
-    test("Repo in config",  async () => {
+    test("Repo in config", async () => {
         setWorkspaceFolders(repoPath);
         configData.repos[repoPath] = {
             id: 1234,
@@ -277,7 +367,7 @@ describe("trackRepoHandler",  () => {
         expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
     });
 
-    test("With nested directory",  async () => {
+    test("With nested directory", async () => {
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
     

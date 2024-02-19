@@ -12,12 +12,10 @@ import {
 	SYNCIGNORE,
 	UPDATE_SYNCIGNORE_AFTER
 } from "../constants";
-import { isRepoConnected } from '../events/utils';
 import { isAccountActive, isPortAvailable, logout } from './auth_utils';
-import { showConnectRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
-import { checkSubDir, getActiveUsers, readYML } from './common';
-import { 
-	disconnectRepoHandler, 
+import { showConnectRepo, showDisconnectedRepo, showSignUpButtons, showSyncIgnoredRepo } from './notifications';
+import { readYML } from './common';
+import {
 	openSyncIgnoreHandler, 
 	reactivateAccountHandler, 
 	SignUpHandler, 
@@ -26,7 +24,9 @@ import {
 	trackRepoHandler, 
 	upgradePlanHandler, 
 	viewActivityHandler, 
-	viewDashboardHandler
+	viewDashboardHandler,
+	disconnectRepoHandler,
+	reconnectRepoHandler
  } from '../handlers/commands_handler';
 import { generateSettings, PLUGIN_USER } from "../settings";
 import { initExpressServer } from "../server/server";
@@ -35,6 +35,8 @@ import { pathUtils } from './path_utils';
 import { CodeSyncLogger } from '../logger';
 import { GitExtension } from '../git';
 import { CODESYNC_STATES, CodeSyncState } from './state_utils';
+import { RepoState } from './repo_state_utils';
+import { UserState } from './user_utils';
 
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
@@ -59,7 +61,6 @@ export const createSystemDirectories = () => {
 	defaultData[settings.ALERTS] = yaml.dump({ team_activity: {} });
 	defaultData[settings.POPULATE_BUFFER_LOCK_FILE] = "";
 	defaultData[settings.DIFFS_SEND_LOCK_FILE] = "";
-	defaultData[settings.UPGRADE_PLAN_ALERT] = "";
 	// Create file if does not exist
 	[
 		// System Files
@@ -68,14 +69,12 @@ export const createSystemDirectories = () => {
 		settings.ALERTS,
 		// Lock Files
 		settings.POPULATE_BUFFER_LOCK_FILE, 
-		settings.DIFFS_SEND_LOCK_FILE, 
-		settings.UPGRADE_PLAN_ALERT
+		settings.DIFFS_SEND_LOCK_FILE
 	].forEach(filePath => {
 		if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, defaultData[filePath]);
 	});
 	// Reset file if it contains invalid data
 	[
-		settings.CONFIG_PATH,
 		settings.USER_PATH,
 		settings.ALERTS
 	].forEach(filePath => {
@@ -85,7 +84,10 @@ export const createSystemDirectories = () => {
 	});
 	// Clean content of config.yml
 	const config = readYML(settings.CONFIG_PATH);
-	if (!config.repos) fs.writeFileSync(settings.CONFIG_PATH, defaultData[settings.CONFIG_PATH]);
+	if (!config || !config.repos) {
+		CodeSyncLogger.critical("Removing contents of the config file");
+		fs.writeFileSync(settings.CONFIG_PATH, defaultData[settings.CONFIG_PATH]);
+	}
 	
 	// TODO: Remove deprecated files, Not doing until Intellij handles this as well
 	// settings.deprecatedFiles.forEach(filePath => {
@@ -132,16 +134,8 @@ export const addPluginUser = async () => {
     fs.writeFileSync(settings.USER_PATH, yaml.dump(users));
 };
 
-const generateRandom = (min = 0, max = 100)  => {
-	// find diff
-	const difference = max - min;
-	// generate random number
-	let rand = Math.random();
-	// multiply with difference
-	rand = Math.floor( rand * difference);
-	// add with min value
-	rand = rand + min;
-	return rand;
+export const generateRandomNumber = (min = 0, max = 100)  => {
+	return Math.floor(Math.random() * (max - min) ) + min;
 };
 
 export const setupCodeSync = async (repoPath: string) => {
@@ -151,7 +145,7 @@ export const setupCodeSync = async (repoPath: string) => {
 	const userFilePath = settings.USER_PATH;
 	let port = 0;
 	while (!port) {
-		const randomPort = generateRandom(MIN_PORT, MAX_PORT);
+		const randomPort = generateRandomNumber(MIN_PORT, MAX_PORT);
 		const isAvailable = await isPortAvailable(randomPort);
 		if (isAvailable) {
 			port = randomPort;
@@ -165,78 +159,46 @@ export const setupCodeSync = async (repoPath: string) => {
 
 	if (!fs.existsSync(userFilePath)) {
 		showSignUpButtons();
-		return port;
+		return;
 	}
-
 	// Check if there is valid user present
-	const activeUser = getActiveUsers()[0];
+	const userUtils = new UserState();
+	const activeUser = userUtils.getUser(false);
 	if (!activeUser) {
 		showSignUpButtons();
-		return port;
+		return;
 	}
 	// Check is accessToken is valid 
-	const success = await isAccountActive(activeUser.email, activeUser.access_token);
-	if (success) {
-		CodeSyncLogger.debug(`User's access toekn is active, user=${activeUser.email}`);
-	}
-	// Check if repo is connected
-	return showRepoStatusMsg(repoPath, port);
+	const isUserActive = await isAccountActive(activeUser.email, activeUser.access_token);
+	if (!isUserActive) return;
+	CodeSyncLogger.debug(`User's access token is active, user=${activeUser.email}`);		
+	// Show Repo Status
+	showRepoStatusMsg(repoPath);
 };
 
-export const showLogIn = () => {
-	const settings = generateSettings();
-	if (!fs.existsSync(settings.USER_PATH)) {
-		return true;
-	}
-	// Check if access token is present against users
-	const validUsers = getActiveUsers();
-	return validUsers.length === 0;
-};
-
-export const showRepoStatusMsg = (repoPath: string, port?: number) => {
+export const showRepoStatusMsg = (repoPath: string) => {
 	if (!repoPath) return;
-
-	const subDirResult = checkSubDir(repoPath);
-
 	registerSyncIgnoreSaveEvent(repoPath);
-	
-	if (showRepoIsSyncIgnoredView(repoPath)) {
-		showSyncIgnoredRepo(repoPath, subDirResult.parentRepo);
-		return port;
+	const repoState = new RepoState(repoPath).get();
+	if (repoState.IS_SUB_DIR && repoState.IS_SYNC_IGNORED) {
+		showSyncIgnoredRepo(repoPath, repoState.PARENT_REPO_PATH);
+		return;
 	}
-
-	if (showConnectRepoView(repoPath)) {
-		// Show notification to user to Sync the repo
-		showConnectRepo(repoPath);
-		return port;
-	}
-
+	if (repoState.IS_DISCONNECTED) return showDisconnectedRepo(repoPath);
+	if (!repoState.IS_CONNECTED) return showConnectRepo(repoPath);
 	let msg = getRepoInSyncMsg(repoPath);
 	let button = NOTIFICATION.TRACK_IT;
-
-	if (subDirResult.isSubDir) {
+	if (repoState.IS_SUB_DIR) {
 		button = NOTIFICATION.TRACK_PARENT_REPO;
-		msg = getDirectoryIsSyncedMsg(repoPath, subDirResult.parentRepo);
+		msg = getDirectoryIsSyncedMsg(repoPath, repoState.PARENT_REPO_PATH);
 	}
-
 	// Show notification that repo is in sync
 	vscode.window.showInformationMessage(msg, button).then(selection => {
-		if (!selection) { return; }
+		if (!selection) return;
 		if (selection === NOTIFICATION.TRACK_IT) {
 			trackRepoHandler();
 		}
 	});
-};
-
-export const showConnectRepoView = (repoPath: string) => {
-	if (!repoPath) return false;
-	return !isRepoConnected(repoPath, false);
-};
-
-export const showRepoIsSyncIgnoredView = (repoPath: string) => {
-	if (!repoPath) return false;
-	const result = checkSubDir(repoPath);
-	return result.isSubDir && result.isSyncIgnored;
 };
 
 const registerSyncIgnoreSaveEvent = (repoPath: string) => {
@@ -286,15 +248,23 @@ export const registerGitListener = async (repoPath: string) => {
 	});
 };
 
+export const showLogIn = () => {
+	const userState = new UserState();
+	const activeUser = userState.getUser(false);
+	return !activeUser;
+};
+
 export const setInitialContext = () => {
 	const repoPath = pathUtils.getRootPath();
-	const subDirResult = checkSubDir(repoPath);
+	const repoState = new RepoState(repoPath).get();
+	const showConnectRepoView = repoState.IS_OPENED && !repoState.IS_CONNECTED && !repoState.IS_DISCONNECTED;
 	vscode.commands.executeCommand('setContext', contextVariables.showLogIn, showLogIn());
-	vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, showConnectRepoView(repoPath));
-	vscode.commands.executeCommand('setContext', contextVariables.isSubDir, subDirResult.isSubDir);
-	vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, subDirResult.isSyncIgnored);
+	vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, showConnectRepoView);
+	vscode.commands.executeCommand('setContext', contextVariables.isSubDir, repoState.IS_SUB_DIR);
+	vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, repoState.IS_SYNC_IGNORED);
 	vscode.commands.executeCommand('setContext', contextVariables.codesyncActivated, true);
 	vscode.commands.executeCommand('setContext', contextVariables.upgradePricingPlan, false);
+	vscode.commands.executeCommand('setContext', contextVariables.isDisconnectedRepo, repoState.IS_DISCONNECTED);
 };
 
 export const registerCommands = (context: vscode.ExtensionContext) => {
@@ -309,6 +279,7 @@ export const registerCommands = (context: vscode.ExtensionContext) => {
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.viewDashboard, viewDashboardHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.viewActivity, viewActivityHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.reactivateAccount, reactivateAccountHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerReconnectRepo, reconnectRepoHandler));
 };
 
 export const createStatusBarItem = (context: vscode.ExtensionContext) => {

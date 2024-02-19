@@ -2,11 +2,11 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 import untildify from "untildify";
-import {isRepoConnected} from "../../../src/events/utils";
-import {addUser, Config, getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
-import {DEFAULT_BRANCH, SYNCIGNORE} from "../../../src/constants";
+import { RepoState } from "../../src/utils/repo_state_utils";
+import {addUser, Config, getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../helpers/helpers";
+import {DEFAULT_BRANCH, SYNCIGNORE} from "../../src/constants";
 
-describe("isRepoConnected", () => {
+describe("RepoState:get", () => {
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
     const configData = {repos: {}};
@@ -28,34 +28,50 @@ describe("isRepoConnected", () => {
     });
 
     test("with no config.yml", () => {
-        expect(isRepoConnected(repoPath)).toBe(false);
+        const repoState = new RepoState(repoPath).get();
+        expect(repoState.IS_OPENED).toBe(true);
+        expect(repoState.IS_CONNECTED).toBe(false);
+        expect(repoState.IS_DISCONNECTED).toBe(false);
+        expect(repoState.IS_SUB_DIR).toBe(false);
+        expect(repoState.IS_SYNC_IGNORED).toBe(false);
     });
 
     test("with invalid config.yml", () => {
         fs.writeFileSync(configPath, "");
-        expect(isRepoConnected(repoPath)).toBe(false);
+        const repoState = new RepoState(repoPath).get();
+        expect(repoState.IS_CONNECTED).toBe(false);
+        expect(repoState.IS_DISCONNECTED).toBe(false);
     });
 
     test("With no repo opened", () => {
-        expect(isRepoConnected("")).toBe(false);
+        const repoState = new RepoState("").get();
+        expect(repoState.IS_OPENED).toBe(false);
+        expect(repoState.IS_CONNECTED).toBe(false);
+        expect(repoState.IS_DISCONNECTED).toBe(false);
     });
 
     test("with repo not in config.yml", () => {
         fs.writeFileSync(configPath, yaml.dump({'repos': {}}));
-        expect(isRepoConnected(repoPath)).toBe(false);
+        const repoState = new RepoState(repoPath).get();
+        expect(repoState.IS_CONNECTED).toBe(false);
+        expect(repoState.IS_DISCONNECTED).toBe(false);
     });
 
     test("Non Synced Branch",  () => {
         configData.repos[repoPath] = {branches: {}};
         fs.writeFileSync(configPath, yaml.dump(configData));
-        expect(isRepoConnected(repoPath)).toBe(false);
+        const repoState = new RepoState(repoPath).get();
+        expect(repoState.IS_CONNECTED).toBe(false);
+        expect(repoState.IS_DISCONNECTED).toBe(false);
     });
 
-    test("Synced repo", () => {
+    test("Connected repo", () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
-        expect(isRepoConnected(repoPath)).toBe(true);
+        const repoState = new RepoState(repoPath).get();
+        expect(repoState.IS_CONNECTED).toBe(true);
+        expect(repoState.IS_DISCONNECTED).toBe(false);
     });
 
     test("Invalid file IDs",  () => {
@@ -66,22 +82,30 @@ describe("isRepoConnected", () => {
         };
         fs.writeFileSync(configPath, yaml.dump(configData));
         addUser(baseRepoPath);
-        expect(isRepoConnected(repoPath)).toBe(false);
+        const repoState = new RepoState(repoPath).get();
+        expect(repoState.IS_CONNECTED).toBe(false);
+        expect(repoState.IS_DISCONNECTED).toBe(false);
     });
 
     test("Disconnected repo",  () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo(true);
         addUser(baseRepoPath);
-        expect(isRepoConnected(repoPath)).toBe(false);
+        const repoState = new RepoState(repoPath).get();
+        expect(repoState.IS_CONNECTED).toBe(false);
+        expect(repoState.IS_DISCONNECTED).toBe(true);
     });
 
-    test('Sub directory of synced repo', () => {
+    test('Sub directory of connected repo', () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
         const subDir = path.join(repoPath, "directory");
-        expect(isRepoConnected(subDir)).toBe(true);
+        const repoState = new RepoState(subDir).get();
+        expect(repoState.IS_CONNECTED).toBe(true);
+        expect(repoState.IS_DISCONNECTED).toBe(false);
+        expect(repoState.IS_SUB_DIR).toBe(true);
+        expect(repoState.IS_SYNC_IGNORED).toBe(false);
     });
     
     test('Sub directory is syncignored', () => {
@@ -92,6 +116,10 @@ describe("isRepoConnected", () => {
         const syncignorePath = path.join(repoPath, SYNCIGNORE);
         fs.writeFileSync(syncignorePath, "directory");        
         const subDir = path.join(repoPath, "directory");
-        expect(isRepoConnected(subDir)).toBe(false);
+        const repoState = new RepoState(subDir).get();
+        expect(repoState.IS_DISCONNECTED).toBe(false);
+        expect(repoState.IS_CONNECTED).toBe(true);
+        expect(repoState.IS_SUB_DIR).toBe(true);
+        expect(repoState.IS_SYNC_IGNORED).toBe(true);
     });
 });

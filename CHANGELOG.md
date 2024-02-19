@@ -4,8 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.39.0] - 2024-01-23 [NOT_DEPLOYED]
+
+## [3.39.0] - 2024-02-19
 - Packages Upgraded
+- Stop generating diffs for the deactivated accounts
+- Team Activity alert skips deactivated accounts
+- Dropping a log when we reset the config file
+- Updated messages for a disconnected repository in menus, left panel and notifications
+- Repo based plan limits implemented, improved button text to upgrade pricing plans, removed pricing_lock file
+- Skipping Diffs for the repository for which limit is reached. We try sending diffs after allowed wait time
+- Added 15m delay in showing Upgrade Plan Notification per repo
+- Added error handling if PrivateRepoCountLimit is reached
+- Managing user from State to avoid read/write in user config file
 
 ## [3.38.0] - 2024-01-12
 - Sending commit_hash for new files 

@@ -1,12 +1,14 @@
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
+import vscode from "vscode";
 
 import {readYML, readFile} from "../../src/utils/common";
 import {diff_match_patch} from "diff-match-patch";
 import {pathUtils} from "../../src/utils/path_utils";
+import {UserState} from "../../src/utils/user_utils";
+import {generateRandomNumber} from "../../src/utils/setup_utils";
 import {DEFAULT_BRANCH, VSCODE} from "../../src/constants";
-import vscode from "vscode";
 
 export function getRandomString(length) {
     var randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -143,16 +145,15 @@ export class Config {
         this.configPath = configPath;
     }
 
-    addRepo = (isDisconnected=false) => {
+    addRepo = (isDisconnected=false, userEmail=TEST_EMAIL, filesConfig=null) => {
         const config = {repos: {}};
         config.repos[this.repoPath] = {
+            id: generateRandomNumber(1, 100000),
             branches: {},
-            email: TEST_EMAIL
+            email: userEmail,
+            is_disconnected: isDisconnected
         };
-        config.repos[this.repoPath].branches[DEFAULT_BRANCH] = TEST_REPO_RESPONSE.file_path_and_id;
-        if (isDisconnected) {
-            config.repos[this.repoPath].is_disconnected = true;
-        }
+        config.repos[this.repoPath].branches[DEFAULT_BRANCH] = filesConfig || TEST_REPO_RESPONSE.file_path_and_id;
         fs.writeFileSync(this.configPath, yaml.dump(config));
     }
 
@@ -283,6 +284,8 @@ export const addUser = (baseRepoPath, isActive=true) => {
     // Add user
     const userFilePath = getUserFilePath(baseRepoPath);
     const userFileData = {};
+    const userState = new UserState();
+    userState.set(isActive, false);
     userFileData[TEST_USER.email] = {
         access_key: TEST_USER.iam_access_key,
         secret_key: TEST_USER.iam_secret_key,

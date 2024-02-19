@@ -11,24 +11,24 @@ import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { diff_match_patch } from 'diff-match-patch';
 import { VSCODE } from "../constants";
-import { isRepoConnected } from './utils';
 import { removeFile } from '../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
 import gitCommitInfo from 'git-commit-info';
+import { RepoState } from '../utils/repo_state_utils';
+import { UserState } from '../utils/user_utils';
 
 
 export class eventHandler {
-	repoPath: string;
-	branch: string;
-	commitHash: string|null;
-	viaDaemon: boolean;
-	repoIsNotConnected: boolean;
+	repoPath = "";
+	branch = "";
+	commitHash: string|null = null;
+	viaDaemon = false;
 	pathUtils: any;
-	shadowRepoBranchPath: string;
-	deletedRepoBranchPath: string;
-	originalsRepoBranchPath: string;
-	syncIgnoreItems: string[];
-	defaultIgnorePatterns: string[];
+	shadowRepoBranchPath = "";
+	deletedRepoBranchPath = "";
+	originalsRepoBranchPath = "";
+	syncIgnoreItems: string[] = [];
+	defaultIgnorePatterns: string[] = [];
 
 	// Diff props
 	isNewFile = false;
@@ -36,12 +36,18 @@ export class eventHandler {
 	isDelete = false;
 	createdAt = '';
 	settings = generateSettings();
+	shouldProceed = false;
 
 	constructor(repoPath="", createdAt="", viaDaemon=false) {
+		const userState = new UserState();
+		const isValidAccount = userState.isValidAccount();
 		this.createdAt = createdAt || formatDatetime();
 		this.viaDaemon = viaDaemon;
 		this.repoPath = repoPath || pathUtils.getRootPath();
-		this.repoIsNotConnected = !isRepoConnected(this.repoPath, false);
+		const repoState = new RepoState(this.repoPath).get();
+		const repoIsConnected = repoState.IS_CONNECTED;
+		this.shouldProceed = isValidAccount && repoIsConnected;
+		if (!this.shouldProceed) return;
 		this.branch = getBranch(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
 		this.shadowRepoBranchPath = this.pathUtils.getShadowRepoBranchPath();
@@ -107,7 +113,7 @@ export class eventHandler {
 	}
 
 	handleChangeEvent = (changeEvent: vscode.TextDocumentChangeEvent) => {
-		if (this.repoIsNotConnected) return;
+		if (!this.shouldProceed) return;
 		// If you only care about changes to the active editor's text,
 		// just check to see if changeEvent.document matches the active editor's document.
 		const editor = vscode.window.activeTextEditor;
@@ -177,7 +183,7 @@ export class eventHandler {
 	}
 
 	handleNewFile = (_filePath: string, forceUpload=false) => {
-		if (this.repoIsNotConnected) return;
+		if (!this.shouldProceed) return;
 		const filePath = pathUtils.normalizePath(_filePath);
 		// Do not continue if file does not exist
 		if (!fs.existsSync(filePath)) return;
@@ -232,7 +238,7 @@ export class eventHandler {
 	}
 
 	handleDelete = (filePath: string) => {
-		if (this.repoIsNotConnected) return;
+		if (!this.shouldProceed) return;
 		const itemPath = pathUtils.normalizePath(filePath);
 		if (!itemPath.startsWith(this.repoPath)) return;
 
@@ -309,7 +315,7 @@ export class eventHandler {
                             path:"/Users/basit/projects/codesync/codesync/5.py"
                             scheme:"file
         */
-		if (this.repoIsNotConnected) return;
+		if (!this.shouldProceed) return;
 		event.files.forEach(_event => {
 			this.handleRename(_event.oldUri.fsPath, _event.newUri.fsPath);
 		});

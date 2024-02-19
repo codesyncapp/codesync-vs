@@ -1,15 +1,18 @@
+import fs from "fs";
 import vscode from "vscode";
 
-import {contextVariables, ERROR_SENDING_DIFFS, STATUS_BAR_MSGS} from "../../constants";
+import {contextVariables, ERROR_SENDING_DIFFS, HttpStatusCodes, STATUS_BAR_MSGS} from "../../constants";
 import {CodeSyncLogger, logErrorMsg} from "../../logger";
-import {IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
+import {IDiff, IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
 import {DiffHandler} from "../handlers/diff_handler";
 import {DiffsHandler} from "../handlers/diffs_handler";
 import {getDiffsBeingProcessed, setDiffsBeingProcessed, statusBarMsgs} from "../utils";
 import {markUsersInactive} from "../../utils/auth_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
-import { getPlanLimitReached, resetPlanLimitReached, setPlanLimitReached } from "../../utils/pricing_utils";
-import { ErrorCodes } from "../../utils/common";
+import { PlanLimitsHandler } from "../../utils/pricing_utils";
+import { readYML } from "../../utils/common";
+import { RepoPlanLimitsState } from "../../utils/repo_state_utils";
+import { UserState } from "../../utils/user_utils";
 
 
 const EVENT_TYPES = {
@@ -48,15 +51,18 @@ export class SocketEvents {
     onDeactivatedAccount() {
         errorCount = logErrorMsg(ERROR_SENDING_DIFFS.DEACTIVATED_ACCOUNT_FOUND, errorCount);
         this.statusBarMsgsHandler.update(STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED);
-        CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, true);
+        const userState = new UserState();
+        userState.setDeactivated();
         CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
         vscode.commands.executeCommand('setContext', contextVariables.showReactivateAccount, true);
         this.connection.close();
     }
 
-    async onRepoSizeLimitReached() {
+    async onRepoSizeLimitReached(repoId: number) {
         CodeSyncLogger.error(ERROR_SENDING_DIFFS.REPO_SIZE_LIMIT_REACHED);
-        await setPlanLimitReached(this.accessToken);
+        const limitsHandler = new PlanLimitsHandler(this.accessToken, repoId);
+        await limitsHandler.run();
+        if (!limitsHandler.isCurrentRepo) return;
         const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
         const msg = canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
         this.statusBarMsgsHandler.update(msg);
@@ -64,7 +70,8 @@ export class SocketEvents {
 
     async onValidAuth() {
         this.connection.send(JSON.stringify({"auth": 200}));
-        CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, false);
+        const userState = new UserState();
+        userState.setValidAccount();
         const statusBarMsg = this.statusBarMsgsHandler.getMsg();
         this.statusBarMsgsHandler.update(statusBarMsg);
         if (!this.canSendDiffs) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
@@ -94,9 +101,12 @@ export class SocketEvents {
     }
 
     onSyncSuccess(diffFilePath: string) {
-        const { planLimitReached } = getPlanLimitReached();
-        if (planLimitReached) resetPlanLimitReached();
         if (!this.canSendDiffs) return;
+        if (!fs.existsSync(diffFilePath)) return;
+        // Reset Plan Limits
+        const diffData = <IDiff>readYML(diffFilePath);
+        const repoLimitsState = new RepoPlanLimitsState(diffData.repo_path);
+        repoLimitsState.reset();
         DiffHandler.removeDiffFile(diffFilePath);
         // Remove diff from diffsBeingProcessed
         const diffsBeingProcessed = getDiffsBeingProcessed();
@@ -115,7 +125,7 @@ export class SocketEvents {
                     case 200:
                         await this.onValidAuth();
                         return true;
-                    case ErrorCodes.USER_ACCOUNT_DEACTIVATED:
+                    case HttpStatusCodes.USER_ACCOUNT_DEACTIVATED:
                         this.onDeactivatedAccount();
                         return true;    
                     default:
@@ -127,8 +137,8 @@ export class SocketEvents {
                     case 200:
                         this.onSyncSuccess(resp.diff_file_path);
                         return true;
-                    case ErrorCodes.REPO_SIZE_LIMIT_REACHED:
-                        await this.onRepoSizeLimitReached(); 
+                    case HttpStatusCodes.PAYMENT_REQUIRED:
+                        await this.onRepoSizeLimitReached(resp.repo_id); 
                         return true;    
                     default:
                         return false;

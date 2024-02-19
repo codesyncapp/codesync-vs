@@ -10,7 +10,6 @@ export const CODESYNC_STATES = {
     POPULATE_BUFFER_RUNNING: "populateBufferRunning",
     BUFFER_HANDLER_RUNNING: "bufferHandlerRunning",
     PRICING_URL: "pricingUrl",
-    REQUEST_SENT_AT: "requestSentAt",
     SYNCING_BRANCH: "syncingBranch",
     IS_SYNCING_BRANCH: "isSyncingBranch",
     UPLOADING_TO_S3: "uploadingToS3",
@@ -26,7 +25,9 @@ export const CODESYNC_STATES = {
     SOCKET_CONNECTED_AT: "socketConnectedAt",
     INTERNET_DOWN_AT: "internetDownAt",
     GIT_COMMIT_HASH: "gitCommitHash",
-    ACCOUNT_DEACTIVATED: "accountDeactivated"
+    ACCOUNT_DEACTIVATED: "accountDeactivated",
+    REPO_STATE: "repoState",
+    IS_USER_ACTIVE: "isUserActive"
 };
 
 export class CodeSyncState {

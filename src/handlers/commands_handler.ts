@@ -1,31 +1,30 @@
-import fs from "fs";
 import path from "path";
 import vscode from 'vscode';
-import yaml from "js-yaml";
 
 import {
 	Auth0URLs,
-	contextVariables,
 	getRepoInSyncMsg,
 	NOTIFICATION,
 	SYNCIGNORE
 } from '../constants';
-import { checkSubDir, getActiveUsers, getBranch, isRepoActive, readYML } from '../utils/common';
-import { isRepoConnected } from '../events/utils';
+import { checkSubDir, getBranch, readYML } from '../utils/common';
 import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
-import { updateRepo } from '../utils/sync_repo_utils';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
 import { createRedirectUri, generateWebUrl } from "../utils/url_utils";
+import { RepoState } from "../utils/repo_state_utils";
+import { RepoDisconnectHandler, RepoReconnectHandler } from "./repo_commands";
+import { UserState } from "../utils/user_utils";
 
 export const SignUpHandler = () => {
 	redirectToBrowser();
 };
 
 export const reactivateAccountHandler = () => {
-	const activeUser = getActiveUsers()[0];
+	const userState = new UserState();
+	const activeUser = userState.getUser();
 	if (!activeUser) return vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
 	const webUrl = generateWebUrl("/settings");
 	const redirectURI = createRedirectUri(Auth0URLs.REACTIVATE_CALLBACK_PATH);
@@ -36,7 +35,8 @@ export const reactivateAccountHandler = () => {
 export const connectRepoHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
-	if (isRepoConnected(repoPath)) {
+	const repoState = new RepoState(repoPath).get();
+	if (repoState.IS_CONNECTED) {
 		// Show notification that repo is in sync
 		vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
 		return;
@@ -47,48 +47,18 @@ export const connectRepoHandler = async () => {
 };
 
 export const disconnectRepoHandler = async () => {
-	let repoPath = pathUtils.getRootPath();
-	if (!repoPath) return;
-	let msg = NOTIFICATION.REPO_DISCONNECT_CONFIRMATION;
-	const result = checkSubDir(repoPath);
-	if (result.isSubDir) {
-		repoPath = result.parentRepo;
-		msg = NOTIFICATION.REPO_DISCONNECT_PARENT_CONFIRMATION;
-	}
-	vscode.window.showWarningMessage(msg, NOTIFICATION.YES, NOTIFICATION.CANCEL)
-	.then(async selection => {
-		await postSelectionDisconnectRepo(repoPath, selection);
-	});
+	const handler = new RepoDisconnectHandler();
+	await handler.run();
 };
 
-export const postSelectionDisconnectRepo = async (repoPath: string, selection?: string) => {
-	if (!selection || selection !== NOTIFICATION.YES) {
-		return;
-	}
-	const settings = generateSettings();
-	const config = readYML(settings.CONFIG_PATH);
-	if (!isRepoActive(config, repoPath)) { return; }
-	const configRepo = config.repos[repoPath];
-	const users = readYML(settings.USER_PATH);
-	const accessToken = users[configRepo.email].access_token;
-	const json = await updateRepo(accessToken, configRepo.id, { is_in_sync: false });
-	if (json.error) {
-		vscode.window.showErrorMessage(NOTIFICATION.REPO_DISCONNECT_FAILED);
-		return;
-	}
-	// Show notification that repo is not in sync
-	configRepo.is_disconnected = true;
-	fs.writeFileSync(settings.CONFIG_PATH, yaml.dump(config));
-	// TODO: Maybe should delete repo from .shadow and .originals,
-	vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, true);
-	vscode.commands.executeCommand('setContext', contextVariables.isSubDir, false);
-	vscode.commands.executeCommand('setContext', contextVariables.isSyncIgnored, false);
-	vscode.window.showInformationMessage(NOTIFICATION.REPO_DISCONNECTED);
+export const reconnectRepoHandler = async () => {
+	const handler = new RepoReconnectHandler();
+	await handler.run();
 };
 
 export const trackRepoHandler = () => {
 	let repoPath = pathUtils.getRootPath();
-	if (!repoPath) { return; }
+	if (!repoPath) return;
 	const settings = generateSettings();
 	const config = readYML(settings.CONFIG_PATH);
 	const result = checkSubDir(repoPath);

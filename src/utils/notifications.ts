@@ -1,9 +1,10 @@
 import vscode from 'vscode';
 import { initHandler } from '../init/init_handler';
-import { getActiveUsers } from './common';
 import { redirectToBrowser } from './auth_utils';
-import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin } from '../constants';
-import { trackRepoHandler, disconnectRepoHandler, openSyncIgnoreHandler } from '../handlers/commands_handler';
+import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON, PRICING_URL_PATH, getUpgradePlanMsg } from '../constants';
+import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
+import { UserState } from './user_utils';
+import { generateWebUrl } from './url_utils';
 
 
 export const showSignUpButtons = () => {
@@ -43,10 +44,23 @@ export const showConnectRepo = (repoPath: string, email="", accessToken="") => {
 	});
 };
 
+export const showDisconnectedRepo = (repoPath: string) => {
+	const msg = getDisconnectedRepoMsg(repoPath);
+	vscode.window.showErrorMessage(msg, ...[
+		NOTIFICATION_BUTTON.RECONNECT_REPO,
+	]).then(async selection => {
+		if (selection === NOTIFICATION_BUTTON.RECONNECT_REPO) {
+			reconnectRepoHandler();
+		}
+	});
+};
+
+
 // TODO: Probably add a separate function
 export const showChooseAccount = async (repoPath: string) => {
 	// Check if access token is present against users
-	const activeUser =  getActiveUsers()[0];
+	const userState = new UserState();
+	const activeUser = userState.getUser();
 	if (!activeUser) {
 		vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
 		return;
@@ -88,7 +102,7 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 		NOTIFICATION.OPEN_SYNCIGNORE, 
 		NOTIFICATION.TRACK_PARENT_REPO, 
 		NOTIFICATION.DISCONNECT_PARENT_REPO).then(async selection => {
-		if (!selection) { return; }
+		if (!selection) return;
 		switch (selection) {
 			case NOTIFICATION.TRACK_PARENT_REPO:
 				trackRepoHandler();
@@ -96,10 +110,22 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 			case NOTIFICATION.OPEN_SYNCIGNORE:
 				openSyncIgnoreHandler();
 				break;
-			case NOTIFICATION.DISCONNECT_PARENT_REPO:
+			case NOTIFICATION.DISCONNECT_PARENT_REPO: 
 				disconnectRepoHandler();
 				break;
 			default:
 			}
 		});
+};
+
+export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=false) => {
+	const msg = getUpgradePlanMsg(repoPath, isNewPrivateRepo);
+	// TODO: get canAvailTrial from /users/pricing/subscription API call
+	const button = NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
+	const pricingUrl = generateWebUrl(PRICING_URL_PATH);
+	// Show alert msg
+	vscode.window.showErrorMessage(msg, button).then(async selection => {
+		if (!selection) return;
+		vscode.env.openExternal(vscode.Uri.parse(pricingUrl));
+	});
 };

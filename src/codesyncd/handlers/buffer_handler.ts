@@ -5,15 +5,15 @@ import { glob } from 'glob';
 
 import {getDiffsBeingProcessed, isValidDiff} from '../utils';
 import {CodeSyncLogger} from '../../logger';
-import {IFileToDiff, IRepoDiffs} from '../../interface';
+import {IFileToDiff, IRepoDiffs, IUser} from '../../interface';
 import {DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER} from "../../constants";
 import {generateSettings} from "../../settings";
-import {getActiveUsers, getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
+import {getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
 import {SocketClient} from "../websocket/socket_client";
-import { getPlanLimitReached } from '../../utils/pricing_utils';
 import { removeFile } from '../../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../../utils/state_utils';
-
+import { UserState } from '../../utils/user_utils';
+import { RepoPlanLimitsState } from '../../utils/repo_state_utils';
 
 
 export class bufferHandler {
@@ -62,8 +62,10 @@ export class bufferHandler {
 	configJSON: any;
 	defaultIgnorePatterns: string[];
 	instanceUUID: string;
+	activeUser: IUser|null;
 	// Log run msg after 2 minutes
 	LOG_BUFFER_HANDLER_RUN_AFTER = 5 * 60 * 1000;
+	
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		this.statusBarItem = statusBarItem;
@@ -71,14 +73,13 @@ export class bufferHandler {
 		this.configJSON = readYML(this.settings.CONFIG_PATH);
         this.defaultIgnorePatterns = getDefaultIgnorePatterns();
 		this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
+		this.activeUser = null;
 	}
 
 	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
 
 	getDiffFiles = async () => {
-		const activeUser = getActiveUsers()[0];
 		const diffsBeingProcessed = getDiffsBeingProcessed();
-
         const invalidDiffFiles = await glob("**", { 
 			ignore: "*.yml",
 			nodir: true,
@@ -126,19 +127,19 @@ export class bufferHandler {
 				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
-
 			// If diff does not belong to user's repo, skip it
-			if (configRepo.email !== activeUser.email) return false;
-
+			if (this.activeUser && configRepo.email !== this.activeUser.email) return false;
 			// Remove diff is repo is disconnected
 			if (configRepo.is_disconnected) {
 				CodeSyncLogger.error(`Removing diff: Repo ${diffData.repo_path} is disconnected`);
 				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
+			// Skip the diff if repo's limit has been reached and retry after allowed time
+			const repoLimitsState = new RepoPlanLimitsState(diffData.repo_path).get();
+			if (repoLimitsState.planLimitReached && !repoLimitsState.canRetry) return false;
 			// Skip diffs that are already being iterated
 			if (diffsBeingProcessed.has(filePath)) return false;
-
 			// If rel_path is ignoreable, only delete event should be allowed for that
 			const isIgnorablePath = shouldIgnorePath(diffData.file_relative_path, this.defaultIgnorePatterns, []);
 			if (isIgnorablePath && !diffData.is_deleted) {
@@ -153,8 +154,7 @@ export class bufferHandler {
 				// We want to keep data in case plan limit is reached so that user can access it when plan is upgraded
 				const fileInfo = fs.lstatSync(filePath);
 				if (new Date().getTime() - fileInfo.ctimeMs > (DAY * 5)) {
-					const { planLimitReached } = getPlanLimitReached();
-					if (planLimitReached) {
+					if (repoLimitsState.planLimitReached) {
 						CodeSyncLogger.error(
 							`Keeping diff: Branch=${diffData.branch} is not synced. Repo=${diffData.repo_path}`,
 							"", 
@@ -228,14 +228,14 @@ export class bufferHandler {
 		
 		try {
 			// Check if we have an active user
-			const activeUser = getActiveUsers()[0];
-			if (!activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+			this.activeUser = new UserState().getUser();
+			if (!this.activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			const diffs = await this.getDiffFiles();
 			if (!diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			const repoDiffs = this.groupRepoDiffs(diffs.files);
 			// Create Websocket client
-			const webSocketClient = new SocketClient(this.statusBarItem, activeUser.access_token, repoDiffs);
+			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs);
 			webSocketClient.connect(canSendDiffs);
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment

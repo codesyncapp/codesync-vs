@@ -11,7 +11,6 @@ import {
     API_ROUTES,
     STATUS_BAR_MSGS
 } from "../../constants";
-import { getPlanLimitReached } from "../../utils/pricing_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
 import { setDiffsBeingProcessed } from "../utils";
 
@@ -47,12 +46,7 @@ export class SocketClient {
         return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
-
     connect = (canSendDiffs: boolean) => {
-        // Check plan limits
-        const { planLimitReached, canRetry } = getPlanLimitReached();
-		if (planLimitReached && !canRetry) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-
         if (!this.client) {
             this.client = new client();
             (global as any).client = this.client;

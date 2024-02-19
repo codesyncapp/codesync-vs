@@ -9,7 +9,7 @@ import { IDiff } from "../interface";
 import {
 	COMMAND,
 	DIFF_SIZE_LIMIT,
-	HTTP_STATUS_CODES,
+	HttpStatusCodes,
 	REQUIRED_DIFF_KEYS,
 	REQUIRED_DIR_RENAME_DIFF_KEYS,
 	REQUIRED_FILE_RENAME_DIFF_KEYS,
@@ -19,10 +19,11 @@ import { uploadFileToServer } from '../utils/upload_utils';
 import { CodeSyncLogger } from '../logger';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
-import { checkSubDir, getActiveUsers, isRepoActive, readFile, readYML } from '../utils/common';
-import { getPlanLimitReached } from '../utils/pricing_utils';
+import { readFile, readYML } from '../utils/common';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { removeFile } from '../utils/file_utils';
+import { RepoPlanLimitsState, RepoState } from '../utils/repo_state_utils';
+import { UserState } from '../utils/user_utils';
 
 
 export const isValidDiff = (diffData: IDiff) => {
@@ -34,8 +35,7 @@ export const isValidDiff = (diffData: IDiff) => {
 	if (diff && diff.length > DIFF_SIZE_LIMIT) return false;
 	if (isRename || isDirRename) {
 		if (!diff) return false;
-		let diffJSON = {};
-		diffJSON = yaml.load(diff);
+		const diffJSON = <any> yaml.load(diff);
 		if (typeof diffJSON !== "object") return false;
 		if (isRename && isDirRename) return false;
 		if (isRename) {
@@ -67,8 +67,8 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		};
 	}
 	// Check plan limits
-	const { planLimitReached, canRetry } = getPlanLimitReached();
-	if (planLimitReached && !canRetry) return {
+	const repoLimitsState = new RepoPlanLimitsState(repoPath).get();
+	if (repoLimitsState.planLimitReached && !repoLimitsState.canRetry) return {
 		uploaded: false,
 		deleteDiff: false,
 		config: configJSON
@@ -80,7 +80,7 @@ export const handleNewFileUpload = async (accessToken: string, repoPath: string,
 		);
 	if (response.error) {
 		CodeSyncLogger.error(`Error uploading file=${relPath}, repoPath=${repoPath}, branch=${branch} error=${response.error}`);
-		const isClientError = [HTTP_STATUS_CODES.INVALID_USAGE, HTTP_STATUS_CODES.FORBIDDEN, HTTP_STATUS_CODES.NOT_FOUND].includes(response.statusCode);
+		const isClientError = [HttpStatusCodes.INVALID_USAGE, HttpStatusCodes.FORBIDDEN, HttpStatusCodes.NOT_FOUND].includes(response.statusCode);
 		return {
 			uploaded: false,
 			deleteDiff: isClientError,
@@ -168,6 +168,9 @@ export class statusBarMsgs {
 				case STATUS_BAR_MSGS.CONNECT_REPO:
 					command = COMMAND.triggerSync;
 					break;
+				case STATUS_BAR_MSGS.RECONNECT_REPO:
+					command = COMMAND.triggerReconnectRepo;
+					break;
 				case STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN:
 					command = COMMAND.upgradePlan;
 					break;
@@ -194,19 +197,18 @@ export class statusBarMsgs {
 		if (!fs.existsSync(this.settings.CONFIG_PATH)) return STATUS_BAR_MSGS.NO_CONFIG;
 		const repoPath = pathUtils.getRootPath();
 		const daemonError = CodeSyncState.get(CODESYNC_STATES.DAEMON_ERROR);
-		const isDeactivated = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);
-		if (isDeactivated) return STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED;
+		const userState = new UserState().get();
 		// No Valid account found
-		const activeUsers = getActiveUsers();
-		if (!activeUsers.length) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
+		if (!userState.isActive) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
+		// Account is deactivated
+		if (userState.isDeactivated) return STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED;
 		// Check plan limits
-		const { planLimitReached } = getPlanLimitReached();
-		if (planLimitReached) {
+		const repoLimitsState = new RepoPlanLimitsState(repoPath).get();
+		if (repoLimitsState.planLimitReached) {
 			const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
 			return canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
 		}
 		const activityAlertMsg = CodeSyncState.get(CODESYNC_STATES.STATUS_BAR_ACTIVITY_ALERT_MSG);
-
 		// No repo is opened
 		if (!repoPath) return activityAlertMsg || STATUS_BAR_MSGS.NO_REPO_OPEN;
 		// Branch is being uploaded
@@ -214,16 +216,11 @@ export class statusBarMsgs {
 		if (isSyncingBranch) return STATUS_BAR_MSGS.UPLOADING_BRANCH;
 		// Get default msg
 		const defaultMsg = daemonError || activityAlertMsg || STATUS_BAR_MSGS.DEFAULT;
-		const subDirResult = checkSubDir(repoPath);
-		if (subDirResult.isSubDir) {
-			if (subDirResult.isSyncIgnored) {
-				return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
-			}
-			return defaultMsg;
-		}
-		// Repo is not synced
-		if (!isRepoActive(this.configJSON, repoPath)) return STATUS_BAR_MSGS.CONNECT_REPO;
-		return defaultMsg;
+		// Check Repo State
+		const repoState = new RepoState(repoPath).get();
+		if (repoState.IS_DISCONNECTED) return STATUS_BAR_MSGS.RECONNECT_REPO;
+		if (repoState.IS_SUB_DIR && repoState.IS_SYNC_IGNORED) return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
+		return repoState.IS_CONNECTED ? defaultMsg : STATUS_BAR_MSGS.CONNECT_REPO;
 	}
 }
 
