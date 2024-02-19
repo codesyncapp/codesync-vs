@@ -218,8 +218,7 @@ export class statusBarMsgs {
 		// Get default msg
 		const defaultMsg = daemonError || activityAlertMsg || STATUS_BAR_MSGS.DEFAULT;
 		// Check Repo State
-		const repoUtils = new RepoState(repoPath);
-		const repoState = repoUtils.get();
+		const repoState = new RepoState(repoPath).get();
 		if (repoState.IS_DISCONNECTED) return STATUS_BAR_MSGS.RECONNECT_REPO;
 		if (repoState.IS_SUB_DIR && repoState.IS_SYNC_IGNORED) return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;
 		return repoState.IS_CONNECTED ? defaultMsg : STATUS_BAR_MSGS.CONNECT_REPO;

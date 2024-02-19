@@ -28,8 +28,7 @@ describe("RepoState:get", () => {
     });
 
     test("with no config.yml", () => {
-        const repoUtils = new RepoState(repoPath);
-        const repoState = repoUtils.get();
+        const repoState = new RepoState(repoPath).get();
         expect(repoState.IS_OPENED).toBe(true);
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(false);
@@ -39,8 +38,7 @@ describe("RepoState:get", () => {
 
     test("with invalid config.yml", () => {
         fs.writeFileSync(configPath, "");
-        const repoUtils = new RepoState(repoPath);
-        const repoState = repoUtils.get();
+        const repoState = new RepoState(repoPath).get();
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(false);
     });
@@ -55,8 +53,7 @@ describe("RepoState:get", () => {
 
     test("with repo not in config.yml", () => {
         fs.writeFileSync(configPath, yaml.dump({'repos': {}}));
-        const repoUtils = new RepoState(repoPath);
-        const repoState = repoUtils.get();
+        const repoState = new RepoState(repoPath).get();
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(false);
     });
@@ -64,8 +61,7 @@ describe("RepoState:get", () => {
     test("Non Synced Branch",  () => {
         configData.repos[repoPath] = {branches: {}};
         fs.writeFileSync(configPath, yaml.dump(configData));
-        const repoUtils = new RepoState(repoPath);
-        const repoState = repoUtils.get();
+        const repoState = new RepoState(repoPath).get();
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(false);
     });
@@ -74,8 +70,7 @@ describe("RepoState:get", () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
         addUser(baseRepoPath);
-        const repoUtils = new RepoState(repoPath);
-        const repoState = repoUtils.get();
+        const repoState = new RepoState(repoPath).get();
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(repoState.IS_DISCONNECTED).toBe(false);
     });
@@ -88,8 +83,7 @@ describe("RepoState:get", () => {
         };
         fs.writeFileSync(configPath, yaml.dump(configData));
         addUser(baseRepoPath);
-        const repoUtils = new RepoState(repoPath);
-        const repoState = repoUtils.get();
+        const repoState = new RepoState(repoPath).get();
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(false);
     });
@@ -98,8 +92,7 @@ describe("RepoState:get", () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo(true);
         addUser(baseRepoPath);
-        const repoUtils = new RepoState(repoPath);
-        const repoState = repoUtils.get();
+        const repoState = new RepoState(repoPath).get();
         expect(repoState.IS_CONNECTED).toBe(false);
         expect(repoState.IS_DISCONNECTED).toBe(true);
     });
