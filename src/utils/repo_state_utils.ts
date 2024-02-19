@@ -77,7 +77,7 @@ export class RepoPlanLimitsState {
 		state.planLimitReached = CodeSyncState.get(this.planLimitKey);
 		const requestSentAt = CodeSyncState.get(this.requestSentAtKey);
 		const alertShownAt = CodeSyncState.get(this.alertShownAtKey);
-		state.canRetry = !requestSentAt || (new Date().getTime() - requestSentAt) > RETRY_REQUEST_AFTER;
+		state.canRetry = requestSentAt && (new Date().getTime() - requestSentAt) > RETRY_REQUEST_AFTER;
 		state.canShowNotification = !alertShownAt || (new Date().getTime() - alertShownAt) > SHOW_PLAN_UPGRADE_MSG_AFTER;
 		return state;
 	}

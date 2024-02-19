@@ -109,7 +109,6 @@ export class initHandler {
 		initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
 		// Upload repo/branch
 		const uploaded = await initUtilsObj.uploadRepo(this.branch, this.accessToken, itemPaths, userEmail, isPublic);
-		if (!uploaded) CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
 		return uploaded;
 	};
 }
