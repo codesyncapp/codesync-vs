@@ -22,7 +22,7 @@ import { pathUtils } from "../utils/path_utils";
 import { readFile, readYML } from '../utils/common';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { removeFile } from '../utils/file_utils';
-import { RepoPlanLimitsState, RepoUtils } from '../utils/repo_utils';
+import { RepoPlanLimitsState, RepoState } from '../utils/repo_state_utils';
 import { UserUtils } from '../utils/user_utils';
 
 
@@ -218,7 +218,7 @@ export class statusBarMsgs {
 		// Get default msg
 		const defaultMsg = daemonError || activityAlertMsg || STATUS_BAR_MSGS.DEFAULT;
 		// Check Repo State
-		const repoUtils = new RepoUtils(repoPath);
+		const repoUtils = new RepoState(repoPath);
 		const repoState = repoUtils.get();
 		if (repoState.IS_DISCONNECTED) return STATUS_BAR_MSGS.RECONNECT_REPO;
 		if (repoState.IS_SUB_DIR && repoState.IS_SYNC_IGNORED) return STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR;

@@ -14,7 +14,7 @@ import { VSCODE } from "../constants";
 import { removeFile } from '../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
 import gitCommitInfo from 'git-commit-info';
-import { RepoUtils } from '../utils/repo_utils';
+import { RepoState } from '../utils/repo_state_utils';
 
 
 export class eventHandler {
@@ -44,7 +44,7 @@ export class eventHandler {
 		this.createdAt = createdAt || formatDatetime();
 		this.viaDaemon = viaDaemon;
 		this.repoPath = repoPath || pathUtils.getRootPath();
-		const repoUtis = new RepoUtils(this.repoPath);
+		const repoUtis = new RepoState(this.repoPath);
 		this.repoIsNotConnected = !repoUtis.get(false).IS_CONNECTED;
 		this.branch = getBranch(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);

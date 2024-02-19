@@ -8,7 +8,7 @@ import { RETRY_REQUEST_AFTER, contextVariables } from "../constants";
 import { pathUtils } from './path_utils';
 
 
-export class RepoUtils {
+export class RepoState {
 
 	repoPath: string;
 	config: any;

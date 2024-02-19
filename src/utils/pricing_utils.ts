@@ -6,7 +6,7 @@ import { CodeSyncState, CODESYNC_STATES } from "./state_utils";
 import { getRepoPlanInfo } from './sync_repo_utils';
 import { generateWebUrl } from './url_utils';
 import { ConfigUtils } from './config_utils';
-import { RepoPlanLimitsState } from './repo_utils';
+import { RepoPlanLimitsState } from './repo_state_utils';
 import { IRepoPlanInfo } from '../interface';
 import { showFreeTierLimitReached } from './notifications';
 
