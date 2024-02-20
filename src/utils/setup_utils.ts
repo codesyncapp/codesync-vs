@@ -4,7 +4,7 @@ import vscode, { Extension } from 'vscode';
 import {
 	COMMAND,
 	contextVariables,
-	getDirectoryIsSyncedMsg,
+	getSubDirectoryInSyncMsg,
 	getRepoInSyncMsg,
 	MAX_PORT,
 	MIN_PORT,
@@ -140,6 +140,7 @@ export const generateRandomNumber = (min = 0, max = 100)  => {
 
 export const setupCodeSync = async (repoPath: string) => {
 	const settings = createSystemDirectories();
+	new RepoState(repoPath).setSubDirState();
 	await createOrUpdateSyncignore();
 	await addPluginUser();
 	const userFilePath = settings.USER_PATH;
@@ -190,7 +191,7 @@ export const showRepoStatusMsg = (repoPath: string) => {
 	let button = NOTIFICATION.TRACK_IT;
 	if (repoState.IS_SUB_DIR) {
 		button = NOTIFICATION.TRACK_PARENT_REPO;
-		msg = getDirectoryIsSyncedMsg(repoPath, repoState.PARENT_REPO_PATH);
+		msg = getSubDirectoryInSyncMsg(repoPath, repoState.PARENT_REPO_PATH);
 	}
 	// Show notification that repo is in sync
 	vscode.window.showInformationMessage(msg, button).then(selection => {

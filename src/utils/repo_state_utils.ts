@@ -1,10 +1,13 @@
 import vscode from 'vscode';
-import { checkSubDir } from "./common";
 import { IRepoPlanLimitState, IRepoState } from '../interface';
 import { ConfigUtils } from './config_utils';
 import { CODESYNC_STATES, CodeSyncState } from "./state_utils";
 import { RETRY_REQUEST_AFTER, SHOW_PLAN_UPGRADE_MSG_AFTER, contextVariables } from "../constants";
 import { pathUtils } from './path_utils';
+import { UserState } from './user_utils';
+import { getDefaultIgnorePatterns, getSyncIgnoreItems, readYML, shouldIgnorePath } from './common';
+import { generateSettings } from '../settings';
+import path from 'path';
 
 
 export class RepoState {
@@ -17,7 +20,55 @@ export class RepoState {
 		const configUtils = new ConfigUtils();
 		this.config = configUtils.config;
 	}
+
+	static setIsSubDir (isSubDir: boolean, parentRepo: string, isSyncIgnored: boolean): void {
+		CodeSyncState.set(CODESYNC_STATES.IS_SUB_DIR, isSubDir);
+		CodeSyncState.set(CODESYNC_STATES.PARENT_REPO, parentRepo);
+		CodeSyncState.set(CODESYNC_STATES.IS_SYNCIGNORED_SUB_DIR, isSyncIgnored);
+	}
+
+	static isSubDir() {
+		return CodeSyncState.get(CODESYNC_STATES.IS_SUB_DIR);
+	}
+
+	static getParentRepo() {
+		return CodeSyncState.get(CODESYNC_STATES.PARENT_REPO);
+	}
+
+	static isSyncIgnoredSubDir() {
+		return CodeSyncState.get(CODESYNC_STATES.IS_SYNCIGNORED_SUB_DIR);
+	}
+
+	setSubDirState = () => {
+		let isSubDir = false;
+		let parentRepo = "";
+		let isSyncIgnored = false;
+		if (!this.config) return RepoState.setIsSubDir(isSubDir, parentRepo, isSyncIgnored);
+		const userState = new UserState();
+		const activeUser = userState.getUser();
+		const repoPaths = Object.keys(this.config.repos);
+		const defaultIgnorePatterns = getDefaultIgnorePatterns();
 	
+		for (const _repoPath of repoPaths) {
+			const repoConfig = this.config.repos[_repoPath];
+			// Verify connected repo is of current user's repo
+			if (activeUser && repoConfig.email !== activeUser.email) continue;
+			// Skip disconnected repos
+			if (repoConfig.is_disconnected) continue;
+			const relative = path.relative(_repoPath, this.repoPath);
+			const isSubdir = relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+			if (isSubdir) {
+				parentRepo = _repoPath;
+				const relPath = this.repoPath.split(path.join(_repoPath, path.sep))[1];
+				const syncIgnoreItems = getSyncIgnoreItems(_repoPath);
+				isSyncIgnored = relPath ? shouldIgnorePath(relPath, defaultIgnorePatterns, syncIgnoreItems) : false;
+				break;
+			}
+		}
+		isSubDir = !!parentRepo;
+		RepoState.setIsSubDir(isSubDir, parentRepo, isSyncIgnored);
+	}
+
 	get () : IRepoState {
 		/*
 		Returns true if follwing conditions exist, and returns false otherwise 
@@ -35,13 +86,12 @@ export class RepoState {
 			PARENT_REPO_PATH: ""
 		};
 		if (!this.config) return repoState;
-		const result = checkSubDir(this.repoPath);
-		repoState.IS_SUB_DIR = result.isSubDir;
-		repoState.IS_SYNC_IGNORED = result.isSyncIgnored;
-		if (result.isSubDir) {
+		repoState.IS_SUB_DIR = RepoState.isSubDir();
+		repoState.IS_SYNC_IGNORED = RepoState.isSyncIgnoredSubDir();
+		if (repoState.IS_SUB_DIR) {
 			repoState.IS_CONNECTED = true;
-			repoState.PARENT_REPO_PATH = result.parentRepo;
-			if (result.isSyncIgnored) return repoState;
+			repoState.PARENT_REPO_PATH = RepoState.getParentRepo();
+			if (repoState.IS_SYNC_IGNORED) return repoState;
 			this.repoPath = repoState.PARENT_REPO_PATH;
 		}
 		const repoConfig = this.config.repos[this.repoPath];

@@ -12,6 +12,7 @@ import {
     trackFileHandler,
     trackRepoHandler,
 } from "../../src/handlers/commands_handler";
+import { RepoState } from "../../src/utils/repo_state_utils";
 import {RepoDisconnectHandler, RepoReconnectHandler} from "../../src/handlers/repo_commands";
 import {
     Config,
@@ -56,8 +57,9 @@ describe("connectRepoHandler",  () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
-        setWorkspaceFolders(repoPath);
         untildify.mockReturnValue(baseRepoPath);
+        setWorkspaceFolders(repoPath);
+        new RepoState(repoPath).setSubDirState();
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.dump(configData));
@@ -112,6 +114,7 @@ describe("RepoDisconnectHandler.run",  () => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         setWorkspaceFolders(repoPath);
+        new RepoState(repoPath).setSubDirState();
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         addUser(baseRepoPath);
@@ -142,6 +145,7 @@ describe("RepoDisconnectHandler.run",  () => {
         configUtil.addRepo();
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
+        new RepoState(subDir).setSubDirState();
         new RepoDisconnectHandler().run();
         expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showWarningMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_DISCONNECT_PARENT_CONFIRMATION);
@@ -165,6 +169,7 @@ describe("RepoDisconnectHandler.postSelection",  () => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         setWorkspaceFolders(repoPath);
+        new RepoState(repoPath).setSubDirState();
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.dump(configData));
@@ -258,6 +263,7 @@ describe("RepoReconnectHandler.run",  () => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         setWorkspaceFolders(repoPath);
+        new RepoState(repoPath).setSubDirState();
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.dump(configData));
@@ -337,7 +343,7 @@ describe("trackRepoHandler",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
-
+        new RepoState(repoPath).setSubDirState();
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.dump(configData));
@@ -370,13 +376,13 @@ describe("trackRepoHandler",  () => {
     test("With nested directory", async () => {
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
-    
         configData.repos[repoPath] = {
             id: 1234,
             branches: {},
             email: TEST_EMAIL
         };
         fs.writeFileSync(configPath, yaml.dump(configData));
+        new RepoState(subDir).setSubDirState();
         const playbackLink = trackRepoHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
         expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
@@ -395,6 +401,7 @@ describe("trackFileHandler",  () => {
     beforeEach(() => {
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
+        new RepoState(repoPath).setSubDirState();
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
         fs.writeFileSync(configPath, yaml.dump(configData));
@@ -478,7 +485,6 @@ describe("trackFileHandler",  () => {
         // Mock data
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
-    
         jest.spyOn(vscode.window, 'activeTextEditor', 'get').mockReturnValue({
             document: {
                 fileName: path.join(repoPath, "file.js")
@@ -493,7 +499,7 @@ describe("trackFileHandler",  () => {
         };
         configData.repos[repoPath].branches[DEFAULT_BRANCH] = {"file.js": 1234};
         fs.writeFileSync(configPath, yaml.dump(configData));
-
+        new RepoState(subDir).setSubDirState();
         trackFileHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
     });

@@ -6,6 +6,7 @@ import { RepoState } from "../../src/utils/repo_state_utils";
 import {addUser, Config, getConfigFilePath, randomBaseRepoPath, randomRepoPath} from "../helpers/helpers";
 import {DEFAULT_BRANCH, SYNCIGNORE} from "../../src/constants";
 
+
 describe("RepoState:get", () => {
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
@@ -20,6 +21,7 @@ describe("RepoState:get", () => {
         fs.mkdirSync(baseRepoPath, {recursive: true});
         jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
+        new RepoState(repoPath).setSubDirState();
     });
 
     afterEach(() => {
@@ -101,7 +103,9 @@ describe("RepoState:get", () => {
         configUtil.addRepo();
         addUser(baseRepoPath);
         const subDir = path.join(repoPath, "directory");
-        const repoState = new RepoState(subDir).get();
+        const repoStateObj = new RepoState(subDir);
+        repoStateObj.setSubDirState();
+        const repoState = repoStateObj.get();
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(repoState.IS_DISCONNECTED).toBe(false);
         expect(repoState.IS_SUB_DIR).toBe(true);
@@ -116,7 +120,9 @@ describe("RepoState:get", () => {
         const syncignorePath = path.join(repoPath, SYNCIGNORE);
         fs.writeFileSync(syncignorePath, "directory");        
         const subDir = path.join(repoPath, "directory");
-        const repoState = new RepoState(subDir).get();
+        const repoStateObj = new RepoState(subDir);
+        repoStateObj.setSubDirState();
+        const repoState = repoStateObj.get();
         expect(repoState.IS_DISCONNECTED).toBe(false);
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(repoState.IS_SUB_DIR).toBe(true);

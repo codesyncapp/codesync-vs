@@ -7,7 +7,7 @@ import {
 	NOTIFICATION,
 	SYNCIGNORE
 } from '../constants';
-import { checkSubDir, getBranch, readYML } from '../utils/common';
+import { getBranch, readYML } from '../utils/common';
 import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
 import { generateSettings } from "../settings";
@@ -59,15 +59,14 @@ export const reconnectRepoHandler = async () => {
 export const trackRepoHandler = () => {
 	let repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
-	const settings = generateSettings();
-	const config = readYML(settings.CONFIG_PATH);
-	const result = checkSubDir(repoPath);
-	if (result.isSubDir) {
-		repoPath = result.parentRepo;
+	const repoState = new RepoState(repoPath);
+	const isSubDir = RepoState.isSubDir();
+	if (isSubDir) {
+		repoPath = RepoState.getParentRepo();
 	}
-	const configRepo = config.repos[repoPath];
+	const repoConfig = repoState.config.repos[repoPath];
 	// Show notification that repo is in sync
-	const playbackLink = generateWebUrl(`/repos/${configRepo.id}/playback`);
+	const playbackLink = generateWebUrl(`/repos/${repoConfig.id}/playback`);
 	vscode.env.openExternal(vscode.Uri.parse(playbackLink));
 	return playbackLink;
 };
@@ -76,9 +75,9 @@ export const trackRepoHandler = () => {
 export const trackFileHandler = () => {
 	let repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
-	const result = checkSubDir(repoPath);
-	if (result.isSubDir) {
-		repoPath = result.parentRepo;
+	const isSubDir = RepoState.isSubDir();
+	if (isSubDir) {
+		repoPath = RepoState.getParentRepo();
 	}
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) return;
@@ -101,9 +100,11 @@ export const trackFileHandler = () => {
 export const openSyncIgnoreHandler = async () => {
 	const repoPath = pathUtils.getRootPath();
 	if (!repoPath) return;
-	const subDirResult = checkSubDir(repoPath);
-	if (!subDirResult.isSubDir || !subDirResult.isSyncIgnored) return;
-	const syncignorePath = path.join(subDirResult.parentRepo, SYNCIGNORE);
+	const isSubDir = RepoState.isSubDir();
+	const parentRepo = RepoState.getParentRepo();
+	const isSyncIgnored = RepoState.isSyncIgnoredSubDir();
+	if (!isSubDir || !isSyncIgnored) return;
+	const syncignorePath = path.join(parentRepo, SYNCIGNORE);
 	const setting: vscode.Uri = vscode.Uri.parse("file:" + syncignorePath);
 	// Opening .syncignore
 	await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
