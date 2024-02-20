@@ -1,3 +1,4 @@
+import path from 'path';
 import vscode from 'vscode';
 import { IRepoPlanLimitState, IRepoState } from '../interface';
 import { ConfigUtils } from './config_utils';
@@ -5,9 +6,7 @@ import { CODESYNC_STATES, CodeSyncState } from "./state_utils";
 import { RETRY_REQUEST_AFTER, SHOW_PLAN_UPGRADE_MSG_AFTER, contextVariables } from "../constants";
 import { pathUtils } from './path_utils';
 import { UserState } from './user_utils';
-import { getDefaultIgnorePatterns, getSyncIgnoreItems, readYML, shouldIgnorePath } from './common';
-import { generateSettings } from '../settings';
-import path from 'path';
+import { getDefaultIgnorePatterns, getSyncIgnoreItems, shouldIgnorePath } from './common';
 
 
 export class RepoState {
