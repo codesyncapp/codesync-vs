@@ -15,8 +15,6 @@ import {
 import { IUserProfile } from "../interface";
 import { generateSettings } from "../settings";
 import { CodeSyncLogger } from '../logger';
-import { UserState } from './user_utils';
-import { RepoState } from './repo_state_utils';
 
 
 export const readFile = (filePath: string) => {

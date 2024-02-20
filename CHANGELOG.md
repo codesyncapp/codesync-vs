@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.41.1] - 2024-02-20
 - Refactored checkSubDir, keeping SubDir State in global, fixed Nested SubDir view for left panel
+- Fixed a bug in showing Upgrade Plan button with unit tests
 
 ## [3.41.0] - 2024-02-19
 - Packages Upgraded

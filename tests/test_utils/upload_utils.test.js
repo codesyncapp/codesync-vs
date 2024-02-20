@@ -1,5 +1,5 @@
 import fs from "fs";
-
+import vscode from "vscode";
 import path from "path";
 import untildify from "untildify";
 import fetchMock from "jest-fetch-mock";
@@ -8,17 +8,40 @@ import {
     PRE_SIGNED_URL, 
     randomRepoPath, 
     randomBaseRepoPath, 
-    TEST_REPO_RESPONSE
+    TEST_REPO_RESPONSE,
+    REPO_UPLOAD_402,
+    PRIVATE_REPO_UPLOAD_402,
+    getConfigFilePath,
+    Config,
+    setWorkspaceFolders,
+    USER_REPO_CAN_AVAIL_TRIAL, 
+    USER_REPO_PLAN_INFO,
+    ORG_REPO_PLAN_INFO,
+    ORG_REPO_CAN_AVAIL_TRIAL
 } from "../helpers/helpers";
 import {uploadFile, uploadFileTos3, uploadFileToServer, uploadRepoToServer} from "../../src/utils/upload_utils";
-import {API_ROUTES, DEFAULT_BRANCH} from "../../src/constants";
+import { generateServerUrl } from "../../src/utils/url_utils";
+import {
+    API_ROUTES,
+    DEFAULT_BRANCH, 
+    HttpStatusCodes, 
+    getUpgradePlanMsg,
+    NOTIFICATION_BUTTON,
+    contextVariables,
+    API_PATH,
+    NOTIFICATION
+} from "../../src/constants";
 import { formatDatetime } from "../../src/utils/common";
 import { createSystemDirectories } from "../../src/utils/setup_utils";
 
 describe('uploadRepoToServer', () => {
+    let baseRepoPath;
+    let repoPath;
+
     beforeEach(() => {
         fetch.resetMocks();
-        const baseRepoPath = randomBaseRepoPath();
+        baseRepoPath = randomBaseRepoPath();
+        repoPath = randomRepoPath();
         untildify.mockReturnValue(baseRepoPath);
     });
 
@@ -57,6 +80,192 @@ describe('uploadRepoToServer', () => {
         expect(res.response).toStrictEqual({});
         expect(assertAPICall()).toBe(true);
     });
+});
+
+describe('uploadRepoToServer: Payment Errors', () => {
+    let baseRepoPath;
+    let repoPath;
+
+    const repoId = 1234;
+
+    beforeEach(() => {
+        fetch.resetMocks();
+        jest.clearAllMocks();
+        baseRepoPath = randomBaseRepoPath();
+        repoPath = randomRepoPath();
+        untildify.mockReturnValue(baseRepoPath);
+        fs.mkdirSync(baseRepoPath, {recursive: true});
+        fs.mkdirSync(repoPath, {recursive: true});
+        setWorkspaceFolders(repoPath);
+        const configPath = getConfigFilePath(baseRepoPath);
+        const configUtil = new Config(repoPath, configPath);
+        configUtil.addRepo();
+    });
+
+    afterEach(() => {
+        fs.rmSync(repoPath, {recursive: true, force: true});
+        fs.rmSync(baseRepoPath, {recursive: true, force: true});
+    });
+
+    const assertAPICall = (token="ACCESS_TOKEN") => {
+        // Assert API call
+        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.REPO_INIT);
+        const options = fetch.mock.calls[0][1];
+        expect(options.method).toStrictEqual('POST');
+        expect(options.headers).toStrictEqual({
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${token}`
+        });
+        return true;
+    };
+
+    const assertgetPlanInfoAPICall = (token="ACCESS_TOKEN") => {
+        const url = generateServerUrl(`${API_PATH.REPOS}/${repoId}/upgrade_plan`);
+        expect(fetch.mock.calls[1][0]).toStrictEqual(url);
+        const options = fetch.mock.calls[1][1];
+        expect(options.headers).toStrictEqual({
+            'Authorization': `Basic ${token}`
+        });
+        return true;
+    };
+
+    test('Payment Required: New Repo', async () => {        
+        fetchMock.mockResponseOnce(JSON.stringify(REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED });
+        const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath });
+        expect(res.error).toBeTruthy();
+        expect(res.response).toStrictEqual({});
+        expect(assertAPICall()).toBe(true);
+        const msg = getUpgradePlanMsg(repoPath, false);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION_BUTTON.UPGRADE_TO_PRO);
+    });
+
+    test('Payment Required: More than 1 Private Repos', async () => {        
+        fetchMock.mockResponseOnce(JSON.stringify(PRIVATE_REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED });
+        const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath });
+        expect(res.error).toBeTruthy();
+        expect(res.response).toStrictEqual({});
+        expect(assertAPICall()).toBe(true);
+        const msg = getUpgradePlanMsg(repoPath, true);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION_BUTTON.UPGRADE_TO_PRO);
+    });
+
+    test('Payment Required: Brnach Upload for currently opened User Repo', async () => {        
+        fetchMock
+            .mockResponseOnce(JSON.stringify(REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED })
+            .mockResponseOnce(JSON.stringify(USER_REPO_PLAN_INFO));
+        const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath }, repoId);
+        expect(res.error).toBeTruthy();
+        expect(res.response).toStrictEqual({});
+        expect(assertAPICall()).toBe(true);
+        expect(assertgetPlanInfoAPICall()).toBe(true);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
+        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.canAvailTrial);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
+        let msg = NOTIFICATION.FREE_TIER_LIMIT_REACHED;
+		const subMsg = NOTIFICATION.UPGRADE_PRICING_PLAN;
+		msg = `${msg} ${repoPath}. ${subMsg}`;
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION_BUTTON.UPGRADE_TO_PRO);
+    });
+
+    test('Payment Required: Brnach Upload for UserRepo, canAvtailTrial', async () => {        
+        fetchMock
+            .mockResponseOnce(JSON.stringify(REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED })
+            .mockResponseOnce(JSON.stringify(USER_REPO_CAN_AVAIL_TRIAL));
+        const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath }, repoId);
+        expect(res.error).toBeTruthy();
+        expect(res.response).toStrictEqual({});
+        expect(assertAPICall()).toBe(true);
+        expect(assertgetPlanInfoAPICall()).toBe(true);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
+        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.canAvailTrial);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(true);
+        let msg = NOTIFICATION.FREE_TIER_LIMIT_REACHED;
+		const subMsg = NOTIFICATION.UPGRADE_PRICING_PLAN;
+		msg = `${msg} ${repoPath}. ${subMsg}`;
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION_BUTTON.TRY_PRO_FOR_FREE);
+    });
+
+    test('Payment Required: Brnach Upload for currently opened Org Repo', async () => {        
+        fetchMock
+            .mockResponseOnce(JSON.stringify(REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED })
+            .mockResponseOnce(JSON.stringify(ORG_REPO_PLAN_INFO));
+        const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath }, repoId);
+        expect(res.error).toBeTruthy();
+        expect(res.response).toStrictEqual({});
+        expect(assertAPICall()).toBe(true);
+        expect(assertgetPlanInfoAPICall()).toBe(true);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
+        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.canAvailTrial);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
+		const subMsg = NOTIFICATION.UPGRADE_ORG_PLAN;
+		const msg = `${NOTIFICATION.FREE_TIER_LIMIT_REACHED} ${repoPath}. ${subMsg}`;
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION_BUTTON.UPGRADE_TO_TEAM);
+    });
+
+    test('Payment Required: Brnach Upload for OrgRepo, canAvailTrial', async () => {        
+        fetchMock
+            .mockResponseOnce(JSON.stringify(REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED })
+            .mockResponseOnce(JSON.stringify(ORG_REPO_CAN_AVAIL_TRIAL));
+        const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath }, repoId);
+        expect(res.error).toBeTruthy();
+        expect(res.response).toStrictEqual({});
+        expect(assertAPICall()).toBe(true);
+        expect(assertgetPlanInfoAPICall()).toBe(true);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
+        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.canAvailTrial);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(true);
+		const subMsg = NOTIFICATION.UPGRADE_ORG_PLAN;
+		const msg = `${NOTIFICATION.FREE_TIER_LIMIT_REACHED} ${repoPath}. ${subMsg}`;
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION_BUTTON.TRY_TEAM_FOR_FREE);
+    });
+
+    test('Payment Required: Brnach Upload for non-opened OrgRepo', async () => {
+        const currentRepoPath = randomRepoPath();
+        setWorkspaceFolders(currentRepoPath);
+        fetchMock
+            .mockResponseOnce(JSON.stringify(REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED })
+            .mockResponseOnce(JSON.stringify(ORG_REPO_CAN_AVAIL_TRIAL));
+        const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath }, repoId);
+        expect(res.error).toBeTruthy();
+        expect(res.response).toStrictEqual({});
+        expect(assertAPICall()).toBe(true);
+        expect(assertgetPlanInfoAPICall()).toBe(true);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(0);
+		const subMsg = NOTIFICATION.UPGRADE_ORG_PLAN;
+		const msg = `${NOTIFICATION.FREE_TIER_LIMIT_REACHED} ${repoPath}. ${subMsg}`;
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION_BUTTON.TRY_TEAM_FOR_FREE);
+    });
+
 });
 
 describe('uploadFile', () => {

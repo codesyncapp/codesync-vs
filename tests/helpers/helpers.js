@@ -9,6 +9,7 @@ import {pathUtils} from "../../src/utils/path_utils";
 import {UserState} from "../../src/utils/user_utils";
 import {generateRandomNumber} from "../../src/utils/setup_utils";
 import {DEFAULT_BRANCH, VSCODE} from "../../src/constants";
+import {ErrorCodes} from "../../src/utils/common";
 
 export function getRandomString(length) {
     var randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -85,6 +86,29 @@ export const ANOTHER_TEST_EMAIL = 'anotherTest@codesync.com';
 export const INVALID_TOKEN_JSON = {"error": {"message": "Invalid token"}};
 export const FILE_UPLOAD_400 = {error: {message: "File path is in the syncignore file and can not be uploaded."}};
 export const FILE_UPLOAD_402 = {error: {message: "Repo size limit reached"}};
+export const REPO_UPLOAD_402 = {error: {message: "Repo size limit reached"}};
+export const PRIVATE_REPO_UPLOAD_402 = {
+    error: {
+        message: "Only 1 private repo is allowed", 
+        error_code: ErrorCodes.PRIVATE_REPO_COUNT_LIMIT_REACHED
+    }
+};
+export const ORG_REPO_PLAN_INFO = {
+    is_org_repo: true,
+    can_avail_trial: false
+};
+export const USER_REPO_PLAN_INFO = {
+    is_org_repo: false,
+    can_avail_trial: false
+};
+export const ORG_REPO_CAN_AVAIL_TRIAL = {
+    is_org_repo: true,
+    can_avail_trial: true
+};
+export const USER_REPO_CAN_AVAIL_TRIAL = {
+    is_org_repo: false,
+    can_avail_trial: true
+};
 export const FILE_UPLOAD_404 = {error: {message: "Branch not found"}};
 export const FILE_UPLOAD_403 = {error: {message: "Unauthorized for given repo"}};
 export const INTERNAL_SERVER_ERROR = {error: {message: "Internal Server Error"}};
