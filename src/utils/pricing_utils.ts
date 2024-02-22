@@ -77,14 +77,12 @@ export class PlanLimitsHandler {
 		if (!config) return;
 		this.repoPath = this.repoPath || configUtils.getRepoPathByRepoId(this.repoId);
 		if (!this.repoPath) return;
-		const repoPlanInfo = await this._getRepoPlanInfo();
+		this.repoPlanInfo = await this._getRepoPlanInfo();
+		this.setStateAndContext();
 		const repoPlanLimits = new RepoPlanLimitsState(this.repoPath);
 		const repoLimitsState = repoPlanLimits.get();
-		this.setStateAndContext();
-		if (repoLimitsState.canShowNotification) {
-			this.showNotification();
-		}
-		repoPlanLimits.set(repoPlanInfo.canAvailTrial, repoLimitsState.canShowNotification);
+		if (repoLimitsState.canShowNotification) this.showNotification();
+		repoPlanLimits.set(this.repoPlanInfo.canAvailTrial, repoLimitsState.canShowNotification);
 	}
 	
 	uploadRepo = async (statusCode: number, errorCode: number) => {

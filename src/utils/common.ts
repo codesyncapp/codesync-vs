@@ -15,7 +15,6 @@ import {
 import { IUserProfile } from "../interface";
 import { generateSettings } from "../settings";
 import { CodeSyncLogger } from '../logger';
-import { UserState } from './user_utils';
 
 
 export const readFile = (filePath: string) => {
@@ -31,60 +30,6 @@ export const readYML = (filePath: string) => {
 		CodeSyncLogger.error(`Exception reading yml file: ${filePath}`, e);
 		return null;
 	}
-};
-
-export const checkSubDir = (currentRepoPath: string) => {
-	let isSyncIgnored = false;
-	const settings = generateSettings();
-	const configPath = settings.CONFIG_PATH;
-	const userState = new UserState();
-	const activeUser = userState.getUser();
-	if (!activeUser) return {
-		isSubDir: false,
-		parentRepo: "",
-		isSyncIgnored
-	};
-	// If config.yml does not exist, return
-	if (!fs.existsSync(configPath)) return {
-		isSubDir: false,
-		parentRepo: "",
-		isSyncIgnored
-	};
-	const config = readYML(configPath);
-	if (!config) {
-		return {
-			isSubDir: false,
-			parentRepo: "",
-			isSyncIgnored
-		};
-	}
-
-	const repoPaths = Object.keys(config.repos);
-	const defaultIgnorePatterns = getDefaultIgnorePatterns();
-
-	let parentRepo = "";
-	for (const _repoPath of repoPaths) {
-		const configRepo = config.repos[_repoPath];
-		// Verify connected repo is of current user's repo
-		if (configRepo.email !== activeUser.email) continue;
-		// Skip disconnected repos
-		if (configRepo.is_disconnected) continue;
-		const relative = path.relative(_repoPath, currentRepoPath);
-		const isSubdir = relative && !relative.startsWith('..') && !path.isAbsolute(relative);
-		if (isSubdir) {
-			parentRepo = _repoPath;
-			const relPath = currentRepoPath.split(path.join(_repoPath, path.sep))[1];
-			const syncIgnoreItems = getSyncIgnoreItems(_repoPath);
-			isSyncIgnored = relPath ? shouldIgnorePath(relPath, defaultIgnorePatterns, syncIgnoreItems) : false;
-			break;
-		}
-	}
-	
-	return {
-		isSubDir: !!parentRepo,
-		parentRepo,
-		isSyncIgnored
-	};
 };
 
 export const getSyncIgnoreItems = (repoPath: string) => {

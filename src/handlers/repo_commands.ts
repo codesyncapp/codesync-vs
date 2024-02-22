@@ -8,7 +8,7 @@ import {
 	getRepoReconnectedMsg,
 	NOTIFICATION
 } from '../constants';
-import { checkSubDir, readYML } from '../utils/common';
+import { readYML } from '../utils/common';
 import { updateRepo } from '../utils/sync_repo_utils';
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
@@ -39,9 +39,8 @@ export class RepoDisconnectHandler extends RepoCommandsHandler {
 	run = async () => {
 		if (!this.repoPath) return;
 		let msg = NOTIFICATION.REPO_DISCONNECT_CONFIRMATION;
-		const result = checkSubDir(this.repoPath);
-		if (result.isSubDir) {
-			this.repoPath = result.parentRepo;
+		if (RepoState.isSubDir()) {
+			this.repoPath = RepoState.getParentRepo();
 			msg = NOTIFICATION.REPO_DISCONNECT_PARENT_CONFIRMATION;
 		}
 		vscode.window.showWarningMessage(msg, NOTIFICATION.YES, NOTIFICATION.CANCEL)

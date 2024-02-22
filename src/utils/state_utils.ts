@@ -2,6 +2,7 @@ export const CODESYNC_STATES = {
     REPO_IS_IN_SYNC: "repoIsInSync",
     USER_EMAIL: "userEmail",
     IS_SUB_DIR: "isSubDir",
+    PARENT_REPO: "parentRepo",
     IS_SYNCIGNORED_SUB_DIR: "isSyncIgnored",
 	DIFFS_SEND_LOCK_ACQUIRED: "diffsSendLockAcquired",
 	POPULATE_BUFFER_LOCK_ACQUIRED: "populateBufferLockAcquired",

@@ -20,6 +20,7 @@ import {createSystemDirectories} from "../../src/utils/setup_utils";
 import {STATUS_BAR_MSGS, COMMAND, SYNCIGNORE} from "../../src/constants";
 import {statusBarMsgs} from "../../src/codesyncd/utils";
 import { LockUtils } from "../../src/utils/lock_utils";
+import { RepoState } from "../../src/utils/repo_state_utils";
 
 describe("codesyncd: locks", () => {
     let baseRepoPath;
@@ -148,6 +149,7 @@ describe("codesyncd: recallDaemon", () => {
     test("With Sub directory", async () => {
         const subDir = path.join(repoPath, "directory");
         setWorkspaceFolders(subDir);
+        new RepoState(subDir).setSubDirState();
         recallDaemon(statusBarItem);
         expect(assertCommon(STATUS_BAR_MSGS.DEFAULT)).toBe(true);
     });
@@ -159,6 +161,7 @@ describe("codesyncd: recallDaemon", () => {
         fs.writeFileSync(syncignorePath, subDirName);
         const subDir = path.join(repoPath, subDirName);
         setWorkspaceFolders(subDir);
+        new RepoState(subDir).setSubDirState();
         recallDaemon(statusBarItem);
         expect(assertCommon(STATUS_BAR_MSGS.IS_SYNCIGNORED_SUB_DIR)).toBe(true);
     });    

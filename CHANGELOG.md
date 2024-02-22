@@ -5,7 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [3.41.0] - 2024-02-19
+## [3.42.0] - 2024-02-21
+- Refactored checkSubDir, keeping SubDir State in global, fixed Nested SubDir view for left panel
+- Fixed a bug in showing Upgrade Plan button with unit tests
+
+## [3.41.0] - 2024-02-20
 - Packages Upgraded
 - Stop generating diffs for the deactivated accounts
 - Team Activity alert skips deactivated accounts

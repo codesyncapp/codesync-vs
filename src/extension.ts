@@ -12,10 +12,10 @@ import {
 	uuidv4
 } from "./utils/setup_utils";
 import { pathUtils } from "./utils/path_utils";
-import { checkSubDir } from "./utils/common";
 import { recallDaemon } from "./codesyncd/codesyncd";
 import { CodeSyncLogger } from "./logger";
 import { CODESYNC_STATES, CodeSyncState } from './utils/state_utils';
+import { RepoState } from './utils/repo_state_utils';
 
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -23,24 +23,23 @@ export async function activate(context: vscode.ExtensionContext) {
 	CodeSyncState.set(CODESYNC_STATES.INSTANCE_UUID, uuid);
 
 	try {
+		let repoPath = pathUtils.getRootPath();
+		await setupCodeSync(repoPath);
+		await registerGitListener(repoPath);
 		// vscode.commands.executeCommand
 		setInitialContext();
 		// vscode.commands.registerCommand
 		registerCommands(context);
-		let repoPath = pathUtils.getRootPath();
-		await setupCodeSync(repoPath);
-		await registerGitListener(repoPath);
-		const subDirResult = checkSubDir(repoPath);
 		// Create status bar item
 		const statusBarItem = createStatusBarItem(context);
 		if (repoPath) {
 			CodeSyncLogger.info(`Configured repo: ${repoPath}, uuid=${uuid}`);
-			if (subDirResult.isSubDir) {
-				repoPath = subDirResult.parentRepo;
+			if (RepoState.isSubDir()) {
+				repoPath = RepoState.getParentRepo();
 				CodeSyncLogger.debug(`Parent repo: ${repoPath}`);
 			}	
 		}
-
+		// Register workspace events
 		vscode.workspace.onDidChangeTextDocument(changeEvent => {
 			try {
 				const handler = new eventHandler(repoPath);

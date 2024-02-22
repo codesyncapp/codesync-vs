@@ -150,7 +150,7 @@ export const getConnectRepoMsgAfterJoin = (email: string) => {
     return `Successfully logged in to CodeSync with ${email}. Let's connect your repo`;
 };
 
-export const getDirectoryIsSyncedMsg = (repoPath: string, parentPath: string) => {
+export const getSubDirectoryInSyncMsg = (repoPath: string, parentPath: string) => {
 	const subDirName = path.basename(repoPath);
 	return `You are good to go ✅. Directory ${subDirName} is in sync with CodeSync because parent repo ${parentPath} is in sync.`;
 };

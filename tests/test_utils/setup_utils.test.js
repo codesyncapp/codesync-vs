@@ -22,7 +22,7 @@ import {
 import { readYML } from "../../src/utils/common";
 import { RepoState } from "../../src/utils/repo_state_utils";
 import { generateSettings } from "../../src/settings";
-import {getRepoInSyncMsg, getDirectorySyncIgnoredMsg, getDirectoryIsSyncedMsg, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
+import {getRepoInSyncMsg, getDirectorySyncIgnoredMsg, getSubDirectoryInSyncMsg, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 
 
 describe("createSystemDirectories",  () => {
@@ -196,7 +196,7 @@ describe("setupCodeSync",  () => {
         const repoState = new RepoState(repoPath).get();
         expect(repoState.IS_CONNECTED).toBe(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        const msg = getDirectoryIsSyncedMsg(subDir, repoPath);
+        const msg = getSubDirectoryInSyncMsg(subDir, repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
         fs.rmSync(userFilePath);

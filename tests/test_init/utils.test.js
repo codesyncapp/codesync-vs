@@ -258,13 +258,11 @@ describe("uploadRepo",  () => {
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
-
         baseRepoPath = randomBaseRepoPath();
         repoPath = randomRepoPath();
         // Create directories
         fs.mkdirSync(baseRepoPath, {recursive: true});
         fs.mkdirSync(repoPath, {recursive: true});
-        
         untildify.mockReturnValue(baseRepoPath);
         createSystemDirectories();
         writeTestRepoFiles(repoPath);
@@ -332,18 +330,16 @@ describe("uploadRepo",  () => {
         // Run s3Uploader
         const uploaderUtils = new s3UploaderUtils();
         await uploaderUtils.runUploader();
-        await waitFor(3);
+        await waitFor(4);
         // Verify file Ids have been added in config
         const config = readYML(configPath);
         expect(config.repos[repoPath].branches[DEFAULT_BRANCH]).toStrictEqual(TEST_REPO_RESPONSE.file_path_and_id);
-
         // verify user.yml
         const users = readYML(userFilePath);
         expect(users[TEST_USER.email].access_key).toStrictEqual(TEST_USER.iam_access_key);
         expect(users[TEST_USER.email].secret_key).toStrictEqual(TEST_USER.iam_secret_key);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_CONNECTED);
-
         // Make sure files have been deleted from .originals
         filePaths.forEach(_filePath => {
             const relPath = _filePath.split(path.join(repoPath, path.sep))[1];
