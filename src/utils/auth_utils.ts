@@ -142,6 +142,7 @@ export const createUser = async (accessToken: string, idToken: string) => {
 
 export const logout = () => {
     const logoutUrl = generateAuthUrl(Auth0URLs.LOGOUT);
+    vscode.env.openExternal(vscode.Uri.parse(logoutUrl));
     markUsersInactive();
     return logoutUrl;
 };
