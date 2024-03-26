@@ -8,7 +8,9 @@ CodeSync for VS Code uniquely blends the power of playback technology with the c
 - **Collaboration Boost**: Facilitate team discussions and education by sharing visual code histories, promoting better understanding and teamwork.
 - **GitHub Pull Request Integration**: Elevate code reviews by replaying GitHub Pull Requests, gaining insight into the developer's reasoning and approach.
 - **Seamless IDE Integration**: Effortlessly merge CodeSync into your VS Code environment, complementing and enriching your existing coding workflow.
-- **Flexible Hosting Options**: Adapt CodeSync to your team's needs with cloud-based hosting or self-hosted options on your AWS account.
+- **Data Privacy**: The CodeSync IDE plugin collects and sends the following data: code, diff timestamps, repository names, file paths, timezone to show activity alert, etc. <br>
+CodeSync is SOC-2 compliant and ensures the highest standards of security, privacy and encryption. [Contact us](mailto:support@codesync.com) for our SOC-2 report. <br>
+We support both cloud and self-hosting via AWS. If you’d like your data and infrastructure to be on your own AWS account, contact us for a free trial of the self-hosted option.
 
 **Getting Started**
 

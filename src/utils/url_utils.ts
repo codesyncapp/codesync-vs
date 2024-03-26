@@ -11,6 +11,8 @@ export const generateAuthUrl = (url: string) => {
     const redirectUri = createRedirectUri();
 	_url.searchParams.append("source", VSCODE);
 	_url.searchParams.append("v", VERSION);
+	_url.searchParams.append("utm_medium", "plugin");
+	_url.searchParams.append("utm_source", VSCODE);
     _url.searchParams.append("redirect_uri", redirectUri);
 	return _url.href;
 };
