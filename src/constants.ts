@@ -219,13 +219,9 @@ export const contextVariables = {
 };
 
 export class staticFiles {
-	LOGIN_SUCCESS: string;
-	LOGIN_FAILURE: string;
 	DEACTIVATED_ACCOUNT: string;
 	REACTIVATED_ACCOUNT: string;
 	fileNames = {
-		loginSuccess: "login-success.html",
-		loginFailure:"login-failure.html",
 		deactivatedAccount: "deactivated-account.html",
 		reactivatedAccount: "reactivated-account.html"
 	}
@@ -233,8 +229,6 @@ export class staticFiles {
 	constructor(baseRepo: string) {
 		const rootPath = baseRepo.replace("out", "src");
 		const basePath = path.join(rootPath, "static");
-		this.LOGIN_SUCCESS = path.join(basePath, this.fileNames.loginSuccess);
-		this.LOGIN_FAILURE = path.join(basePath, this.fileNames.loginFailure);
 		this.DEACTIVATED_ACCOUNT = path.join(basePath, this.fileNames.deactivatedAccount);
 		this.REACTIVATED_ACCOUNT = path.join(basePath, this.fileNames.reactivatedAccount);
 	}
