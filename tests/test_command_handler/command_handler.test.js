@@ -7,7 +7,6 @@ import fetchMock from "jest-fetch-mock";
 import getBranchName from "current-git-branch";
 
 import {
-    SignUpHandler,
     connectRepoHandler,
     trackFileHandler,
     trackRepoHandler,
@@ -34,15 +33,27 @@ import {
 } from "../../src/constants";
 import {WEB_APP_URL} from "../../src/settings";
 import {readYML} from "../../src/utils/common";
+import { authHandler } from "../../src/handlers/auth_commands";
 
+describe("authHandler",  () => {
+    
+    beforeEach(() => {
+        fetch.resetMocks();
+        jest.clearAllMocks();
+    });
 
-describe("SignUpHandler",  () => {
-
-    test("SignUpHandler",  () => {
-        SignUpHandler();
+    test("authHandler:skipAskConnect=false",  () => {
+        authHandler();
         expect(global.skipAskConnect).toBe(false);
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
     });
+
+    test("authHandler:skipAskConnect=true",  () => {
+        authHandler(true);
+        expect(global.skipAskConnect).toBe(true);
+        expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
+    });
+
 });
 
 describe("connectRepoHandler",  () => {

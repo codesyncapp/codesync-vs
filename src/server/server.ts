@@ -1,7 +1,7 @@
 import path from "path";
 import vscode from 'vscode';
 import express from "express";
-import { createUser, postSuccessLogin } from "../utils/auth_utils";
+import { createUser } from "../utils/auth_utils";
 import {
     Auth0URLs,
     NOTIFICATION,
@@ -33,21 +33,12 @@ export const initExpressServer = () => {
 
     // define a route handler for the authorization callback
     expressApp.get(Auth0URLs.LOGIN_CALLBACK_PATH, async (req: any, res: any) => {
-        const files = new staticFiles(__dirname);
-        let responseFile = files.LOGIN_SUCCESS;
         try {
-            const userResponse = await createUser(req.query.access_token, req.query.id_token);
-            if (!userResponse.success) {
-                responseFile = files.LOGIN_FAILURE;
-            } else if (userResponse.isDeactivated) {
-                responseFile = files.DEACTIVATED_ACCOUNT;
-            }
-            res.sendFile(responseFile);
+            await createUser(req.query.access_token, req.query.id_token);
         } catch (e) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            CodeSyncLogger.critical("Login failed", e.stack);
-            res.sendFile(files.LOGIN_FAILURE);
+            CodeSyncLogger.critical("Login callback failed", e.stack);
         }
     });
 

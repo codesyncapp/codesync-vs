@@ -260,7 +260,6 @@ export const SOCKET_ERRORS = {
 	ERROR_MSG_RECEIVE: 'Error receiving socket msg'
 };
 export const DAY = 24 * 60 * 60 * 1000;
-export const PRICING_URL_PATH = "/pricing";
 export const RETRY_WEBSOCKET_CONNECTION_AFTER = 3 * 60 * 1000; // 1000 is for ms;
 export const GLOB_TIME_TAKEN_THRESHOLD = 2;
 export const UPDATE_SYNCIGNORE_AFTER = 7 * 24 * 60 * 60 * 1000;  // 1 week
@@ -277,4 +276,10 @@ export const HttpStatusCodes = {
 	NOT_FOUND: 404,
 	SERVER_ERROR: 500,
 	USER_ACCOUNT_DEACTIVATED: 403
+};
+
+export const WebPaths = {
+	PRICING: "/pricing",
+	AUTH: "/signup",
+	USER_PROFILE_SETTINGS: "/settings"
 };

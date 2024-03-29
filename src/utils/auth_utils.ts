@@ -9,13 +9,13 @@ import {readYML} from './common';
 import {showConnectRepo} from "./notifications";
 import {createUserWithApi} from "./api_utils";
 import {generateSettings} from "../settings";
-import {reactivateAccountHandler, trackRepoHandler} from "../handlers/commands_handler";
-import {Auth0URLs, contextVariables, ECONNREFUSED, getRepoInSyncMsg, HttpStatusCodes, NOTIFICATION, NOTIFICATION_BUTTON} from "../constants";
+import {trackRepoHandler} from "../handlers/commands_handler";
+import {contextVariables, ECONNREFUSED, getRepoInSyncMsg, HttpStatusCodes, NOTIFICATION, NOTIFICATION_BUTTON} from "../constants";
 import { CodeSyncLogger } from "../logger";
-import { generateAuthUrl } from "./url_utils";
 import { pathUtils } from "./path_utils";
 import { RepoState } from "./repo_state_utils";
 import { UserState } from "./user_utils";
+import { authHandler, reactivateAccountHandler } from "../handlers/user_commands";
 
 
 export const isPortAvailable = async (port: number) => {
@@ -29,11 +29,6 @@ export const isPortAvailable = async (port: number) => {
         });
 };
 
-export const redirectToBrowser = (skipAskConnect=false) => {
-    (global as any).skipAskConnect = skipAskConnect;
-    const authorizeUrl = generateAuthUrl(Auth0URLs.AUTHORIZE);
-    vscode.env.openExternal(vscode.Uri.parse(authorizeUrl));
-};
 
 const postSuccessLoginAddUser = (userEmail: string, accessToken: string) => {
     if (!userEmail) return;
@@ -140,12 +135,6 @@ export const createUser = async (accessToken: string, idToken: string) => {
     };
 };
 
-export const logout = () => {
-    const logoutUrl = generateAuthUrl(Auth0URLs.LOGOUT);
-    vscode.env.openExternal(vscode.Uri.parse(logoutUrl));
-    markUsersInactive();
-    return logoutUrl;
-};
 
 export const markUsersInactive = (notify=true) => {
     vscode.commands.executeCommand('setContext', contextVariables.showLogIn, true);
@@ -172,7 +161,7 @@ export const askAndTriggerSignUp = () => {
         NOTIFICATION.IGNORE
     ]).then(selection => {
         if (selection === NOTIFICATION.LOGIN) {
-            redirectToBrowser(true);
+            authHandler(true);
         }
     });
 };

@@ -1,10 +1,10 @@
 import vscode from 'vscode';
-import { contextVariables, HttpStatusCodes, NOTIFICATION, NOTIFICATION_BUTTON, PRICING_URL_PATH } from '../constants';
+import { contextVariables, HttpStatusCodes, NOTIFICATION, NOTIFICATION_BUTTON, WebPaths } from '../constants';
 import { ErrorCodes } from './common';
 import { pathUtils } from './path_utils';
 import { CodeSyncState, CODESYNC_STATES } from "./state_utils";
 import { getRepoPlanInfo } from './sync_repo_utils';
-import { generateWebUrl } from './url_utils';
+import { appendGAparams, generateWebUrl } from './url_utils';
 import { ConfigUtils } from './config_utils';
 import { RepoPlanLimitsState } from './repo_state_utils';
 import { IRepoPlanInfo } from '../interface';
@@ -31,12 +31,12 @@ export class PlanLimitsHandler {
 	_getRepoPlanInfo = async () : Promise<IRepoPlanInfo> => {
 		// Get Repo Plan Info from server
 		const planInfo = <IRepoPlanInfo>{};
-		planInfo.pricingUrl = generateWebUrl(PRICING_URL_PATH);
+		planInfo.pricingUrl = generateWebUrl(WebPaths.PRICING);
 		planInfo.isOrgRepo = false;
 		planInfo.canAvailTrial = false;
 		const json = <any> await getRepoPlanInfo(this.accessToken, this.repoId);
 		if (!json.error) {
-			planInfo.pricingUrl = generateWebUrl("", json.response.url);
+			planInfo.pricingUrl = appendGAparams(json.response.url).href;
 			planInfo.isOrgRepo = json.response.is_org_repo;
 			planInfo.canAvailTrial = json.response.can_avail_trial;
 		}
