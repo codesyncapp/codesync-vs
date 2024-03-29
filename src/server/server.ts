@@ -40,6 +40,7 @@ export const initExpressServer = () => {
             // @ts-ignore
             CodeSyncLogger.critical("Login callback failed", e.stack);
         }
+        res.send("OK");
     });
 
     // define a route handler for the default home page
