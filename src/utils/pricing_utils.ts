@@ -36,7 +36,7 @@ export class PlanLimitsHandler {
 		planInfo.canAvailTrial = false;
 		const json = <any> await getRepoPlanInfo(this.accessToken, this.repoId);
 		if (!json.error) {
-			planInfo.pricingUrl = appendGAparams(json.response.url).href;
+			planInfo.pricingUrl = appendGAparams(json.response.pricing_url).href;
 			planInfo.isOrgRepo = json.response.is_org_repo;
 			planInfo.canAvailTrial = json.response.can_avail_trial;
 		}

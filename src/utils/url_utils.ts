@@ -26,7 +26,8 @@ export const generateServerUrl = (urlPath: string, baseUrl=API_BASE_URL, addTime
 };
 
 export const generateWebUrl = (urlPath="", additionalParams: any=null) => {
-	const _url = appendGAparams(`${WEB_APP_URL}${urlPath}`);
+	const url = `${WEB_APP_URL}${urlPath}`;
+	const _url = appendGAparams(url);
 	if (additionalParams) {
 		Object.keys(additionalParams).forEach(key => {
 			_url.searchParams.append(key, additionalParams[key]);
@@ -36,7 +37,6 @@ export const generateWebUrl = (urlPath="", additionalParams: any=null) => {
 };
 
 export const appendGAparams = (url: string) => {
-	console.log("appendGAparams", url);
 	const _url = new URL(url);
 	// Adding G4A params
 	_url.searchParams.append("utm_medium", "plugin");
