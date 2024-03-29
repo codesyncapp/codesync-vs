@@ -8,7 +8,7 @@ import {
     createUser,
     isPortAvailable
 } from "../../src/utils/auth_utils";
-import { logoutHandler } from "../../src/handlers/auth_commands";
+import { logoutHandler } from "../../src/handlers/user_commands";
 import { Auth0URLs, contextVariables, NOTIFICATION } from "../../src/constants";
 import { createRedirectUri } from "../../src/utils/url_utils";
 import {

@@ -17,7 +17,7 @@ import {
     getDirectorySyncIgnoredMsg,
     HttpStatusCodes
 } from "../src/constants";
-import { authHandler, reactivateAccountHandler } from "../src/handlers/user_commands";
+import { authHandler, reactivateAccountHandler, logoutHandler } from "../src/handlers/user_commands";
 import {
     connectRepoHandler,
     trackFileHandler,
@@ -47,7 +47,6 @@ import {
     waitFor,
     TEST_EMAIL
 } from "./helpers/helpers";
-import {logoutHandler} from "../src/handlers/auth_commands";
 
 describe("Extension: activate", () => {
 
