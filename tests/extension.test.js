@@ -17,7 +17,7 @@ import {
     getDirectorySyncIgnoredMsg,
     HttpStatusCodes
 } from "../src/constants";
-import { authHandler, reactivateAccountHandler } from "../src/handlers/auth_commands";
+import { authHandler, reactivateAccountHandler } from "../src/handlers/user_commands";
 import {
     connectRepoHandler,
     trackFileHandler,

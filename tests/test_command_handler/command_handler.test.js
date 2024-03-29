@@ -33,7 +33,7 @@ import {
 } from "../../src/constants";
 import {WEB_APP_URL} from "../../src/settings";
 import {readYML} from "../../src/utils/common";
-import { authHandler } from "../../src/handlers/auth_commands";
+import { authHandler } from "../../src/handlers/user_commands";
 
 describe("authHandler",  () => {
     
