@@ -2,35 +2,18 @@ import path from "path";
 import vscode from 'vscode';
 
 import {
-	Auth0URLs,
 	getRepoInSyncMsg,
-	NOTIFICATION,
 	SYNCIGNORE
 } from '../constants';
 import { getBranch, readYML } from '../utils/common';
-import { redirectToBrowser } from "../utils/auth_utils";
 import { showChooseAccount } from "../utils/notifications";
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../utils/state_utils";
-import { createRedirectUri, generateWebUrl } from "../utils/url_utils";
+import { generateWebUrl } from "../utils/url_utils";
 import { RepoState } from "../utils/repo_state_utils";
 import { RepoDisconnectHandler, RepoReconnectHandler } from "./repo_commands";
-import { UserState } from "../utils/user_utils";
 
-export const SignUpHandler = () => {
-	redirectToBrowser();
-};
-
-export const reactivateAccountHandler = () => {
-	const userState = new UserState();
-	const activeUser = userState.getUser();
-	if (!activeUser) return vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
-	const webUrl = generateWebUrl("/settings");
-	const redirectURI = createRedirectUri(Auth0URLs.REACTIVATE_CALLBACK_PATH);
-	const reactivateWebUrl = `${webUrl}&callback=${redirectURI}`;
-	vscode.env.openExternal(vscode.Uri.parse(reactivateWebUrl));
-};
 
 export const connectRepoHandler = async () => {
 	const repoPath = pathUtils.getRootPath();

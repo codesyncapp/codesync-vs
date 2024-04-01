@@ -8,7 +8,8 @@ import {diff_match_patch} from "diff-match-patch";
 import {pathUtils} from "../../src/utils/path_utils";
 import {UserState} from "../../src/utils/user_utils";
 import {generateRandomNumber} from "../../src/utils/setup_utils";
-import {DEFAULT_BRANCH, VSCODE} from "../../src/constants";
+import {DEFAULT_BRANCH, VSCODE, WebPaths} from "../../src/constants";
+import {WEB_APP_URL} from "../../src/settings";
 import {ErrorCodes} from "../../src/utils/common";
 
 export function getRandomString(length) {
@@ -95,19 +96,23 @@ export const PRIVATE_REPO_UPLOAD_402 = {
 };
 export const ORG_REPO_PLAN_INFO = {
     is_org_repo: true,
-    can_avail_trial: false
+    can_avail_trial: false,
+    pricing_url: `${WEB_APP_URL}${WebPaths.PRICING}`
 };
 export const USER_REPO_PLAN_INFO = {
     is_org_repo: false,
-    can_avail_trial: false
+    can_avail_trial: false,
+    pricing_url: `${WEB_APP_URL}${WebPaths.PRICING}`
 };
 export const ORG_REPO_CAN_AVAIL_TRIAL = {
     is_org_repo: true,
-    can_avail_trial: true
+    can_avail_trial: true,
+    pricing_url: `${WEB_APP_URL}${WebPaths.PRICING}`
 };
 export const USER_REPO_CAN_AVAIL_TRIAL = {
     is_org_repo: false,
-    can_avail_trial: true
+    can_avail_trial: true,
+    pricing_url: `${WEB_APP_URL}${WebPaths.PRICING}`
 };
 export const FILE_UPLOAD_404 = {error: {message: "Branch not found"}};
 export const FILE_UPLOAD_403 = {error: {message: "Unauthorized for given repo"}};
