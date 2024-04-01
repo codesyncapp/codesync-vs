@@ -1,6 +1,7 @@
 import path from "path";
 import vscode from 'vscode';
 import express from "express";
+import cors from "cors";
 import { createUser } from "../utils/auth_utils";
 import {
     Auth0URLs,
@@ -25,6 +26,7 @@ export const initExpressServer = () => {
     let staticPath = path.join(__dirname, 'static');
     staticPath = staticPath.replace("out", "src");
     expressApp.use(express.static(staticPath));
+    expressApp.use(cors());
 
     // define a route handler for the default home page
     expressApp.get("/", async (req: any, res: any) => {
