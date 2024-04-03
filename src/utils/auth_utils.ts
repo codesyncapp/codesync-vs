@@ -97,16 +97,16 @@ const checkDeactivatedAccount = (email: string, accessToken: string, statusCode:
 export const isAccountActive = async (email: string, accessToken: string) => {
     const isValidAccount = true;
     const userState = new UserState();
-    userState.set(isValidAccount, false);
+    userState.setValidAccount();
     const userResponse = await createUserWithApi(accessToken);
     if (!userResponse.error) return isValidAccount;
     if (userResponse.statusCode === HttpStatusCodes.UNAUTHORIZED) {
-        userState.set(false, false);
+        userState.setInvalidAccount();
         askAndTriggerSignUp();
         return false;
     }
     const isDeactivated = checkDeactivatedAccount(email, accessToken, userResponse.statusCode);
-	userState.set(isValidAccount, isDeactivated);
+	userState.setDeactivated(isDeactivated);
     if (isDeactivated) return false;
     return !userResponse.error.toString().includes(ECONNREFUSED);
 };
@@ -146,7 +146,7 @@ export const markUsersInactive = (notify=true) => {
     });
     fs.writeFileSync(settings.USER_PATH, yaml.dump(users));
     const userState = new UserState();
-	userState.set(false, false);
+	userState.setInvalidAccount();
     if (!notify) return;
     setTimeout(() => {
         vscode.window.showInformationMessage(NOTIFICATION.LOGGED_OUT_SUCCESSFULLY);

@@ -12,6 +12,9 @@ export const authHandler = (skipAskConnect=false) => {
 		"login-callback": redirectURI
 	};
 	const authUrl = generateWebUrl(WebPaths.AUTH, additionalParams);
+	const userState = new UserState();
+	userState.setWaitingForLogin();
+	vscode.window.showInformationMessage(NOTIFICATION.WAITING_FOR_LOGIN_CONFIRMATION);
 	vscode.env.openExternal(vscode.Uri.parse(authUrl));
 };
 
