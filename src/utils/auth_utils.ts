@@ -121,7 +121,7 @@ export const createUser = async (accessToken: string, idToken: string) => {
                 isDeactivated: true
         };
         vscode.window.showErrorMessage(NOTIFICATION.SIGNUP_FAILED);
-        CodeSyncLogger.critical("Error creaing user from API", userResponse.error);    
+        CodeSyncLogger.critical("Error creating user from API", userResponse.error);    
         return {
             success: false,
             isDeactivated: false
