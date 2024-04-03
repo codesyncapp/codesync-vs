@@ -46,6 +46,7 @@ export const Auth0URLs = {
 	AUTHORIZE: `${CODESYNC_HOST}/authorize`,
     LOGOUT: `${CODESYNC_HOST}/auth-logout`,
 	LOGIN_CALLBACK_PATH: "/login-callback",
+	LOGOUT_CALLBACK_PATH: "/logout-callback",
 	REACTIVATE_CALLBACK_PATH: "/reactivate-callback"
 };
 
@@ -84,7 +85,7 @@ export const NOTIFICATION = {
 	VIEW_DASHBOARD: "View Dashboard",
 	REVIEW_TEAM_PLAYBACK: "Review Team Playback",
 	REVIEW_PLAYBACK: "Review Playback",
-	TRACK_IT: "View repo on web",
+	TRACK_IT: "View Repository on web",
 	TRACK_PARENT_REPO: "View parent repo on web",
 	OPEN_SYNCIGNORE: "Open .syncignore",
 	DISCONNECT_REPO: "Dicsonnect",
@@ -103,6 +104,7 @@ export const NOTIFICATION = {
 	UPGRADE_ORG_PLAN: "Please upgrade your Organization's plan to continue using CodeSync",
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
+	WAITING_FOR_LOGIN_CONFIRMATION: "Waiting for login confirmation from CodeSync...",
 	REPO_IN_SYNC: "is in sync with CodeSync.",
 	REPO_IS_DISCONNECTED: "is disconnected.",
 	AUTHENTICATION_FAILED: "Authentication failed. You need to login again",
@@ -174,20 +176,21 @@ export const ERROR_SENDING_DIFFS = {
 
 export const STATUS_BAR_MSGS = {
 	DEFAULT: ' CodeSync ✅',
-	AUTHENTICATION_FAILED: ' CodeSync ❌, Click to authenticate!',
-	ACCOUNT_DEACTIVATED: ' CodeSync ❌, Click to reactivate your account!',
-	SERVER_DOWN: ' CodeSync ❌, Offline',
+	WAITING_FOR_LOGIN: ' CodeSync $(loading~spin) Waiting for Login confirmation...',
+	AUTHENTICATION_FAILED: ' CodeSync ❌ Click to authenticate!',
+	ACCOUNT_DEACTIVATED: ' CodeSync ❌ Click to reactivate your account!',
+	SERVER_DOWN: ' CodeSync ❌ Offline',
 	GETTING_READY: ' CodeSync $(loading~spin)',
 	NO_REPO_OPEN: ' CodeSync => No project is open',
-	CONNECT_REPO: ' CodeSync ❌, Click to connect repo!',
-	RECONNECT_REPO: ' CodeSync ❌, Click to reconnect repo!',
-	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌, Repo is syncignored and not being synced!',
-	NO_CONFIG: ' CodeSync ❌, Reload required!',
-	UPGRADE_PRICING_PLAN: ' CodeSync ❌, Click to upgrade pricing plan!',
-	UPGRADE_PRICING_PLAN_FOR_FREE: ' CodeSync ❌, Click to upgrade pricing plan for free!',
+	CONNECT_REPO: ' CodeSync ❌ Click to connect repo!',
+	RECONNECT_REPO: ' CodeSync ❌ Click to reconnect repo!',
+	IS_SYNCIGNORED_SUB_DIR: ' CodeSync ❌ Repo is syncignored and not being synced!',
+	NO_CONFIG: ' CodeSync ❌ Reload required!',
+	UPGRADE_PRICING_PLAN: ' CodeSync ❌ Click to upgrade pricing plan!',
+	UPGRADE_PRICING_PLAN_FOR_FREE: ' CodeSync ❌ Click to upgrade pricing plan for free!',
 	USER_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your activity today!",
 	TEAM_ACTIVITY_ALERT: "CodeSync 🔁 Click to review your team's activity today!",
-	UPLOADING_BRANCH: ' CodeSync $(loading~spin) Uploading branch...'
+	UPLOADING_BRANCH: ' CodeSync $(loading~spin) Uploading files...'
 };
 
 export const COMMAND = {
@@ -219,13 +222,9 @@ export const contextVariables = {
 };
 
 export class staticFiles {
-	LOGIN_SUCCESS: string;
-	LOGIN_FAILURE: string;
 	DEACTIVATED_ACCOUNT: string;
 	REACTIVATED_ACCOUNT: string;
 	fileNames = {
-		loginSuccess: "login-success.html",
-		loginFailure:"login-failure.html",
 		deactivatedAccount: "deactivated-account.html",
 		reactivatedAccount: "reactivated-account.html"
 	}
@@ -233,8 +232,6 @@ export class staticFiles {
 	constructor(baseRepo: string) {
 		const rootPath = baseRepo.replace("out", "src");
 		const basePath = path.join(rootPath, "static");
-		this.LOGIN_SUCCESS = path.join(basePath, this.fileNames.loginSuccess);
-		this.LOGIN_FAILURE = path.join(basePath, this.fileNames.loginFailure);
 		this.DEACTIVATED_ACCOUNT = path.join(basePath, this.fileNames.deactivatedAccount);
 		this.REACTIVATED_ACCOUNT = path.join(basePath, this.fileNames.reactivatedAccount);
 	}
@@ -255,12 +252,12 @@ export const S3_UPLOADR_RETRY_AFTER = 5 * 60 * 1000; // 1000 is for ms
 export const RUN_POPULATE_BUFFER_AFTER = 5 * 60 * 1000; // 1000 is for ms;
 export const RUN_POPULATE_BUFFER_CURRENT_REPO_AFTER = 10 * 60 * 1000; // 1000 is for ms;
 export const RUN_DELETE_HANDLER_AFTER = 5 * 60 * 1000; // 1000 is for ms;
+export const AUTHENTICATION_TIMEOUT = 5 * 60 * 1000; // 1000 is for ms
 export const SOCKET_CONNECT_ERROR_CODES = [ECONNREFUSED, "ETIMEDOUT", "ECONNRESET"];
 export const SOCKET_ERRORS = {
 	ERROR_MSG_RECEIVE: 'Error receiving socket msg'
 };
 export const DAY = 24 * 60 * 60 * 1000;
-export const PRICING_URL_PATH = "/pricing";
 export const RETRY_WEBSOCKET_CONNECTION_AFTER = 3 * 60 * 1000; // 1000 is for ms;
 export const GLOB_TIME_TAKEN_THRESHOLD = 2;
 export const UPDATE_SYNCIGNORE_AFTER = 7 * 24 * 60 * 60 * 1000;  // 1 week
@@ -277,4 +274,10 @@ export const HttpStatusCodes = {
 	NOT_FOUND: 404,
 	SERVER_ERROR: 500,
 	USER_ACCOUNT_DEACTIVATED: 403
+};
+
+export const WebPaths = {
+	PRICING: "/pricing",
+	AUTH: "/signup",
+	USER_PROFILE_SETTINGS: "/settings"
 };

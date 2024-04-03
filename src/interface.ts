@@ -107,4 +107,5 @@ export interface IRepoPlanInfo {
 export interface IUserState {
 	isActive: boolean;
 	isDeactivated: boolean;
+	isWaitingForLogin: boolean;
 }

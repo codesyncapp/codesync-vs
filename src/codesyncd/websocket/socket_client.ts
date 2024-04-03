@@ -18,7 +18,7 @@ import { setDiffsBeingProcessed } from "../utils";
 let errorCount = 0;
 
 export class SocketClient {
-    client: any;
+    websocketClient: any;
     statusBarItem: vscode.StatusBarItem;
     accessToken: string;
     repoDiffs: IRepoDiffs[];
@@ -27,7 +27,7 @@ export class SocketClient {
         this.statusBarItem = statusBarItem;
         this.accessToken = accessToken;
         this.repoDiffs = repoDiffs;
-        this.client = (global as any).client;
+        this.websocketClient = (global as any).websocketClient;
     }
 
     resetGlobals = () => {
@@ -36,20 +36,20 @@ export class SocketClient {
         // Reset diffsBeingProcessed
         setDiffsBeingProcessed(new Set());
         try {
-            this.client.abort();
+            this.websocketClient.abort();
         } catch (e) {
             // Not logging the error
         }
-        this.client = null;
-        (global as any).client = null;
+        this.websocketClient = null;
+        (global as any).websocketClient = null;
         (global as any).socketConnection = null;
         return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
     connect = (canSendDiffs: boolean) => {
-        if (!this.client) {
-            this.client = new client();
-            (global as any).client = this.client;
+        if (!this.websocketClient) {
+            this.websocketClient = new client();
+            (global as any).websocketClient = this.websocketClient;
             this.registerEvents(canSendDiffs);
         } else {
             const socketConnection = (global as any).socketConnection;
@@ -64,7 +64,7 @@ export class SocketClient {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const that = this;
 
-        this.client.on('connectFailed', function (error: any) {
+        this.websocketClient.on('connectFailed', function (error: any) {
             const errStr = error.toString();
             if (!SOCKET_CONNECT_ERROR_CODES.filter(err => error.code === err).length) {
                 console.log(`Socket Connect Failed: ${error.code}, ${errStr}`);
@@ -74,7 +74,7 @@ export class SocketClient {
             return that.resetGlobals();
         });
 
-        this.client.on('connect', function (connection: any) {
+        this.websocketClient.on('connect', function (connection: any) {
             CodeSyncState.set(CODESYNC_STATES.DAEMON_ERROR, "");
             CodeSyncState.set(CODESYNC_STATES.SOCKET_CONNECTED_AT, new Date().getTime());
             errorCount = 0;
@@ -86,7 +86,7 @@ export class SocketClient {
             url += '&auth_only=1';
         }
         console.log(`Socket Connecting... canSendDiffs=${canSendDiffs}`, );
-        this.client.connect(url);
+        this.websocketClient.connect(url);
     };
 
     registerConnectionEvents = (connection: any, canSendDiffs: boolean) => {
