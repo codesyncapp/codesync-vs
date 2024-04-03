@@ -2,7 +2,7 @@ import path from "path";
 import vscode from 'vscode';
 import express from "express";
 import cors from "cors";
-import { createUser } from "../utils/auth_utils";
+import { createUser, markUsersInactive } from "../utils/auth_utils";
 import {
     Auth0URLs,
     NOTIFICATION,
@@ -13,6 +13,7 @@ import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { createUserWithApi } from "../utils/api_utils";
 import { UserState } from "../utils/user_utils";
+import { generateAuthUrl } from "../utils/url_utils";
 
 export const initExpressServer = () => {
     const msgs = {
@@ -43,6 +44,19 @@ export const initExpressServer = () => {
             CodeSyncLogger.critical("Login callback failed", e.stack);
         }
         res.send("OK");
+    });
+
+    expressApp.get(Auth0URLs.LOGOUT_CALLBACK_PATH, async (req: any, res: any) => {
+        const authUrl = generateAuthUrl();
+        markUsersInactive();
+        if ((global as any).socketConnection) {
+            (global as any).socketConnection.close();
+            (global as any).socketConnection = null;
+        }
+        if ((global as any).websocketClient) {
+            (global as any).websocketClient = null;
+        }
+        res.redirect(authUrl);
     });
 
     // define a route handler for the default home page

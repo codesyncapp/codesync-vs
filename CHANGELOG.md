@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Using codesync.com for Auth instead of localhost browser
 - Showing waiting for login confirmation... message while auth is in process
 - Hiding above message if auth callback is not received within 5 minutes
+- Updated Logout Logic to redirect back to Web Login
 - Upon Logout, closing Websocket connection so that no further diffs are processed
 
 ## [3.44.1] - 2024-03-26

@@ -46,6 +46,7 @@ export const Auth0URLs = {
 	AUTHORIZE: `${CODESYNC_HOST}/authorize`,
     LOGOUT: `${CODESYNC_HOST}/auth-logout`,
 	LOGIN_CALLBACK_PATH: "/login-callback",
+	LOGOUT_CALLBACK_PATH: "/logout-callback",
 	REACTIVATE_CALLBACK_PATH: "/reactivate-callback"
 };
 

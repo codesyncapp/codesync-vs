@@ -148,10 +148,9 @@ export const markUsersInactive = (notify=true) => {
     const userState = new UserState();
 	userState.setInvalidAccount();
     if (!notify) return;
-    setTimeout(() => {
-        vscode.window.showInformationMessage(NOTIFICATION.LOGGED_OUT_SUCCESSFULLY);
-    }, 1000);
+    vscode.window.showInformationMessage(NOTIFICATION.LOGGED_OUT_SUCCESSFULLY);
 };
+
 
 export const askAndTriggerSignUp = () => {
     // Trigger sign up process
