@@ -2,7 +2,7 @@ import path from "path";
 import vscode from 'vscode';
 import express from "express";
 import cors from "cors";
-import { createUser, markUsersInactive } from "../utils/auth_utils";
+import { createUser, markUsersInactive, postSuccessLogout } from "../utils/auth_utils";
 import {
     Auth0URLs,
     NOTIFICATION,
@@ -47,15 +47,8 @@ export const initExpressServer = () => {
     });
 
     expressApp.get(Auth0URLs.LOGOUT_CALLBACK_PATH, async (req: any, res: any) => {
+        postSuccessLogout();
         const authUrl = generateAuthUrl();
-        markUsersInactive();
-        if ((global as any).socketConnection) {
-            (global as any).socketConnection.close();
-            (global as any).socketConnection = null;
-        }
-        if ((global as any).websocketClient) {
-            (global as any).websocketClient = null;
-        }
         res.redirect(authUrl);
     });
 

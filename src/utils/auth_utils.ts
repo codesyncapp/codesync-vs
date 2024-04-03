@@ -168,3 +168,14 @@ export const askAndTriggerSignUp = () => {
 const parseJwt = (token: string) => {
     return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
 };
+
+export const postSuccessLogout = () => {
+    markUsersInactive();
+    if ((global as any).socketConnection) {
+        (global as any).socketConnection.close();
+        (global as any).socketConnection = null;
+    }
+    if ((global as any).websocketClient) {
+        (global as any).websocketClient = null;
+    }
+};
