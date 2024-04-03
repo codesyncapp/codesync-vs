@@ -7,9 +7,9 @@ import {
     askAndTriggerSignUp,
     createUser,
     isPortAvailable,
-    logout,
-    redirectToBrowser
+    postSuccessLogout
 } from "../../src/utils/auth_utils";
+import { logoutHandler } from "../../src/handlers/user_commands";
 import { Auth0URLs, contextVariables, NOTIFICATION } from "../../src/constants";
 import { createRedirectUri } from "../../src/utils/url_utils";
 import {
@@ -25,6 +25,7 @@ import {
 } from "../helpers/helpers";
 import { readYML } from "../../src/utils/common";
 import { initExpressServer } from "../../src/server/server";
+
 
 describe("isPortAvailable",  () => {
     test("random free port", async () => {
@@ -59,27 +60,8 @@ describe("createRedirectUri",  () => {
     });
 });
 
-describe("redirectToBrowser",  () => {
 
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
-
-    test("skipAskConnect=false",  () => {
-        redirectToBrowser();
-        expect(global.skipAskConnect).toBe(false);
-        expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
-    });
-
-    test("skipAskConnect=true",  () => {
-        redirectToBrowser(true);
-        expect(global.skipAskConnect).toBe(true);
-        expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
-    });
-});
-
-
-describe("logout",  () => {
+describe("logoutHandler",  () => {
     let userFilePath = '';
     const baseRepoPath = randomBaseRepoPath();
 
@@ -94,8 +76,10 @@ describe("logout",  () => {
     });
 
     test("Verify Logout URL",  async () => {
-        const logoutUrl = logout();
+        const logoutUrl = logoutHandler();
         expect(logoutUrl.startsWith(Auth0URLs.LOGOUT)).toBe(true);
+        // Mocking Server Callback here
+        postSuccessLogout();
         // Verify user has been marked as inActive in user.yml
         const users = readYML(userFilePath);
         expect(users[TEST_EMAIL].is_active).toBe(false);

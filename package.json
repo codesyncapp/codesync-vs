@@ -3,7 +3,7 @@
   "displayName": "CodeSync",
   "description": "Stream code to the cloud. Save it forever. Play it back later. No commits needed.",
   "icon": "images/icon.png",
-  "version": "3.44.1",
+  "version": "3.45.0",
   "publisher": "codesync",
   "engines": {
     "vscode": "^1.86.0",
@@ -167,15 +167,15 @@
       },
       {
         "view": "codesync-repo-connected",
-        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View Repository on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-upgrade-to-pro-plan",
-        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[Upgrade plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View Repository on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[Upgrade plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-try-pro-for-free",
-        "contents": "Repo is in sync with CodeSync.\n[View repo on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[Upgrade plan for free](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View Repository on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[Upgrade plan for free](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-opened-repo-is-sub-dir-of-connected-repo",
@@ -290,6 +290,7 @@
     "@babel/core": "^7.20.7",
     "@babel/preset-env": "^7.23.8",
     "@babel/preset-typescript": "^7.23.3",
+    "@types/cors": "^2.8.17",
     "@types/current-git-branch": "^1.1.1",
     "@types/dateformat": "3.0.1",
     "@types/diff-match-patch": "^1.0.32",
@@ -313,6 +314,7 @@
     "@types/proper-lockfile": "^4.1.4",
     "@types/run-parallel": "^1.1.2",
     "@types/string-similarity": "^4.0.0",
+    "cors": "^2.8.5",
     "current-git-branch": "^1.1.0",
     "dateformat": "3.0.1",
     "detect-port": "^1.3.0",

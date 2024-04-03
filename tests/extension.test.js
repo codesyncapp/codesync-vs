@@ -17,8 +17,8 @@ import {
     getDirectorySyncIgnoredMsg,
     HttpStatusCodes
 } from "../src/constants";
+import { authHandler, reactivateAccountHandler, logoutHandler } from "../src/handlers/user_commands";
 import {
-    SignUpHandler,
     connectRepoHandler,
     trackFileHandler,
     trackRepoHandler,
@@ -26,7 +26,6 @@ import {
     upgradePlanHandler,
     viewDashboardHandler,
     viewActivityHandler,
-    reactivateAccountHandler,
     disconnectRepoHandler,
     reconnectRepoHandler
 } from "../src/handlers/commands_handler";
@@ -38,7 +37,6 @@ import {
     createStatusBarItem,
     generateRandomNumber
 } from "../src/utils/setup_utils";
-import { ErrorCodes } from "../src/utils/common";
 import {
     addUser,
     Config,
@@ -49,9 +47,8 @@ import {
     waitFor,
     TEST_EMAIL
 } from "./helpers/helpers";
-import {logout} from "../src/utils/auth_utils";
 
-describe("Extension: activate",() => {
+describe("Extension: activate", () => {
 
     let baseRepoPath;
     let repoPath;
@@ -123,9 +120,9 @@ describe("Extension: activate",() => {
         // Output of registerCommands
         expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(Object.keys(COMMAND).length);
         expect(vscode.commands.registerCommand.mock.calls[0][0]).toStrictEqual(COMMAND.triggerSignUp);
-        expect(vscode.commands.registerCommand.mock.calls[0][1]).toStrictEqual(SignUpHandler);
+        expect(vscode.commands.registerCommand.mock.calls[0][1]).toStrictEqual(authHandler);
         expect(vscode.commands.registerCommand.mock.calls[1][0]).toStrictEqual(COMMAND.triggerLogout);
-        expect(vscode.commands.registerCommand.mock.calls[1][1]).toStrictEqual(logout);
+        expect(vscode.commands.registerCommand.mock.calls[1][1]).toStrictEqual(logoutHandler);
         expect(vscode.commands.registerCommand.mock.calls[2][0]).toStrictEqual(COMMAND.triggerSync);
         expect(vscode.commands.registerCommand.mock.calls[2][1]).toStrictEqual(connectRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[3][0]).toStrictEqual(COMMAND.triggerDisconnectRepo);
@@ -205,9 +202,9 @@ describe("Extension: activate",() => {
         registerCommands(vscode.ExtensionContext);
         expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(Object.keys(COMMAND).length);
         expect(vscode.commands.registerCommand.mock.calls[0][0]).toStrictEqual(COMMAND.triggerSignUp);
-        expect(vscode.commands.registerCommand.mock.calls[0][1]).toStrictEqual(SignUpHandler);
+        expect(vscode.commands.registerCommand.mock.calls[0][1]).toStrictEqual(authHandler);
         expect(vscode.commands.registerCommand.mock.calls[1][0]).toStrictEqual(COMMAND.triggerLogout);
-        expect(vscode.commands.registerCommand.mock.calls[1][1]).toStrictEqual(logout);
+        expect(vscode.commands.registerCommand.mock.calls[1][1]).toStrictEqual(logoutHandler);
         expect(vscode.commands.registerCommand.mock.calls[2][0]).toStrictEqual(COMMAND.triggerSync);
         expect(vscode.commands.registerCommand.mock.calls[2][1]).toStrictEqual(connectRepoHandler);
         expect(vscode.commands.registerCommand.mock.calls[3][0]).toStrictEqual(COMMAND.triggerDisconnectRepo);

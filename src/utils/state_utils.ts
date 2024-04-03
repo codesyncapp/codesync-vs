@@ -26,9 +26,13 @@ export const CODESYNC_STATES = {
     SOCKET_CONNECTED_AT: "socketConnectedAt",
     INTERNET_DOWN_AT: "internetDownAt",
     GIT_COMMIT_HASH: "gitCommitHash",
-    ACCOUNT_DEACTIVATED: "accountDeactivated",
     REPO_STATE: "repoState",
-    IS_USER_ACTIVE: "isUserActive"
+    USER: {
+        IS_USER_ACTIVE: "isUserActive",
+        ACCOUNT_DEACTIVATED: "accountDeactivated",
+        WAITING_FOR_LOGIN_CONFIRMATION: "waitingForLoginConfirmation",
+        AUTHENTICATION_INITIATED_AT: "authInitiatedAt"
+    }
 };
 
 export class CodeSyncState {

@@ -63,7 +63,7 @@ describe("bufferHandler", () => {
             send: jest.fn(),
             close: jest.fn()
         };
-        global.client = null;
+        global.websocketClient = null;
 
         baseRepoPath = randomBaseRepoPath("bufferHandler");
         repoPath = randomRepoPath();
@@ -297,9 +297,9 @@ describe("bufferHandler", () => {
         const repoDiffs = handler.groupRepoDiffs(diffs.files);
         const webSocketClient = new SocketClient(statusBarItem, "access_token", repoDiffs);
         webSocketClient.connect();
-        expect(webSocketClient.client.on).toHaveBeenCalledTimes(2);
-        expect(webSocketClient.client.on.mock.calls[0][0]).toStrictEqual("connectFailed");
-        expect(webSocketClient.client.on.mock.calls[1][0]).toStrictEqual("connect");
+        expect(webSocketClient.websocketClient.on).toHaveBeenCalledTimes(2);
+        expect(webSocketClient.websocketClient.on.mock.calls[0][0]).toStrictEqual("connectFailed");
+        expect(webSocketClient.websocketClient.on.mock.calls[1][0]).toStrictEqual("connect");
     });
 
     test("SocketClient: registerConnectionEvents", async () => {
