@@ -109,3 +109,9 @@ export interface IUserState {
 	isDeactivated: boolean;
 	isWaitingForLogin: boolean;
 }
+
+export interface IUserSubscriptionInfo {
+	plan: string;
+	customerId: boolean;
+	canAvailTrial: boolean;
+}

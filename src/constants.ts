@@ -36,7 +36,8 @@ export const API_ROUTES = {
 	REACTIVATE_ACCOUNT: generateServerUrl("/users/reactivate"),
 	USER_SUBSCRIPTION: generateServerUrl("/users/subscription"),
 	DIFFS_WEBSOCKET: generateServerUrl("/v2/websocket", CODESYNC_WEBSOCKET_HOST),
-	TEAM_ACTIVITY: generateServerUrl("/team_activity", API_BASE_URL, true)
+	TEAM_ACTIVITY: generateServerUrl("/team_activity", API_BASE_URL, true),
+	USER_PRICING : generateServerUrl("/pricing/subscription")
 };
 
 // Auth0

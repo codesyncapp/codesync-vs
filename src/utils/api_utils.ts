@@ -75,3 +75,28 @@ export const getTeamActivity = async (accessToken: string) => {
 		error
 	};
 };
+
+export const getUserSubcription = async (accessToken: string) => {
+	let error = "";
+	console.log("url generated: ", API_ROUTES.USER_SUBSCRIPTION);
+
+	let response = <any> await fetch(API_ROUTES.USER_SUBSCRIPTION, {
+		headers: {
+			'Authorization': `Basic ${accessToken}`
+		},
+	})
+		.then(res => res.json())
+		.then(json => json)
+		.catch(err => error = err);
+
+	if (response.error) {
+		error = response.error.message;
+	}
+	if (error) {
+		response = {};
+	}
+	return {
+		response,
+		error
+	};
+};

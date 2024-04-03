@@ -5,6 +5,7 @@ import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconne
 import { UserState } from './user_utils';
 import { generateWebUrl } from './url_utils';
 import { authHandler } from '../handlers/user_commands';
+import { getCanAwaitTrial } from './pricing_utils';
 
 
 export const showSignUpButtons = () => {
@@ -118,9 +119,11 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 		});
 };
 
-export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=false) => {
+export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=false, accessToken: string) => {
 	const msg = getUpgradePlanMsg(repoPath, isNewPrivateRepo);
 	// TODO: get canAvailTrial from /users/pricing/subscription API call
+	const canAvailTrial = getCanAwaitTrial(accessToken);
+	console.log("canAvailTrial: ", canAvailTrial);
 	const button = NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
 	const pricingUrl = generateWebUrl(WebPaths.PRICING);
 	// Show alert msg
