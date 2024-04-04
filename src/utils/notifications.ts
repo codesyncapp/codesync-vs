@@ -6,6 +6,7 @@ import { UserState } from './user_utils';
 import { generateWebUrl } from './url_utils';
 import { authHandler } from '../handlers/user_commands';
 import { getCanAwaitTrial } from './pricing_utils';
+import { IUserSubscriptionInfo } from '../interface';
 
 
 export const showSignUpButtons = () => {
@@ -119,11 +120,11 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 		});
 };
 
-export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=false, accessToken: string) => {
+export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=false, canAvailTrial: IUserSubscriptionInfo) => {
 	const msg = getUpgradePlanMsg(repoPath, isNewPrivateRepo);
 	// TODO: get canAvailTrial from /users/pricing/subscription API call
-	const canAvailTrial = getCanAwaitTrial(accessToken);
 	console.log("canAvailTrial: ", canAvailTrial);
+	// const canAvailTrial = await getCanAwaitTrial(accessToken);
 	const button = NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
 	const pricingUrl = generateWebUrl(WebPaths.PRICING);
 	// Show alert msg

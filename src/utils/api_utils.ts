@@ -78,9 +78,9 @@ export const getTeamActivity = async (accessToken: string) => {
 
 export const getUserSubcription = async (accessToken: string) => {
 	let error = "";
-	console.log("url generated: ", API_ROUTES.USER_SUBSCRIPTION);
+	console.log("url generated: ", API_ROUTES.USER_PRICING);
 
-	let response = <any> await fetch(API_ROUTES.USER_SUBSCRIPTION, {
+	let response = <any> await fetch(API_ROUTES.USER_PRICING, {
 		headers: {
 			'Authorization': `Basic ${accessToken}`
 		},
@@ -88,6 +88,8 @@ export const getUserSubcription = async (accessToken: string) => {
 		.then(res => res.json())
 		.then(json => json)
 		.catch(err => error = err);
+	console.log("response: ", response?.subscription);
+	console.log("response: ", response?.subscription.can_avail_trial);
 
 	if (response.error) {
 		error = response.error.message;
