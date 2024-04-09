@@ -10,7 +10,7 @@ import {
     postSuccessLogout
 } from "../../src/utils/auth_utils";
 import { logoutHandler } from "../../src/handlers/user_commands";
-import { Auth0URLs, contextVariables, NOTIFICATION } from "../../src/constants";
+import { Auth0URLs, contextVariables, NOTIFICATION, WebPaths } from "../../src/constants";
 import { createRedirectUri } from "../../src/utils/url_utils";
 import {
     addUser,
@@ -77,7 +77,7 @@ describe("logoutHandler",  () => {
 
     test("Verify Logout URL",  async () => {
         const logoutUrl = logoutHandler();
-        expect(logoutUrl.startsWith(Auth0URLs.LOGOUT)).toBe(true);
+        expect(logoutUrl.startsWith(WebPaths.LOGOUT)).toBe(true);
         // Mocking Server Callback here
         postSuccessLogout();
         // Verify user has been marked as inActive in user.yml
