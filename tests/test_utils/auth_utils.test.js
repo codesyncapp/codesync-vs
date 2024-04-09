@@ -11,7 +11,7 @@ import {
 } from "../../src/utils/auth_utils";
 import { logoutHandler } from "../../src/handlers/user_commands";
 import { Auth0URLs, contextVariables, NOTIFICATION, WebPaths } from "../../src/constants";
-import { createRedirectUri } from "../../src/utils/url_utils";
+import { createRedirectUri, generateWebUrl} from "../../src/utils/url_utils";
 import {
     addUser,
     getUserFilePath,
@@ -32,7 +32,7 @@ describe("isPortAvailable",  () => {
         expect(await isPortAvailable(59402)).toBe(true);
     });
     
-    // TODO: Won't run on Github
+    // TODO: Won't run on GitHub Actions
     // test("server port", async () => {
     //     expect(await isPortAvailable(8000)).toBe(false);
     // });
@@ -43,7 +43,6 @@ describe("initExpressServer",  () => {
         const port = 1234;
         global.port = port;
         initExpressServer();
-
         const refUrl = `http://localhost:${port}${Auth0URLs.LOGIN_CALLBACK_PATH}`;
         const url = createRedirectUri();
         expect(url).toEqual(refUrl);
@@ -77,7 +76,7 @@ describe("logoutHandler",  () => {
 
     test("Verify Logout URL",  async () => {
         const logoutUrl = logoutHandler();
-        expect(logoutUrl.startsWith(WebPaths.LOGOUT)).toBe(true);
+        expect(logoutUrl.startsWith(generateWebUrl(WebPaths.LOGOUT))).toBe(true);
         // Mocking Server Callback here
         postSuccessLogout();
         // Verify user has been marked as inActive in user.yml
