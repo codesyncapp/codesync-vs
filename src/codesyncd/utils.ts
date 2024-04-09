@@ -7,6 +7,7 @@ import { diff_match_patch } from 'diff-match-patch';
 
 import { IDiff } from "../interface";
 import {
+	AUTHENTICATION_TIMEOUT,
 	COMMAND,
 	DIFF_SIZE_LIMIT,
 	HttpStatusCodes,
@@ -197,11 +198,19 @@ export class statusBarMsgs {
 		if (!fs.existsSync(this.settings.CONFIG_PATH)) return STATUS_BAR_MSGS.NO_CONFIG;
 		const repoPath = pathUtils.getRootPath();
 		const daemonError = CodeSyncState.get(CODESYNC_STATES.DAEMON_ERROR);
-		const userState = new UserState().get();
+		const userState = new UserState();
+		const user = new UserState().get();
+		// Login is in process
+		if (user.isWaitingForLogin) {
+			const authInProcess = CodeSyncState.canSkipRun(CODESYNC_STATES.USER.AUTHENTICATION_INITIATED_AT, AUTHENTICATION_TIMEOUT);
+			if (authInProcess) return STATUS_BAR_MSGS.WAITING_FOR_LOGIN;
+			userState.setInvalidAccount();
+			return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
+		}
 		// No Valid account found
-		if (!userState.isActive) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
+		if (!user.isActive) return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
 		// Account is deactivated
-		if (userState.isDeactivated) return STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED;
+		if (user.isDeactivated) return STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED;
 		// Check plan limits
 		const repoLimitsState = new RepoPlanLimitsState(repoPath).get();
 		if (repoLimitsState.planLimitReached) {

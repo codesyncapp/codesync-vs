@@ -7,40 +7,59 @@ import { CODESYNC_STATES, CodeSyncState } from './state_utils';
 
 export class UserState {
 
-	set = (isUserActive: boolean, isDeactivated: boolean): void => {
-		CodeSyncState.set(CODESYNC_STATES.IS_USER_ACTIVE, isUserActive);
-		CodeSyncState.set(CODESYNC_STATES.ACCOUNT_DEACTIVATED, isDeactivated);
+	set = (isUserActive: boolean, isDeactivated: boolean, waitingForLogin: boolean): void => {
+		CodeSyncState.set(CODESYNC_STATES.USER.IS_USER_ACTIVE, isUserActive);
+		CodeSyncState.set(CODESYNC_STATES.USER.ACCOUNT_DEACTIVATED, isDeactivated);
+		CodeSyncState.set(CODESYNC_STATES.USER.WAITING_FOR_LOGIN_CONFIRMATION, waitingForLogin);
 	}
 
 	get = (): IUserState => {
-		const isActive = CodeSyncState.get(CODESYNC_STATES.IS_USER_ACTIVE);
-		const isDeactivated = CodeSyncState.get(CODESYNC_STATES.ACCOUNT_DEACTIVATED);
+		const isActive = CodeSyncState.get(CODESYNC_STATES.USER.IS_USER_ACTIVE);
+		const isDeactivated = CodeSyncState.get(CODESYNC_STATES.USER.ACCOUNT_DEACTIVATED);
+		const isWaitingForLogin = CodeSyncState.get(CODESYNC_STATES.USER.WAITING_FOR_LOGIN_CONFIRMATION);
 		return {
 			isActive,
-			isDeactivated
+			isDeactivated,
+			isWaitingForLogin
 		};
 	}
 
-	setDeactivated = (): void => {
+	setDeactivated = (isDeactivated=false): void => {
 		const isActive = true;
-		const isDeactivated = true;
-		this.set(isActive, isDeactivated);
+		const isWaitingForLogin = false;
+		this.set(isActive, isDeactivated, isWaitingForLogin);
+	}
+
+	setInvalidAccount = (): void => {
+		const isActive = false;
+		const isDeactivated = false;
+		const isWaitingForLogin = false;
+		this.set(isActive, isDeactivated, isWaitingForLogin);
 	}
 
 	setValidAccount = (): void => {
 		const isActive = true;
 		const isDeactivated = false;
-		this.set(isActive, isDeactivated);
+		const isWaitingForLogin = false;
+		this.set(isActive, isDeactivated, isWaitingForLogin);
+	}
+
+	setWaitingForLogin = (): void => {
+		const isActive = false;
+		const isDeactivated = false;
+		const isWaitingForLogin = true;
+		CodeSyncState.set(CODESYNC_STATES.USER.AUTHENTICATION_INITIATED_AT, new Date().getTime());
+		this.set(isActive, isDeactivated, isWaitingForLogin);
 	}
 
 	isValidAccount = (): boolean => {
 		const state = this.get();
-		return state.isActive && !state.isDeactivated;
+		return state.isActive && !state.isDeactivated && !state.isWaitingForLogin;
 	}
 
 	isDeactivated = (): boolean => {
 		const state = this.get();
-		return state.isActive && state.isDeactivated;
+		return !state.isWaitingForLogin && state.isActive && state.isDeactivated;
 	}
 
 	getUser = (checkState=true): IUser|null => {

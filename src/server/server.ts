@@ -1,7 +1,8 @@
 import path from "path";
 import vscode from 'vscode';
 import express from "express";
-import { createUser, postSuccessLogin } from "../utils/auth_utils";
+import cors from "cors";
+import { createUser, markUsersInactive, postSuccessLogout } from "../utils/auth_utils";
 import {
     Auth0URLs,
     NOTIFICATION,
@@ -12,6 +13,7 @@ import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { createUserWithApi } from "../utils/api_utils";
 import { UserState } from "../utils/user_utils";
+import { generateAuthUrl } from "../utils/url_utils";
 
 export const initExpressServer = () => {
     const msgs = {
@@ -25,6 +27,7 @@ export const initExpressServer = () => {
     let staticPath = path.join(__dirname, 'static');
     staticPath = staticPath.replace("out", "src");
     expressApp.use(express.static(staticPath));
+    expressApp.use(cors());
 
     // define a route handler for the default home page
     expressApp.get("/", async (req: any, res: any) => {
@@ -33,22 +36,20 @@ export const initExpressServer = () => {
 
     // define a route handler for the authorization callback
     expressApp.get(Auth0URLs.LOGIN_CALLBACK_PATH, async (req: any, res: any) => {
-        const files = new staticFiles(__dirname);
-        let responseFile = files.LOGIN_SUCCESS;
         try {
-            const userResponse = await createUser(req.query.access_token, req.query.id_token);
-            if (!userResponse.success) {
-                responseFile = files.LOGIN_FAILURE;
-            } else if (userResponse.isDeactivated) {
-                responseFile = files.DEACTIVATED_ACCOUNT;
-            }
-            res.sendFile(responseFile);
+            await createUser(req.query.access_token, req.query.id_token);
         } catch (e) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            CodeSyncLogger.critical("Login failed", e.stack);
-            res.sendFile(files.LOGIN_FAILURE);
+            CodeSyncLogger.critical("Login callback failed", e.stack);
         }
+        res.send("OK");
+    });
+
+    expressApp.get(Auth0URLs.LOGOUT_CALLBACK_PATH, async (req: any, res: any) => {
+        postSuccessLogout();
+        const authUrl = generateAuthUrl();
+        res.redirect(authUrl);
     });
 
     // define a route handler for the default home page

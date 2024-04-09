@@ -1,10 +1,10 @@
 import vscode from 'vscode';
 import { initHandler } from '../init/init_handler';
-import { redirectToBrowser } from './auth_utils';
-import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON, PRICING_URL_PATH, getUpgradePlanMsg } from '../constants';
+import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON, getUpgradePlanMsg, WebPaths} from '../constants';
 import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
 import { UserState } from './user_utils';
 import { generateWebUrl } from './url_utils';
+import { authHandler } from '../handlers/user_commands';
 
 
 export const showSignUpButtons = () => {
@@ -14,7 +14,7 @@ export const showSignUpButtons = () => {
 		NOTIFICATION.IGNORE
 	]).then(async selection => {
 		if (selection === NOTIFICATION.JOIN) {
-			redirectToBrowser();
+			authHandler();
 		}
 	});
 };
@@ -78,7 +78,7 @@ export const showChooseAccount = async (repoPath: string) => {
 	// 	.then(async selection => {
 	// 		if (selection === NOTIFICATION.USE_DIFFERENT_ACCOUNT) {
 	// 			(global as any).skipAskConnect = true;
-	// 			return logout();
+	// 			return logoutHandler();
 	// 		}
 	// 	const index = validUsers.findIndex(user => user.email === selection);
 	// 	const user = validUsers[index];
@@ -122,7 +122,7 @@ export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=fals
 	const msg = getUpgradePlanMsg(repoPath, isNewPrivateRepo);
 	// TODO: get canAvailTrial from /users/pricing/subscription API call
 	const button = NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
-	const pricingUrl = generateWebUrl(PRICING_URL_PATH);
+	const pricingUrl = generateWebUrl(WebPaths.PRICING);
 	// Show alert msg
 	vscode.window.showErrorMessage(msg, button).then(async selection => {
 		if (!selection) return;
