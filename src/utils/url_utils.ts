@@ -17,13 +17,13 @@ export const generateAuthUrl = () => {
 };
 
 export const generateLogoutUrl = () => {
-	// https://api.codesync.com/auth-logout?source=vscode&v=3.44.1&redirect_uri=http://localhost:53381/logout-callback
-    const _url = new URL(Auth0URLs.LOGOUT);
-	_url.searchParams.append("source", VSCODE);
-	_url.searchParams.append("v", VERSION);
+	// https://codesync.com/logout?utm_medium=plugin&utm_source=vscode&logout-callback=http://localhost:53381/logout-callback
 	const redirectURI = createRedirectUri(Auth0URLs.LOGOUT_CALLBACK_PATH);
-    _url.searchParams.append("redirect_uri", redirectURI);
-	return _url.href;
+	const additionalParams = {
+		"logout-callback": redirectURI
+	};
+	const authUrl = generateWebUrl(WebPaths.LOGOUT, additionalParams);
+	return authUrl;
 };
 
 export const generateServerUrl = (urlPath: string, baseUrl=API_BASE_URL, addTimezone=false) => {

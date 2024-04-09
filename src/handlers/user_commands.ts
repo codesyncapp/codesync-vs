@@ -1,7 +1,6 @@
 import vscode from 'vscode';
 import { Auth0URLs, NOTIFICATION, WebPaths } from "../constants";
 import { createRedirectUri, generateAuthUrl, generateLogoutUrl, generateWebUrl } from "../utils/url_utils";
-import { markUsersInactive } from '../utils/auth_utils';
 import { UserState } from '../utils/user_utils';
 
 
@@ -17,7 +16,7 @@ export const authHandler = (skipAskConnect=false) => {
 
 export const logoutHandler = () => {
     const logoutUrl = generateLogoutUrl();
-    vscode.env.openExternal(vscode.Uri.parse(decodeURIComponent(logoutUrl)));
+	vscode.env.openExternal(vscode.Uri.parse(logoutUrl));
     return logoutUrl;
 };
 

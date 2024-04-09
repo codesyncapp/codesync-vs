@@ -43,8 +43,6 @@ export const API_ROUTES = {
 export const MIN_PORT = 49152;
 export const MAX_PORT = 65535;
 export const Auth0URLs = {
-	AUTHORIZE: `${CODESYNC_HOST}/authorize`,
-    LOGOUT: `${CODESYNC_HOST}/auth-logout`,
 	LOGIN_CALLBACK_PATH: "/login-callback",
 	LOGOUT_CALLBACK_PATH: "/logout-callback",
 	REACTIVATE_CALLBACK_PATH: "/reactivate-callback"
@@ -279,5 +277,6 @@ export const HttpStatusCodes = {
 export const WebPaths = {
 	PRICING: "/pricing",
 	AUTH: "/signup",
+	LOGOUT: "/logout",
 	USER_PROFILE_SETTINGS: "/settings"
 };
