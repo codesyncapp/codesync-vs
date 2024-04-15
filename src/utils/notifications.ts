@@ -10,10 +10,10 @@ import { authHandler } from '../handlers/user_commands';
 export const showSignUpButtons = () => {
 	vscode.window.showInformationMessage(
 		NOTIFICATION.WELCOME_MSG, ...[
-		NOTIFICATION.JOIN,
+		NOTIFICATION.LOGIN,
 		NOTIFICATION.IGNORE
 	]).then(async selection => {
-		if (selection === NOTIFICATION.JOIN) {
+		if (selection === NOTIFICATION.LOGIN) {
 			authHandler();
 		}
 	});

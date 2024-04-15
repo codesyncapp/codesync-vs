@@ -70,7 +70,6 @@ export const NOTIFICATION_BUTTON = {
 
 // Notification Messages
 export const NOTIFICATION = {
-	JOIN: "Join",
 	LOGIN: "Login",
 	CONNECT: "Connect",
 	IGNORE: 'Ignore',

@@ -151,7 +151,7 @@
       },
       {
         "view": "codesync-signup",
-        "contents": "Login to CodeSync.\n[Join](command:codesync.signup)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
+        "contents": "Login to CodeSync.\n[Login](command:codesync.signup)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
       },
       {
         "view": "codesync-deactivated-account",
@@ -298,8 +298,8 @@
     "@types/node": "^20.12.5",
     "@types/vscode": "^1.86.0",
     "@types/websocket": "^1.0.4",
-    "@typescript-eslint/eslint-plugin": "^4.33.0",
-    "@typescript-eslint/parser": "^4.31.1",
+    "@typescript-eslint/eslint-plugin": "^6.x",
+    "@typescript-eslint/parser": "^6.x",
     "babel-jest": "^29.7.0",
     "eslint": "^7.1.0",
     "eslint-plugin-jest": "^27.2.0",

@@ -2,7 +2,7 @@ import path from "path";
 import vscode from 'vscode';
 import express from "express";
 import cors from "cors";
-import { createUser, markUsersInactive, postSuccessLogout } from "../utils/auth_utils";
+import { createUser, postSuccessLogout } from "../utils/auth_utils";
 import {
     Auth0URLs,
     NOTIFICATION,
@@ -13,7 +13,7 @@ import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { createUserWithApi } from "../utils/api_utils";
 import { UserState } from "../utils/user_utils";
-import { generateAuthUrl } from "../utils/url_utils";
+import { createRedirectUri } from "../utils/url_utils";
 
 export const initExpressServer = () => {
     const msgs = {
@@ -48,8 +48,8 @@ export const initExpressServer = () => {
 
     expressApp.get(Auth0URLs.LOGOUT_CALLBACK_PATH, async (req: any, res: any) => {
         postSuccessLogout();
-        const authUrl = generateAuthUrl();
-        res.redirect(authUrl);
+        const login_callback = createRedirectUri(Auth0URLs.LOGIN_CALLBACK_PATH);
+        res.send(JSON.stringify({login_callback}));
     });
 
     // define a route handler for the default home page
