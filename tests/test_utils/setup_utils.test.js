@@ -135,7 +135,7 @@ describe("setupCodeSync",  () => {
         expect(lsResult.includes("config.yml")).toBe(true);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
-        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.JOIN);
+        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.LOGIN);
     });
 
     test('with empty user.yml', async () => {
@@ -143,7 +143,7 @@ describe("setupCodeSync",  () => {
         await setupCodeSync(undefined);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
-        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.JOIN);
+        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.LOGIN);
         fs.rmSync(userFilePath);
     });
 
@@ -152,7 +152,7 @@ describe("setupCodeSync",  () => {
         await setupCodeSync(repoPath);
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
-        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.JOIN);
+        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.LOGIN);
         fs.rmSync(userFilePath);
     });
 
