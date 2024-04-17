@@ -122,10 +122,7 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 
 export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=false, canAvailTrial: IUserSubscriptionInfo) => {
 	const msg = getUpgradePlanMsg(repoPath, isNewPrivateRepo);
-	// TODO: get canAvailTrial from /users/pricing/subscription API call
-	console.log("canAvailTrial: ", canAvailTrial);
-	// const canAvailTrial = await getCanAwaitTrial(accessToken);
-	const button = NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
+	const button = canAvailTrial ? NOTIFICATION_BUTTON.TRY_PRO_FOR_FREE : NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
 	const pricingUrl = generateWebUrl(WebPaths.PRICING);
 	// Show alert msg
 	vscode.window.showErrorMessage(msg, button).then(async selection => {

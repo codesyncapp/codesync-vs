@@ -100,7 +100,6 @@ export class PlanLimitsHandler {
 			// This is "Connect Repo"
 			const isNewPrivateRepo = errorCode === ErrorCodes.PRIVATE_REPO_COUNT_LIMIT_REACHED;
 			const canAvailTrial = await getCanAwaitTrial(this.accessToken);
-			console.log("canAvailTrial: ", canAvailTrial);
 			showFreeTierLimitReached(this.repoPath, isNewPrivateRepo, canAvailTrial);
 			return true;
 		}
@@ -112,10 +111,8 @@ export const getCanAwaitTrial = async(accessToken: string) : Promise<IUserSubscr
 	// Get CanAvailTrial from server
 	const userSubscriptionInfo = <IUserSubscriptionInfo>{};
 	const json = <any> await getUserSubcription(accessToken);
-	console.log("json response:", json);
 	if (!json.error) {
-		userSubscriptionInfo.canAvailTrial = json.response?.subscription.can_avail_trial?.can_avail_trial;
-		console.log("can avail trial: ", userSubscriptionInfo.canAvailTrial);
+		userSubscriptionInfo.canAvailTrial = json?.response?.subscription?.can_avail_trial;
 	}
 	return userSubscriptionInfo;
 };
