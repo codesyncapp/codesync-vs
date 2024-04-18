@@ -111,7 +111,5 @@ export interface IUserState {
 }
 
 export interface IUserSubscriptionInfo {
-	plan: string;
-	customerId: boolean;
 	canAvailTrial: boolean;
 }

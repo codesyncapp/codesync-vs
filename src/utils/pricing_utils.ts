@@ -10,6 +10,7 @@ import { RepoPlanLimitsState } from './repo_state_utils';
 import { IRepoPlanInfo, IUserSubscriptionInfo } from '../interface';
 import { showFreeTierLimitReached } from './notifications';
 import { getUserSubcription } from './api_utils';
+import { CodeSyncLogger } from '../logger';
 
 export class PlanLimitsHandler {
 
@@ -99,7 +100,8 @@ export class PlanLimitsHandler {
 			if (this.repoId) return await this.run();
 			// This is "Connect Repo"
 			const isNewPrivateRepo = errorCode === ErrorCodes.PRIVATE_REPO_COUNT_LIMIT_REACHED;
-			const canAvailTrial = await getCanAwaitTrial(this.accessToken);
+			const response = await getCanAwailTrial(this.accessToken);
+			const canAvailTrial = response?.canAvailTrial;
 			showFreeTierLimitReached(this.repoPath, isNewPrivateRepo, canAvailTrial);
 			return true;
 		}
@@ -107,12 +109,13 @@ export class PlanLimitsHandler {
 	}	
 }
 
-export const getCanAwaitTrial = async(accessToken: string) : Promise<IUserSubscriptionInfo> => {
+export const getCanAwailTrial = async(accessToken: string) : Promise<IUserSubscriptionInfo> => {
 	// Get CanAvailTrial from server
 	const userSubscriptionInfo = <IUserSubscriptionInfo>{};
 	const json = <any> await getUserSubcription(accessToken);
-	if (!json.error) {
-		userSubscriptionInfo.canAvailTrial = json?.response?.subscription?.can_avail_trial;
+	if (json.error){
+		CodeSyncLogger.error("Error retrieving canAvailTrial from Subscription API", json.error);
 	}
+	userSubscriptionInfo.canAvailTrial = json?.response?.subscription?.can_avail_trial;
 	return userSubscriptionInfo;
 };

@@ -4,9 +4,9 @@ import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConne
 import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
 import { UserState } from './user_utils';
 import { generateWebUrl } from './url_utils';
-import { authHandler } from '../handlers/user_commands';
-import { getCanAwaitTrial } from './pricing_utils';
+import { getCanAwailTrial } from './pricing_utils';
 import { IUserSubscriptionInfo } from '../interface';
+import { authHandler } from '../handlers/user_commands';
 
 
 export const showSignUpButtons = () => {
@@ -120,7 +120,7 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 		});
 };
 
-export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=false, canAvailTrial: IUserSubscriptionInfo) => {
+export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=false, canAvailTrial: boolean) => {
 	const msg = getUpgradePlanMsg(repoPath, isNewPrivateRepo);
 	const button = canAvailTrial ? NOTIFICATION_BUTTON.TRY_PRO_FOR_FREE : NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
 	const pricingUrl = generateWebUrl(WebPaths.PRICING);
