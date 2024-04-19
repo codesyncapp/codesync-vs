@@ -142,12 +142,9 @@ export const generateRandomNumber = (min = 0, max = 100)  => {
 
 export const setupCodeSync = async (repoPath: string) => {
 	const settings = createSystemDirectories();
-<<<<<<< HEAD
 	new RepoState(repoPath).setSubDirState();
-=======
 	// Setup Database
 	await setupDatabase();
->>>>>>> 87aa4ab (WIP: Integrating SQL.js)
 	await createOrUpdateSyncignore();
 	await addPluginUser();
 	const userFilePath = settings.USER_PATH;
