@@ -4,8 +4,6 @@ import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConne
 import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
 import { UserState } from './user_utils';
 import { generateWebUrl } from './url_utils';
-import { getCanAwailTrial } from './pricing_utils';
-import { IUserSubscriptionInfo } from '../interface';
 import { authHandler } from '../handlers/user_commands';
 
 

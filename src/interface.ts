@@ -110,6 +110,3 @@ export interface IUserState {
 	isWaitingForLogin: boolean;
 }
 
-export interface IUserSubscriptionInfo {
-	canAvailTrial: boolean;
-}

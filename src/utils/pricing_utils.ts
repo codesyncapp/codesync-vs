@@ -7,7 +7,7 @@ import { getRepoPlanInfo } from './sync_repo_utils';
 import { appendGAparams, generateWebUrl } from './url_utils';
 import { ConfigUtils } from './config_utils';
 import { RepoPlanLimitsState } from './repo_state_utils';
-import { IRepoPlanInfo, IUserSubscriptionInfo } from '../interface';
+import { IRepoPlanInfo } from '../interface';
 import { showFreeTierLimitReached } from './notifications';
 import { getUserSubcription } from './api_utils';
 import { CodeSyncLogger } from '../logger';
@@ -110,12 +110,13 @@ export class PlanLimitsHandler {
 
 export const getCanAwailTrial = async(accessToken: string) : Promise<boolean> => {
 	// Get CanAvailTrial from server
-	const userSubscriptionInfo = <IUserSubscriptionInfo>{};
-	userSubscriptionInfo.canAvailTrial = false;
+	let canAvailTrial = false;
 	const json = <any> await getUserSubcription(accessToken);
 	if (json.error){
 		CodeSyncLogger.error("Error retrieving canAvailTrial from Subscription API", json.error);
 	}
-	userSubscriptionInfo.canAvailTrial = json?.response?.subscription?.can_avail_trial;
-	return userSubscriptionInfo.canAvailTrial;
+	else {
+		canAvailTrial = json?.response?.subscription?.can_avail_trial;
+	}
+	return canAvailTrial;
 };

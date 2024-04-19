@@ -79,7 +79,7 @@ export const getTeamActivity = async (accessToken: string) => {
 export const getUserSubcription = async (accessToken: string) => {
 	let error = "";
 
-	let response = <any>await fetch(API_ROUTES.USER_PRICING, {
+	let response = <any> await fetch(API_ROUTES.USER_PRICING, {
 		headers: {
 			'Authorization': `Basic ${accessToken}`
 		},
