@@ -120,7 +120,7 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 };
 
 export const showFreeTierLimitReached = async (repoPath: string, isNewPrivateRepo=false, accessToken="") => {
-	let canAvailTrial = await getCanAwailTrial(accessToken);
+	const canAvailTrial = await getCanAwailTrial(accessToken);
 	const msg = getUpgradePlanMsg(repoPath, isNewPrivateRepo);
 	const button = canAvailTrial ? NOTIFICATION_BUTTON.TRY_PRO_FOR_FREE : NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
 	const pricingUrl = generateWebUrl(WebPaths.PRICING);

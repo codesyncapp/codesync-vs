@@ -100,7 +100,7 @@ export class PlanLimitsHandler {
 			if (this.repoId) return await this.run();
 			// This is "Connect Repo"
 			const isNewPrivateRepo = errorCode === ErrorCodes.PRIVATE_REPO_COUNT_LIMIT_REACHED;
-			showFreeTierLimitReached(this.repoPath, isNewPrivateRepo, this.accessToken);
+			await showFreeTierLimitReached(this.repoPath, isNewPrivateRepo, this.accessToken);
 			return true;
 		}
 		return false;
