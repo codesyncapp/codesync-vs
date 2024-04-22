@@ -1,7 +1,7 @@
 export interface IDiff {
 	repo_path: string;
 	branch: string;
-	commit_hash: string|null;
+	commit_hash: string | null;
 	file_relative_path: string;
 	created_at: string;
 	added_at: string;
@@ -28,9 +28,9 @@ export interface IFileToUpload {
 	file_path: string,
 	rel_path: string,
 	is_binary: boolean,
-	size: number|undefined,
-	created_at: number|undefined,
-	modified_at: number|undefined
+	size: number | undefined,
+	created_at: number | undefined,
+	modified_at: number | undefined
 }
 
 export interface IUser {
@@ -54,9 +54,9 @@ export interface IDiffToSend {
 	'file_id': number;
 	'path': string;
 	'diff': string;
-	'is_deleted': boolean|undefined;
-	'is_rename': boolean|undefined;
-	'is_binary': boolean|undefined;
+	'is_deleted': boolean | undefined;
+	'is_rename': boolean | undefined;
+	'is_binary': boolean | undefined;
 	'created_at': string;
 	'diff_file_path': string;
 	'source': string;
@@ -109,3 +109,4 @@ export interface IUserState {
 	isDeactivated: boolean;
 	isWaitingForLogin: boolean;
 }
+

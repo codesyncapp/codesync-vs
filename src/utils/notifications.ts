@@ -5,6 +5,7 @@ import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconne
 import { UserState } from './user_utils';
 import { generateWebUrl } from './url_utils';
 import { authHandler } from '../handlers/user_commands';
+import { getCanAwailTrial } from './pricing_utils';
 
 
 export const showSignUpButtons = () => {
@@ -118,10 +119,10 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 		});
 };
 
-export const showFreeTierLimitReached = (repoPath: string, isNewPrivateRepo=false) => {
+export const showFreeTierLimitReached = async (repoPath: string, isNewPrivateRepo=false, accessToken="") => {
+	const canAvailTrial = await getCanAwailTrial(accessToken);
 	const msg = getUpgradePlanMsg(repoPath, isNewPrivateRepo);
-	// TODO: get canAvailTrial from /users/pricing/subscription API call
-	const button = NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
+	const button = canAvailTrial ? NOTIFICATION_BUTTON.TRY_PRO_FOR_FREE : NOTIFICATION_BUTTON.UPGRADE_TO_PRO;
 	const pricingUrl = generateWebUrl(WebPaths.PRICING);
 	// Show alert msg
 	vscode.window.showErrorMessage(msg, button).then(async selection => {
