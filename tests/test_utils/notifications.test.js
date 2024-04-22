@@ -13,6 +13,7 @@ import {
     TEST_EMAIL
 } from "../helpers/helpers";
 import {askPublicPrivate, showChooseAccount} from "../../src/utils/notifications";
+import { showFreeTierLimitReached } from "../../src/utils/notifications";
 
 
 describe("showChooseAccount",  () => {
@@ -87,4 +88,40 @@ describe("askPublicPrivate",  () => {
         expect(vscode.window.showInformationMessage.mock.calls[0][2]).toStrictEqual(NOTIFICATION.PUBLIC);
         expect(vscode.window.showInformationMessage.mock.calls[0][3]).toStrictEqual(NOTIFICATION.PRIVATE);
     });
+});
+
+describe.only("showFreeTierLimitReached", () => {
+    
+    beforeEach(() => {
+        fetch.resetMocks();
+        jest.clearAllMocks();
+    });
+
+    test('With canAvailTrial = False', async () => {
+        const repoPath = randomRepoPath();
+        const isNewPrivateRepo = true;
+        const apiResponse = {subscription : {can_avail_trial: false}}
+        fetchMock
+            .mockResponseOnce(JSON.stringify(apiResponse))
+        await showFreeTierLimitReached(repoPath, isNewPrivateRepo, "ACCESS_TOKEN");
+
+        const msg = `${NOTIFICATION.PRIVATE_REPO_COUNT_LIMIT_REACHED}. ${NOTIFICATION.UPGRADE_PRICING_PLAN}`;
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION.UPGRADE_TO_PRO);
+    })
+
+    test('With canAvailTrial = True', async () => {
+        const repoPath = randomRepoPath();
+        const isNewPrivateRepo = true;
+        const apiResponse = {subscription : {can_avail_trial: true}}
+        fetchMock
+            .mockResponseOnce(JSON.stringify(apiResponse))
+        await showFreeTierLimitReached(repoPath, isNewPrivateRepo, "ACCESS_TOKEN");
+
+        const msg = `${NOTIFICATION.PRIVATE_REPO_COUNT_LIMIT_REACHED}. ${NOTIFICATION.UPGRADE_PRICING_PLAN}`;
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRY_PRO_FOR_FREE);
+    })
 });

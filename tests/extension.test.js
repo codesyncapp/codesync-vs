@@ -47,7 +47,6 @@ import {
     waitFor,
     TEST_EMAIL
 } from "./helpers/helpers";
-import { showFreeTierLimitReached } from "../src/utils/notifications";
 
 describe("Extension: activate", () => {
 
@@ -546,29 +545,4 @@ describe("Extension: activate", () => {
         expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
         expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.DISCONNECT_PARENT_REPO);
     });
-
-
-    test('With canAvailTrial = False', async () => {
-        const repoPath = randomRepoPath();
-        const isNewPrivateRepo = true;
-        const canAvailTrial = false;
-        showFreeTierLimitReached(repoPath, isNewPrivateRepo, canAvailTrial);
-
-        const msg = `${NOTIFICATION.PRIVATE_REPO_COUNT_LIMIT_REACHED}. ${NOTIFICATION.UPGRADE_PRICING_PLAN}`;
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
-        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION.UPGRADE_TO_PRO);
-    })
-
-    test('With canAvailTrial = True', async () => {
-        const repoPath = randomRepoPath();
-        const isNewPrivateRepo = true;
-        const canAvailTrial = true;
-        showFreeTierLimitReached(repoPath, isNewPrivateRepo, canAvailTrial);
-
-        const msg = `${NOTIFICATION.PRIVATE_REPO_COUNT_LIMIT_REACHED}. ${NOTIFICATION.UPGRADE_PRICING_PLAN}`;
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
-        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRY_PRO_FOR_FREE);
-    })
 });

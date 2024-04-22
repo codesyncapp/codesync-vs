@@ -87,7 +87,6 @@ export const getUserSubcription = async (accessToken: string) => {
 		.then(res => res.json())
 		.then(json => json)
 		.catch(err => error = err);
-
 	if (response.error) {
 		error = response.error.message;
 	}
