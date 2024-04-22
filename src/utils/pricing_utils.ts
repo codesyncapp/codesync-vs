@@ -9,6 +9,8 @@ import { ConfigUtils } from './config_utils';
 import { RepoPlanLimitsState } from './repo_state_utils';
 import { IRepoPlanInfo } from '../interface';
 import { showFreeTierLimitReached } from './notifications';
+import { getUserSubcription } from './api_utils';
+import { CodeSyncLogger } from '../logger';
 
 export class PlanLimitsHandler {
 
@@ -42,6 +44,7 @@ export class PlanLimitsHandler {
 		}
 		return planInfo;
 	}
+
 
 	showNotification = () => {
 		const isOrgRepo = this.repoPlanInfo.isOrgRepo;
@@ -97,9 +100,22 @@ export class PlanLimitsHandler {
 			if (this.repoId) return await this.run();
 			// This is "Connect Repo"
 			const isNewPrivateRepo = errorCode === ErrorCodes.PRIVATE_REPO_COUNT_LIMIT_REACHED;
-			showFreeTierLimitReached(this.repoPath, isNewPrivateRepo);
+			await showFreeTierLimitReached(this.repoPath, isNewPrivateRepo, this.accessToken);
 			return true;
 		}
 		return false;
 	}	
 }
+
+export const getCanAwailTrial = async(accessToken: string) : Promise<boolean> => {
+	// Get CanAvailTrial from server
+	let canAvailTrial = false;
+	const json = <any> await getUserSubcription(accessToken);
+	if (json.error){
+		CodeSyncLogger.error("Error retrieving canAvailTrial from Subscription API", json.error);
+	}
+	else {
+		canAvailTrial = json?.response?.subscription?.can_avail_trial;
+	}
+	return canAvailTrial;
+};

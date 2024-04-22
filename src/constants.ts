@@ -36,7 +36,8 @@ export const API_ROUTES = {
 	REACTIVATE_ACCOUNT: generateServerUrl("/users/reactivate"),
 	USER_SUBSCRIPTION: generateServerUrl("/users/subscription"),
 	DIFFS_WEBSOCKET: generateServerUrl("/v2/websocket", CODESYNC_WEBSOCKET_HOST),
-	TEAM_ACTIVITY: generateServerUrl("/team_activity", API_BASE_URL, true)
+	TEAM_ACTIVITY: generateServerUrl("/team_activity", API_BASE_URL, true),
+	USER_PRICING : generateServerUrl("/pricing/subscription")
 };
 
 // Auth0
@@ -99,6 +100,8 @@ export const NOTIFICATION = {
 	SERVICE_NOT_AVAILABLE: "CodeSync service is unavailable. Please try again in a moment.",
 	UPGRADE_PRICING_PLAN: "Please upgrade your plan to continue using CodeSync",
 	UPGRADE_ORG_PLAN: "Please upgrade your Organization's plan to continue using CodeSync",
+	UPGRADE_TO_PRO: "Upgrade to Pro plan",
+	TRY_PRO_FOR_FREE: "Try Pro plan for free",
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
 	WAITING_FOR_LOGIN_CONFIRMATION: "Waiting for login confirmation from CodeSync...",
