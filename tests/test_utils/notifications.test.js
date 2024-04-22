@@ -90,7 +90,7 @@ describe("askPublicPrivate",  () => {
     });
 });
 
-describe.only("showFreeTierLimitReached", () => {
+describe("showFreeTierLimitReached", () => {
     
     beforeEach(() => {
         fetch.resetMocks();
