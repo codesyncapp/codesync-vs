@@ -100,6 +100,8 @@ export const NOTIFICATION = {
 	SERVICE_NOT_AVAILABLE: "CodeSync service is unavailable. Please try again in a moment.",
 	UPGRADE_PRICING_PLAN: "Please upgrade your plan to continue using CodeSync",
 	UPGRADE_ORG_PLAN: "Please upgrade your Organization's plan to continue using CodeSync",
+	UPGRADE_TO_PRO: "Upgrade to Pro plan",
+	TRY_PRO_FOR_FREE: "Try Pro plan for free",
 	INIT_CANCELLED: "Init process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
 	WAITING_FOR_LOGIN_CONFIRMATION: "Waiting for login confirmation from CodeSync...",
