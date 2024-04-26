@@ -14,11 +14,13 @@ import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { createUserWithApi } from "../utils/api_utils";
 import { UserState } from "../utils/user_utils";
 import { WEB_APP_URL } from "../settings";
+import { generateWebUrl } from "../utils/url_utils";
 
 export const initExpressServer = () => {
     const msgs = {
         OK: "OK",
-        TOKEN_VERIFICATION_FAILED: "Token verification failed"
+        TOKEN_VERIFICATION_FAILED: "Token verification failed",
+        ACCESS_TOKEN_NOT_FOUND: "Access token not found"
     };
     // Create an express server
     const expressApp = express();
@@ -36,7 +38,9 @@ export const initExpressServer = () => {
 
     // define a route handler for the authorization callback
     expressApp.get(Auth0URLs.LOGIN_CALLBACK_PATH, async (req: any, res: any) => {
-        if (!req.query.access_token || !req.query.id_token) return;
+        if (!req.query.access_token || !req.query.id_token) {
+            return res.send(msgs.ACCESS_TOKEN_NOT_FOUND);
+        }
         try {
             await createUser(req.query.access_token, req.query.id_token);
         } catch (e) {
@@ -44,7 +48,7 @@ export const initExpressServer = () => {
             // @ts-ignore
             CodeSyncLogger.critical("Login callback failed", e.stack);
         }
-        res.redirect(WEB_APP_URL);
+        res.redirect(generateWebUrl("", {type: "login"}));
     });
 
     expressApp.get(Auth0URLs.LOGOUT_CALLBACK_PATH, async (req: any, res: any) => {
@@ -56,7 +60,7 @@ export const initExpressServer = () => {
 		const activeUser = userState.getUser();
         if (activeUser && activeUser.email !== userResponse.email) return res.send(msgs.TOKEN_VERIFICATION_FAILED);
         postSuccessLogout();
-        res.redirect(WEB_APP_URL);
+        res.redirect(generateWebUrl("", {type: "logout"}));
     });
 
     // define a route handler for the default home page
