@@ -48,6 +48,13 @@ export const initExpressServer = () => {
     });
 
     expressApp.get(Auth0URLs.LOGOUT_CALLBACK_PATH, async (req: any, res: any) => {
+        if (!req.query.access_token) return;
+        const userResponse = await createUserWithApi(req.query.access_token);
+        if (userResponse.error) return res.send(msgs.TOKEN_VERIFICATION_FAILED);
+        // Verify that accessToken's user is same as logged-in user
+        const userState = new UserState();
+		const activeUser = userState.getUser();
+        if (activeUser && activeUser.email !== userResponse.email) return res.send(msgs.TOKEN_VERIFICATION_FAILED);
         postSuccessLogout();
         res.redirect(WEB_APP_URL);
     });
