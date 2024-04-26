@@ -1,6 +1,9 @@
 import fs from 'fs';
+import path from 'path';
 import yaml from 'js-yaml';
 import vscode, { Extension } from 'vscode';
+import initSqlJs, { Database } from 'sql.js';
+
 import {
 	COMMAND,
 	contextVariables,
@@ -140,6 +143,8 @@ export const generateRandomNumber = (min = 0, max = 100)  => {
 export const setupCodeSync = async (repoPath: string) => {
 	const settings = createSystemDirectories();
 	new RepoState(repoPath).setSubDirState();
+	// Setup Database
+	await setupDatabase();
 	await createOrUpdateSyncignore();
 	await addPluginUser();
 	const userFilePath = settings.USER_PATH;
@@ -304,4 +309,40 @@ export const uuidv4 = () => {
         }
         return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
+};
+
+export const setupDatabase = async () => {
+	const settings = generateSettings();
+	if (!fs.existsSync(settings.DATABASE_FILE_PATH)) {
+		fs.openSync(settings.DATABASE_FILE_PATH, "w+");
+	}
+	const filebuffer = fs.readFileSync(settings.DATABASE_FILE_PATH);
+	const SQL = await initSqlJs({
+		// Required to load the wasm binary asynchronously. Of course, you can host it wherever you want
+		// You can omit locateFile completely when running in node
+		locateFile: file => path.join(__dirname, ".." , `node_modules/sql.js/dist/${file}`)
+	});
+	const db = new SQL.Database(filebuffer);
+	
+	try {
+		// const res = db.exec("SELECT * FROM hello");
+		db.run('BEGIN TRANSACTION');
+		db.run("CREATE TABLE IF NOT EXISTS test1 (col1, col2);");
+		// Commit the transaction
+		db.run('COMMIT');
+		console.log("Commiting to DB");
+		// writeToDB(db);
+	} catch (e) {
+		console.log("error", e);
+		// Testing a comment with Latest Sanic version on Server
+		// How about now with intermediate changes
+	}
+};
+
+
+const writeToDB = (db: Database) => {
+	const settings = generateSettings();
+	const data = db.export();
+	const buffer = Buffer.from(data);
+	fs.writeFileSync(settings.DATABASE_FILE_PATH, buffer);
 };
