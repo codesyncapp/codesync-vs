@@ -38,9 +38,7 @@ export const initExpressServer = () => {
 
     // define a route handler for the authorization callback
     expressApp.get(Auth0URLs.LOGIN_CALLBACK_PATH, async (req: any, res: any) => {
-        if (!req.query.access_token || !req.query.id_token) {
-            return res.send(msgs.ACCESS_TOKEN_NOT_FOUND);
-        }
+        if (!req.query.access_token || !req.query.id_token) return res.send(msgs.ACCESS_TOKEN_NOT_FOUND);
         try {
             await createUser(req.query.access_token, req.query.id_token);
         } catch (e) {
@@ -48,11 +46,13 @@ export const initExpressServer = () => {
             // @ts-ignore
             CodeSyncLogger.critical("Login callback failed", e.stack);
         }
-        res.redirect(generateWebUrl("", {type: "login"}));
+        const redirectURL = generateWebUrl("", {type: "login"});
+        // http://localhost:3000/?utm_medium=plugin&utm_source=vscode&type=login
+        res.redirect(redirectURL);
     });
 
     expressApp.get(Auth0URLs.LOGOUT_CALLBACK_PATH, async (req: any, res: any) => {
-        if (!req.query.access_token) return;
+        if (!req.query.access_token) return res.send(msgs.ACCESS_TOKEN_NOT_FOUND);
         const userResponse = await createUserWithApi(req.query.access_token);
         if (userResponse.error) return res.send(msgs.TOKEN_VERIFICATION_FAILED);
         // Verify that accessToken's user is same as logged-in user
@@ -60,7 +60,9 @@ export const initExpressServer = () => {
 		const activeUser = userState.getUser();
         if (activeUser && activeUser.email !== userResponse.email) return res.send(msgs.TOKEN_VERIFICATION_FAILED);
         postSuccessLogout();
-        res.redirect(generateWebUrl("", {type: "logout"}));
+        const redirectURL = generateWebUrl("", {type: "logout"});
+        // http://localhost:3000/?utm_medium=plugin&utm_source=vscode&type=logout
+        res.redirect(redirectURL);
     });
 
     // define a route handler for the default home page
