@@ -90,7 +90,7 @@ export const generateSettings = () => {
         ALERTS: path.join(rootRepo, "alerts.yml")
     };
 
-    const DATABASE_FILE_PATH = path.join(rootRepo, "codesyncdb.db");
+    const DATABASE_FILE_PATH = path.join(rootRepo, "codesync-v1-vscode.db");
 
     return {
         ...systemDirectories,

@@ -12,7 +12,7 @@ export const showSignUpButtons = () => {
 		NOTIFICATION.WELCOME_MSG, ...[
 		NOTIFICATION.LOGIN,
 		NOTIFICATION.IGNORE
-	]).then(async selection => {
+	]).then(selection => {
 		if (selection === NOTIFICATION.LOGIN) {
 			authHandler();
 		}

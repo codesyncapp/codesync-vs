@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import vscode, { Extension } from 'vscode';
-import initSqlJs from 'sql.js';
+import initSqlJs, { Database } from 'sql.js';
 
 import {
 	COMMAND,
@@ -314,7 +314,6 @@ export const uuidv4 = () => {
 export const setupDatabase = async () => {
 	const settings = generateSettings();
 	if (!fs.existsSync(settings.DATABASE_FILE_PATH)) {
-		console.log("Creating DB");
 		fs.openSync(settings.DATABASE_FILE_PATH, "w+");
 	}
 	const filebuffer = fs.readFileSync(settings.DATABASE_FILE_PATH);
@@ -323,14 +322,27 @@ export const setupDatabase = async () => {
 		// You can omit locateFile completely when running in node
 		locateFile: file => path.join(__dirname, ".." , `node_modules/sql.js/dist/${file}`)
 	});
-	console.log("db", 1);
 	const db = new SQL.Database(filebuffer);
-	console.log("db", 2);
+	
 	try {
-		const res = db.exec("SELECT * FROM hello");
+		// const res = db.exec("SELECT * FROM hello");
+		db.run('BEGIN TRANSACTION');
+		db.run("CREATE TABLE IF NOT EXISTS test1 (col1, col2);");
+		// Commit the transaction
+		db.run('COMMIT');
+		console.log("Commiting to DB");
+		// writeToDB(db);
 	} catch (e) {
-		console.log("Creating table");
+		console.log("error", e);
 		// Testing a comment with Latest Sanic version on Server
 		// How about now with intermediate changes
 	}
+};
+
+
+const writeToDB = (db: Database) => {
+	const settings = generateSettings();
+	const data = db.export();
+	const buffer = Buffer.from(data);
+	fs.writeFileSync(settings.DATABASE_FILE_PATH, buffer);
 };
