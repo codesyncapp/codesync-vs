@@ -17,11 +17,12 @@ export const generateAuthUrl = () => {
 };
 
 export const generateLogoutUrl = (access_token: string) => {
-	// https://codesync.com/logout?utm_medium=plugin&utm_source=vscode&logout-callback=http://localhost:53381/logout-callback?access_token=ACCESS_TOKEN
+	// https://codesync.com/logout?utm_medium=plugin&utm_source=vscode&access_token=ACCESS_TOKEN&logout-callback=http://localhost:53381/logout-callback
 	const redirectURI = createRedirectUri(Auth0URLs.LOGOUT_CALLBACK_PATH);
 	const logout_callback_url = `${redirectURI}?access_token=${access_token}`;
 	const additionalParams = {
-		"logout-callback": logout_callback_url
+		"logout-callback": logout_callback_url,
+		"access_token": access_token
 	};
 	const authUrl = generateWebUrl(WebPaths.LOGOUT, additionalParams);
 	return authUrl;
