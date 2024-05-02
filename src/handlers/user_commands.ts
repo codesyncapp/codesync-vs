@@ -9,7 +9,6 @@ export const authHandler = (skipAskConnect=false) => {
 	const authUrl = generateAuthUrl();
 	const userState = new UserState();
 	userState.setWaitingForLogin();
-	vscode.window.showInformationMessage(NOTIFICATION.WAITING_FOR_LOGIN_CONFIRMATION);
 	vscode.env.openExternal(vscode.Uri.parse(authUrl));
 };
 

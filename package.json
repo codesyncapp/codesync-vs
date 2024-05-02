@@ -47,7 +47,7 @@
       },
       {
         "command": "codesync.disconnectRepo",
-        "title": "Disconnect Repo",
+        "title": "Disconnect repo",
         "category": "CodeSync"
       },
       {
@@ -167,15 +167,15 @@
       },
       {
         "view": "codesync-repo-connected",
-        "contents": "Repo is in sync with CodeSync.\n[View Repository on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View this repo on the web](command:codesync.trackRepo)\n[View Dashboard](command:codesync.viewDashboard)\n[Disconnect repo](command:codesync.disconnectRepo)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-upgrade-to-pro-plan",
-        "contents": "Repo is in sync with CodeSync.\n[View Repository on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[Upgrade plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View this repo on the web](command:codesync.trackRepo)\n[Upgrade plan](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Disconnect repo](command:codesync.disconnectRepo)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-try-pro-for-free",
-        "contents": "Repo is in sync with CodeSync.\n[View Repository on web](command:codesync.trackRepo)\n[Disconnect Repo](command:codesync.disconnectRepo)\n[Upgrade plan for free](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Logout](command:codesync.logout)"
+        "contents": "Repo is in sync with CodeSync.\n[View this repo on the web](command:codesync.trackRepo)\n[Upgrade plan for free](command:codesync.upgradePlan)\n[View Dashboard](command:codesync.viewDashboard)\n[Disconnect repo](command:codesync.disconnectRepo)\n[Logout](command:codesync.logout)"
       },
       {
         "view": "codesync-opened-repo-is-sub-dir-of-connected-repo",
