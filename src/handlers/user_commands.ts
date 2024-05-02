@@ -9,13 +9,15 @@ export const authHandler = (skipAskConnect=false) => {
 	const authUrl = generateAuthUrl();
 	const userState = new UserState();
 	userState.setWaitingForLogin();
-	vscode.window.showInformationMessage(NOTIFICATION.WAITING_FOR_LOGIN_CONFIRMATION);
 	vscode.env.openExternal(vscode.Uri.parse(authUrl));
 };
 
 
 export const logoutHandler = () => {
-    const logoutUrl = generateLogoutUrl();
+	const userState = new UserState();
+	const activeUser = userState.getUser();
+	if (!activeUser) return vscode.window.showErrorMessage(NOTIFICATION.NO_VALID_ACCOUNT);
+    const logoutUrl = generateLogoutUrl(activeUser.access_token);
 	vscode.env.openExternal(vscode.Uri.parse(logoutUrl));
     return logoutUrl;
 };

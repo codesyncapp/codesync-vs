@@ -83,7 +83,7 @@ export const NOTIFICATION = {
 	VIEW_DASHBOARD: "View Dashboard",
 	REVIEW_TEAM_PLAYBACK: "Review Team Playback",
 	REVIEW_PLAYBACK: "Review Playback",
-	TRACK_IT: "View Repository on web",
+	TRACK_IT: "View this repo on the web",
 	TRACK_PARENT_REPO: "View parent repo on web",
 	OPEN_SYNCIGNORE: "Open .syncignore",
 	DISCONNECT_REPO: "Dicsonnect",
