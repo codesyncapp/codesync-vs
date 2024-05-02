@@ -326,7 +326,7 @@
     "glob": "^9.3.5",
     "ignore": "^5.2.4",
     "is-online": "^10.0.0",
-    "isbinaryfile": "^5.0.0",
+    "isbinaryfile": "^5.0.2",
     "jest-fetch-mock": "^3.0.3",
     "js-yaml": "^4.1.0",
     "macaddress": "^0.5.3",
