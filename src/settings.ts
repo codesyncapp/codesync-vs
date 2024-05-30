@@ -64,6 +64,7 @@ export const generateSettings = () => {
     const systemDirectories = {
         CODESYNC_ROOT: rootRepo,
         DIFFS_REPO: path.join(rootRepo, ".diffs", ".vscode"),
+        TABS_PATH: path.join(rootRepo, ".tabs"),
         ORIGINALS_REPO: path.join(rootRepo, ".originals"),
         SHADOW_REPO: path.join(rootRepo, ".shadow"),
         DELETED_REPO: path.join(rootRepo, ".deleted"),

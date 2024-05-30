@@ -47,7 +47,8 @@ export const createSystemDirectories = () => {
 		settings.SHADOW_REPO,
 		settings.DELETED_REPO,
 		settings.LOCKS_REPO,
-		settings.S3_UPLOADER
+		settings.S3_UPLOADER,
+		settings.TABS_PATH,
 	].forEach(directoryPath => {
 		// Create directory if does not exist
 		if (!fs.existsSync(directoryPath)) fs.mkdirSync(directoryPath, { recursive: true });
