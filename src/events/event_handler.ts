@@ -146,7 +146,19 @@ export class eventHandler {
 		// Get list of current tabs
 		const open_tabs = vscode.window.tabGroups.all;
 		// console.log("List of open tabs: ", open_tabs);
-
+		// Loop through tab groups
+		for (const tab_group of open_tabs) {
+			// console.log(`Displaying tab group:`, tab_group)
+			for (let tab of tab_group.tabs) {
+				console.log(`Displaying tabs: `, tab);
+				// Get path of tab
+				// @ts-ignore
+				let tab_path = tab.input.uri.path;
+				console.log(`The path of tab is: ${tab_path}`)
+				// Get file ID using path 
+				
+			}
+		}
 		// Dump to <timestamp.yml>
 		// Storing current timestamp in current_timestamp 
 		// const current_timestamp = new Date().getTime();
