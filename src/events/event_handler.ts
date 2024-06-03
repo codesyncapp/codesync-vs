@@ -139,6 +139,8 @@ export class eventHandler {
 		// For the current open repoPath, get the repo_id and from config File
 		const configJSON = readYML(this.settings.CONFIG_PATH);
 		const repo_id = configJSON.repos[this.repoPath].id;
+		// Discard event if no repo_id found
+		if (!repo_id) return;
 		console.log('repo_id: ', repo_id)
 		console.log(`Tabs changed!`);
 		// Get list of current tabs
