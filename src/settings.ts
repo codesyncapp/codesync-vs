@@ -54,6 +54,7 @@ export const generateSettings = () => {
             Note: Above lock files do not contain any data. It depends on the process which acquires the lock. 
         .originals/
         .shadow/
+        .tabs/
         alerts.yml (Keeps track of different kind of alerts shown to user)
         config.yml 
         sequence_token.yml 

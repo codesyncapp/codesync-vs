@@ -127,6 +127,32 @@ export class eventHandler {
 		this.handleChanges(filePath, currentText);
 	}
 
+	handleTabChangeEvent = (changeEvent: vscode.TabChangeEvent) => {
+		/*
+		The flow for handler will be as follows:
+			- For the current open repoPath, get the repo_id and from config File
+			- Get Current Open Tabs TabGroups.ALL
+			- For each tab:
+				* Get the Relative Path of each file using repoPath
+				* Get the fileID using relative_path found in above step
+		*/
+		// For the current open repoPath, get the repo_id and from config File
+		const configJSON = readYML(this.settings.CONFIG_PATH);
+		const repo_id = configJSON.repos[this.repoPath].id;
+		console.log('repo_id: ', repo_id)
+		console.log(`Tabs changed!`);
+		// Get list of current tabs
+		const open_tabs = vscode.window.tabGroups.all;
+		// console.log("List of open tabs: ", open_tabs);
+
+		// Dump to <timestamp.yml>
+		// Storing current timestamp in current_timestamp 
+		// const current_timestamp = new Date().getTime();
+		// Question: where to we mention file name
+		// fs.writeFileSync(this.settings.TABS_PATH, yaml.dump(configJSON));
+	}
+
+
 	handleChanges = (filePath: string, currentText: string) => {
 		if (!filePath.startsWith(this.repoPath)) return;
 		// If file does not exist, return
