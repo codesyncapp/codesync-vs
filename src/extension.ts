@@ -39,6 +39,19 @@ export async function activate(context: vscode.ExtensionContext) {
 				CodeSyncLogger.debug(`Parent repo: ${repoPath}`);
 			}	
 		}
+
+		// Register tab change event
+		vscode.window.tabGroups.onDidChangeTabs(changeEvent => {
+			try {
+				const handler = new eventHandler(repoPath);
+				handler.handleTabChangeEvent(changeEvent);
+			} catch (e) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				CodeSyncLogger.error("Failed handling tabChangeEvent", e.stack);
+			}
+		})
+
 		// Register workspace events
 		vscode.workspace.onDidChangeTextDocument(changeEvent => {
 			try {
