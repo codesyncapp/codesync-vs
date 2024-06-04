@@ -127,7 +127,7 @@ export class eventHandler {
 		this.handleChanges(filePath, currentText);
 	}
 
-	handleTabChangeEvent = (changeEvent: vscode.TabChangeEvent) => {
+	handleTabChangeEvent = (tab_data: object) => {
 		/*
 		The flow for handler will be as follows:
 			- For the current open repoPath, get the repo_id and from config File
@@ -136,26 +136,26 @@ export class eventHandler {
 				* Get the Relative Path of each file using repoPath
 				* Get the fileID using relative_path found in above step
 		*/
+
 		// For the current open repoPath, get the repo_id and from config File
 		const configJSON = readYML(this.settings.CONFIG_PATH);
 		const repo_id = configJSON.repos[this.repoPath].id;
+		console.log(`Repo ID: ${repo_id}`)
 		// Discard event if no repo_id found
 		if (!repo_id) return;
-		console.log('repo_id: ', repo_id)
-		console.log(`Tabs changed!`);
+
 		// Get list of current tabs
 		const open_tabs = vscode.window.tabGroups.all;
-		// console.log("List of open tabs: ", open_tabs);
 		// Loop through tab groups
 		for (const tab_group of open_tabs) {
-			// console.log(`Displaying tab group:`, tab_group)
 			for (let tab of tab_group.tabs) {
 				console.log(`Displaying tabs: `, tab);
 				// Get path of tab
 				// @ts-ignore
-				let tab_path = tab.input.uri.path;
-				console.log(`The path of tab is: ${tab_path}`)
-				// Get file ID using path 
+				let tab_path = (tab.input.uri.path).split('/');
+				// Get file ID using path
+				let file_id = configJSON.repos[this.repoPath].branches[this.branch][tab_path[tab_path.length - 1]];
+				console.log("File ID: ", file_id);
 				
 			}
 		}

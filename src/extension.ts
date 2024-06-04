@@ -43,8 +43,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Register tab change event
 		vscode.window.tabGroups.onDidChangeTabs(changeEvent => {
 			try {
+				const tab_data = vscode.window.tabGroups.all;
+				// Discard event if file is changed 
+				if (changeEvent.changed.length > 0) return;
 				const handler = new eventHandler(repoPath);
-				handler.handleTabChangeEvent(changeEvent);
+				handler.handleTabChangeEvent(tab_data);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
