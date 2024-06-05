@@ -38,6 +38,14 @@ export class pathUtils {
         return repoPath.replace(":", "");
     };
 
+    getTabPath = (tabPath: string): string[] => {
+        // For Windows path
+        if (tabPath.includes("\\")) {
+            return tabPath.split("\\");
+        }
+        return tabPath.split('/');
+    };
+
     getOriginalsRepoPath = () => {
         return path.join(this.settings.ORIGINALS_REPO, this.formattedRepoPath);
     };
