@@ -142,8 +142,8 @@ export class eventHandler {
 		const configUtils = new ConfigUtils();
 		const repoId = configUtils.getRepoIdByPath(this.repoPath);
 		console.log(`Repo ID: ${repoId}`)
-		const configJSON = readYML(this.settings.CONFIG_PATH);
-		
+		const configJSON = configUtils.config;
+
 		// Get list of current tabs
 		const open_tabs = vscode.window.tabGroups.all;
 		// Loop through tab groups
