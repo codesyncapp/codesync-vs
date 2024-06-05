@@ -141,7 +141,7 @@ export class eventHandler {
 		// For the current open repoPath, get the repo_id and from config File
 		const configUtils = new ConfigUtils();
 		const repoId = configUtils.getRepoIdByPath(this.repoPath);
-		console.log(`Repo ID: ${repoId}`)
+		// console.log(`Repo ID: ${repoId}`)
 		const configJSON = configUtils.config;
 
 		// Get list of current tabs
@@ -152,11 +152,10 @@ export class eventHandler {
 				console.log(`Displaying tabs: `, tab);
 				// Get path of tab
 				// @ts-ignore
-				let tab_path = (tab.input.uri.path).split('/');
+				let tabPath = (tab.input.uri.path).split('/');
 				// Get file ID using path
-				let file_id = configJSON.repos[this.repoPath].branches[this.branch][tab_path[tab_path.length - 1]];
-				console.log("File ID: ", file_id);
-				
+				let fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, tabPath[tabPath.length - 1]);
+				console.log("File ID: ", fileId);
 			}
 		}
 		// Dump to <timestamp.yml>
