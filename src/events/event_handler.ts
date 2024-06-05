@@ -16,6 +16,7 @@ import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
 import gitCommitInfo from 'git-commit-info';
 import { RepoState } from '../utils/repo_state_utils';
 import { UserState } from '../utils/user_utils';
+import { ConfigUtils } from '../utils/config_utils';
 
 
 export class eventHandler {
@@ -138,9 +139,10 @@ export class eventHandler {
 		*/
 
 		// For the current open repoPath, get the repo_id and from config File
+		const configUtils = new ConfigUtils();
+		const repoId = configUtils.getRepoIdByPath(this.repoPath);
+		console.log(`Repo ID: ${repoId}`)
 		const configJSON = readYML(this.settings.CONFIG_PATH);
-		const repo_id = configJSON.repos[this.repoPath].id;
-		console.log(`Repo ID: ${repo_id}`)
 		
 		// Get list of current tabs
 		const open_tabs = vscode.window.tabGroups.all;

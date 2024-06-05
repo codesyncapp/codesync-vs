@@ -22,4 +22,15 @@ export class ConfigUtils {
 		});
 		return repoPath || "";
 	}
+
+	getRepoIdByPath = (repoPath: string): number | null => {
+		if (!this.isConfigValid()) return null;
+		const path: string | undefined = Object.keys(this.config.repos).find(path => {
+			const _repoConfig = this.config.repos[path];
+			return _repoConfig.id == this.config.repos[repoPath].id
+		})
+		// @ts-ignore
+		return this.config.repos[path].id || null;
+	}
 }
+
