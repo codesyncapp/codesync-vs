@@ -152,7 +152,7 @@ export class eventHandler {
 				console.log(`Displaying tabs: `, tab);
 				// Get path of tab
 				// @ts-ignore
-				let tabPath = (tab.input.uri.path).split('/');
+				let tabPath = this.pathUtils.getTabPath(tab.input.uri.path);
 				// Get file ID using path
 				let fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, tabPath[tabPath.length - 1]);
 				console.log("File ID: ", fileId);
