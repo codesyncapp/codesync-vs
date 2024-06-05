@@ -27,10 +27,20 @@ export class ConfigUtils {
 		if (!this.isConfigValid()) return null;
 		const path: string | undefined = Object.keys(this.config.repos).find(path => {
 			const _repoConfig = this.config.repos[path];
-			return _repoConfig.id == this.config.repos[repoPath].id
+			return _repoConfig.id == this.config.repos[repoPath].id;
 		})
 		// @ts-ignore
 		return this.config.repos[path].id || null;
+	}
+
+	getFileIdByPath = (repoPath: string, branchName: string, fileName: string): number | null => {
+		if (!this.isConfigValid()) return null;
+		const path: string | undefined = Object.keys(this.config.repos).find(path => {
+			const _repoConfig = this.config.repos[path].branches[branchName];
+			return _repoConfig[fileName] == this.config.repos[repoPath].branches[branchName][fileName];
+		})
+		// @ts-ignore
+		return this.config.repos[path].branches[branchName][fileName];
 	}
 }
 
