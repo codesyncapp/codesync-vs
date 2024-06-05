@@ -127,7 +127,7 @@ export class eventHandler {
 		this.handleChanges(filePath, currentText);
 	}
 
-	handleTabChangeEvent = (tab_data: object) => {
+	handleTabChangeEvent = () => {
 		/*
 		The flow for handler will be as follows:
 			- For the current open repoPath, get the repo_id and from config File
@@ -141,9 +141,7 @@ export class eventHandler {
 		const configJSON = readYML(this.settings.CONFIG_PATH);
 		const repo_id = configJSON.repos[this.repoPath].id;
 		console.log(`Repo ID: ${repo_id}`)
-		// Discard event if no repo_id found
-		if (!repo_id) return;
-
+		
 		// Get list of current tabs
 		const open_tabs = vscode.window.tabGroups.all;
 		// Loop through tab groups
