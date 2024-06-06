@@ -1,5 +1,6 @@
 import yaml from "js-yaml";
 import vscode from 'vscode';
+import path from 'path';
 import fs from 'fs';
 
 import { VSCODE } from "../constants";
@@ -10,11 +11,13 @@ import { pathUtils } from "../utils/path_utils";
 import { generateSettings } from "../settings";
 import { RepoState } from "../utils/repo_state_utils";
 import { UserState } from "../utils/user_utils";
+import { CodeSyncLogger } from "../logger";
 
 export class tabEventHandler {
 	repoPath = "";
 	branch = "";
 	pathUtils: any;
+	newTab = <ITab>{};
 
 	// Diff props
 	settings = generateSettings();
@@ -61,20 +64,25 @@ export class tabEventHandler {
 		const tabsJSON = JSON.stringify(tabs);
 		// Structuring tab data
 		if (!repoId) return
-		const newTab = <ITab>{};
-		newTab.repo_id = repoId;
-		newTab.created_at = formatDatetime(created_at);
-		newTab.source = VSCODE;
-		newTab.file_name = `${new Date().getTime()}.yml`
-		newTab.tabs = tabsJSON;
-		console.log("newTab: ", yaml.dump(newTab));
+		this.newTab.repo_id = repoId;
+		this.newTab.created_at = formatDatetime(created_at);
+		this.newTab.source = VSCODE;
+		this.newTab.file_name = `${new Date().getTime()}.yml`
+		this.newTab.tabs = tabsJSON;
+		console.log("newTab: ", yaml.dump(this.newTab));
 
-		// Dump to <timestamp.yml>
-		fs.writeFileSync(this.settings.TABS_PATH, yaml.dump(newTab));
+		// Dump data in the buffer
+		const tabFilePath = path.join(this.settings.TABS_PATH, this.newTab.file_name);
+		this.addToBuffer(tabFilePath);
+
 	}
 
-	addToBuffer = () => {
-
+	addToBuffer = (tabFilePath: string) => {
+		try {
+			fs.writeFileSync(tabFilePath, yaml.dump(this.newTab));
+		} catch (e) {
+			CodeSyncLogger.error(`Error while dumping tab data: ${e}`);
+		}
 	}
 
 
