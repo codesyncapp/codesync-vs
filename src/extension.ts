@@ -16,6 +16,7 @@ import { recallDaemon } from "./codesyncd/codesyncd";
 import { CodeSyncLogger } from "./logger";
 import { CODESYNC_STATES, CodeSyncState } from './utils/state_utils';
 import { RepoState } from './utils/repo_state_utils';
+import { tabEventHandler } from './events/tab_event_handler';
 
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -39,7 +40,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				CodeSyncLogger.debug(`Parent repo: ${repoPath}`);
 			}
 			// Capturing initial tabs
-			const handler = new eventHandler(repoPath);
+			const handler = new tabEventHandler(repoPath);
 			handler.handleTabChangeEvent();
 		}
 
@@ -51,7 +52,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				// Discard event if file is changed 
 				if (changeEvent.changed.length > 0) return;
 
-				const handler = new eventHandler(repoPath);
+				const handler = new tabEventHandler(repoPath);
 				handler.handleTabChangeEvent();
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
