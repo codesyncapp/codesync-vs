@@ -38,12 +38,8 @@ export class pathUtils {
         return repoPath.replace(":", "");
     };
 
-    getTabPath = (tabPath: string): string[] => {
-        // For Windows path
-        if (tabPath.includes("\\")) {
-            return tabPath.split("\\");
-        }
-        return tabPath.split('/');
+    getFileRelativePath  = (tabPath: string): string => {
+        return tabPath.split(`${this.repoPath}${path.sep}`)[1];
     };
 
     getOriginalsRepoPath = () => {
