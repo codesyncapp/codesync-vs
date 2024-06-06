@@ -25,7 +25,7 @@ export class ConfigUtils {
 
 	getRepoIdByPath = (repoPath: string): number | null => {
 		if (!this.isConfigValid()) return null;
-		const repoConfig = this.config.repos[repoPath];
+		const repoConfig = this.config.repos[repoPath]; 
 		if (!repoConfig) return null;
 		return repoConfig.id;
 	}
