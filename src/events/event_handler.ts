@@ -148,17 +148,17 @@ export class eventHandler {
 
 		// Get list of current tabs
 		const open_tabs = vscode.window.tabGroups.all;
-		let tabs: any[] = [];
+		const tabs: any[] = [];
 		// Loop through tab groups
 		for (const tab_group of open_tabs) {
 			for (let tab of tab_group.tabs) {
 				// console.log(`Displaying tabs: `, tab);
 				// Get path of tab
 				// @ts-ignore
-				let fileRelativePath = this.pathUtils.getFileRelativePath(tab.input.uri.path);
+				const fileRelativePath = this.pathUtils.getFileRelativePath(tab.input.uri.path);
 				// console.log("File Name: ", fileRelativePath);
 				// Get file ID using path
-				let fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, fileRelativePath);
+				const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, fileRelativePath);
 				// console.log("File ID: ", fileId);
 				tabs.push({"file_id": fileId, "path": fileRelativePath});
 			}
