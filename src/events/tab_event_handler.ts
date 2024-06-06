@@ -74,7 +74,6 @@ export class tabEventHandler {
 		// Dump data in the buffer
 		const tabFilePath = path.join(this.settings.TABS_PATH, this.newTab.file_name);
 		this.addToBuffer(tabFilePath);
-
 	}
 
 	addToBuffer = (tabFilePath: string) => {
