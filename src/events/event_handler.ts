@@ -16,7 +16,6 @@ import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
 import gitCommitInfo from 'git-commit-info';
 import { RepoState } from '../utils/repo_state_utils';
 import { UserState } from '../utils/user_utils';
-import { ConfigUtils } from '../utils/config_utils';
 
 
 export class eventHandler {
@@ -127,59 +126,6 @@ export class eventHandler {
 		const currentText = changeEvent.document.getText();
 		this.handleChanges(filePath, currentText);
 	}
-
-	handleTabChangeEvent = () => {
-		/*
-		The flow for handler will be as follows:
-			- For the current open repoPath, get the repo_id and from config File
-			- Get Current Open Tabs TabGroups.ALL
-			- For each tab:
-				* Get the Relative Path of each file using repoPath
-				* Get the fileID using relative_path found in above step
-		*/
-		// Record timestamp
-		const created_at = new Date().getTime();
-		console.log("created_at: ", created_at);
-		// For the current open repoPath, get the repo_id and from config File
-		const configUtils = new ConfigUtils();
-		const repoId = configUtils.getRepoIdByPath(this.repoPath);
-		console.log(`Repo ID: ${repoId}`)
-		const configJSON = configUtils.config;
-
-		// Get list of current tabs
-		const open_tabs = vscode.window.tabGroups.all;
-		const tabs: any[] = [];
-		// Loop through tab groups
-		for (const tab_group of open_tabs) {
-			for (let tab of tab_group.tabs) {
-				// console.log(`Displaying tabs: `, tab);
-				// Get path of tab
-				// @ts-ignore
-				const fileRelativePath = this.pathUtils.getFileRelativePath(tab.input.uri.path);
-				// console.log("File Name: ", fileRelativePath);
-				// Get file ID using path
-				const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, fileRelativePath);
-				// console.log("File ID: ", fileId);
-				tabs.push({"file_id": fileId, "path": fileRelativePath});
-			}
-		}
-		const tabsYAML = yaml.dump(tabs);
-		// console.log("tabs: ", tabsYAML);
-		// Structuring tab data
-		if (!repoId) return
-		const newTab = <ITab>{};
-		newTab.repo_id = repoId;
-		newTab.created_at = formatDatetime(created_at);
-		// console.log("Created at: ", this.createdAt)
-		newTab.source = VSCODE;
-		newTab.file_name = `${new Date().getTime()}.yml`
-		newTab.tabs = tabsYAML;
-		// console.log("newTab: ", newTab);
-
-		// Dump to <timestamp.yml>
-		fs.writeFileSync(this.settings.TABS_PATH, yaml.dump(newTab));
-	}
-
 
 	handleChanges = (filePath: string, currentText: string) => {
 		if (!filePath.startsWith(this.repoPath)) return;
