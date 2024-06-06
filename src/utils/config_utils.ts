@@ -25,22 +25,16 @@ export class ConfigUtils {
 
 	getRepoIdByPath = (repoPath: string): number | null => {
 		if (!this.isConfigValid()) return null;
-		const path: string | undefined = Object.keys(this.config.repos).find(path => {
-			const _repoConfig = this.config.repos[path];
-			return _repoConfig.id == this.config.repos[repoPath].id;
-		})
-		// @ts-ignore
-		return this.config.repos[path].id || null;
+		const repoConfig = this.config.repos[repoPath];
+		if (!repoConfig) return null;
+		return repoConfig.id;
 	}
 
 	getFileIdByPath = (repoPath: string, branchName: string, fileName: string): number | null => {
 		if (!this.isConfigValid()) return null;
-		const path: string | undefined = Object.keys(this.config.repos).find(path => {
-			const _repoConfig = this.config.repos[path].branches[branchName];
-			return _repoConfig[fileName] == this.config.repos[repoPath].branches[branchName][fileName];
-		})
-		// @ts-ignore
-		return this.config.repos[path].branches[branchName][fileName];
+		const repoConfig = this.config.repos[repoPath].branches[branchName];
+		if (!repoConfig) return null;
+		return repoConfig[fileName];
 	}
 }
 
