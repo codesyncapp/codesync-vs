@@ -16,7 +16,7 @@ export interface IDiff {
 
 export interface ITab {
 	repo_id: number;
-	created_at: number;
+	created_at: string;
 	source: string;
 	file_name: string;
 	tabs: string;

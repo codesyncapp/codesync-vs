@@ -75,6 +75,7 @@ export const generateSettings = () => {
         USER_PATH: path.join(rootRepo, "user.yml"),
         SEQUENCE_TOKEN_PATH: path.join(rootRepo, "sequence_token.yml"),
         SYNCIGNORE_PATH: path.join(rootRepo, "syncignore.yml"),
+        TABS_PATH: path.join(rootRepo, ".tabs")
     };
     // Lock Files
     const lockFiles = {
