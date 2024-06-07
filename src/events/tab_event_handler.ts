@@ -24,11 +24,14 @@ export class tabEventHandler {
 	constructor(repoPath="") {
 		const userState = new UserState();
 		const isValidAccount = userState.isValidAccount();
+		console.log("is valid account: ", isValidAccount);
 		this.repoPath = repoPath || pathUtils.getRootPath();
 		if(!this.repoPath) return;
 		const repoState = new RepoState(this.repoPath).get();
 		const repoIsConnected = repoState.IS_CONNECTED;
+		console.log("repoIsConnected: ", repoIsConnected)
 		this.shouldProceed = isValidAccount && repoIsConnected;
+		console.log("this.shouldProceed: ", this.shouldProceed);
 		if (!this.shouldProceed) return;
 		this.branch = getBranch(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
@@ -37,8 +40,9 @@ export class tabEventHandler {
 	handleTabChangeEvent = (isTabEvent: boolean) => {
 		if(!this.repoPath) return;
 		// Discard event if file is changed 
+		console.log("Just before check");
 		if (!isTabEvent) return;
-
+		console.log("Just after check");
 		// Record timestamp
 		const created_at = formatDatetime(new Date().getTime());
 		// For the current open repoPath, get the repo_id and from config File
