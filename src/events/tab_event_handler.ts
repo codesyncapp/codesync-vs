@@ -27,6 +27,7 @@ export class tabEventHandler {
 		const userState = new UserState();
 		const isValidAccount = userState.isValidAccount();
 		this.repoPath = repoPath || pathUtils.getRootPath();
+		if(!this.repoPath) return;
 		const repoState = new RepoState(this.repoPath).get();
 		const repoIsConnected = repoState.IS_CONNECTED;
 		this.shouldProceed = isValidAccount && repoIsConnected;
@@ -40,7 +41,10 @@ export class tabEventHandler {
 		const created_at = new Date().getTime();
 		// For the current open repoPath, get the repo_id and from config File
 		const configUtils = new ConfigUtils();
+		console.log("repo path: ", this.repoPath);
 		const repoId = configUtils.getRepoIdByPath(this.repoPath);
+		console.log("repo id: ", repoId);
+		if (!repoId) return
 		// console.log(`Repo ID: ${repoId}`)
 		const configJSON = configUtils.config;
 
@@ -61,14 +65,12 @@ export class tabEventHandler {
 				tabs.push({"file_id": fileId, "path": fileRelativePath});
 			}
 		}
-		const tabsJSON = JSON.stringify(tabs);
 		// Structuring tab data
-		if (!repoId) return
 		this.newTab.repo_id = repoId;
 		this.newTab.created_at = formatDatetime(created_at);
 		this.newTab.source = VSCODE;
 		this.newTab.file_name = `${new Date().getTime()}.yml`
-		this.newTab.tabs = tabsJSON;
+		this.newTab.tabs = tabs;
 		console.log("newTab: ", yaml.dump(this.newTab));
 
 		// Dump data in the buffer
@@ -78,6 +80,7 @@ export class tabEventHandler {
 
 	addToBuffer = (tabFilePath: string) => {
 		try {
+			if (!tabFilePath) return;
 			fs.writeFileSync(tabFilePath, yaml.dump(this.newTab));
 		} catch (e) {
 			CodeSyncLogger.error(`Error while dumping tab data: ${e}`);
