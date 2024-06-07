@@ -11,13 +11,11 @@ import { pathUtils } from "../utils/path_utils";
 import { generateSettings } from "../settings";
 import { RepoState } from "../utils/repo_state_utils";
 import { UserState } from "../utils/user_utils";
-import { CodeSyncLogger } from "../logger";
 
 export class tabEventHandler {
 	repoPath = "";
 	branch = "";
 	pathUtils: any;
-	newTab = <ITab>{};
 
 	// Diff props
 	settings = generateSettings();
@@ -36,9 +34,13 @@ export class tabEventHandler {
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
 	}
 
-	handleTabChangeEvent = () => {
+	handleTabChangeEvent = (isTabEvent: boolean) => {
+		if(!this.repoPath) return;
+		// Discard event if file is changed 
+		if (!isTabEvent) return;
+
 		// Record timestamp
-		const created_at = new Date().getTime();
+		const created_at = formatDatetime(new Date().getTime());
 		// For the current open repoPath, get the repo_id and from config File
 		const configUtils = new ConfigUtils();
 		console.log("repo path: ", this.repoPath);
@@ -57,34 +59,31 @@ export class tabEventHandler {
 				// console.log(`Displaying tabs: `, tab);
 				// Get path of tab
 				// @ts-ignore
-				const fileRelativePath = this.pathUtils.getFileRelativePath(tab.input.uri.path);
-				// console.log("File Name: ", fileRelativePath);
+				const fileRelativePath = (tab.input.uri.path).split(`${this.repoPath}${path.sep}`)[1];
+				console.log("File Name: ", fileRelativePath);
 				// Get file ID using path
 				const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, fileRelativePath);
 				// console.log("File ID: ", fileId);
 				tabs.push({"file_id": fileId, "path": fileRelativePath});
 			}
 		}
-		// Structuring tab data
-		this.newTab.repo_id = repoId;
-		this.newTab.created_at = formatDatetime(created_at);
-		this.newTab.source = VSCODE;
-		this.newTab.file_name = `${new Date().getTime()}.yml`
-		this.newTab.tabs = tabs;
-		console.log("newTab: ", yaml.dump(this.newTab));
-
-		// Dump data in the buffer
-		const tabFilePath = path.join(this.settings.TABS_PATH, this.newTab.file_name);
-		this.addToBuffer(tabFilePath);
+		// Adding to buffer
+		this.addToBuffer(repoId, created_at, tabs);
 	}
 
-	addToBuffer = (tabFilePath: string) => {
-		try {
-			if (!tabFilePath) return;
-			fs.writeFileSync(tabFilePath, yaml.dump(this.newTab));
-		} catch (e) {
-			CodeSyncLogger.error(`Error while dumping tab data: ${e}`);
-		}
+	addToBuffer = (repoId: number, created_at: string, tabs: any[]) => {
+		const newTab = <ITab>{};
+		// Structuring tab data
+		newTab.repo_id = repoId;
+		newTab.created_at = created_at;
+		newTab.source = VSCODE;
+		newTab.file_name = `${new Date().getTime()}.yml`
+		newTab.tabs = tabs;
+		console.log("newTab: ", yaml.dump(newTab));
+
+		// Dump data in the buffer
+		const tabFilePath = path.join(this.settings.TABS_PATH, newTab.file_name);	
+		fs.writeFileSync(tabFilePath, yaml.dump(newTab));
 	}
 
 

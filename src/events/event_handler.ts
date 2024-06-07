@@ -4,7 +4,7 @@ import yaml from "js-yaml";
 import vscode from 'vscode';
 import { globSync } from 'glob';
 
-import { IDiff, ITab } from "../interface";
+import { IDiff } from "../interface";
 import { initUtils } from "../init/utils";
 import { formatDatetime, getBranch, getDefaultIgnorePatterns, getSyncIgnoreItems, readFile, readYML, shouldIgnorePath } from "../utils/common";
 import { generateSettings } from "../settings";

@@ -38,10 +38,6 @@ export class pathUtils {
         return repoPath.replace(":", "");
     };
 
-    getFileRelativePath  = (tabPath: string): string => {
-        return tabPath.split(`${this.repoPath}${path.sep}`)[1];
-    };
-
     getOriginalsRepoPath = () => {
         return path.join(this.settings.ORIGINALS_REPO, this.formattedRepoPath);
     };
@@ -68,6 +64,10 @@ export class pathUtils {
 
     getDiffsRepo = () => {
         return this.settings.DIFFS_REPO;
+    }
+
+    getTabsRepo = () => {
+        return this.settings.TABS_PATH;
     }
 
     static getS3UploaderRepo = () => {
