@@ -41,19 +41,15 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 			// Capturing initial tabs
 			const handler = new tabEventHandler(repoPath);
-			handler.handleTabChangeEvent();
+			handler.handleTabChangeEvent(true);
 		}
 
 		// Register tab change event
 		vscode.window.tabGroups.onDidChangeTabs(changeEvent => {
 			try {
-				// Discard event if repo is not opened
-				if (!repoPath) return;
-				// Discard event if file is changed 
-				if (changeEvent.changed.length > 0) return;
-
+				const isTabEvent = changeEvent.changed.length == 0
 				const handler = new tabEventHandler(repoPath);
-				handler.handleTabChangeEvent();
+				handler.handleTabChangeEvent(isTabEvent);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
