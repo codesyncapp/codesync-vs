@@ -2,7 +2,14 @@ import fs from "fs";
 import path from "path";
 import untildify from "untildify";
 import {DATETIME_FORMAT, DEFAULT_BRANCH} from "../../../src/constants";
-import {randomBaseRepoPath, randomRepoPath} from "../../helpers/helpers";
+import {
+    randomBaseRepoPath,
+    randomRepoPath,
+    addUser,
+    Config,
+    getConfigFilePath,
+    DUMMY_FILE_CONTENT
+} from "../../helpers/helpers";
 import dateFormat from "dateformat";
 import {readYML} from "../../../src/utils/common";
 import {VSCODE} from "../../../src/constants";
@@ -10,10 +17,19 @@ import {pathUtils} from "../../../src/utils/path_utils";
 import {tabEventHandler} from "../../../src/events/tab_event_handler";
 import { createSystemDirectories } from "../../../src/utils/setup_utils";
 
-describe("addTab", () => {
+// Helper method that asserts that no tabs were recorded
+const assertNoTabsRecorded = (tabsRepo) => {
+    // Verify no tab file should be generated
+    let tabFiles = fs.readdirSync(tabsRepo);
+    console.log("Tab files:", tabFiles);
+    expect(tabFiles).toHaveLength(0);    
+}
 
+describe("addTab", () => {
 	const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
+    const configPath = getConfigFilePath(baseRepoPath);
+    const configUtil = new Config(repoPath, configPath);
     untildify.mockReturnValue(baseRepoPath);
 
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
@@ -42,22 +58,62 @@ describe("addTab", () => {
         expect(untildify()).toBe(baseRepoPath);
     });
     
-    // Skips cases where repo is not connected OR file is changed
-    test("should be skipped",() => {
-        // Case: repo is not connected
-        // const repo_path = null;
-        const handler = new tabEventHandler(repoPath);
+    // Skips case when repo exists
+    test("Should be skipped if repo does not exist",() => {
+        const handler = new tabEventHandler();
         handler.handleTabChangeEvent();
-        // Verify no diff file should be generated
-        try {
-            console.log(`Tabs Repo`)
-            let tabFiles = fs.readdirSync(tabsRepo);
-            console.log("Tab files:", tabFiles);
-            expect(tabFiles).toHaveLength(0);
-        } catch (err) {
-            console.error("Error reading tabsRepo directory:", err);
-            throw err; // Re-throw the error to let the test fail
-        }
+        // Verify no tab file should be generated
+        assertNoTabsRecorded(tabsRepo)   
         });
 
+    //  Skips cases where repo exists, but is not connected
+    test("Should skip if repo exists, but is not connected", () => {
+        const handler = new tabEventHandler(repoPath);
+        handler.handleTabChangeEvent();
+        // Verify no tab file should be generated
+        assertNoTabsRecorded(tabsRepo)    
+    })
+
+    // Skip case where repo is connected, but user account is not valid
+    test("Should skip if repo is connected, but user account is not valid", () => {
+        configUtil.addRepo();
+        addUser(baseRepoPath, false);
+        const handler = new tabEventHandler(repoPath);
+        handler.handleTabChangeEvent();
+        // Verify no tab file should be generated
+        assertNoTabsRecorded(tabsRepo)       
+    })
+
+    // Skip case where user account is not valid, but repo is not connected 
+    test("Should skip if user account is valid, but repo is not connected", () => {
+        addUser(baseRepoPath, true);
+        const handler = new tabEventHandler(repoPath);
+        handler.handleTabChangeEvent();
+        // Verify no tab file should be generated
+        assertNoTabsRecorded(tabsRepo)      
+    })
+
+    // Skip case where file is changed
+    test("Should skip if file is changed", () => {
+        // Repo is connected & user account is also valid
+        configUtil.addRepo();
+        addUser(baseRepoPath, true);
+        const handler = new tabEventHandler(repoPath);
+        // Pass isTabEvent=false, which means changeEvent.changed.length > 0
+        handler.handleTabChangeEvent(false);
+        // Verify no tab file should be generated
+        assertNoTabsRecorded(tabsRepo)    
+    })
+
+    // Skip if invalid repo id
+    test("Should skip is repoId doesn't exist", () => {
+        const invalid_repo_path = "/home/documents"
+        const configUtil_2 = new Config(invalid_repo_path, configPath);
+        configUtil.addRepo();
+        addUser(baseRepoPath, true);
+        const handler = new tabEventHandler(invalid_repo_path);
+        handler.handleTabChangeEvent(true);
+        // Verify no tab file should be generated
+        assertNoTabsRecorded(tabsRepo)    
+    })
 })
