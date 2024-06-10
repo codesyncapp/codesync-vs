@@ -20,7 +20,10 @@ const window = {
     createTextEditorDecorationType: jest.fn(),
     showTextDocument: jest.fn(() => ({
         then: jest.fn()
-    }))
+    })),
+    tabGroups: {
+        all: jest.fn(),
+  },
 };
 
 Object.defineProperty(window, 'activeTextEditor', {

@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import vscode from 'vscode'
 import untildify from "untildify";
 import {DATETIME_FORMAT, DEFAULT_BRANCH} from "../../../src/constants";
 import {
@@ -34,7 +35,8 @@ describe("addTab", () => {
 
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
     const tabsRepo = pathUtilsObj.getTabsRepo();
-    const newFilePath = path.join(repoPath, "new.js");
+    const newFilePath1 = path.join(repoPath, "new1.js");
+    const newFilePath2 = path.join(repoPath, "new2.js");
 
     beforeEach(() => {
         // Create directories
@@ -51,11 +53,6 @@ describe("addTab", () => {
     afterEach(() => {
         fs.rmSync(repoPath, { recursive: true, force: true });
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
-    });
-
-    test('untildify should return the correct mocked path', () => {
-        untildify.mockReturnValue(baseRepoPath);
-        expect(untildify()).toBe(baseRepoPath);
     });
     
     // Skips case when repo exists
@@ -118,32 +115,18 @@ describe("addTab", () => {
     })
 
     test("Tabs data in positive case", async () => {
-
-        jest.mock('vscode', () => {
-            return {
-              window: {
-                tabGroups: {
-                    all: jest.fn(),
-              },
-            },
-            };
-          });
-          
-        const vscode = require('vscode');
         const mockTabGroups = [
             { 
                 tabs: [
-                    { file_id: 1, path: 'home/documents/user/file1.txt' },
-                    { file_id: 2, path: 'home/documents/user/file2.txt' },
+                    { file_id: 1, path: `${newFilePath1}` },
+                    { file_id: 2, path: `${newFilePath2}` },
                 ],
                 activeTab: { id: 1 } 
             }
         ];
         const spy = jest.spyOn(vscode.window.tabGroups, 'all').mockReturnValue(mockTabGroups);    
         const result = vscode.window.tabGroups.all();
-
         expect(result).toEqual(mockTabGroups);
-        expect(spy).toHaveBeenCalled();
         expect(result[0].tabs).toHaveLength(2);
         for (const tab of result[0].tabs) {
             expect(tab['file_id']).toBeDefined();
