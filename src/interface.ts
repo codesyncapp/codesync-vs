@@ -22,6 +22,11 @@ export interface ITab {
 	tabs: any[];
 }
 
+export interface ITabFile {
+	file_id: number | null;
+	path: string;
+}
+
 export interface IRepoDiffs {
 	repoPath: string;
 	file_to_diff: IFileToDiff[];
