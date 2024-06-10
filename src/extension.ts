@@ -41,7 +41,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 			// Capturing initial tabs
 			const handler = new tabEventHandler(repoPath);
-			handler.handleTabChangeEvent(true);
+			handler.handleTabChangeEvent();
 		}
 
 		// Register tab change event

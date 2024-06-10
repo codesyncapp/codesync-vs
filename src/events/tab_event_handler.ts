@@ -37,7 +37,7 @@ export class tabEventHandler {
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
 	}
 
-	handleTabChangeEvent = (isTabEvent: boolean) => {
+	handleTabChangeEvent = (isTabEvent: boolean = true) => {
 		if(!this.repoPath) return;
 		// Discard event if file is changed 
 		console.log("Just before check");
