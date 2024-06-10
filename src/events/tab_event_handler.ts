@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 
 import { VSCODE } from "../constants";
-import { ITab } from "../interface";
+import { ITab, ITabFile } from "../interface";
 import { formatDatetime, getBranch } from "../utils/common";
 import { ConfigUtils } from "../utils/config_utils";
 import { pathUtils } from "../utils/path_utils";
@@ -24,14 +24,11 @@ export class tabEventHandler {
 	constructor(repoPath="") {
 		const userState = new UserState();
 		const isValidAccount = userState.isValidAccount();
-		console.log("is valid account: ", isValidAccount);
 		this.repoPath = repoPath || pathUtils.getRootPath();
 		if(!this.repoPath) return;
 		const repoState = new RepoState(this.repoPath).get();
 		const repoIsConnected = repoState.IS_CONNECTED;
-		console.log("repoIsConnected: ", repoIsConnected)
 		this.shouldProceed = isValidAccount && repoIsConnected;
-		console.log("this.shouldProceed: ", this.shouldProceed);
 		if (!this.shouldProceed) return;
 		this.branch = getBranch(this.repoPath);
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
@@ -40,34 +37,26 @@ export class tabEventHandler {
 	handleTabChangeEvent = (isTabEvent: boolean = true) => {
 		if(!this.repoPath) return;
 		// Discard event if file is changed 
-		console.log("Just before check");
 		if (!isTabEvent) return;
-		console.log("Just after check");
 		// Record timestamp
 		const created_at = formatDatetime(new Date().getTime());
 		// For the current open repoPath, get the repo_id and from config File
 		const configUtils = new ConfigUtils();
-		console.log("repo path: ", this.repoPath);
 		const repoId = configUtils.getRepoIdByPath(this.repoPath);
-		console.log("repo id: ", repoId);
 		if (!repoId) return
-		// console.log(`Repo ID: ${repoId}`)
 		const configJSON = configUtils.config;
 
 		// Get list of current tabs
 		const open_tabs = vscode.window.tabGroups.all;
-		const tabs: any[] = [];
+		const tabs: ITabFile[] = [];
 		// Loop through tab groups
 		for (const tab_group of open_tabs) {
 			for (let tab of tab_group.tabs) {
-				// console.log(`Displaying tabs: `, tab);
 				// Get path of tab
 				// @ts-ignore
 				const fileRelativePath = (tab.input.uri.path).split(`${this.repoPath}${path.sep}`)[1];
-				console.log("File Name: ", fileRelativePath);
 				// Get file ID using path
 				const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, fileRelativePath);
-				// console.log("File ID: ", fileId);
 				tabs.push({"file_id": fileId, "path": fileRelativePath});
 			}
 		}
@@ -83,7 +72,6 @@ export class tabEventHandler {
 		newTab.source = VSCODE;
 		newTab.file_name = `${new Date().getTime()}.yml`
 		newTab.tabs = tabs;
-		console.log("newTab: ", yaml.dump(newTab));
 
 		// Dump data in the buffer
 		const tabFilePath = path.join(this.settings.TABS_PATH, newTab.file_name);	
