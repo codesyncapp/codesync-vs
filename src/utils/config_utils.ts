@@ -32,9 +32,9 @@ export class ConfigUtils {
 
 	getFileIdByPath = (repoPath: string, branchName: string, fileName: string): number | null => {
 		if (!this.isConfigValid()) return null;
-		const repoConfig = this.config.repos[repoPath].branches[branchName];
-		if (!repoConfig) return null;
-		return repoConfig[fileName];
+		const repoBranchConfig = this.config.repos[repoPath].branches[branchName];
+		if (!repoBranchConfig) return null;
+		return repoBranchConfig[fileName];
 	}
 }
 
