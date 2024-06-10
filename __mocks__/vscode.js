@@ -23,6 +23,7 @@ const window = {
     })),
     tabGroups: {
         all: jest.fn(),
+        onDidChangeTabs: jest.fn(),
   },
 };
 

@@ -44,19 +44,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			handler.handleTabChangeEvent();
 		}
 
-		// Register tab change event
-		vscode.window.tabGroups.onDidChangeTabs(changeEvent => {
-			try {
-				const isTabEvent = changeEvent.changed.length == 0 && (changeEvent.opened.length > 0 || changeEvent.closed.length > 0)				
-				const handler = new tabEventHandler(repoPath);
-				handler.handleTabChangeEvent(isTabEvent);
-			} catch (e) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
-				CodeSyncLogger.error("Failed handling tabChangeEvent", e.stack);
-			}
-		})
-
 		// Register workspace events
 		vscode.workspace.onDidChangeTextDocument(changeEvent => {
 			try {
@@ -101,6 +88,19 @@ export async function activate(context: vscode.ExtensionContext) {
 				CodeSyncLogger.error("Failed handling renameEvent", e.stack);
 			}
 		});
+
+		// Register tab change event
+		vscode.window.tabGroups.onDidChangeTabs(changeEvent => {
+			try {
+				const isTabEvent = changeEvent.changed.length == 0 && (changeEvent.opened.length > 0 || changeEvent.closed.length > 0)				
+				const handler = new tabEventHandler(repoPath);
+				handler.handleTabChangeEvent(isTabEvent);
+			} catch (e) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				CodeSyncLogger.error("Failed handling tabChangeEvent", e.stack);
+			}
+		})
 
 		// Do not run daemon in case of tests
 		if ((global as any).IS_CODESYNC_TEST_MODE) return;
