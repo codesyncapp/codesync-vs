@@ -25,9 +25,9 @@ export class ConfigUtils {
 
 	getRepoIdByPath = (repoPath: string): number | null => {
 		if (!this.isConfigValid()) return null;
-		const repoConfig = this.config.repos[repoPath]; 
-		if (!repoConfig) return null;
-		return repoConfig.id;
+		const repoBranchConfig = this.config.repos[repoPath]; 
+		if (!repoBranchConfig) return null;
+		return repoBranchConfig.id;
 	}
 
 	getFileIdByPath = (repoPath: string, branchName: string, fileName: string): number | null => {
