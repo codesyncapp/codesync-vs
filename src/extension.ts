@@ -47,7 +47,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Register tab change event
 		vscode.window.tabGroups.onDidChangeTabs(changeEvent => {
 			try {
-				const isTabEvent = changeEvent.changed.length == 0
+				const isTabEvent = changeEvent.changed.length == 0 && (changeEvent.opened.length > 0 || changeEvent.closed.length > 0)				
 				const handler = new tabEventHandler(repoPath);
 				handler.handleTabChangeEvent(isTabEvent);
 			} catch (e) {

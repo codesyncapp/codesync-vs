@@ -76,7 +76,7 @@ describe("addTab", () => {
         configUtil.addRepo();
         addUser(baseRepoPath, false);
         const handler = new tabEventHandler(repoPath);
-        handler.handleTabChangeEvent();
+        handler.handleTabChangeEvent(false);
         // Verify no tab file should be generated
         assertNoTabsRecorded(tabsRepo)       
     })
@@ -90,8 +90,8 @@ describe("addTab", () => {
         assertNoTabsRecorded(tabsRepo)      
     })
 
-    // Skip case where file is changed
-    test("Should skip if file is changed", () => {
+    // Should skip if not opened/closed event
+    test("Should skip if not opened/closed event", () => {
         // Repo is connected & user account is also valid
         configUtil.addRepo();
         addUser(baseRepoPath, true);
@@ -103,10 +103,9 @@ describe("addTab", () => {
     })
 
     // Skip if invalid repo id
-    test("Should skip is repoId doesn't exist", () => {
-        const invalid_repo_path = "/home/documents"
+    test("Should skip if repoId doesn't exist", () => {
+        const invalid_repo_path = (repoPath).slice(0,5);
         const configUtil_2 = new Config(invalid_repo_path, configPath);
-        configUtil.addRepo();
         addUser(baseRepoPath, true);
         const handler = new tabEventHandler(invalid_repo_path);
         handler.handleTabChangeEvent(true);
