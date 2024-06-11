@@ -35,36 +35,31 @@ export class tabEventHandler {
 	}
 
 	handleTabChangeEvent = (isTabEvent: boolean = true) => {
-		if(!this.repoPath) return;
-		// Discard event if file is changed 
-		if (!isTabEvent) return;
+		if(!this.repoPath || !isTabEvent) return;
 		// Record timestamp
 		const created_at = formatDatetime(new Date().getTime());
 		// For the current open repoPath, get the repo_id and from config File
 		const configUtils = new ConfigUtils();
 		const repoId = configUtils.getRepoIdByPath(this.repoPath);
 		if (!repoId) return
-		const configJSON = configUtils.config;
 
 		// Get list of current tabs
 		const open_tabs = vscode.window.tabGroups.all;
-		const tabs: ITabFile[] = [];
-		// Loop through tab groups
-		for (const tab_group of open_tabs) {
-			for (let tab of tab_group.tabs) {
+		const tabs: ITabFile[] = [] = open_tabs.flatMap(tab_group => 
+			tab_group.tabs.map(tab => {
 				// Get path of tab
 				// @ts-ignore
-				const fileRelativePath = (tab.input.uri.path).split(`${this.repoPath}${path.sep}`)[1];
+				const fileRelativePath = tab.input.uri.path;
 				// Get file ID using path
 				const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, fileRelativePath);
-				tabs.push({"file_id": fileId, "path": fileRelativePath});
-			}
-		}
+				return {file_id: fileId || null, path: fileRelativePath};
+			})
+		);
 		// Adding to buffer
 		this.addToBuffer(repoId, created_at, tabs);
 	}
 
-	addToBuffer = (repoId: number, created_at: string, tabs: any[]) => {
+	addToBuffer = (repoId: number, created_at: string, tabs: ITabFile[]) => {
 		const newTab = <ITab>{};
 		// Structuring tab data
 		newTab.repo_id = repoId;
@@ -77,6 +72,4 @@ export class tabEventHandler {
 		const tabFilePath = path.join(this.settings.TABS_PATH, newTab.file_name);	
 		fs.writeFileSync(tabFilePath, yaml.dump(newTab));
 	}
-
-
 }

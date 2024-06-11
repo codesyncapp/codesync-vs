@@ -2,27 +2,25 @@ import fs from "fs";
 import path from "path";
 import vscode from 'vscode'
 import untildify from "untildify";
-import {DATETIME_FORMAT, DEFAULT_BRANCH} from "../../../src/constants";
+import { DEFAULT_BRANCH } from "../../../src/constants";
 import {
     randomBaseRepoPath,
     randomRepoPath,
     addUser,
     Config,
     getConfigFilePath,
-    DUMMY_FILE_CONTENT
 } from "../../helpers/helpers";
-import dateFormat from "dateformat";
-import {readYML} from "../../../src/utils/common";
-import {VSCODE} from "../../../src/constants";
-import {pathUtils} from "../../../src/utils/path_utils";
-import {tabEventHandler} from "../../../src/events/tab_event_handler";
+import { readYML } from "../../../src/utils/common";
+import { VSCODE } from "../../../src/constants";
+import { pathUtils } from "../../../src/utils/path_utils";
+import { tabEventHandler } from "../../../src/events/tab_event_handler";
 import { createSystemDirectories } from "../../../src/utils/setup_utils";
+
 
 // Helper method that asserts that no tabs were recorded
 const assertNoTabsRecorded = (tabsRepo) => {
     // Verify no tab file should be generated
     let tabFiles = fs.readdirSync(tabsRepo);
-    console.log("Tab files:", tabFiles);
     expect(tabFiles).toHaveLength(0);    
 }
 
@@ -35,16 +33,16 @@ describe("addTab", () => {
 
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
     const tabsRepo = pathUtilsObj.getTabsRepo();
-    const newFilePath1 = path.join(repoPath, "new1.js");
+    const newFilePath1 = path.join(repoPath, "file_1.js");
     const newFilePath2 = path.join(repoPath, "new2.js");
 
     beforeEach(() => {
+        jest.clearAllMocks();
         // Create directories
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(tabsRepo, { recursive: true });
         createSystemDirectories();   
         console.log(`Creating directories: repoPath=${repoPath}, tabsRepo=${tabsRepo}`);     
-        jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         const returnedPath = untildify();
         console.log(`untildify returned: ${returnedPath}`);
@@ -68,7 +66,8 @@ describe("addTab", () => {
         const handler = new tabEventHandler(repoPath);
         handler.handleTabChangeEvent();
         // Verify no tab file should be generated
-        assertNoTabsRecorded(tabsRepo)    
+        assertNoTabsRecorded(tabsRepo)   
+
     })
 
     // Skip case where repo is connected, but user account is not valid
@@ -78,7 +77,7 @@ describe("addTab", () => {
         const handler = new tabEventHandler(repoPath);
         handler.handleTabChangeEvent(false);
         // Verify no tab file should be generated
-        assertNoTabsRecorded(tabsRepo)       
+        assertNoTabsRecorded(tabsRepo)   
     })
 
     // Skip case where user account is not valid, but repo is not connected 
@@ -87,7 +86,7 @@ describe("addTab", () => {
         const handler = new tabEventHandler(repoPath);
         handler.handleTabChangeEvent();
         // Verify no tab file should be generated
-        assertNoTabsRecorded(tabsRepo)      
+        assertNoTabsRecorded(tabsRepo)
     })
 
     // Should skip if not opened/closed event
@@ -99,7 +98,7 @@ describe("addTab", () => {
         // Pass isTabEvent=false, which means changeEvent.changed.length > 0
         handler.handleTabChangeEvent(false);
         // Verify no tab file should be generated
-        assertNoTabsRecorded(tabsRepo)    
+        assertNoTabsRecorded(tabsRepo)
     })
 
     // Skip if invalid repo id
@@ -110,29 +109,55 @@ describe("addTab", () => {
         const handler = new tabEventHandler(invalid_repo_path);
         handler.handleTabChangeEvent(true);
         // Verify no tab file should be generated
-        assertNoTabsRecorded(tabsRepo)    
+        assertNoTabsRecorded(tabsRepo)
     })
 
-    test("Tabs data in positive case", async () => {
-        const mockTabGroups = [
-            { 
-                tabs: [
-                    { file_id: 1, path: `${newFilePath1}` },
-                    { file_id: 2, path: `${newFilePath2}` },
-                ],
-                activeTab: { id: 1 } 
-            }
-        ];
-        const spy = jest.spyOn(vscode.window.tabGroups, 'all').mockReturnValue(mockTabGroups);    
-        const result = vscode.window.tabGroups.all();
-        expect(result).toEqual(mockTabGroups);
-        expect(result[0].tabs).toHaveLength(2);
-        for (const tab of result[0].tabs) {
-            expect(tab['file_id']).toBeDefined();
-            expect(tab['path']).toBeDefined();
-            expect(typeof tab['file_id']).toBe('number');
-            expect(typeof tab['path']).toBe('string');
-        }
+    test("Tabs data in positive case", () => {
+        const createdAt = new Date();
+        configUtil.addRepo();
+        addUser(baseRepoPath, true);
+        const config_data = readYML(configPath);
+        const tab1_fileId = config_data.repos[repoPath].branches[DEFAULT_BRANCH]["file_1.js"]
+        const repo_id = config_data.repos[repoPath].id;
+        const mockTabs = [
+                {
+                    tabs: [
+                        {
+                            input: {
+                                    uri: {
+                                        path: newFilePath1,
+                                }
+                            }
+                        },
+                        {
+                            input: {
+                                    uri: {
+                                        path: newFilePath2,
+                                }
+                            }
+                        },
+                    ]
+                }
+            ]
+        Object.defineProperty(vscode.window.tabGroups, 'all', {
+            get: jest.fn(() => mockTabs),
+          });
+        const handler = new tabEventHandler(repoPath);
+        handler.handleTabChangeEvent()
+        let tabFiles = fs.readdirSync(tabsRepo)
+        // Assert file should be created
+        expect(tabFiles).toHaveLength(1);
+        const tabFilePath = path.join(tabsRepo, tabFiles[0]);
+        const tabData = readYML(tabFilePath);
+        // Assert source == 'vscode'
+        expect(tabData.source).toEqual(VSCODE);
+        // Assert created_at value of tab file and testing value to be in range of 1 second
+        expect((new Date(tabData.created_at)).getTime() - (createdAt).getTime()).toBeLessThanOrEqual(1000);
+        // Assert repo_id
+        expect(tabData.repo_id).toEqual(repo_id);
+        // Assert tabs
+        expect(tabData.tabs[0].file_id).toBe(tab1_fileId);
+        expect(typeof tabData.tabs[0].file_id).toBe('number');
+        expect(tabData.tabs[1].file_id).toBeNull();
     });
-    
 })
