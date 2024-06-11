@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { generateSettings } from "../settings";
 import { readYML } from "./common";
+import path from 'path';
 
 export class ConfigUtils {
 	config: any;
@@ -34,7 +35,7 @@ export class ConfigUtils {
 		if (!this.isConfigValid()) return null;
 		const repoBranchConfig = this.config.repos[repoPath].branches[branchName];
 		if (!repoBranchConfig) return null;
-		return repoBranchConfig[fileName];
+		return repoBranchConfig[fileName.split(`${repoPath}${path.sep}`)[1]];
 	}
 }
 
