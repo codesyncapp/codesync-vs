@@ -2,7 +2,7 @@ import path from "path";
 import untildify from "untildify";
 
 // Set this to true for Development
-const DEBUG = true;
+const DEBUG = false;
 const useStaging = false;
 const DevConfig = {
     ROOT_REPO: useStaging ? '~/.codesync-staging': '~/.codesync-local',
