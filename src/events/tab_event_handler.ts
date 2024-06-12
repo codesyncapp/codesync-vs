@@ -52,7 +52,7 @@ export class tabEventHandler {
 				const fileRelativePath = tab.input.uri.path;
 				// Get file ID using path
 				const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, fileRelativePath);
-				return {file_id: fileId || null, path: fileRelativePath};
+				return {file_id: fileId, path: fileRelativePath};
 			})
 		);
 		// Adding to buffer

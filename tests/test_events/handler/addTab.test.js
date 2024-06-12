@@ -34,7 +34,7 @@ describe("addTab", () => {
     const pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
     const tabsRepo = pathUtilsObj.getTabsRepo();
     const newFilePath1 = path.join(repoPath, "file_1.js");
-    const newFilePath2 = path.join(repoPath, "new2.js");
+    const newFilePath2 = path.join(repoPath, "directory", "documents", "new2.js");
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -42,10 +42,8 @@ describe("addTab", () => {
         fs.mkdirSync(repoPath, { recursive: true });
         fs.mkdirSync(tabsRepo, { recursive: true });
         createSystemDirectories();   
-        console.log(`Creating directories: repoPath=${repoPath}, tabsRepo=${tabsRepo}`);     
         untildify.mockReturnValue(baseRepoPath);
         const returnedPath = untildify();
-        console.log(`untildify returned: ${returnedPath}`);
     });
 
     afterEach(() => {
@@ -157,7 +155,8 @@ describe("addTab", () => {
         expect(tabData.repo_id).toEqual(repo_id);
         // Assert tabs
         expect(tabData.tabs[0].file_id).toBe(tab1_fileId);
-        expect(typeof tabData.tabs[0].file_id).toBe('number');
+        expect(tabData.tabs[0].path).toBe(newFilePath1);
         expect(tabData.tabs[1].file_id).toBeNull();
+        expect(tabData.tabs[1].path).toBe(newFilePath2);
     });
 })
