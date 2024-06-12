@@ -19,7 +19,7 @@ export interface ITab {
 	created_at: string;
 	source: string;
 	file_name: string;
-	tabs: any[];
+	tabs: ITabFile[];
 }
 
 export interface ITabFile {

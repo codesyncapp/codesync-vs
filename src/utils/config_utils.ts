@@ -35,7 +35,8 @@ export class ConfigUtils {
 		if (!this.isConfigValid()) return null;
 		const repoBranchConfig = this.config.repos[repoPath].branches[branchName];
 		if (!repoBranchConfig) return null;
-		return repoBranchConfig[fileName.split(`${repoPath}${path.sep}`)[1]];
+		const fileRelPath = fileName.split(`${repoPath}${path.sep}`)[1];
+		return repoBranchConfig[fileRelPath] || null;
 	}
 }
 
