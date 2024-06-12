@@ -14,6 +14,19 @@ export interface IDiff {
 	is_deleted?: boolean;
 }
 
+export interface ITab {
+	repo_id: number;
+	created_at: string;
+	source: string;
+	file_name: string;
+	tabs: ITabFile[];
+}
+
+export interface ITabFile {
+	file_id: number | null;
+	path: string;
+}
+
 export interface IRepoDiffs {
 	repoPath: string;
 	file_to_diff: IFileToDiff[];

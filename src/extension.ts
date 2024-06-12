@@ -16,6 +16,7 @@ import { recallDaemon } from "./codesyncd/codesyncd";
 import { CodeSyncLogger } from "./logger";
 import { CODESYNC_STATES, CodeSyncState } from './utils/state_utils';
 import { RepoState } from './utils/repo_state_utils';
+import { tabEventHandler } from './events/tab_event_handler';
 
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -37,8 +38,12 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (RepoState.isSubDir()) {
 				repoPath = RepoState.getParentRepo();
 				CodeSyncLogger.debug(`Parent repo: ${repoPath}`);
-			}	
+			}
+			// Capturing initial tabs
+			const handler = new tabEventHandler(repoPath);
+			handler.handleTabChangeEvent();
 		}
+
 		// Register workspace events
 		vscode.workspace.onDidChangeTextDocument(changeEvent => {
 			try {
@@ -83,6 +88,19 @@ export async function activate(context: vscode.ExtensionContext) {
 				CodeSyncLogger.error("Failed handling renameEvent", e.stack);
 			}
 		});
+
+		// Register tab change event
+		vscode.window.tabGroups.onDidChangeTabs(changeEvent => {
+			try {
+				const isTabEvent = changeEvent.changed.length == 0 && (changeEvent.opened.length > 0 || changeEvent.closed.length > 0)				
+				const handler = new tabEventHandler(repoPath);
+				handler.handleTabChangeEvent(isTabEvent);
+			} catch (e) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				CodeSyncLogger.error("Failed handling tabChangeEvent", e.stack);
+			}
+		})
 
 		// Do not run daemon in case of tests
 		if ((global as any).IS_CODESYNC_TEST_MODE) return;

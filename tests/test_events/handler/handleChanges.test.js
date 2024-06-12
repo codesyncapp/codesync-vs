@@ -25,7 +25,7 @@ import { createSystemDirectories } from "../../../src/utils/setup_utils";
 describe("handleChangeEvent",  () => {
     /*
      {
-        source: 'vs-code',
+        source: 'vscode',
         created_at: '2021-08-26 18:59:51.954',
         diff: "",
         repo_path: 'tests/tests_data/test_repo_sNIVUqukDv',
