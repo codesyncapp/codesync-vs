@@ -76,6 +76,15 @@ export interface IDiffToSend {
 	'platform': string
 }
 
+export interface ITabToSend {
+	repo_id: number;
+	source: string;
+	created_at: string; 
+	is_active: boolean;
+	file_name: string;
+	tabs: ITabFile[];
+}
+
 export interface IRepoInfo {
 	last_synced_at: string;
 }
