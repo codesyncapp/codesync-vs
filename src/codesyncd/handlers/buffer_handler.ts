@@ -18,7 +18,7 @@ import { RepoPlanLimitsState } from '../../utils/repo_state_utils';
 
 export class bufferHandler {
 	/*
-	 * Each file in .diffs directory contains data something like
+	 * Each file in .diffs directory contains data like:
 
         repo_path: /Users/basit/projects/codesync/codesync
         branch: plugins
@@ -29,6 +29,16 @@ export class bufferHandler {
          +#
         created_at: '2021-01-01 11:49:36.121'
 
+		Each file in .tabs directory contains data like:
+
+		repo_id: 1234 
+		created_at: <timestamp>
+		source: vscode
+		file_name: 123232134343.yml
+		tabs: 
+		- file_id: <file_id> path: <path>     
+		- file_id: <file_id_1> path: <path_1>
+		
 	Steps:
 		- Get list of diffs (only .yml files)
 		- If there are diffs founds
