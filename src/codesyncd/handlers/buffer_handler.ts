@@ -3,7 +3,7 @@ import path from 'path';
 import vscode from "vscode";
 import { glob } from 'glob';
 
-import {getDiffsBeingProcessed, isValidDiff} from '../utils';
+import {getDiffsBeingProcessed, isValidDiff, getRandomIndex} from '../utils';
 import {CodeSyncLogger} from '../../logger';
 import {IFileToDiff, IRepoDiffs, IUser} from '../../interface';
 import {DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER} from "../../constants";
@@ -14,6 +14,7 @@ import { removeFile } from '../../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../../utils/state_utils';
 import { UserState } from '../../utils/user_utils';
 import { RepoPlanLimitsState } from '../../utils/repo_state_utils';
+import { TabsHandler } from './tabs_handler';
 
 
 export class bufferHandler {
@@ -86,8 +87,6 @@ export class bufferHandler {
 		this.activeUser = null;
 	}
 
-	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
-
 	getDiffFiles = async () => {
 		const diffsBeingProcessed = getDiffsBeingProcessed();
         const invalidDiffFiles = await glob("**", { 
@@ -115,7 +114,7 @@ export class bufferHandler {
 		let randomIndex = undefined;
 		for (let index = 0; index < Math.min(DIFF_FILES_PER_ITERATION, diffs.length); index++) {
 			do {
-				randomIndex = this.getRandomIndex( diffs.length );
+				randomIndex = getRandomIndex( diffs.length );
 			}
 			while ( usedIndices.includes( randomIndex ) );
 			usedIndices.push(randomIndex);
@@ -212,7 +211,7 @@ export class bufferHandler {
 		return repoDiffs;
 	};
 
-	async run(canSendDiffs: boolean) {
+	async run(canSendDiffs: boolean, canSendTabs: boolean) {
 		const isRunning = CodeSyncState.get(CODESYNC_STATES.BUFFER_HANDLER_RUNNING);
 		const skipLog = CodeSyncState.canSkipRun(CODESYNC_STATES.BUFFER_HANDLER_LOGGED_AT, this.LOG_BUFFER_HANDLER_RUN_AFTER);
 		if (!skipLog) {
@@ -244,9 +243,21 @@ export class bufferHandler {
 			if (!diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			const repoDiffs = this.groupRepoDiffs(diffs.files);
+			// Get tabs data
+			const tabs_handler = new TabsHandler()
+			const tabs = await tabs_handler.getYMLFiles();
+			/*
+			❓: will we set buffer_handler state twice or once?
+				 or maybe we can do smth like:
+				(!diffs.files.length || !tabs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+			 */ 
+			// if (!tabs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+			if (canSendTabs) CodeSyncLogger.debug(`Processing ${tabs.files.length}/${tabs.count} tabs, uuid=${this.instanceUUID}`);
+			// TODO: group tabs data according to repo ID
+			const repoTabs = tabs_handler.groupTabData(tabs.files);
 			// Create Websocket client
-			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs);
-			webSocketClient.connect(canSendDiffs);
+			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs, repoTabs);
+			webSocketClient.connect(canSendDiffs, canSendTabs);
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore

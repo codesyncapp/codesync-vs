@@ -2,7 +2,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
-import { ITab, ITabFile, ITabToSend } from "../../interface";
+import { ITabYML, ITabFile, ITabToSend } from "../../interface";
 import {generateSettings} from "../../settings";
 import {readYML} from "../../utils/common";
 import {CodeSyncLogger} from "../../logger";
@@ -13,7 +13,7 @@ import { removeTabFile } from "../../utils/tab_utils";
 
 export class TabHandler {
     accessToken: string;
-	tabData: ITab;
+	tabData: ITabYML;
 	tabFilePath: string;
 	repoPath: string;
 
@@ -27,7 +27,7 @@ export class TabHandler {
     configRepo: any;
 
 	constructor(
-		tabData: ITab,
+		tabData: ITabYML,
 		tabFilePath: string,
 		repoPath: string,
 		accessToken: string
@@ -49,11 +49,11 @@ export class TabHandler {
 
 	createTabToSend() {
 		return {
-			'repo_id': this.repo_id,
-			'created_at': this.created_at,
-			'source': this.source,
-			'file_name': this.file_name,
-			'tabs': this.tabs,
+			repo_id: this.repo_id,
+			created_at: this.created_at,
+			source: this.source,
+			file_name: this.file_name,
+			tabs: this.tabs,
 		};
 	}
 
@@ -72,6 +72,12 @@ export class TabHandler {
 		const isRelative = relative && !relative.startsWith('..') && !path.isAbsolute(relative);
         if (!(isRelative && fs.existsSync(tabFilePath))) return;
         removeTabFile(tabFilePath, "removeTabFile");
+	}
+
+	// Assert that keys exist in tabs YML file (lines 43->onwards)
+	assertValidYML( tabData: ITabYML ) {
 
 	}
+
+	// TODO: group the repo ids, and then perform validation on them. Instead of iterating thru repo ids 
 }

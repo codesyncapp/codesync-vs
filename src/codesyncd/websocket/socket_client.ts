@@ -1,7 +1,7 @@
 import vscode from "vscode";
 import {client} from "websocket";
 
-import {IRepoDiffs} from "../../interface";
+import {IRepoDiffs, ITabYML} from "../../interface";
 import {CodeSyncLogger, logErrorMsg} from "../../logger";
 import {SocketEvents} from "./socket_events";
 import {
@@ -22,12 +22,14 @@ export class SocketClient {
     statusBarItem: vscode.StatusBarItem;
     accessToken: string;
     repoDiffs: IRepoDiffs[];
+    repoTabs: ITabYML[];
 
-    constructor(statusBarItem: vscode.StatusBarItem, accessToken: string, repoDiffs: IRepoDiffs[]) {
+    constructor(statusBarItem: vscode.StatusBarItem, accessToken: string, repoDiffs: IRepoDiffs[], repoTabs: ITabYML[]) {
         this.statusBarItem = statusBarItem;
         this.accessToken = accessToken;
         this.repoDiffs = repoDiffs;
         this.websocketClient = (global as any).websocketClient;
+        this.repoTabs = repoTabs;
     }
 
     resetGlobals = () => {
@@ -46,7 +48,7 @@ export class SocketClient {
         return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
-    connect = (canSendDiffs: boolean) => {
+    connect = (canSendDiffs: boolean, canSendTabs: boolean) => {
         if (!this.websocketClient) {
             this.websocketClient = new client();
             (global as any).websocketClient = this.websocketClient;
@@ -55,7 +57,7 @@ export class SocketClient {
             const socketConnection = (global as any).socketConnection;
             if (!socketConnection) return this.resetGlobals();
             // Trigger onValidAuth for already connected socket
-            const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs);
+            const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs, this.repoTabs, canSendTabs);
             webSocketEvents.onValidAuth();
         }
     };
