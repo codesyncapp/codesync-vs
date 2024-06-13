@@ -33,7 +33,9 @@ export const CODESYNC_STATES = {
         ACCOUNT_DEACTIVATED: "accountDeactivated",
         WAITING_FOR_LOGIN_CONFIRMATION: "waitingForLoginConfirmation",
         AUTHENTICATION_INITIATED_AT: "authInitiatedAt"
-    }
+    },
+    // ❓ why do we need a lock
+    TABS_SEND_LOCK_ACQUIRED: "tabsSendLockAcquired",
 };
 
 export class CodeSyncState {

@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 
 import { VSCODE } from "../constants";
-import { ITab, ITabFile } from "../interface";
+import { ITabYML, ITabFile } from "../interface";
 import { formatDatetime, getBranch } from "../utils/common";
 import { ConfigUtils } from "../utils/config_utils";
 import { pathUtils } from "../utils/path_utils";
@@ -60,7 +60,7 @@ export class tabEventHandler {
 	}
 
 	addToBuffer = (repoId: number, created_at: string, tabs: ITabFile[]) => {
-		const newTab = <ITab>{};
+		const newTab = <ITabYML>{};
 		// Structuring tab data
 		newTab.repo_id = repoId;
 		newTab.created_at = created_at;

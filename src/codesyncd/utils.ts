@@ -250,3 +250,5 @@ export const getTabsBeingProcessed = () => {
 export const setTabsBeingProcessed = (tabs: Set<string>) => {
 	CodeSyncState.set(CODESYNC_STATES.TABS_BEING_PROCESSED, tabs);
 };
+
+export const getRandomIndex = (length: number) => Math.floor( Math.random() * length );
