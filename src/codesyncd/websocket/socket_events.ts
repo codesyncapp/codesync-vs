@@ -30,27 +30,23 @@ export class SocketEvents {
     repoTabs: ITabYML[];
     accessToken: string;
     statusBarMsgsHandler: any;
-    canSendDiffs: boolean;
-    canSendTabs: boolean;
+    canSendSocketData: boolean;
 
     constructor(
         statusBarItem: vscode.StatusBarItem,
         repoDiffs: IRepoDiffs[],
         accessToken: string,
-        canSendDiffs = false,
+        canSendSocketData = false,
         repoTabs: ITabYML[] | null = null,
-        canSendTabs = false,
     ) {
         this.connection = (global as any).socketConnection;
         this.statusBarItem = statusBarItem;
         this.repoDiffs = repoDiffs;
         this.accessToken = accessToken;
         this.statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
-        this.canSendDiffs = canSendDiffs;
+        this.canSendSocketData = canSendSocketData;
         if (!repoTabs) return;
         this.repoTabs = repoTabs;
-        if (!canSendTabs) return;
-        this.canSendTabs = canSendTabs;
     }
 
     onInvalidAuth() {
@@ -88,7 +84,7 @@ export class SocketEvents {
         userState.setValidAccount();
         const statusBarMsg = this.statusBarMsgsHandler.getMsg();
         this.statusBarMsgsHandler.update(statusBarMsg);
-        if (!this.canSendDiffs) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+        if (!this.canSendSocketData) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
         // Send diffs
         let validDiffs: IDiffToSend[] = [];
         errorCount = 0;
@@ -132,7 +128,7 @@ export class SocketEvents {
     }
 
     onSyncSuccess(diffFilePath: string) {
-        if (!this.canSendDiffs) return;
+        if (!this.canSendSocketData) return;
         if (!fs.existsSync(diffFilePath)) return;
         // Reset Plan Limits
         const diffData = <IDiff>readYML(diffFilePath);

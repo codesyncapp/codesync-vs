@@ -48,16 +48,16 @@ export class SocketClient {
         return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
-    connect = (canSendDiffs: boolean, canSendTabs: boolean) => {
+    connect = (canSendSocketData: boolean) => {
         if (!this.websocketClient) {
             this.websocketClient = new client();
             (global as any).websocketClient = this.websocketClient;
-            this.registerEvents(canSendDiffs);
+            this.registerEvents(canSendSocketData);
         } else {
             const socketConnection = (global as any).socketConnection;
             if (!socketConnection) return this.resetGlobals();
             // Trigger onValidAuth for already connected socket
-            const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs, this.repoTabs, canSendTabs);
+            const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendSocketData, this.repoTabs);
             webSocketEvents.onValidAuth();
         }
     };

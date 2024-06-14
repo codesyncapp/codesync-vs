@@ -211,7 +211,7 @@ export class bufferHandler {
 		return repoDiffs;
 	};
 
-	async run(canSendDiffs: boolean, canSendTabs: boolean) {
+	async run(canSendSocketData: boolean) {
 		const isRunning = CodeSyncState.get(CODESYNC_STATES.BUFFER_HANDLER_RUNNING);
 		const skipLog = CodeSyncState.canSkipRun(CODESYNC_STATES.BUFFER_HANDLER_LOGGED_AT, this.LOG_BUFFER_HANDLER_RUN_AFTER);
 		if (!skipLog) {
@@ -241,7 +241,7 @@ export class bufferHandler {
 			if (!this.activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			const diffs = await this.getDiffFiles();
 			if (!diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
+			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			const repoDiffs = this.groupRepoDiffs(diffs.files);
 			// Get tabs data
 			const tabs_handler = new TabsHandler()
@@ -252,12 +252,12 @@ export class bufferHandler {
 				(!diffs.files.length || !tabs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			 */ 
 			// if (!tabs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-			if (canSendTabs) CodeSyncLogger.debug(`Processing ${tabs.files.length}/${tabs.count} tabs, uuid=${this.instanceUUID}`);
+			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${tabs.files.length}/${tabs.count} tabs, uuid=${this.instanceUUID}`);
 			// TODO: group tabs data according to repo ID
 			const repoTabs = tabs_handler.groupTabData(tabs.files);
 			// Create Websocket client
 			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs, repoTabs);
-			webSocketClient.connect(canSendDiffs, canSendTabs);
+			webSocketClient.connect(canSendSocketData);
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
