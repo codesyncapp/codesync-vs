@@ -114,7 +114,8 @@ export class TabsHandler {
             const filePath = path.join(this.settings.TABS_PATH, tabFile);
             const tabData = readYML(filePath);
             const tab_validator = new TabValidator();
-            if (!tabData || !tab_validator.validateYMLFile(tabData) ) {
+            this.repo_id
+            if (!tabData || !tab_validator.validateYMLFile(tabData) || !tab_validator.validateRepoId(tabData, this.repo_id) ) {
                 CodeSyncLogger.info(`Removing file: Skipping invalid tab: ${tabFile}`, "", tabData);
 				removeFile(filePath, "getTabFiles");
 				return false;
