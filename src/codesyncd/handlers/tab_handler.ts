@@ -28,7 +28,7 @@ export class TabHandler {
 
 	constructor(
 		tabData: ITabYML,
-		tabFilePath: string,
+		tabFilePath: string | null = null,
 		repoPath: string,
 		accessToken: string
 	) {
@@ -37,10 +37,12 @@ export class TabHandler {
 		this.repo_id = tabData.repo_id;
 		this.created_at = tabData.created_at;
 		this.source = tabData.source;
-		this.file_name = tabData.source;
+		this.file_name = tabData.file_name;
 		this.tabs = tabData.tabs;
-		this.tabFilePath = tabFilePath;
 		this.repoPath = repoPath
+		if (!tabFilePath) return;
+		this.tabFilePath = tabFilePath;
+
 
 		const settings = generateSettings();
         this.configJSON = readYML(settings.CONFIG_PATH);
