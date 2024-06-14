@@ -111,7 +111,6 @@ export class SocketEvents {
         // Send tabs
         let validTabs: ITabYML[] = [];
         errorCount = 0;
-        if (!this.repoTabs) return;
         for (const repoTab of this.repoTabs) {
             const tabsHandler = new TabsHandler(repoTab, this.accessToken);
             const tabs = await tabsHandler.run();
@@ -121,7 +120,7 @@ export class SocketEvents {
 
         if (validTabs.length) {
             CodeSyncLogger.debug(`Sending ${validTabs.length} tabs`);
-            this.connection.send(JSON.stringify({"tabs": validTabs}));
+            sendTabsToServer(this.connection, validTabs)
 
         }
         CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
@@ -206,3 +205,7 @@ export class SocketEvents {
         }
     }
 }
+function sendTabsToServer(connection: any, validTabs: ITabYML[]) {
+    throw new Error("Function not implemented.");
+}
+
