@@ -28,11 +28,4 @@ export class TabValidator {
 		
 		return true;
 	}
-
-
-
-}
-
-function expect(repo_id: number) {
-	throw new Error("Function not implemented.");
 }
