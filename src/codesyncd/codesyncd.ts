@@ -101,13 +101,12 @@ export const recallDaemon = (statusBarItem: vscode.StatusBarItem, viaDaemon=true
     setTimeout(() => {
         // Get updated states
         const canPopulateBuffer = CodeSyncState.get(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED);
-        const canSendDiffs = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
-        const canSendTabs = CodeSyncState.get(CODESYNC_STATES.TABS_SEND_LOCK_ACQUIRED);
+        const canSendSocketData = CodeSyncState.get(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED);
         // Populate Buffer
         if (canPopulateBuffer) populateBuffer();
         // Buffer Handler
         const handler = new bufferHandler(statusBarItem);
-        handler.run(canSendDiffs, canSendTabs);
+        handler.run(canSendSocketData);
         // recall Daemon
         recallDaemon(statusBarItem);
     }, RESTART_DAEMON_AFTER);
