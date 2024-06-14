@@ -17,7 +17,8 @@ import { TabsHandler } from "../handlers/tabs_handler";
 
 const EVENT_TYPES = {
     AUTH: 'auth',
-    SYNC: 'sync'
+    SYNC: 'sync',
+    TAB_PROCESSED: "tab_processed"
 };
 
 let errorCount = 0;
@@ -118,26 +119,19 @@ export class SocketEvents {
         for (const repoTab of this.repoTabs) {
             const tabsHandler = new TabsHandler(repoTab, this.accessToken);
             const tabs = await tabsHandler.run();
+            if (!tabs) return;
             validTabs = validTabs.concat(tabs);
         }
 
         if (validTabs.length) {
             CodeSyncLogger.debug(`Sending ${validTabs.length} tabs`);
-            // Keep track of tabs in State
-            // const currentTabs = new Set(validTabs.map(validTab => validTab.tab_path));
-            // let tabsBeingProcessed = getTabsBeingProcessed();
-            // // 🫡 
-            // if (tabsBeingProcessed.size) {
-            //     tabsBeingProcessed = new Set([...tabsBeingProcessed, ...currentTabs])
-            //     setTabsBeingProcessed(tabsBeingProcessed);
-            // } else {
-            //     setTabsBeingProcessed(currentTabs);
-            // }
+            this.connection.send(JSON.stringify({"tabs": validTabs}));
+
         }
         CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
-    onSyncSuccess(diffFilePath: string, tabFilePath: string | null = null) {
+    onSyncSuccess(diffFilePath: string) {
         if (!this.canSendDiffs) return;
         if (!fs.existsSync(diffFilePath)) return;
         // Reset Plan Limits
@@ -150,11 +144,20 @@ export class SocketEvents {
         if (!diffsBeingProcessed.size) return;
         diffsBeingProcessed.delete(diffFilePath);
         setDiffsBeingProcessed(diffsBeingProcessed);
+    }
+
+    async onTabProcessed(tabFilePath: string) {
         // Remove tab from tabsBeingProcessed
         const tabsBeingProcessed = getTabsBeingProcessed();
         if (!tabsBeingProcessed.size) return;
         tabsBeingProcessed.delete(tabFilePath);
         setTabsBeingProcessed(tabsBeingProcessed);
+    }
+
+    async onPaymentRequiredRecieved() {
+        const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
+        const msg = canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
+        this.statusBarMsgsHandler.update(msg);
     }
 
     async onMessage(message: IWebSocketMessage) {
@@ -176,12 +179,29 @@ export class SocketEvents {
                 }
             case EVENT_TYPES.SYNC:
                 switch (resp.status) {
-                    case 200:
-                        this.onSyncSuccess(resp.diff_file_path, resp.tab_path);
+                    case HttpStatusCodes.OK:
+                        this.onSyncSuccess(resp.diff_file_path);
                         return true;
                     case HttpStatusCodes.PAYMENT_REQUIRED:
                         await this.onRepoSizeLimitReached(resp.repo_id); 
                         return true;    
+                    default:
+                        return false;
+                }
+            case EVENT_TYPES.TAB_PROCESSED:
+                switch (resp.status) {
+                    case HttpStatusCodes.OK:
+                        this.onTabProcessed(resp.tab_path);
+                        return true;
+                    case HttpStatusCodes.PAYMENT_REQUIRED:
+                        this.onPaymentRequiredRecieved();
+                        return true;
+                    case HttpStatusCodes.INVALID_USAGE:
+                        this.onTabProcessed(resp.tab_path);
+                        return true;
+                    case HttpStatusCodes.FORBIDDEN:
+                        this.onTabProcessed(resp.tab_path);
+                        return true;
                     default:
                         return false;
                 }

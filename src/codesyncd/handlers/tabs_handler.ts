@@ -13,35 +13,63 @@ import { ITabYML, ITabFile } from "../../interface";
 import { generateSettings } from "../../settings";
 import { readYML } from "../../utils/common";
 import { ConfigUtils } from "../../utils/config_utils";
-import { getRandomIndex, getTabsBeingProcessed, isValidDiff } from "../utils";
+import { getRandomIndex, getTabsBeingProcessed } from "../utils";
 import path from "path";
 import { removeFile } from "../../utils/file_utils";
-import { TAB_FILES_PER_ITERATION } from "../../constants";
+import { TAB_FILES_PER_ITERATION, TAB_SIZE_LIMIT } from "../../constants";
 import { CodeSyncLogger } from "../../logger";
 import { TabValidator } from "../validators/tab_validator";
+import { TabHandler } from "./tab_handler";
+import { runInThisContext } from "vm";
 
 export class TabsHandler {
 
-    tabsList: ITabYML;
+    tabs: ITabYML;
     accessToken: string;
+    repo_id: number;
+    repo_path: string;
+
     settings: any;
     configJSON: any;
     configRepo: any;
 
-    constructor(repoTabs: ITabYML | null = null, accessToken: string | null = null) {
+    constructor(repoTab: ITabYML | null = null, accessToken: string | null = null) {
+        // console.log(`settins: ${this.settings}`);
         if (!accessToken) return;
         this.accessToken = accessToken;
-        if (!repoTabs) return;
-        this.tabsList = repoTabs;
+        if (!repoTab) return;
+        this.tabs = repoTab;
+        this.repo_id = this.tabs.repo_id;
+        const config_utils = new ConfigUtils();
+        this.repo_path = config_utils.getRepoPathByRepoId(this.repo_id);
         this.settings = generateSettings();
+        // console.log(`settins: ${JSON.stringify(this.settings)}`);
         this.configJSON = readYML(this.settings.CONFIG_PATH);
     }
 
     async run() {
         const validTabs: ITabYML[] = [];
         let tabsSize = 0;
+        const tab_handler = new TabHandler(this.tabs, null, this.repo_path, this.accessToken);
+        const tabToSend = await tab_handler.createTabToSend();
+        if (!tabToSend) {
+            CodeSyncLogger.error(`createTabToSend() returned empty response`);
+            return;
+        }
+        console.log(`tabToSend: ${JSON.stringify(tabToSend)}`);
+       
+        console.log(`tabsSize: ${tabsSize}`)
+        tabsSize += JSON.stringify(tabToSend).length;
+        console.log(`tabsSize: ${tabsSize}`)
         
-        
+        console.log(`validTabs: ${validTabs}`);
+        if (tabsSize < TAB_SIZE_LIMIT) {
+            validTabs.push(tabToSend);
+        } else {
+            CodeSyncLogger.error(`Tabs size limit reached, size = ${tabsSize} bytes`);
+        }
+        console.log(`validTabs: ${JSON.stringify(validTabs)}`);
+
         return validTabs;
     }
 
@@ -109,7 +137,6 @@ export class TabsHandler {
 
             return true;
         });
-        
         return {
             files: randomTabFiles,
             count: tabs.length,
