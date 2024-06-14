@@ -13,8 +13,11 @@ export class TabValidator {
 	constructor() {
 	}
 
-	validateRepoId() {
-
+	validateRepoId(tabData: ITabYML, repo_id: number) {
+		if(tabData.repo_id === repo_id) {
+			return true;
+		}
+		return false;
 	}
 
 	validateYMLFile(tabData: ITabYML){
@@ -28,4 +31,8 @@ export class TabValidator {
 
 
 
+}
+
+function expect(repo_id: number) {
+	throw new Error("Function not implemented.");
 }
