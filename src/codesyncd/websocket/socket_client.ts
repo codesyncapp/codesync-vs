@@ -111,7 +111,7 @@ export class SocketClient {
         });
 
         // Iterate repoDiffs and send to server
-        const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs);
+        const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs, this.repoTabs);
 
         connection.on('message', function (message: any) {
             try {

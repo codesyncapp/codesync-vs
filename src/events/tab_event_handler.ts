@@ -62,7 +62,7 @@ export class tabEventHandler {
 	addToBuffer = (repoId: number, created_at: string, tabs: ITabFile[]) => {
 		const newTab = <ITabYML>{};
 		// Structuring tab data
-		newTab.repo_id = repoId;
+		newTab.repository_id = repoId;
 		newTab.created_at = created_at;
 		newTab.source = VSCODE;
 		newTab.file_name = `${new Date().getTime()}.yml`

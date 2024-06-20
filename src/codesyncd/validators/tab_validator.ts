@@ -5,7 +5,7 @@ class TabValidator:
 	group_data()
 */
 
-import { REQUIRED_TAB_KEYS, TAB_SIZE_LIMIT } from "../../constants";
+import { REQUIRED_KEYS_TAB_FILE_YML, TAB_SIZE_LIMIT } from "../../constants";
 import { ITabYML } from "../../interface";
 import { CodeSyncLogger } from "../../logger";
 import { generateSettings } from "../../settings";
@@ -42,19 +42,19 @@ export class TabValidator {
 	}
 	
 	validateRepoId(tabData: ITabYML, repo_id: number) {
-			
-		if(tabData.repo_id === repo_id) {
+		console.log(`tabData.repo_id: ${tabData.repository_id}, repo_id: ${repo_id}`);
+		if(tabData.repository_id === repo_id) {
 			return true;
 		}
 		return false;
 	}
 
 	validateYMLFile(tabData: ITabYML){
-		const missingKeys = REQUIRED_TAB_KEYS.filter(key => !(key in tabData));
-		if (missingKeys) return false;
+		const missingKeys = REQUIRED_KEYS_TAB_FILE_YML.filter(key => !(key in tabData));
+		if (missingKeys.length > 0) return false;
 		if (tabData.tabs && tabData.tabs.length > TAB_SIZE_LIMIT) return false;
 		if (tabData.created_at && (typeof tabData.created_at) != "string") return false;
-		if (tabData.repo_id && (typeof tabData.repo_id) != "number") return false;
+		if (tabData.repository_id && (typeof tabData.repository_id) != "number") return false;
 		if (tabData.source && (typeof tabData.source != "string")) return false;
 		if (tabData.file_name && (typeof tabData.file_name != "string")) return false;
 		

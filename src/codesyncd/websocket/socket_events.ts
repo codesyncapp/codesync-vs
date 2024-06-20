@@ -37,7 +37,7 @@ export class SocketEvents {
         repoDiffs: IRepoDiffs[],
         accessToken: string,
         canSendSocketData = false,
-        repoTabs: ITabYML[] | null = null,
+        repoTabs: ITabYML[],
     ) {
         this.connection = (global as any).socketConnection;
         this.statusBarItem = statusBarItem;
@@ -45,7 +45,6 @@ export class SocketEvents {
         this.accessToken = accessToken;
         this.statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
         this.canSendSocketData = canSendSocketData;
-        if (!repoTabs) return;
         this.repoTabs = repoTabs;
     }
 
@@ -111,17 +110,19 @@ export class SocketEvents {
         // Send tabs
         let validTabs: ITabYML[] = [];
         errorCount = 0;
-        for (const repoTab of this.repoTabs) {
-            const tabsHandler = new TabsHandler(repoTab, this.accessToken);
+        console.log(`this.repoTabs: ${JSON.stringify(this.repoTabs)}`);
+   
+            console.log(`repoTab: ${JSON.stringify(this.repoTabs)}`);
+            const tabsHandler = new TabsHandler(this.repoTabs, this.accessToken);
             const tabs = await tabsHandler.run();
             if (!tabs) return;
             validTabs = validTabs.concat(tabs);
-        }
+            
 
         if (validTabs.length) {
             CodeSyncLogger.debug(`Sending ${validTabs.length} tabs`);
-            sendTabsToServer(this.connection, validTabs)
-
+            const tabs_handler = new TabsHandler(this.repoTabs, this.accessToken);
+            tabs_handler.sendTabsToServer(this.connection, validTabs)
         }
         CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }

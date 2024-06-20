@@ -11,10 +11,12 @@ import { TAB_FILES_PER_ITERATION, TAB_SIZE_LIMIT } from "../../constants";
 import { CodeSyncLogger } from "../../logger";
 import { TabValidator } from "../validators/tab_validator";
 import { TabHandler } from "./tab_handler";
+import { ConfigUtils } from "../../utils/config_utils";
 
 export class TabsHandler {
-
+    // @ts-ignore
     tabs: ITabYML[];
+    // @ts-ignore
     accessToken: string;
 
     settings: any;
@@ -22,14 +24,14 @@ export class TabsHandler {
     configRepo: any;
 
     constructor(repoTab: ITabYML[] | null = null, accessToken: string | null = null) {
-        // console.log(`settins: ${this.settings}`);
-        if (!accessToken) return;
+        console.log(`settins: ${this.settings}`);
+        // @ts-ignore
         this.accessToken = accessToken;
-        if (!repoTab) return;
+        // @ts-ignore
         this.tabs = repoTab;
-        
         this.settings = generateSettings();
-        // console.log(`settins: ${JSON.stringify(this.settings)}`);
+        console.log(`tabs_path: ${this.settings.TABS_PATH}`);
+        console.log(`settins: ${JSON.stringify(this.settings)}`);
         this.configJSON = readYML(this.settings.CONFIG_PATH);
     }
 
@@ -62,6 +64,7 @@ export class TabsHandler {
 
     getYMLFiles = async () => {
         const tabsBeingProcessed = getTabsBeingProcessed();
+        console.log(`tabs_path: ${this.settings.TABS_PATH}`);
         // Discard all files that aren't of .YML 
         const invalidTabFiles = await glob("**", { 
 			ignore: "*.yml",
@@ -100,14 +103,27 @@ export class TabsHandler {
         randomTabFiles = randomTabFiles.filter((tabFile) => {
             const filePath = path.join(this.settings.TABS_PATH, tabFile);
             const tabData = readYML(filePath);
+            console.log(`tab_data: ${JSON.stringify(tabData)}`);
             const tab_validator = new TabValidator();
-            for (const tab of tabData){
-            if (!tabData || !tab_validator.validateYMLFile(tabData) || !tab_validator.validateRepoId(tabData, tab.repo_id) ) {
+            for (const tab of tabData.tabs){
+                console.log("in loop")
+                console.log(`tab: ${JSON.stringify(tab)}`);
+                const validate_tab_data: boolean = tab_validator.validateYMLFile(tabData);
+                console.log(`validation result: ${validate_tab_data}`);
+                let segments: string[] = tab.path.split('/');
+                let repo_path: string = '';
+                if (segments.length > 1) {
+                    segments.pop();
+                    repo_path = segments.join('/')
+                }
+                console.log(`repo_path: ${repo_path}`); 
+                const config_utils = new ConfigUtils();
+                const repo_id = config_utils.getRepoIdByPath(repo_path);
+            if (!tabData || !tab_validator.validateYMLFile(tabData) || !tab_validator.validateRepoId(tabData, tabData.repository_id) ) {
                 CodeSyncLogger.info(`Removing file: Skipping invalid tab: ${tabFile}`, "", tabData);
 				removeFile(filePath, "getTabFiles");
 				return false;
             }
-            validateRepo(tabFile, tabData, filePath, tab.repo_id);
     }
             
 
@@ -121,25 +137,36 @@ export class TabsHandler {
     }
 
     groupTabData = (tabFiles: string[]) => {
-        const repoTabs: ITabYML[] = []
-        const grouped_repos: number[] = []
+        const repoTabs: ITabYML[] = [];
+    
         for (const tabFile of tabFiles) {
             const filePath = path.join(this.settings.TABS_PATH, tabFile);
-            const tabData = readYML(filePath);
-            // Group tabs by repo_id
-            if(!(tabData.repo_id in grouped_repos)) {
-                grouped_repos.push(tabData.repo_id);
+            const tabData = readYML(filePath) as ITabYML;
+    
+            // Find the index of the repo with the current repo_id
+            const index = repoTabs.findIndex(repoTab => repoTab.repository_id === tabData.repository_id);
+            
+            if (index > -1) {
+                // Repo exists, so append the tabs data
+                repoTabs[index].tabs.push(...tabData.tabs);
+            } else {
+                // Repo does not exist, so create a new entry
+                repoTabs.push({
+                    repository_id: tabData.repository_id,
+                    created_at: tabData.created_at,
+                    source: tabData.source,
+                    file_name: tabData.file_name,
+                    tabs: tabData.tabs
+                });
             }
         }
-        return grouped_repos;
+        
+        return repoTabs;
+    
     }
     
 	sendTabsToServer(webSocketConnection: any, tabToSend: ITabYML[]) {
 		// Send tab to server
 		webSocketConnection.send(JSON.stringify({'tabs': [tabToSend]}));
 	}
-}
-
-function validateRepo(tabFile: string, tabData: any, filePath: string, repo_id: any) {
-    throw new Error("Function not implemented.");
 }

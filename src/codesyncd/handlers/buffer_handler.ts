@@ -5,7 +5,7 @@ import { glob } from 'glob';
 
 import {getDiffsBeingProcessed, isValidDiff, getRandomIndex} from '../utils';
 import {CodeSyncLogger} from '../../logger';
-import {IFileToDiff, IRepoDiffs, IUser} from '../../interface';
+import {IFileToDiff, IRepoDiffs, ITabYML, IUser} from '../../interface';
 import {DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER} from "../../constants";
 import {generateSettings} from "../../settings";
 import {getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
@@ -236,6 +236,7 @@ export class bufferHandler {
 		CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, true);
 		
 		try {
+			console.log("in try block");
 			// Check if we have an active user
 			this.activeUser = new UserState().getUser();
 			if (!this.activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
@@ -244,7 +245,9 @@ export class bufferHandler {
 			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			const repoDiffs = this.groupRepoDiffs(diffs.files);
 			// Get tabs data
+			console.log("before tabs handler");
 			const tabs_handler = new TabsHandler()
+			console.log("after tabs handler");
 			const tabs = await tabs_handler.getYMLFiles();
 			/*
 			❓: will we set buffer_handler state twice or once?
