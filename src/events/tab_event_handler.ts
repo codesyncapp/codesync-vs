@@ -52,7 +52,8 @@ export class tabEventHandler {
 				const fileRelativePath = tab.input.uri.path;
 				// Get file ID using path
 				const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, fileRelativePath);
-				return {file_id: fileId, path: fileRelativePath};
+				const is_active_tab: boolean = tab.isActive;
+				return {file_id: fileId, path: fileRelativePath, is_active_tab: is_active_tab};
 			})
 		);
 		// Adding to buffer

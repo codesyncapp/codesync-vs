@@ -2,7 +2,7 @@ import path from "path";
 
 import { glob } from "glob";
 
-import { ITabYML, ITabFile } from "../../interface";
+import { ITabYML } from "../../interface";
 import { generateSettings } from "../../settings";
 import { readYML } from "../../utils/common";
 import { getRandomIndex, getTabsBeingProcessed } from "../utils";
@@ -30,8 +30,6 @@ export class TabsHandler {
         // @ts-ignore
         this.tabs = repoTab;
         this.settings = generateSettings();
-        console.log(`tabs_path: ${this.settings.TABS_PATH}`);
-        console.log(`settins: ${JSON.stringify(this.settings)}`);
         this.configJSON = readYML(this.settings.CONFIG_PATH);
     }
 
@@ -106,7 +104,6 @@ export class TabsHandler {
             console.log(`tab_data: ${JSON.stringify(tabData)}`);
             const tab_validator = new TabValidator();
             for (const tab of tabData.tabs){
-                console.log("in loop")
                 console.log(`tab: ${JSON.stringify(tab)}`);
                 const validate_tab_data: boolean = tab_validator.validateYMLFile(tabData);
                 console.log(`validation result: ${validate_tab_data}`);
