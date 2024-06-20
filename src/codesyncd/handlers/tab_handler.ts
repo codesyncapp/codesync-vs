@@ -2,7 +2,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
-import { ITabYML, ITabFile } from "../../interface";
+import { ITabYML } from "../../interface";
 import {generateSettings} from "../../settings";
 import {readYML} from "../../utils/common";
 import {CodeSyncLogger} from "../../logger";

@@ -122,4 +122,5 @@ export interface ITabYML {
 export interface ITabFile {
 	file_id: number | null;
 	path: string;
+	is_active_tab: boolean;
 }
