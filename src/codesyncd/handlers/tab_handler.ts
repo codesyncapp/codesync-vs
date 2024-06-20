@@ -26,7 +26,7 @@ export class TabHandler {
 	) {
 		this.accessToken = accessToken;
 		this.tabData = tabData;
-		if (!tabFilePath) return;
+		// @ts-ignore
 		this.tabFilePath = tabFilePath;
 
 
@@ -36,7 +36,7 @@ export class TabHandler {
 
 	createTabToSend() {
 		return {
-			repo_id : this.tabData.repo_id,
+			repository_id : this.tabData.repository_id,
 			created_at : this.tabData.created_at,
 			source : this.tabData.source,
 			file_name : this.tabData.file_name,

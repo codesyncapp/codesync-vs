@@ -112,7 +112,7 @@ export interface IUserState {
 }
 
 export interface ITabYML {
-	repo_id: number;
+	repository_id: number;
 	created_at: string;
 	source: string;
 	file_name: string;
