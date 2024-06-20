@@ -249,14 +249,7 @@ export class bufferHandler {
 			const tabs_handler = new TabsHandler()
 			console.log("after tabs handler");
 			const tabs = await tabs_handler.getYMLFiles();
-			/*
-			❓: will we set buffer_handler state twice or once?
-				 or maybe we can do smth like:
-				(!diffs.files.length || !tabs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-			 */ 
-			// if (!tabs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${tabs.files.length}/${tabs.count} tabs, uuid=${this.instanceUUID}`);
-			// TODO: group tabs data according to repo ID
 			const repoTabs = tabs_handler.groupTabData(tabs.files);
 			// Create Websocket client
 			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs, repoTabs);
