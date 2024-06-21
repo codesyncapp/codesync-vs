@@ -103,8 +103,8 @@ export class TabsHandler {
                     segments.pop();
                     repo_path = segments.join('/')
                 }
-                const config_utils = new ConfigUtils();
-                const repo_id: number | null = config_utils.getRepoIdByPath(repo_path);
+            const config_utils = new ConfigUtils();
+            const repo_id: number | null = config_utils.getRepoIdByPath(repo_path);
             if (!tabData || !tab_validator.validateYMLFile(tabData) || !tab_validator.validateRepoId(tabData, repo_id) ) {
                 CodeSyncLogger.info(`Removing file: Skipping invalid tab: ${tabFile}`, "", tabData);
 				removeFile(filePath, "getTabFiles");
@@ -128,7 +128,6 @@ export class TabsHandler {
         for (const tabFile of tabFiles) {
             const filePath = path.join(this.settings.TABS_PATH, tabFile);
             const tabData = readYML(filePath) as ITabYML;
-    
             // Find the index of the repo with the current repo_id
             const index = repoTabs.findIndex(repoTab => repoTab.repository_id === tabData.repository_id);
             
