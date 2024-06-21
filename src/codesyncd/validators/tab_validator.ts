@@ -5,7 +5,7 @@ class TabValidator:
 	group_data()
 */
 
-import { REQUIRED_KEYS_TAB_FILE_YML, TAB_SIZE_LIMIT } from "../../constants";
+import { REQUIRED_KEYS_TAB_FILE_YML, TAB_SIZE_LIMIT, VSCODE } from "../../constants";
 import { ITabYML } from "../../interface";
 import { CodeSyncLogger } from "../../logger";
 import { generateSettings } from "../../settings";
@@ -61,7 +61,7 @@ export class TabValidator {
 		if (tabData.tabs && tabData.tabs.length > TAB_SIZE_LIMIT) return false;
 		if (tabData.created_at && (typeof tabData.created_at) != "string") return false;
 		if (tabData.repository_id && (typeof tabData.repository_id) != "number") return false;
-		if (tabData.source && (typeof tabData.source != "string")) return false;
+		if (tabData.source && (tabData.source == VSCODE)) return false;
 		if (tabData.file_name && (typeof tabData.file_name != "string")) return false;
 		
 		return true;
