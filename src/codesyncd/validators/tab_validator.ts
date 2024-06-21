@@ -12,6 +12,7 @@ import { generateSettings } from "../../settings";
 import { readYML } from "../../utils/common";
 import { ConfigUtils } from "../../utils/config_utils";
 import { removeFile } from "../../utils/file_utils";
+import { UserState } from "../../utils/user_utils";
 
 export class TabValidator {
 
@@ -27,6 +28,7 @@ export class TabValidator {
 		const config_utils = new ConfigUtils();
 		const repo_path = config_utils.getRepoPathByRepoId(repoId);
 		const configRepo = this.configJSON.repos[repo_path];
+		const repoEmail = configRepo.email;
 		if (!configRepo) {
 			CodeSyncLogger.info(`Removing tab: Skipping invalid tab: ${tabFile}`, "", tabData);
 			removeFile(filePath, "getTabFiles");
@@ -38,6 +40,10 @@ export class TabValidator {
 			removeFile(filePath, "getTabFiles");
 			return false;
 		}
+		// Validate repo belongs to logged-in user
+		const activeUser = new UserState().getUser();
+		if ( activeUser?.email !== repoEmail ) return false;
+		
 		return true;
 	}
 	
