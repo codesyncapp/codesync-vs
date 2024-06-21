@@ -10,7 +10,7 @@ import {pathUtils} from "../../utils/path_utils";
 import {initUtils} from "../../init/utils";
 import {VSCODE} from "../../constants";
 import { removeTabFile } from "../../utils/tab_utils";
-import { isRelative } from "../utils";
+import { isRelativePath } from "../utils";
 
 export class TabHandler {
     accessToken: string;
@@ -51,7 +51,7 @@ export class TabHandler {
 	static removeTabFile(tabFilePath: string) {
 		const settings = generateSettings();
 		const relative = path.relative(settings.TABS_PATH, tabFilePath);
-		const is_relative = isRelative(relative);
+		const is_relative = isRelativePath(relative);
         if (!(is_relative && fs.existsSync(tabFilePath))) return;
         removeTabFile(tabFilePath, "removeTabFile");
 	}
