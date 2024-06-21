@@ -114,9 +114,9 @@ export class SocketEvents {
    
             console.log(`repoTab: ${JSON.stringify(this.repoTabs)}`);
             const tabsHandler = new TabsHandler(this.repoTabs, this.accessToken);
-            const tabs = await tabsHandler.run();
-            if (!tabs) return;
-            validTabs = validTabs.concat(tabs);
+            const validTabsData = await tabsHandler.run();
+            if (!validTabsData) return;
+            validTabs = validTabs.concat(validTabsData);
             
 
         if (validTabs.length) {
