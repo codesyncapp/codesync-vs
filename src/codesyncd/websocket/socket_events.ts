@@ -150,7 +150,7 @@ export class SocketEvents {
         setTabsBeingProcessed(tabsBeingProcessed);
     }
 
-    async onPaymentRequiredRecieved() {
+    async onPaymentRequired() {
         const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
         const msg = canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
         this.statusBarMsgsHandler.update(msg);
@@ -190,7 +190,7 @@ export class SocketEvents {
                         this.onTabProcessed(resp.tab_path);
                         return true;
                     case HttpStatusCodes.PAYMENT_REQUIRED:
-                        this.onPaymentRequiredRecieved();
+                        this.onPaymentRequired();
                         return true;
                     case HttpStatusCodes.INVALID_USAGE:
                         this.onTabProcessed(resp.tab_path);
