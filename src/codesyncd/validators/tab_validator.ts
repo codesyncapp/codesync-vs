@@ -48,7 +48,6 @@ export class TabValidator {
 	}
 	
 	validateRepoId(tabData: ITabYML, repo_id: number | null) {
-		console.log(`tabData.repo_id: ${tabData.repository_id}, repo_id: ${repo_id}`);
 		if(tabData.repository_id === repo_id) {
 			return true;
 		}
@@ -61,7 +60,7 @@ export class TabValidator {
 		if (tabData.tabs && tabData.tabs.length > TAB_SIZE_LIMIT) return false;
 		if (tabData.created_at && (typeof tabData.created_at) != "string") return false;
 		if (tabData.repository_id && (typeof tabData.repository_id) != "number") return false;
-		if (tabData.source && (tabData.source == VSCODE)) return false;
+		if (tabData.source && (tabData.source !== VSCODE)) return false;
 		if (tabData.file_name && (typeof tabData.file_name != "string")) return false;
 		
 		return true;

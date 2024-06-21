@@ -68,7 +68,6 @@ export class tabEventHandler {
 		newTab.source = VSCODE;
 		newTab.file_name = `${new Date().getTime()}.yml`
 		newTab.tabs = tabs;
-
 		// Dump data in the buffer
 		const tabFilePath = path.join(this.settings.TABS_PATH, newTab.file_name);	
 		fs.writeFileSync(tabFilePath, yaml.dump(newTab));

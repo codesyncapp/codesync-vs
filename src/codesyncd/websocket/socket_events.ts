@@ -109,15 +109,11 @@ export class SocketEvents {
 
         // Send tabs
         let validTabs: ITabYML[] = [];
-        errorCount = 0;
-        console.log(`this.repoTabs: ${JSON.stringify(this.repoTabs)}`);
-   
-            console.log(`repoTab: ${JSON.stringify(this.repoTabs)}`);
-            const tabsHandler = new TabsHandler(this.repoTabs, this.accessToken);
-            const validTabsData = await tabsHandler.run();
-            if (!validTabsData) return;
-            validTabs = validTabs.concat(validTabsData);
-            
+        errorCount = 0;   
+        const tabsHandler = new TabsHandler(this.repoTabs, this.accessToken);
+        const validTabsData = await tabsHandler.run();
+        if (!validTabsData) return;
+        validTabs = validTabs.concat(validTabsData);
 
         if (validTabs.length) {
             CodeSyncLogger.debug(`Sending ${validTabs.length} tabs`);
