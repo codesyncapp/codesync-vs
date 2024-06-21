@@ -15,7 +15,7 @@ import { ConfigUtils } from "../../utils/config_utils";
 
 export class TabsHandler {
     // @ts-ignore
-    tabs: ITabYML[];
+    tabYmlFiles : ITabYML[];
     // @ts-ignore
     accessToken: string;
 
@@ -28,7 +28,7 @@ export class TabsHandler {
         // @ts-ignore
         this.accessToken = accessToken;
         // @ts-ignore
-        this.tabs = repoTab;
+        this.tabYmlFiles  = repoTab;
         this.settings = generateSettings();
         this.configJSON = readYML(this.settings.CONFIG_PATH);
     }
@@ -36,7 +36,7 @@ export class TabsHandler {
     async run() {
         const validTabs: ITabYML[] = [];
         let tabsSize = 0;
-        for (const tab of this.tabs) {
+        for (const tab of this.tabYmlFiles ) {
             const tab_handler = new TabHandler(tab, null, this.accessToken);
             const tabToSend = await tab_handler.createTabToSend();
             if (!tabToSend) {
@@ -62,7 +62,6 @@ export class TabsHandler {
 
     getYMLFiles = async () => {
         const tabsBeingProcessed = getTabsBeingProcessed();
-        console.log(`tabs_path: ${this.settings.TABS_PATH}`);
         // Discard all files that aren't of .YML 
         const invalidTabFiles = await glob("**", { 
 			ignore: "*.yml",
@@ -115,8 +114,8 @@ export class TabsHandler {
                 }
                 console.log(`repo_path: ${repo_path}`); 
                 const config_utils = new ConfigUtils();
-                const repo_id = config_utils.getRepoIdByPath(repo_path);
-            if (!tabData || !tab_validator.validateYMLFile(tabData) || !tab_validator.validateRepoId(tabData, tabData.repository_id) ) {
+                const repo_id: number | null = config_utils.getRepoIdByPath(repo_path);
+            if (!tabData || !tab_validator.validateYMLFile(tabData) || !tab_validator.validateRepoId(tabData, repo_id) ) {
                 CodeSyncLogger.info(`Removing file: Skipping invalid tab: ${tabFile}`, "", tabData);
 				removeFile(filePath, "getTabFiles");
 				return false;
