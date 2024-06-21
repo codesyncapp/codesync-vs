@@ -47,7 +47,7 @@ export class TabValidator {
 		return true;
 	}
 	
-	validateRepoId(tabData: ITabYML, repo_id: number) {
+	validateRepoId(tabData: ITabYML, repo_id: number | null) {
 		console.log(`tabData.repo_id: ${tabData.repository_id}, repo_id: ${repo_id}`);
 		if(tabData.repository_id === repo_id) {
 			return true;
