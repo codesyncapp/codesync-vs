@@ -28,12 +28,12 @@ export class TabValidator {
 		const config_utils = new ConfigUtils();
 		const repo_path = config_utils.getRepoPathByRepoId(repoId);
 		const configRepo = this.configJSON.repos[repo_path];
-		const repoEmail = configRepo.email;
 		if (!configRepo) {
 			CodeSyncLogger.info(`Removing tab: Skipping invalid tab: ${tabFile}`, "", tabData);
 			removeFile(filePath, "getTabFiles");
 			return false;
 		}
+		const repoEmail = configRepo.email;
 		// Remove tab if repo is disconnected
 		if (configRepo.is_disconnected) {
 			CodeSyncLogger.error(`Removing tab: Repo ${repo_path} is disconnected`);
@@ -42,7 +42,7 @@ export class TabValidator {
 		}
 		// Validate repo belongs to logged-in user
 		const activeUser = new UserState().getUser();
-		if ( activeUser?.email !== repoEmail ) return false;
+		if ( !activeUser || activeUser?.email !== repoEmail ) return false;
 		
 		return true;
 	}

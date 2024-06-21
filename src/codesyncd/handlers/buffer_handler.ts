@@ -245,7 +245,7 @@ export class bufferHandler {
 			// Get tabs data
 			const tabs_handler = new TabsHandler
 			const tabYMLFiles = await tabs_handler.getYMLFiles();
-			if (!diffs.files.length || !tabYMLFiles.files.length) return;		
+			if (!tabYMLFiles.files.length) return;		
 			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${tabYMLFiles.files.length}/${tabYMLFiles.count} tabs, uuid=${this.instanceUUID}`);
 			const repoTabs = tabs_handler.groupTabData(tabYMLFiles.files);
 			// Create Websocket client
