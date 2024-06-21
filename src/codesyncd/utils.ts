@@ -253,6 +253,7 @@ export const setTabsBeingProcessed = (tabs: Set<string>) => {
 
 export const getRandomIndex = (length: number) => Math.floor( Math.random() * length );
 
-export const isRelative = (relative :string ) => {
-	return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+export const isRelativePath = (relative_path :string ) => {
+	return relative_path && !relative_path.startsWith('..') && !path.isAbsolute(relative_path);
 }
+

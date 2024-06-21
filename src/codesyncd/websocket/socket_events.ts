@@ -206,7 +206,3 @@ export class SocketEvents {
         }
     }
 }
-function sendTabsToServer(connection: any, validTabs: ITabYML[]) {
-    throw new Error("Function not implemented.");
-}
-

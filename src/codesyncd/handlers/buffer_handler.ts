@@ -3,13 +3,13 @@ import path from 'path';
 import vscode from "vscode";
 import { glob } from 'glob';
 
-import {getDiffsBeingProcessed, isValidDiff, getRandomIndex} from '../utils';
-import {CodeSyncLogger} from '../../logger';
-import {IFileToDiff, IRepoDiffs, ITabYML, IUser} from '../../interface';
-import {DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER} from "../../constants";
-import {generateSettings} from "../../settings";
-import {getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
-import {SocketClient} from "../websocket/socket_client";
+import { getDiffsBeingProcessed, isValidDiff, getRandomIndex } from '../utils';
+import { CodeSyncLogger } from '../../logger';
+import { IFileToDiff, IRepoDiffs, ITabYML, IUser } from '../../interface';
+import { DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER } from "../../constants";
+import { generateSettings } from "../../settings";
+import { getDefaultIgnorePatterns, readYML, shouldIgnorePath } from '../../utils/common';
+import { SocketClient } from "../websocket/socket_client";
 import { removeFile } from '../../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../../utils/state_utils';
 import { UserState } from '../../utils/user_utils';
@@ -86,7 +86,6 @@ export class bufferHandler {
 		this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 		this.activeUser = null;
 	}
-
 	getDiffFiles = async () => {
 		const diffsBeingProcessed = getDiffsBeingProcessed();
         const invalidDiffFiles = await glob("**", { 
@@ -236,7 +235,6 @@ export class bufferHandler {
 		CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, true);
 		
 		try {
-			console.log("in try block");
 			// Check if we have an active user
 			this.activeUser = new UserState().getUser();
 			if (!this.activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
@@ -245,12 +243,11 @@ export class bufferHandler {
 			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			const repoDiffs = this.groupRepoDiffs(diffs.files);
 			// Get tabs data
-			console.log("before tabs handler");
-			const tabs_handler = new TabsHandler()
-			console.log("after tabs handler");
-			const tabs = await tabs_handler.getYMLFiles();
-			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${tabs.files.length}/${tabs.count} tabs, uuid=${this.instanceUUID}`);
-			const repoTabs = tabs_handler.groupTabData(tabs.files);
+			const tabs_handler = new TabsHandler
+			const tabYMLFiles = await tabs_handler.getYMLFiles();
+			if (!diffs.files.length || !tabYMLFiles.files.length) return;		
+			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${tabYMLFiles.files.length}/${tabYMLFiles.count} tabs, uuid=${this.instanceUUID}`);
+			const repoTabs = tabs_handler.groupTabData(tabYMLFiles.files);
 			// Create Websocket client
 			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs, repoTabs);
 			webSocketClient.connect(canSendSocketData);
