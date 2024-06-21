@@ -24,11 +24,10 @@ export class TabsHandler {
     configRepo: any;
 
     constructor(repoTab: ITabYML[] | null = null, accessToken: string | null = null) {
-        console.log(`settins: ${this.settings}`);
         // @ts-ignore
         this.accessToken = accessToken;
         // @ts-ignore
-        this.tabYmlFiles  = repoTab;
+        this.tabYmlFiles = repoTab;
         this.settings = generateSettings();
         this.configJSON = readYML(this.settings.CONFIG_PATH);
     }
@@ -36,6 +35,7 @@ export class TabsHandler {
     async run() {
         const validTabs: ITabYML[] = [];
         let tabsSize = 0;
+        if ( !this.tabYmlFiles ) return;
         for (const tab of this.tabYmlFiles ) {
             const tab_handler = new TabHandler(tab, null, this.accessToken);
             const tabToSend = await tab_handler.createTabToSend();
@@ -43,18 +43,12 @@ export class TabsHandler {
                 CodeSyncLogger.error(`createTabToSend() returned empty response`);
                 return;
             }
-            console.log(`tabToSend: ${JSON.stringify(tabToSend)}`);
-           
-            console.log(`tabsSize: ${tabsSize}`)
             tabsSize += JSON.stringify(tabToSend).length;
-            console.log(`tabsSize: ${tabsSize}`)
-            console.log(`validTabs: ${validTabs}`);
             if (tabsSize < TAB_SIZE_LIMIT) {
                 validTabs.push(tabToSend);
             } else {
                 CodeSyncLogger.error(`Tabs size limit reached, size = ${tabsSize} bytes`);
             }
-            console.log(`validTabs: ${JSON.stringify(validTabs)}`);    
         }
 
         return validTabs;
@@ -100,19 +94,15 @@ export class TabsHandler {
         randomTabFiles = randomTabFiles.filter((tabFile) => {
             const filePath = path.join(this.settings.TABS_PATH, tabFile);
             const tabData = readYML(filePath);
-            console.log(`tab_data: ${JSON.stringify(tabData)}`);
             const tab_validator = new TabValidator();
             for (const tab of tabData.tabs){
-                console.log(`tab: ${JSON.stringify(tab)}`);
                 const validate_tab_data: boolean = tab_validator.validateYMLFile(tabData);
-                console.log(`validation result: ${validate_tab_data}`);
                 let segments: string[] = tab.path.split('/');
                 let repo_path: string = '';
                 if (segments.length > 1) {
                     segments.pop();
                     repo_path = segments.join('/')
                 }
-                console.log(`repo_path: ${repo_path}`); 
                 const config_utils = new ConfigUtils();
                 const repo_id: number | null = config_utils.getRepoIdByPath(repo_path);
             if (!tabData || !tab_validator.validateYMLFile(tabData) || !tab_validator.validateRepoId(tabData, repo_id) ) {

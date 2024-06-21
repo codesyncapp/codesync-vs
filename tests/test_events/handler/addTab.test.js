@@ -152,7 +152,7 @@ describe("addTab", () => {
         // Assert created_at value of tab file and testing value to be in range of 1 second
         expect((new Date(tabData.created_at)).getTime() - (createdAt).getTime()).toBeLessThanOrEqual(1000);
         // Assert repo_id
-        expect(tabData.repo_id).toEqual(repo_id);
+        expect(tabData.repository_id).toEqual(repo_id);
         // Assert tabs
         expect(tabData.tabs[0].file_id).toBe(tab1_fileId);
         expect(tabData.tabs[0].path).toBe(newFilePath1);
