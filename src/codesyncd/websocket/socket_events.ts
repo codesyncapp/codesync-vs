@@ -14,6 +14,7 @@ import { readYML } from "../../utils/common";
 import { RepoPlanLimitsState } from "../../utils/repo_state_utils";
 import { UserState } from "../../utils/user_utils";
 import { TabsHandler } from "../handlers/tabs_handler";
+import { TabHandler } from "../handlers/tab_handler";
 
 const EVENT_TYPES = {
     AUTH: 'auth',
@@ -114,7 +115,16 @@ export class SocketEvents {
         const validTabsData = await tabsHandler.run();
         if (!validTabsData) return;
         validTabs = validTabs.concat(validTabsData);
-
+        // Keep track of tabs in State
+        const currentTabs = new Set(
+            validTabs.flatMap(validTab => validTab.tabs.map(tab => tab.path))
+          );
+        let tabsBeingProcessed = getTabsBeingProcessed();
+        if (tabsBeingProcessed.size) {
+            tabsBeingProcessed = new Set([...tabsBeingProcessed, ...currentTabs]);
+        } else {
+            setTabsBeingProcessed(currentTabs);
+        }
         if (validTabs.length) {
             CodeSyncLogger.debug(`Sending ${validTabs.length} tabs`);
             const tabs_handler = new TabsHandler(this.repoTabs, this.accessToken);
@@ -141,8 +151,9 @@ export class SocketEvents {
     async onTabProcessed(tabFilePath: string) {
         // Remove tab from tabsBeingProcessed
         const tabsBeingProcessed = getTabsBeingProcessed();
-        if (!tabsBeingProcessed.size) return;
-        tabsBeingProcessed.delete(tabFilePath);
+        if (tabsBeingProcessed.size <= 0) return;
+        const tab_handler = new TabHandler();
+        tab_handler.cleanTabFile(tabFilePath);
         setTabsBeingProcessed(tabsBeingProcessed);
     }
 
@@ -183,7 +194,7 @@ export class SocketEvents {
             case EVENT_TYPES.TAB_PROCESSED:
                 switch (resp.status) {
                     case HttpStatusCodes.OK:
-                        this.onTabProcessed(resp.tab_path);
+                        this.onTabProcessed(resp.file_name);
                         return true;
                     case HttpStatusCodes.PAYMENT_REQUIRED:
                         this.onPaymentRequired();

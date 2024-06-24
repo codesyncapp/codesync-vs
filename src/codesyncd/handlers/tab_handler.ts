@@ -13,47 +13,30 @@ import { removeTabFile } from "../../utils/tab_utils";
 import { isRelativePath } from "../utils";
 
 export class TabHandler {
-    accessToken: string;
-	tabData: ITabYML;
-	tabFilePath: string;
+	
+	constructor() {}
 
-	configJSON: any;
-
-	constructor(
-		tabData: ITabYML,
-		tabFilePath: string | null = null,
-		accessToken: string
-	) {
-		this.accessToken = accessToken;
-		this.tabData = tabData;
-		// @ts-ignore
-		this.tabFilePath = tabFilePath;
-
-
-		const settings = generateSettings();
-        this.configJSON = readYML(settings.CONFIG_PATH);
-	}
-
-	createTabToSend() {
+	createTabToSend(tabData: ITabYML) {
 		return {
-			repository_id : this.tabData.repository_id,
-			created_at : this.tabData.created_at,
-			source : this.tabData.source,
-			file_name : this.tabData.file_name,
-			tabs : this.tabData.tabs,
+			repository_id : tabData.repository_id,
+			created_at : tabData.created_at,
+			source : tabData.source,
+			file_name : tabData.file_name,
+			tabs : tabData.tabs,
 			};
 	}
 
-	cleanTabFile() {
-		TabHandler.removeTabFile(this.tabFilePath);
+	cleanTabFile(tabFilePath: string) {
+		TabHandler.removeTabFile(tabFilePath);
 	}
 
-	static removeTabFile(tabFilePath: string) {
+	static removeTabFile(tabFileName: string) {
 		const settings = generateSettings();
+		const tabFilePath = path.join(settings.TABS_PATH, tabFileName);
 		const relative = path.relative(settings.TABS_PATH, tabFilePath);
 		const is_relative = isRelativePath(relative);
         if (!(is_relative && fs.existsSync(tabFilePath))) return;
-        removeTabFile(tabFilePath, "removeTabFile");
+		removeTabFile(tabFilePath, "removeTabFile");
 	}
 
 }

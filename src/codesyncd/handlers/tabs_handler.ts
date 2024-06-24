@@ -37,8 +37,8 @@ export class TabsHandler {
         let tabsSize = 0;
         if ( !this.tabYmlFiles ) return;
         for (const tab of this.tabYmlFiles ) {
-            const tab_handler = new TabHandler(tab, null, this.accessToken);
-            const tabToSend = await tab_handler.createTabToSend();
+            const tab_handler = new TabHandler();
+            const tabToSend = await tab_handler.createTabToSend(tab);
             if (!tabToSend) {
                 CodeSyncLogger.error(`createTabToSend() returned empty response`);
                 return;
@@ -150,8 +150,8 @@ export class TabsHandler {
     
     }
     
-	sendTabsToServer(webSocketConnection: any, tabToSend: ITabYML[]) {
+	sendTabsToServer(webSocketConnection: any, tabEventsToSend: ITabYML[]) {
 		// Send tab to server
-		webSocketConnection.send(JSON.stringify({'tabs': [tabToSend]}));
+		webSocketConnection.send(JSON.stringify({'tabs': tabEventsToSend}));
 	}
 }
