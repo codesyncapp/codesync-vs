@@ -12,7 +12,7 @@ import {
     STATUS_BAR_MSGS
 } from "../../constants";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
-import { setDiffsBeingProcessed } from "../utils";
+import { setDiffsBeingProcessed, setTabsBeingProcessed } from "../utils";
 
 
 let errorCount = 0;
@@ -37,6 +37,8 @@ export class SocketClient {
         CodeSyncState.set(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT, new Date().getTime());
         // Reset diffsBeingProcessed
         setDiffsBeingProcessed(new Set());
+        // Reset tabsBeingProcessed
+        setTabsBeingProcessed(new Set());
         try {
             this.websocketClient.abort();
         } catch (e) {
