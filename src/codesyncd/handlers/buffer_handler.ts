@@ -3,22 +3,23 @@ import path from 'path';
 import vscode from "vscode";
 import { glob } from 'glob';
 
-import {getDiffsBeingProcessed, isValidDiff} from '../utils';
-import {CodeSyncLogger} from '../../logger';
-import {IFileToDiff, IRepoDiffs, IUser} from '../../interface';
-import {DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER} from "../../constants";
-import {generateSettings} from "../../settings";
-import {getDefaultIgnorePatterns, readYML, shouldIgnorePath} from '../../utils/common';
-import {SocketClient} from "../websocket/socket_client";
+import { getDiffsBeingProcessed, isValidDiff, getRandomIndex } from '../utils';
+import { CodeSyncLogger } from '../../logger';
+import { IFileToDiff, IRepoDiffs, ITabYML, IUser } from '../../interface';
+import { DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER } from "../../constants";
+import { generateSettings } from "../../settings";
+import { getDefaultIgnorePatterns, readYML, shouldIgnorePath } from '../../utils/common';
+import { SocketClient } from "../websocket/socket_client";
 import { removeFile } from '../../utils/file_utils';
 import { CODESYNC_STATES, CodeSyncState } from '../../utils/state_utils';
 import { UserState } from '../../utils/user_utils';
 import { RepoPlanLimitsState } from '../../utils/repo_state_utils';
+import { TabsHandler } from './tabs_handler';
 
 
 export class bufferHandler {
 	/*
-	 * Each file in .diffs directory contains data something like
+	 * Each file in .diffs directory contains data like:
 
         repo_path: /Users/basit/projects/codesync/codesync
         branch: plugins
@@ -28,6 +29,16 @@ export class bufferHandler {
              pass%0A
          +#
         created_at: '2021-01-01 11:49:36.121'
+
+	   Each file in .tabs directory contains data like:
+
+		repo_id: 1234 
+		created_at: <timestamp>
+		source: vscode
+		file_name: 123232134343.yml
+		tabs: 
+		- file_id: <file_id> path: <path>     
+		- file_id: <file_id_1> path: <path_1>
 
 	Steps:
 		- Get list of diffs (only .yml files)
@@ -75,9 +86,6 @@ export class bufferHandler {
 		this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 		this.activeUser = null;
 	}
-
-	getRandomIndex = (length: number) => Math.floor( Math.random() * length );
-
 	getDiffFiles = async () => {
 		const diffsBeingProcessed = getDiffsBeingProcessed();
         const invalidDiffFiles = await glob("**", { 
@@ -105,7 +113,7 @@ export class bufferHandler {
 		let randomIndex = undefined;
 		for (let index = 0; index < Math.min(DIFF_FILES_PER_ITERATION, diffs.length); index++) {
 			do {
-				randomIndex = this.getRandomIndex( diffs.length );
+				randomIndex = getRandomIndex( diffs.length );
 			}
 			while ( usedIndices.includes( randomIndex ) );
 			usedIndices.push(randomIndex);
@@ -202,7 +210,7 @@ export class bufferHandler {
 		return repoDiffs;
 	};
 
-	async run(canSendDiffs: boolean) {
+	async run(canSendSocketData: boolean) {
 		const isRunning = CodeSyncState.get(CODESYNC_STATES.BUFFER_HANDLER_RUNNING);
 		const skipLog = CodeSyncState.canSkipRun(CODESYNC_STATES.BUFFER_HANDLER_LOGGED_AT, this.LOG_BUFFER_HANDLER_RUN_AFTER);
 		if (!skipLog) {
@@ -232,11 +240,17 @@ export class bufferHandler {
 			if (!this.activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			const diffs = await this.getDiffFiles();
 			if (!diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-			if (canSendDiffs) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
+			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			const repoDiffs = this.groupRepoDiffs(diffs.files);
+			// Get tabs data
+			const tabs_handler = new TabsHandler
+			const tabYMLFiles = await tabs_handler.getYMLFiles();
+			if (!tabYMLFiles.files.length) return;		
+			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${tabYMLFiles.files.length}/${tabYMLFiles.count} tabs, uuid=${this.instanceUUID}`);
+			const repoTabs = tabs_handler.groupTabData(tabYMLFiles.files);
 			// Create Websocket client
-			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs);
-			webSocketClient.connect(canSendDiffs);
+			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs, repoTabs);
+			webSocketClient.connect(canSendSocketData);
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore

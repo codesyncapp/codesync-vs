@@ -54,6 +54,7 @@ export const generateSettings = () => {
             Note: Above lock files do not contain any data. It depends on the process which acquires the lock. 
         .originals/
         .shadow/
+        .tabs/
         alerts.yml (Keeps track of different kind of alerts shown to user)
         config.yml 
         sequence_token.yml 
@@ -64,6 +65,7 @@ export const generateSettings = () => {
     const systemDirectories = {
         CODESYNC_ROOT: rootRepo,
         DIFFS_REPO: path.join(rootRepo, ".diffs", ".vscode"),
+        TABS_PATH: path.join(rootRepo, ".tabs", ".vscode"),
         ORIGINALS_REPO: path.join(rootRepo, ".originals"),
         SHADOW_REPO: path.join(rootRepo, ".shadow"),
         DELETED_REPO: path.join(rootRepo, ".deleted"),

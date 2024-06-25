@@ -42,6 +42,7 @@ describe("createSystemDirectories",  () => {
     test('createSystemDirectories', () => {
         createSystemDirectories();
         const lsResult = fs.readdirSync(baseRepoPath);
+        expect(lsResult.includes(".tabs")).toBe(true);
         expect(lsResult.includes(".diffs")).toBe(true);
         expect(lsResult.includes(".originals")).toBe(true);
         expect(lsResult.includes(".shadow")).toBe(true);

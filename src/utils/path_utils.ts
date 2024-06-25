@@ -66,6 +66,10 @@ export class pathUtils {
         return this.settings.DIFFS_REPO;
     }
 
+    getTabsRepo = () => {
+        return this.settings.TABS_PATH;
+    }
+
     static getS3UploaderRepo = () => {
         const settings = generateSettings();
         return settings.S3_UPLOADER;

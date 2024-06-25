@@ -152,6 +152,8 @@ describe("Extension: activate", () => {
         expect(vscode.workspace.onDidCreateFiles).toHaveBeenCalledTimes(1);
         // onDidRenameFiles
         expect(vscode.workspace.onDidRenameFiles).toHaveBeenCalledTimes(1);
+        // tabGroups.onDidChangeTabs
+        expect(vscode.window.tabGroups.onDidChangeTabs).toHaveBeenCalledTimes(1);
     });
 
     test("setupCodeSync: Fresh Setup, no user, no repo opened", async () => {
