@@ -1,7 +1,7 @@
 import vscode from "vscode";
 import {client} from "websocket";
 
-import {IRepoDiffs} from "../../interface";
+import {IRepoDiffs, ITabYML} from "../../interface";
 import {CodeSyncLogger, logErrorMsg} from "../../logger";
 import {SocketEvents} from "./socket_events";
 import {
@@ -12,7 +12,7 @@ import {
     STATUS_BAR_MSGS
 } from "../../constants";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
-import { setDiffsBeingProcessed } from "../utils";
+import { setDiffsBeingProcessed, setTabsBeingProcessed } from "../utils";
 
 
 let errorCount = 0;
@@ -22,12 +22,14 @@ export class SocketClient {
     statusBarItem: vscode.StatusBarItem;
     accessToken: string;
     repoDiffs: IRepoDiffs[];
+    repoTabs: ITabYML[];
 
-    constructor(statusBarItem: vscode.StatusBarItem, accessToken: string, repoDiffs: IRepoDiffs[]) {
+    constructor(statusBarItem: vscode.StatusBarItem, accessToken: string, repoDiffs: IRepoDiffs[], repoTabs: ITabYML[]) {
         this.statusBarItem = statusBarItem;
         this.accessToken = accessToken;
         this.repoDiffs = repoDiffs;
         this.websocketClient = (global as any).websocketClient;
+        this.repoTabs = repoTabs;
     }
 
     resetGlobals = () => {
@@ -35,6 +37,8 @@ export class SocketClient {
         CodeSyncState.set(CODESYNC_STATES.WEBSOCKET_ERROR_OCCURRED_AT, new Date().getTime());
         // Reset diffsBeingProcessed
         setDiffsBeingProcessed(new Set());
+        // Reset tabsBeingProcessed
+        setTabsBeingProcessed(new Set());
         try {
             this.websocketClient.abort();
         } catch (e) {
@@ -46,16 +50,16 @@ export class SocketClient {
         return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
-    connect = (canSendDiffs: boolean) => {
+    connect = (canSendSocketData: boolean) => {
         if (!this.websocketClient) {
             this.websocketClient = new client();
             (global as any).websocketClient = this.websocketClient;
-            this.registerEvents(canSendDiffs);
+            this.registerEvents(canSendSocketData);
         } else {
             const socketConnection = (global as any).socketConnection;
             if (!socketConnection) return this.resetGlobals();
             // Trigger onValidAuth for already connected socket
-            const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs);
+            const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendSocketData, this.repoTabs);
             webSocketEvents.onValidAuth();
         }
     };
@@ -109,7 +113,7 @@ export class SocketClient {
         });
 
         // Iterate repoDiffs and send to server
-        const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs);
+        const webSocketEvents = new SocketEvents(this.statusBarItem, this.repoDiffs, this.accessToken, canSendDiffs, this.repoTabs);
 
         connection.on('message', function (message: any) {
             try {

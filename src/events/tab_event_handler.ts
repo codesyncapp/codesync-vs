@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 
 import { VSCODE } from "../constants";
-import { ITab, ITabFile } from "../interface";
+import { ITabYML, ITabFile } from "../interface";
 import { formatDatetime, getBranch } from "../utils/common";
 import { ConfigUtils } from "../utils/config_utils";
 import { pathUtils } from "../utils/path_utils";
@@ -52,7 +52,8 @@ export class tabEventHandler {
 				const fileRelativePath = tab.input.uri.path;
 				// Get file ID using path
 				const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, fileRelativePath);
-				return {file_id: fileId, path: fileRelativePath};
+				const is_active_tab: boolean = tab.isActive;
+				return {file_id: fileId, path: fileRelativePath, is_active_tab: is_active_tab};
 			})
 		);
 		// Adding to buffer
@@ -60,14 +61,13 @@ export class tabEventHandler {
 	}
 
 	addToBuffer = (repoId: number, created_at: string, tabs: ITabFile[]) => {
-		const newTab = <ITab>{};
+		const newTab = <ITabYML>{};
 		// Structuring tab data
-		newTab.repo_id = repoId;
+		newTab.repository_id = repoId;
 		newTab.created_at = created_at;
 		newTab.source = VSCODE;
 		newTab.file_name = `${new Date().getTime()}.yml`
 		newTab.tabs = tabs;
-
 		// Dump data in the buffer
 		const tabFilePath = path.join(this.settings.TABS_PATH, newTab.file_name);	
 		fs.writeFileSync(tabFilePath, yaml.dump(newTab));

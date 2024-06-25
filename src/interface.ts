@@ -14,19 +14,6 @@ export interface IDiff {
 	is_deleted?: boolean;
 }
 
-export interface ITab {
-	repo_id: number;
-	created_at: string;
-	source: string;
-	file_name: string;
-	tabs: ITabFile[];
-}
-
-export interface ITabFile {
-	file_id: number | null;
-	path: string;
-}
-
 export interface IRepoDiffs {
 	repoPath: string;
 	file_to_diff: IFileToDiff[];
@@ -76,6 +63,7 @@ export interface IDiffToSend {
 	'platform': string
 }
 
+
 export interface IRepoInfo {
 	last_synced_at: string;
 }
@@ -123,3 +111,16 @@ export interface IUserState {
 	isWaitingForLogin: boolean;
 }
 
+export interface ITabYML {
+	repository_id: number;
+	created_at: string;
+	source: string;
+	file_name: string;
+	tabs: ITabFile[];
+}
+
+export interface ITabFile {
+	file_id: number | null;
+	path: string;
+	is_active_tab: boolean;
+}
