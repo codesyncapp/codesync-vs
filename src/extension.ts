@@ -16,11 +16,21 @@ import { recallDaemon } from "./codesyncd/codesyncd";
 import { CodeSyncLogger } from "./logger";
 import { CODESYNC_STATES, CodeSyncState } from './utils/state_utils';
 import { RepoState } from './utils/repo_state_utils';
+import { CodeSyncViewProvider, createWebViewProvider, updateWebviewContent } from './webViewProvider';
+
 
 
 export async function activate(context: vscode.ExtensionContext) {
 	const uuid = uuidv4();
 	CodeSyncState.set(CODESYNC_STATES.INSTANCE_UUID, uuid);
+	const provider = createWebViewProvider(context);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(CodeSyncViewProvider.viewType, provider)
+	);
+
+	setTimeout(() => {
+		updateWebviewContent('Updated content after 5 seconds');
+	}, 5000);
 
 	try {
 		let repoPath = pathUtils.getRootPath();

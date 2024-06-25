@@ -2,10 +2,10 @@ import path from "path";
 import untildify from "untildify";
 
 // Set this to true for Development
-const DEBUG = false;
-const useStaging = false;
+const DEBUG = true;
+const useStaging = true;
 const DevConfig = {
-    ROOT_REPO: useStaging ? '~/.codesync-staging': '~/.codesync-local',
+    ROOT_REPO: useStaging ? '~/.codesync-staging-testing': '~/.codesync-local',
     WEBSOCKET_HOST: useStaging ? 'wss://api-staging.codesync.com': 'ws://localhost:8000',
     CODESYNC_HOST: useStaging ? 'https://api-staging.codesync.com': 'http://localhost:8000',
     WEB_APP_URL: useStaging ? "https://staging.codesync.com": "http://localhost:3000"
