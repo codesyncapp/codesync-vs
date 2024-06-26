@@ -1,14 +1,9 @@
 import fs from "fs";
-import os from "os";
 import path from "path";
 
 import { ITabYML } from "../../interface";
 import {generateSettings} from "../../settings";
-import {readYML} from "../../utils/common";
 import {CodeSyncLogger} from "../../logger";
-import {pathUtils} from "../../utils/path_utils";
-import {initUtils} from "../../init/utils";
-import {VSCODE} from "../../constants";
 import { removeTabFile } from "../../utils/tab_utils";
 import { isRelativePath } from "../utils";
 
