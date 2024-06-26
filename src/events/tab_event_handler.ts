@@ -12,6 +12,7 @@ import { generateSettings } from "../settings";
 import { RepoState } from "../utils/repo_state_utils";
 import { UserState } from "../utils/user_utils";
 import { CodeSyncLogger } from "../logger";
+import { TabValidator } from "../codesyncd/validators/tab_validator";
 
 export class tabEventHandler {
 	repoPath = "";
@@ -27,6 +28,8 @@ export class tabEventHandler {
 		const isValidAccount = userState.isValidAccount();
 		this.repoPath = repoPath || pathUtils.getRootPath();
 		if(!this.repoPath) return;
+		const tab_validator = new TabValidator();
+		tab_validator.validateRepo(this.repoPath);
 		const repoState = new RepoState(this.repoPath).get();
 		const repoIsConnected = repoState.IS_CONNECTED;
 		this.shouldProceed = isValidAccount && repoIsConnected;
@@ -36,7 +39,6 @@ export class tabEventHandler {
 	}
 
 	handleTabChangeEvent = (isTabEvent: boolean = true) => {
-		console.log(`handleTabChangeEvent called!`);
 		if(!this.repoPath || !isTabEvent) return;
 		// Record timestamp
 		const created_at = formatDatetime(new Date().getTime());
@@ -44,7 +46,7 @@ export class tabEventHandler {
 		const configUtils = new ConfigUtils();
 		const repoId = configUtils.getRepoIdByPath(this.repoPath);
 		if (!repoId) return
-
+		
 		// Get list of current tabs
 		const open_tabs = vscode.window.tabGroups.all;
 
@@ -64,6 +66,8 @@ export class tabEventHandler {
 				return { file_id: fileId, path: splitPath[1], is_active_tab: is_active_tab };
 			})
 		).filter((tab): tab is ITabFile => tab !== null); // Filter out null values
+		// If no tabs found
+		if (tabs.length == 0) return;
 		// Adding to buffer
 		this.addToBuffer(repoId, created_at, tabs);
 
@@ -77,7 +81,6 @@ export class tabEventHandler {
 		newTab.source = VSCODE;
 		newTab.file_name = `${new Date().getTime()}.yml`
 		newTab.tabs = tabs;
-		console.log(`ADDING TO BUFFER: ${JSON.stringify(newTab)}`);
 		// Dump data in the buffer
 		const tabFilePath = path.join(this.settings.TABS_PATH, newTab.file_name);	
 		fs.writeFileSync(tabFilePath, yaml.dump(newTab));
