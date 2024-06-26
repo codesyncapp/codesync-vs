@@ -1,17 +1,8 @@
-/*
-class TabValidator:
-	validateRepoID()
-	validate_yml_file()
-	group_data()
-*/
-
 import { REQUIRED_KEYS_TAB_FILE_YML, TAB_SIZE_LIMIT, VSCODE } from "../../constants";
 import { ITabYML } from "../../interface";
 import { CodeSyncLogger } from "../../logger";
 import { generateSettings } from "../../settings";
 import { readYML } from "../../utils/common";
-import { ConfigUtils } from "../../utils/config_utils";
-import { removeFile } from "../../utils/file_utils";
 import { UserState } from "../../utils/user_utils";
 
 export class TabValidator {
