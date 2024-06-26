@@ -11,7 +11,6 @@ import { TAB_FILES_PER_ITERATION, TAB_SIZE_LIMIT } from "../../constants";
 import { CodeSyncLogger } from "../../logger";
 import { TabValidator } from "../validators/tab_validator";
 import { TabHandler } from "./tab_handler";
-import { ConfigUtils } from "../../utils/config_utils";
 
 export class TabsHandler {
     // @ts-ignore
@@ -94,32 +93,20 @@ export class TabsHandler {
         randomTabFiles = randomTabFiles.filter((tabFile) => {
             const filePath = path.join(this.settings.TABS_PATH, tabFile);
             const tabData = readYML(filePath);
-            const tab_validator = new TabValidator();
-            for (const tab of tabData.tabs){
-                const validate_tab_data: boolean = tab_validator.validateYMLFile(tabData);
-                let segments: string[] = tab.path.split('/');
-                let repo_path: string = '';
-                if (segments.length > 1) {
-                    segments.pop();
-                    repo_path = segments.join('/')
-                }
-            const config_utils = new ConfigUtils();
-            const repo_id: number | null = config_utils.getRepoIdByPath(repo_path);
-            if (!tabData || !tab_validator.validateYMLFile(tabData) || !tab_validator.validateRepoId(tabData, repo_id) ) {
-                CodeSyncLogger.info(`Removing file: Skipping invalid tab: ${tabFile}`, "", tabData);
-				removeFile(filePath, "getTabFiles");
-				return false;
-            }
-    }
-            
-
-            return true;
+            const tabValidator = new TabValidator();
+            // Validating structure
+            if (!tabData || !tabValidator.validateYMLFile(tabData)) {
+            CodeSyncLogger.info(`Removing file: Skipping invalid tab: ${tabFile}`, "", tabData);
+            removeFile(filePath, "getTabFiles");
+            return false;
+        }
+        return true;
         });
+
         return {
             files: randomTabFiles,
             count: tabs.length,
         }
-
     }
 
     groupTabData = (tabFiles: string[]) => {
