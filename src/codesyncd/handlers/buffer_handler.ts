@@ -231,7 +231,6 @@ export class bufferHandler {
 		}
 
 		if (!canConnect) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-
 		CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, true);
 		
 		try {
@@ -239,13 +238,12 @@ export class bufferHandler {
 			this.activeUser = new UserState().getUser();
 			if (!this.activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			const diffs = await this.getDiffFiles();
-			if (!diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			const repoDiffs = this.groupRepoDiffs(diffs.files);
 			// Get tabs data
-			const tabs_handler = new TabsHandler
+			const tabs_handler = new TabsHandler();
 			const tabYMLFiles = await tabs_handler.getYMLFiles();
-			if (!tabYMLFiles.files.length) return;		
+			if (!tabYMLFiles.files.length && !diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);;		
 			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${tabYMLFiles.files.length}/${tabYMLFiles.count} tabs, uuid=${this.instanceUUID}`);
 			const repoTabs = tabs_handler.groupTabData(tabYMLFiles.files);
 			// Create Websocket client

@@ -24,20 +24,15 @@ export class TabValidator {
 
 	}
 
-	validateRepo(tabFile: ITabYML, tabData: string, filePath: string, repoId: number) {
-		const config_utils = new ConfigUtils();
-		const repo_path = config_utils.getRepoPathByRepoId(repoId);
-		const configRepo = this.configJSON.repos[repo_path];
+	validateRepo( repoPath: string) {
+		const configRepo = this.configJSON.repos[repoPath];
 		if (!configRepo) {
-			CodeSyncLogger.info(`Removing tab: Skipping invalid tab: ${tabFile}`, "", tabData);
-			removeFile(filePath, "getTabFiles");
 			return false;
 		}
 		const repoEmail = configRepo.email;
 		// Remove tab if repo is disconnected
 		if (configRepo.is_disconnected) {
-			CodeSyncLogger.error(`Removing tab: Repo ${repo_path} is disconnected`);
-			removeFile(filePath, "getTabFiles");
+			CodeSyncLogger.error(`Removing tab: Repo ${repoPath} is disconnected`);
 			return false;
 		}
 		// Validate repo belongs to logged-in user
@@ -45,13 +40,6 @@ export class TabValidator {
 		if ( !activeUser || activeUser?.email !== repoEmail ) return false;
 		
 		return true;
-	}
-	
-	validateRepoId(tabData: ITabYML, repo_id: number | null) {
-		if(tabData.repository_id === repo_id) {
-			return true;
-		}
-		return false;
 	}
 
 	validateYMLFile(tabData: ITabYML){
