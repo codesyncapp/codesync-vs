@@ -37,6 +37,7 @@ export class TabHandler {
 		const is_relative = isRelativePath(relative);
         if (!(is_relative && fs.existsSync(tabFilePath))) return;
 		removeTabFile(tabFilePath, "removeTabFile");
+		CodeSyncLogger.debug(`TAB REMOVED: ${tabFilePath}`);
 	}
 
 }
