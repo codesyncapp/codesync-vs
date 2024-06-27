@@ -59,7 +59,7 @@ export class tabEventHandler {
 				}
 				const tabValidator = new TabValidator();
 				if (!tabValidator.validateRepo(this.repoPath)) return;
-				if (splitPath.length ==2) {
+				if (splitPath.length == 2) {
 				// Get file ID using path
 				const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, tabFilePath);
 				const is_active_tab: boolean = tab.isActive;
