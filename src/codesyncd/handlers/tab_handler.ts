@@ -3,7 +3,6 @@ import path from "path";
 
 import { ITabYML } from "../../interface";
 import {generateSettings} from "../../settings";
-import {CodeSyncLogger} from "../../logger";
 import { removeTabFile } from "../../utils/tab_utils";
 import { isRelativePath } from "../utils";
 
@@ -32,7 +31,6 @@ export class TabHandler {
 		const is_relative = isRelativePath(relative);
         if (!(is_relative && fs.existsSync(tabFilePath))) return;
 		removeTabFile(tabFilePath, "removeTabFile");
-		CodeSyncLogger.debug(`TAB REMOVED: ${tabFilePath}`);
 	}
 
 }

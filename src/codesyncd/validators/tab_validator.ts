@@ -15,7 +15,7 @@ export class TabValidator {
 
 	}
 
-	validateRepo( repoPath: string) {
+	validateRepo( repoPath: string ) {
 		const configRepo = this.configJSON.repos[repoPath];
 		if (!configRepo) {
 			return false;

@@ -1,8 +1,8 @@
-import fs, { read } from "fs";
+import fs from "fs";
 import path from "path";
 import os from "os";
 import yaml from "js-yaml";
-import vscode, { TreeItem } from "vscode";
+import vscode from "vscode";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
 import fetchMock from "jest-fetch-mock";
@@ -13,7 +13,6 @@ import {CODESYNC_STATES, CodeSyncState} from "../../src/utils/state_utils";
 import {DEFAULT_BRANCH} from "../../src/constants";
 import {
     addUser,
-    Config,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
     PRE_SIGNED_URL,
@@ -167,8 +166,8 @@ describe("bufferHandler", () => {
     const addTab = (repoPath, created_at, tabs ) => {
         console.log(`repoPath: ${repoPath}, created_at: ${created_at}, tabs: ${tabs}`);
         const tab_handler = new tabEventHandler(repoPath)
-        const config_utils = new ConfigUtils();
-        const repoId = config_utils.getRepoIdByPath(repoPath);
+        const ConfigUtils = new ConfigUtils();
+        const repoId = ConfigUtils.getRepoIdByPath(repoPath);
         // Add tabs to buffer
         tab_handler.addToBuffer(repoId, created_at, tabs);
         const pathData = fs.readdirSync(tabsRepo);
@@ -177,7 +176,6 @@ describe("bufferHandler", () => {
             console.log(`ymlFile: ${ymlFile}`);
             const tabData = readYML(path.join(tabsRepo, ymlFile));
             console.log(`tabData: ${JSON.stringify(tabData)}`);
-
         }
     }
     const tabPath1 = "file1.txt"
@@ -187,12 +185,12 @@ describe("bufferHandler", () => {
             {
                 "file_id": 1,
                 "path": tabPath1,
-                "is_active": 0,
+                "is_active_tab": 0,
             },
             {
                 "file_id": 2,
                 "path": tabPath2,
-                "is_active": 1,
+                "is_active_tab": 1,
             },
         ])
     }
@@ -218,11 +216,11 @@ describe("bufferHandler", () => {
             // Asserting tab 1
             expect(tabData.tabs[0].file_id).toBe(1);
             expect(tabData.tabs[0].path).toBe(tabPath1);
-            expect(tabData.tabs[0].is_active).toBe(0);
+            expect(tabData.tabs[0].is_active_tab).toBe(0);
             // Asserting tab 2
             expect(tabData.tabs[1].file_id).toBe(2);
             expect(tabData.tabs[1].path).toBe(tabPath2);
-            expect(tabData.tabs[1].is_active).toBe(1);
+            expect(tabData.tabs[1].is_active_tab).toBe(1);
         }
     }
 
