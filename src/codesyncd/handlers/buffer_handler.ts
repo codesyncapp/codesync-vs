@@ -238,20 +238,13 @@ export class bufferHandler {
 			this.activeUser = new UserState().getUser();
 			if (!this.activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			const diffs = await this.getDiffFiles();
-			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			// Get tabs data
 			const tabs_handler = new TabsHandler();
 			const tabYMLFiles = await tabs_handler.getYMLFiles();
+			if (canSendSocketData && tabYMLFiles.files.length > 0) CodeSyncLogger.debug(`Processing ${tabYMLFiles.files.length}/${tabYMLFiles.count} tabs, uuid=${this.instanceUUID}`);
+			else if (canSendSocketData && diffs.files.length > 0) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
 			if (!tabYMLFiles.files.length && !diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);;		
-			if (!diffs.files.length) {
-				CodeSyncLogger.debug(`No diff files found!`)
-				return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-			}
 			const repoDiffs = this.groupRepoDiffs(diffs.files);
-			if (!tabYMLFiles.files.length) {
-				CodeSyncLogger.debug(`No tab files found!`)
-				return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-			}
 			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${tabYMLFiles.files.length}/${tabYMLFiles.count} tabs, uuid=${this.instanceUUID}`);
 			const repoTabs = tabs_handler.groupTabData(tabYMLFiles.files);
 			// Create Websocket client
