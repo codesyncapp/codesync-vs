@@ -1,8 +1,8 @@
-import fs from "fs";
+import fs, { read } from "fs";
 import path from "path";
 import os from "os";
 import yaml from "js-yaml";
-import vscode from "vscode";
+import vscode, { TreeItem } from "vscode";
 import untildify from "untildify";
 import getBranchName from "current-git-branch";
 import fetchMock from "jest-fetch-mock";
@@ -13,6 +13,7 @@ import {CODESYNC_STATES, CodeSyncState} from "../../src/utils/state_utils";
 import {DEFAULT_BRANCH} from "../../src/constants";
 import {
     addUser,
+    Config,
     DUMMY_FILE_CONTENT,
     getConfigFilePath,
     PRE_SIGNED_URL,
@@ -25,11 +26,13 @@ import {
 } from "../helpers/helpers";
 import {bufferHandler} from "../../src/codesyncd/handlers/buffer_handler";
 import {eventHandler} from "../../src/events/event_handler";
+import {tabEventHandler} from "../../src/events/tab_event_handler";
 import {SocketClient} from "../../src/codesyncd/websocket/socket_client";
 import {SocketEvents} from "../../src/codesyncd/websocket/socket_events";
 import {readYML} from "../../src/utils/common";
 import {VSCODE} from "../../src/constants";
 import {LockUtils} from "../../src/utils/lock_utils";
+import { ConfigUtils } from "../../src/utils/config_utils";
 
 
 describe("bufferHandler", () => {
@@ -41,6 +44,7 @@ describe("bufferHandler", () => {
     let shadowRepoBranchPath;
     let originalsRepoBranchPath;
     let diffsRepo;
+    let tabsRepo;
 
     let newFilePath;
     let shadowFilePath;
@@ -79,6 +83,7 @@ describe("bufferHandler", () => {
         shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
         originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         diffsRepo = pathUtilsObj.getDiffsRepo();
+        tabsRepo = pathUtilsObj.getTabsRepo();
     
         newFilePath = path.join(repoPath, newRelPath);
         shadowFilePath = path.join(shadowRepoBranchPath, fileRelPath);
@@ -158,6 +163,68 @@ describe("bufferHandler", () => {
         expect(diffFiles).toHaveLength(diffsCount);
         return true;
     };
+
+    const addTab = (repoPath, created_at, tabs ) => {
+        console.log(`repoPath: ${repoPath}, created_at: ${created_at}, tabs: ${tabs}`);
+        const tab_handler = new tabEventHandler(repoPath)
+        const config_utils = new ConfigUtils();
+        const repoId = config_utils.getRepoIdByPath(repoPath);
+        // Add tabs to buffer
+        tab_handler.addToBuffer(repoId, created_at, tabs);
+        const pathData = fs.readdirSync(tabsRepo);
+        console.log(`pathData: ${JSON.stringify(pathData)}`);
+        for (const ymlFile of pathData) {
+            console.log(`ymlFile: ${ymlFile}`);
+            const tabData = readYML(path.join(tabsRepo, ymlFile));
+            console.log(`tabData: ${JSON.stringify(tabData)}`);
+
+        }
+    }
+    const tabPath1 = "file1.txt"
+    const tabPath2 = "file2.txt"
+    const returnTabs = () => {
+        return ([
+            {
+                "file_id": 1,
+                "path": tabPath1,
+                "is_active": 0,
+            },
+            {
+                "file_id": 2,
+                "path": tabPath2,
+                "is_active": 1,
+            },
+        ])
+    }
+
+    const assertTabsCount = (tabsCount = 0) => {
+        let tabFiles = fs.readdirSync(tabsRepo);
+        console.log(`tabFiles: ${tabFiles}`);
+        expect(tabFiles).toHaveLength(tabsCount);
+        return true;        
+    }
+
+    const assertTabStructure = () => {
+        const tabFiles = fs.readdirSync(tabsRepo);
+        const config_utils = new ConfigUtils();
+        const repoId = config_utils.getRepoIdByPath(repoPath);
+        for (const tabFile of tabFiles) {
+            const tabData = readYML(path.join(tabsRepo, tabFile));
+            // console.log(`TABS1: ${JSON.stringify(tabData)}`);
+            expect(tabData.repository_id).toBe(repoId);
+            expect(tabData.source).toBe(VSCODE);
+            expect(tabData.created_at).toBeDefined();
+            expect(tabData.file_name).toBeDefined();
+            // Asserting tab 1
+            expect(tabData.tabs[0].file_id).toBe(1);
+            expect(tabData.tabs[0].path).toBe(tabPath1);
+            expect(tabData.tabs[0].is_active).toBe(0);
+            // Asserting tab 2
+            expect(tabData.tabs[1].file_id).toBe(2);
+            expect(tabData.tabs[1].path).toBe(tabPath2);
+            expect(tabData.tabs[1].is_active).toBe(1);
+        }
+    }
 
     test("No config.yml", async () => {
         fs.rmSync(configPath);
@@ -632,4 +699,19 @@ describe("bufferHandler", () => {
         expect(assertDiffsCount(0)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(false);
     });
+
+    test("No tab", async () => {
+        addRepo();
+        const handler = new bufferHandler(statusBarItem);
+        await handler.run();
+        expect(assertTabsCount(0)).toBe(true);
+    });
+
+    test("1 tab", async () => {
+        addRepo();
+        const tabs = returnTabs()
+        addTab(repoPath, new Date().getTime(), tabs);
+        assertTabsCount(1);
+        assertTabStructure()
+    })
 });
