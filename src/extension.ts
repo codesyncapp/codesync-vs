@@ -41,7 +41,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 			// Capturing initial tabs
 			const handler = new tabEventHandler(repoPath);
-			handler.handleTabChangeEvent();
+			setTimeout(() => handler.handleTabChangeEvent(), 1);
 		}
 
 		// Register workspace events
@@ -94,7 +94,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			try {
 				const isTabEvent = changeEvent.changed.length == 0 && (changeEvent.opened.length > 0 || changeEvent.closed.length > 0)				
 				const handler = new tabEventHandler(repoPath);
-				handler.handleTabChangeEvent(isTabEvent);
+				setTimeout(() => handler.handleTabChangeEvent(isTabEvent), 1);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore

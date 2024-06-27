@@ -117,7 +117,7 @@ export class SocketEvents {
         validTabs = validTabs.concat(validTabsData);
         // Keep track of tabs in State
         const currentTabs = new Set(
-            validTabs.flatMap(validTab => validTab.tabs.map(tab => tab.path))
+            validTabs.map(validTab => validTab.file_name)
           );
         let tabsBeingProcessed = getTabsBeingProcessed();
         if (tabsBeingProcessed.size) {
