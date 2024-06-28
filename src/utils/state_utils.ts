@@ -34,6 +34,7 @@ export const CODESYNC_STATES = {
         WAITING_FOR_LOGIN_CONFIRMATION: "waitingForLoginConfirmation",
         AUTHENTICATION_INITIATED_AT: "authInitiatedAt"
     },
+    ACTIVE_FILE_PATH: "activeFilePath",
 };
 
 export class CodeSyncState {
