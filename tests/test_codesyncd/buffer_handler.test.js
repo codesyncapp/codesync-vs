@@ -166,8 +166,8 @@ describe("bufferHandler", () => {
     const addTab = (repoPath, created_at, tabs ) => {
         console.log(`repoPath: ${repoPath}, created_at: ${created_at}, tabs: ${tabs}`);
         const tab_handler = new tabEventHandler(repoPath)
-        const ConfigUtils = new ConfigUtils();
-        const repoId = ConfigUtils.getRepoIdByPath(repoPath);
+        const configUtils = new ConfigUtils();
+        const repoId = configUtils.getRepoIdByPath(repoPath);
         // Add tabs to buffer
         tab_handler.addToBuffer(repoId, created_at, tabs);
         const pathData = fs.readdirSync(tabsRepo);
