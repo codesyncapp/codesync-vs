@@ -54,7 +54,6 @@ describe("bufferHandler", () => {
     let tabFilePath1;
     let tabFilePath2;
 
-
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     const fileRelPath = "file_1.js";
     const newRelPath = "new.js";
@@ -364,7 +363,7 @@ describe("bufferHandler", () => {
         expect(assertDiffsCount(1)).toBe(true);
     });
 
-    test.only("SocketClient: registerEvents", async () => {
+    test("SocketClient: registerEvents", async () => {
         addRepo();
         addChangesDiff();
         const handler = new bufferHandler(statusBarItem);
@@ -377,7 +376,7 @@ describe("bufferHandler", () => {
         expect(webSocketClient.websocketClient.on.mock.calls[1][0]).toStrictEqual("connect");
     });
 
-    test.only("SocketClient: registerConnectionEvents", async () => {
+    test("SocketClient: registerConnectionEvents", async () => {
         addRepo();
         addChangesDiff();
         const handler = new bufferHandler(statusBarItem);
@@ -716,15 +715,12 @@ describe("bufferHandler", () => {
         assertTabFilesCount(1);
     })
 
-    test.only("SocketEvents: onMessage, Tab sent successfully", async () => {
+    test("SocketEvents: onMessage, Tab sent successfully", async () => {
         addRepo();
         addTabToBuffer();
-        // const handler = new bufferHandler(statusBarItem);
         const tabsHandler = new TabsHandler();
         const tabFiles = await tabsHandler.getYMLFiles();
-        console.log(`tabs: ${JSON.stringify(tabFiles)}`);
         const tabData = tabsHandler.groupTabData(tabFiles.files);
-        console.log(`tabData: ${JSON.stringify(tabData)}`)
         const webSocketEvents = new SocketEvents(statusBarItem, null, "ACCESS_TOKEN", true, tabFiles);
         const msg = {
             type: 'utf8',
