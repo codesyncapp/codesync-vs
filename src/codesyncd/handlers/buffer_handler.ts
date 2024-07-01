@@ -239,15 +239,15 @@ export class bufferHandler {
 			if (!this.activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			const diffs = await this.getDiffFiles();
 			// Get tabs data
-			const tabs_handler = new TabsHandler();
-			const tabYMLFiles = await tabs_handler.getYMLFiles();
+			const tabsHandler = new TabsHandler();
+			const tabYMLFiles = await tabsHandler.getYMLFiles();
 			let repoTabs: ITabYML[] = [];
 			let repoDiffs: IRepoDiffs[] = [];
 
 			if (canSendSocketData) {
 				if (tabYMLFiles.files.length > 0) {
 					CodeSyncLogger.debug(`Processing ${tabYMLFiles.files.length}/${tabYMLFiles.count} tabs, uuid=${this.instanceUUID}`);
-					repoTabs = tabs_handler.groupTabData(tabYMLFiles.files);
+					repoTabs = tabsHandler.groupTabData(tabYMLFiles.files);
 				}
 
 				if (diffs.files.length > 0) {
