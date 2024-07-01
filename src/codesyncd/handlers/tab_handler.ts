@@ -24,8 +24,8 @@ export class TabHandler {
 		const settings = generateSettings();
 		const tabFilePath = path.join(settings.TABS_PATH, tabFileName);
 		const relative = path.relative(settings.TABS_PATH, tabFilePath);
-		const is_relative = isRelativePath(relative);
-		if (!(is_relative && fs.existsSync(tabFilePath))) return;
+		const isRelative = isRelativePath(relative);
+		if (!(isRelative && fs.existsSync(tabFilePath))) return;
 		removeTabFile(tabFilePath, "removeTabFile");
 	}
 
