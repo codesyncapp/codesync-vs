@@ -105,6 +105,7 @@ export class SocketEvents {
             } else {
                 setDiffsBeingProcessed(currentDiffs);
             }
+
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
         }
 
@@ -148,12 +149,13 @@ export class SocketEvents {
         setDiffsBeingProcessed(diffsBeingProcessed);
     }
 
-    async onTabProcessed(tabFilePath: string) {
+    async onTabProcessed(tabFileName: string) {
         // Remove tab from tabsBeingProcessed
         const tabsBeingProcessed = getTabsBeingProcessed();
         if (tabsBeingProcessed.size <= 0) return;
-        const tab_handler = new TabHandler();
-        tab_handler.cleanTabFile(tabFilePath);
+        const tabHandler = new TabHandler();
+        tabHandler.removeTabFile(tabFileName);
+        tabsBeingProcessed.delete(tabFileName);
         setTabsBeingProcessed(tabsBeingProcessed);
     }
 

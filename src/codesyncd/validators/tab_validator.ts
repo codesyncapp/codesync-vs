@@ -23,7 +23,6 @@ export class TabValidator {
 		const repoEmail = configRepo.email;
 		// Remove tab if repo is disconnected
 		if (configRepo.is_disconnected) {
-			CodeSyncLogger.error(`Removing tab: Repo ${repoPath} is disconnected`);
 			return false;
 		}
 		// Validate repo belongs to logged-in user
