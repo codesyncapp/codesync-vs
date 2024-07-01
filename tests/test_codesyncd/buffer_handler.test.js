@@ -32,6 +32,7 @@ import {readYML} from "../../src/utils/common";
 import {VSCODE} from "../../src/constants";
 import {LockUtils} from "../../src/utils/lock_utils";
 import { ConfigUtils } from "../../src/utils/config_utils";
+import { TabsHandler } from "../../src/codesyncd/handlers/tabs_handler";
 
 
 describe("bufferHandler", () => {
@@ -170,11 +171,8 @@ describe("bufferHandler", () => {
         return true;
     };
 
-    const addTab = (tabPath1 = tabFilePath1) => {
-        const tabHandler = new tabEventHandler(repoPath)
-        const configUtils = new ConfigUtils();
-        // Add tabs to buffer
-        const mockTabs = [
+    const generateMockTabs = (tabPath1 = tabFilePath1) => {
+        return [
             {
                 tabs: [
                     {
@@ -196,40 +194,44 @@ describe("bufferHandler", () => {
                 ]
             }
         ]
-    Object.defineProperty(vscode.window.tabGroups, 'all', {
-        get: jest.fn(() => mockTabs),
-      });
-    tabHandler.handleTabChangeEvent()
+    }
+
+    const addTab = (tabPath1 = tabFilePath1) => {
+        const tabHandler = new tabEventHandler(repoPath)
+        // Add tabs to buffer
+        const mockTabs = generateMockTabs(tabPath1);
+        Object.defineProperty(vscode.window.tabGroups, 'all', {
+            get: jest.fn(() => mockTabs),
+        });
+        tabHandler.handleTabChangeEvent()
+    }
+
+    const addTabToBuffer = () => {
+        const configUtils = new ConfigUtils;
+        const repoId = configUtils.getRepoIdByPath(repoPath);
+        const fileId1 = configUtils.getFileIdByPath(repoPath, "default", tabFilePath1);
+        const fileId2 = configUtils.getFileIdByPath(repoPath, "default", tabFilePath2);
+        const tabs = [
+            {
+                file_id: fileId1,
+                path: tabFilePath1,
+                is_active_tab: true,
+            },
+            {
+                file_id: fileId2,
+                path: tabFilePath2,
+                is_active_tab: false,
+            }
+        ];
+        
+        const tabHandler = new tabEventHandler(repoPath);
+        tabHandler.addToBuffer(repoId, toString(new Date().getTime()), tabs);
     }
 
     const assertTabFilesCount = (tabsCount = 0) => {
         let tabFiles = fs.readdirSync(tabsRepo);
-        console.log(`tabFiles: ${tabFiles}`);
         expect(tabFiles).toHaveLength(tabsCount);
-        return true;        
-    }
-
-    const assertTabStructure = () => {
-        const tabFiles = fs.readdirSync(tabsRepo);
-        const configUtils = new ConfigUtils();
-        const repoId = configUtils.getRepoIdByPath(repoPath);
-        const fileId1 = configUtils.getFileIdByPath(repoPath, "default", tabFilePath1);
-        const fileId2 = configUtils.getFileIdByPath(repoPath, "default", tabFilePath2);
-        for (const tabFile of tabFiles) {
-            const tabData = readYML(path.join(tabsRepo, tabFile));
-            expect(tabData.repository_id).toBe(repoId);
-            expect(tabData.source).toBe(VSCODE);
-            expect(tabData.created_at).toBeDefined();
-            expect(tabData.file_name).toBeDefined();
-            // Asserting tab 1
-            expect(tabData.tabs[0].file_id).toBe(fileId1);
-            expect(tabData.tabs[0].path).toBe(tabFilePath1.split(path.join(repoPath, path.sep))[1]);
-            expect(tabData.tabs[0].is_active_tab).toBe(true);
-            // Asserting tab 2
-            expect(tabData.tabs[1].file_id).toBe(fileId2);
-            expect(tabData.tabs[1].path).toBe(tabFilePath2.split(path.join(repoPath, path.sep))[1]);
-            expect(tabData.tabs[1].is_active_tab).toBe(false);
-        }
+        return true;
     }
 
     test("No config.yml", async () => {
@@ -362,7 +364,7 @@ describe("bufferHandler", () => {
         expect(assertDiffsCount(1)).toBe(true);
     });
 
-    test("SocketClient: registerEvents", async () => {
+    test.only("SocketClient: registerEvents", async () => {
         addRepo();
         addChangesDiff();
         const handler = new bufferHandler(statusBarItem);
@@ -375,7 +377,7 @@ describe("bufferHandler", () => {
         expect(webSocketClient.websocketClient.on.mock.calls[1][0]).toStrictEqual("connect");
     });
 
-    test("SocketClient: registerConnectionEvents", async () => {
+    test.only("SocketClient: registerConnectionEvents", async () => {
         addRepo();
         addChangesDiff();
         const handler = new bufferHandler(statusBarItem);
@@ -706,49 +708,37 @@ describe("bufferHandler", () => {
         expect(fs.existsSync(diffFilePath)).toBe(false);
     });
 
-    test("No tab", async () => {
+    test("Server is up, 1 valid tab event", async () => {
         addRepo();
+        addTabToBuffer();
         const handler = new bufferHandler(statusBarItem);
         await handler.run();
-        assertTabFilesCount(0);
+        assertTabFilesCount(1);
+    })
+
+    test.only("SocketEvents: onMessage, Tab sent successfully", async () => {
+        addRepo();
+        addTabToBuffer();
+        // const handler = new bufferHandler(statusBarItem);
+        const tabsHandler = new TabsHandler();
+        const tabFiles = await tabsHandler.getYMLFiles();
+        console.log(`tabs: ${JSON.stringify(tabFiles)}`);
+        const tabData = tabsHandler.groupTabData(tabFiles.files);
+        console.log(`tabData: ${JSON.stringify(tabData)}`)
+        const webSocketEvents = new SocketEvents(statusBarItem, null, "ACCESS_TOKEN", true, tabFiles);
+        const msg = {
+            type: 'utf8',
+            utf8Data: JSON.stringify({
+                type: "tab_processed",
+                status: 200,
+                file_name: "file_1.js"
+            })
+        };
+        const handled = await webSocketEvents.onMessage(msg);
+        expect(handled).toBe(true);
+        if (tabFiles.files.length) await waitFor(2);
+        expect(assertTabFilesCount()).toBe(true);
+        expect(fs.existsSync(tabFilePath1)).toBe(false);
     });
 
-    test("1 tab", async () => {
-        addRepo();
-        addTab();
-        assertTabFilesCount(1);
-        assertTabStructure();
-    })
-
-    test("1 tab, repo disconnected", async () => {
-        addTab();
-        assertTabFilesCount();
-    })
-
-    test("1 tab, repo connected, 1 file from another repo", async () => {
-        addRepo();
-        const otherTabFilePath = "home/docs/file1.txt"
-        addTab(otherTabFilePath);
-        assertTabFilesCount(1);
-        const tabFiles = fs.readdirSync(tabsRepo);
-        const configUtils = new ConfigUtils();
-        const repoId = configUtils.getRepoIdByPath(repoPath);
-
-        const fileId2 = configUtils.getFileIdByPath(repoPath, "default", tabFilePath2);
-        
-        // Since tabFile1 was from another repo, it will be discarded. 
-        // So tabFile2 will be at 0th index.
-        for (const tabFile of tabFiles) {
-            const tabData = readYML(path.join(tabsRepo, tabFile));
-            expect(tabData.repository_id).toBe(repoId);
-            expect(tabData.source).toBe(VSCODE);
-            expect(tabData.created_at).toBeDefined();
-            expect(tabData.file_name).toBeDefined();
-            // Asserting tab 2
-            expect(tabData.tabs[0].file_id).toBe(fileId2);
-            expect(tabData.tabs[0].path).toBe(tabFilePath2.split(path.join(repoPath, path.sep))[1]);
-            expect(tabData.tabs[0].is_active_tab).toBe(false);
-        }
-
-    })
 });

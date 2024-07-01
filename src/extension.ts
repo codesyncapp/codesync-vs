@@ -41,6 +41,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 			// Capturing initial tabs
 			const handler = new tabEventHandler(repoPath);
+			// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
 			setTimeout(() => handler.handleTabChangeEvent(), 1);
 		}
 
@@ -94,16 +95,20 @@ export async function activate(context: vscode.ExtensionContext) {
 			try {
 				let fileChanged = false;
                 if(changeEvent.changed.length > 0){
-                    const oldPath = CodeSyncState.get(CODESYNC_STATES.ACTIVE_FILE_PATH);
+                    const oldPath = CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH);					
 					// @ts-ignore
-                    const filePath = changeEvent.changed[0]?.input?.uri.path;
-                    if(filePath !== oldPath) {
+					const filePath = changeEvent.changed[0]?.input?.uri.path;
+					if (!oldPath) {
+                        CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, filePath);
+					}
+					if(filePath !== CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH)) {
                         fileChanged = true;
-                        CodeSyncState.set(CODESYNC_STATES.ACTIVE_FILE_PATH, filePath);
+                        CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, filePath);
                     }
                 }
-                const isTabEvent = fileChanged || (changeEvent.opened.length > 0 || changeEvent.closed.length > 0)
+                const isTabEvent = fileChanged || changeEvent.opened.length > 0 || changeEvent.closed.length > 0
 				const handler = new tabEventHandler(repoPath);
+				// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
 				setTimeout(() => handler.handleTabChangeEvent(isTabEvent), 1);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment

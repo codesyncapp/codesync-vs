@@ -20,16 +20,12 @@ export class TabHandler {
 			};
 	}
 
-	cleanTabFile(tabFilePath: string) {
-		TabHandler.removeTabFile(tabFilePath);
-	}
-
-	static removeTabFile(tabFileName: string) {
+	removeTabFile(tabFileName: string) {
 		const settings = generateSettings();
 		const tabFilePath = path.join(settings.TABS_PATH, tabFileName);
 		const relative = path.relative(settings.TABS_PATH, tabFilePath);
 		const is_relative = isRelativePath(relative);
-        if (!(is_relative && fs.existsSync(tabFilePath))) return;
+		if (!(is_relative && fs.existsSync(tabFilePath))) return;
 		removeTabFile(tabFilePath, "removeTabFile");
 	}
 
