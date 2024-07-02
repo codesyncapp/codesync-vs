@@ -114,7 +114,8 @@ export class SocketEvents {
         errorCount = 0;   
         const tabsHandler = new TabsHandler(this.repoTabs, this.accessToken);
         const validTabsData = await tabsHandler.run();
-        if (!validTabsData) return;
+        if (!validTabsData || (validTabsData && validTabsData?.length <= 0)) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+        // @ts-ignore
         validTabs = validTabs.concat(validTabsData);
         // Keep track of tabs in State
         const currentTabs = new Set(

@@ -35,13 +35,9 @@ export class TabsHandler {
         const validTabs: ITabYML[] = [];
         let tabsSize = 0;
         if ( !this.tabYmlFiles ) return;
-        for (const tab of this.tabYmlFiles ) {
-            const tab_handler = new TabHandler();
-            const tabToSend = await tab_handler.createTabToSend(tab);
-            if (!tabToSend) {
-                CodeSyncLogger.error(`createTabToSend() returned empty response`);
-                return;
-            }
+        for (const tabYMLFile of this.tabYmlFiles ) {
+            const tabHandler = new TabHandler();
+            const tabToSend = tabHandler.createTabToSend(tabYMLFile);
             tabsSize += JSON.stringify(tabToSend).length;
             if (tabsSize < TAB_SIZE_LIMIT) {
                 validTabs.push(tabToSend);
@@ -109,33 +105,21 @@ export class TabsHandler {
         }
     }
 
-    groupTabData = (tabFiles: string[]) => {
-        const repoTabs: ITabYML[] = [];
+    getTabsData = (tabFiles: string[]) => {
+        const tabsData: ITabYML[] = tabFiles.map(tabFileName => {
+            const filePath = path.join(this.settings.TABS_PATH, tabFileName);
+            const tabData: ITabYML = readYML(filePath);
+            return {
+                repository_id: tabData.repository_id,
+                created_at: tabData.created_at,
+                source: tabData.source,
+                file_name: tabData.file_name,
+                tabs: tabData.tabs
+            };
+        });
+        return tabsData;
+    }        
     
-        for (const tabFile of tabFiles) {
-            const filePath = path.join(this.settings.TABS_PATH, tabFile);
-            const tabData = readYML(filePath) as ITabYML;
-            // Find the index of the repo with the current repo_id
-            const index = repoTabs.findIndex(repoTab => repoTab.repository_id === tabData.repository_id);
-            
-            if (index > -1) {
-                // Repo exists, so append the tabs data
-                repoTabs[index].tabs.push(...tabData.tabs);
-            } else {
-                // Repo does not exist, so create a new entry
-                repoTabs.push({
-                    repository_id: tabData.repository_id,
-                    created_at: tabData.created_at,
-                    source: tabData.source,
-                    file_name: tabData.file_name,
-                    tabs: tabData.tabs
-                });
-            }
-        }
-        
-        return repoTabs;
-    
-    }
     
 	sendTabsToServer(webSocketConnection: any, tabEventsToSend: ITabYML[]) {
 		// Send tab to server

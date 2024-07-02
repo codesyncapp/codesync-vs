@@ -98,9 +98,6 @@ export async function activate(context: vscode.ExtensionContext) {
                     const oldPath = CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH);					
 					// @ts-ignore
 					const filePath = changeEvent.changed[0]?.input?.uri.path;
-					if (!oldPath) {
-                        CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, filePath);
-					}
 					if(filePath !== CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH)) {
                         fileChanged = true;
                         CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, filePath);

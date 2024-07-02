@@ -57,13 +57,10 @@ export class tabEventHandler {
 				const tabFilePath = tab.input.uri.path;
 				const splitPath = tabFilePath.split(`${this.repoPath}${path.sep}`);
 				
-				if (splitPath.length == 2) {
+				if (splitPath.length === 2) {
 					// Get file ID using path
 					const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, tabFilePath);
 					const isActiveTab: boolean = tab.isActive;
-					if (isActiveTab == true) {
-						CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, tabFilePath);
-					}
 					return { file_id: fileId, path: splitPath[1], is_active_tab: isActiveTab };
 				} else {
 					return null;
@@ -73,7 +70,6 @@ export class tabEventHandler {
 		).filter((tab): tab is ITabFile => tab !== null); // Filter out null values
 		// If no tabs found
 		if (tabs.length == 0) return;
-
 		// Adding to buffer
 		this.addToBuffer(repoId, createdAt, tabs);
 
