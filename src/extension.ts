@@ -41,7 +41,8 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 			// Capturing initial tabs
 			const handler = new tabEventHandler(repoPath);
-			handler.handleTabChangeEvent();
+			// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
+			setTimeout(() => handler.handleTabChangeEvent(), 1);
 		}
 
 		// Register workspace events
@@ -92,9 +93,20 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Register tab change event
 		vscode.window.tabGroups.onDidChangeTabs(changeEvent => {
 			try {
-				const isTabEvent = changeEvent.changed.length == 0 && (changeEvent.opened.length > 0 || changeEvent.closed.length > 0)				
+				let fileChanged = false;
+                if(changeEvent.changed.length > 0){
+                    const oldPath = CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH);					
+					// @ts-ignore
+					const filePath = changeEvent.changed[0]?.input?.uri.path;
+					if(filePath !== CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH)) {
+                        fileChanged = true;
+                        CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, filePath);
+                    }
+                }
+                const isTabEvent = fileChanged || changeEvent.opened.length > 0 || changeEvent.closed.length > 0
 				const handler = new tabEventHandler(repoPath);
-				handler.handleTabChangeEvent(isTabEvent);
+				// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
+				setTimeout(() => handler.handleTabChangeEvent(isTabEvent), 1);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore

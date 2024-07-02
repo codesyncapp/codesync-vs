@@ -147,6 +147,8 @@ describe("addTab", () => {
         expect(tabFiles).toHaveLength(1);
         const tabFilePath = path.join(tabsRepo, tabFiles[0]);
         const tabData = readYML(tabFilePath);
+        const filePath1 = newFilePath1.split(path.join(repoPath, path.sep));
+        const filePath2 = newFilePath2.split(path.join(repoPath, path.sep));
         // Assert source == 'vscode'
         expect(tabData.source).toEqual(VSCODE);
         // Assert created_at value of tab file and testing value to be in range of 1 second
@@ -155,8 +157,8 @@ describe("addTab", () => {
         expect(tabData.repository_id).toEqual(repo_id);
         // Assert tabs
         expect(tabData.tabs[0].file_id).toBe(tab1_fileId);
-        expect(tabData.tabs[0].path).toBe(newFilePath1);
+        expect(tabData.tabs[0].path).toBe(filePath1[1]);
         expect(tabData.tabs[1].file_id).toBeNull();
-        expect(tabData.tabs[1].path).toBe(newFilePath2);
+        expect(tabData.tabs[1].path).toBe(filePath2[1]);
     });
 })

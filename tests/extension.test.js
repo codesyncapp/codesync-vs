@@ -57,6 +57,7 @@ describe("Extension: activate", () => {
     const user = {
         email: TEST_EMAIL,
     };
+    let mockTabs;
 
     beforeEach(() => {
         fetch.resetMocks();
@@ -74,6 +75,26 @@ describe("Extension: activate", () => {
         fs.mkdirSync(baseRepoPath, {recursive: true});
 
         createSystemDirectories();
+        mockTabs = [
+            {
+                tabs: [
+                    {
+                        input: {
+                                uri: {
+                                    path: "newFilePath1",
+                            }
+                        }
+                    },
+                    {
+                        input: {
+                                uri: {
+                                    path: "newFilePath2",
+                            }
+                        }
+                    },
+                ]
+            }
+        ]
     });
 
     afterEach(() => {
@@ -326,6 +347,9 @@ describe("Extension: activate", () => {
     });
 
     test("With active user, repo is disconnected", async () => {
+    Object.defineProperty(vscode.window.tabGroups, 'all', {
+        get: jest.fn(() => mockTabs),
+      });
         addUser(baseRepoPath);
         const _configData = {...configData};
         _configData.repos[repoPath].is_disconnected = true;
@@ -413,6 +437,9 @@ describe("Extension: activate", () => {
     });
 
     test("With deactivated user, repo is disconnected", async () => {
+    Object.defineProperty(vscode.window.tabGroups, 'all', {
+        get: jest.fn(() => mockTabs),
+      });
         addUser(baseRepoPath);
         fetchMock.mockResponseOnce(JSON.stringify({error: {message: "INVALID_ACCESS_TOKEN"}}));
         const _configData = {...configData};
