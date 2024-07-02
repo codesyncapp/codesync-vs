@@ -92,11 +92,11 @@ export class TabsHandler {
             const tabValidator = new TabValidator();
             // Validating structure
             if (!tabData || !tabValidator.validateYMLFile(tabData)) {
-            CodeSyncLogger.info(`Removing file: Skipping invalid tab: ${tabFile}`, tabData);
-            removeFile(filePath, "getTabFiles");
-            return false;
-        }
-        return true;
+                CodeSyncLogger.info(`Removing file: Skipping invalid tab: ${tabFile}`, tabData);
+                removeFile(filePath, "getTabFiles");
+                return false;
+            }
+            return true;
         });
 
         return {

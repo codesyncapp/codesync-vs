@@ -69,7 +69,7 @@ export class tabEventHandler {
 			})
 		).filter((tab): tab is ITabFile => tab !== null); // Filter out null values
 		// If no tabs found
-		if (tabs.length == 0) return;
+		if (tabs.length === 0) return;
 		// Adding to buffer
 		this.addToBuffer(repoId, createdAt, tabs);
 
