@@ -13,6 +13,7 @@ import { RepoState } from "../utils/repo_state_utils";
 import { UserState } from "../utils/user_utils";
 import { CodeSyncLogger } from "../logger";
 import { TabValidator } from "../codesyncd/validators/tab_validator";
+import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 
 export class tabEventHandler {
 	repoPath = "";
@@ -60,6 +61,9 @@ export class tabEventHandler {
 					// Get file ID using path
 					const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, tabFilePath);
 					const isActiveTab: boolean = tab.isActive;
+					if (isActiveTab == true) {
+						CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, tabFilePath);
+					}
 					return { file_id: fileId, path: splitPath[1], is_active_tab: isActiveTab };
 				} else {
 					return null;
