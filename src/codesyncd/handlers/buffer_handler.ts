@@ -241,13 +241,13 @@ export class bufferHandler {
 			// Get tabs data
 			const tabsHandler = new TabsHandler();
 			const tabYMLFiles = await tabsHandler.getYMLFiles();
-			let repoTabs: ITabYML[] = [];
+			let tabsData: ITabYML[] = [];
 			let repoDiffs: IRepoDiffs[] = [];
 
 			if (canSendSocketData) {
 				if (tabYMLFiles.files.length > 0) {
 					CodeSyncLogger.debug(`Processing ${tabYMLFiles.files.length}/${tabYMLFiles.count} tabs, uuid=${this.instanceUUID}`);
-					repoTabs = tabsHandler.groupTabData(tabYMLFiles.files);
+					tabsData = tabsHandler.getTabsData(tabYMLFiles.files);
 				}
 
 				if (diffs.files.length > 0) {
@@ -259,7 +259,7 @@ export class bufferHandler {
 			if (!tabYMLFiles.files.length && !diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);;
 
 			// Create Websocket client
-			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs, repoTabs);
+			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs, tabsData);
 			webSocketClient.connect(canSendSocketData);
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment

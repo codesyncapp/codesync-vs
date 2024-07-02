@@ -9,7 +9,7 @@ import { isRelativePath } from "../utils";
 export class TabHandler {
 	
 	constructor() {}
-
+	
 	createTabToSend(tabData: ITabYML) {
 		return {
 			repository_id : tabData.repository_id,
