@@ -151,11 +151,11 @@ export class SocketEvents {
     }
 
     async onTabProcessed(tabFileName: string) {
+        const tabHandler = new TabHandler();
+        tabHandler.removeTabFile(tabFileName);
         // Remove tab from tabsBeingProcessed
         const tabsBeingProcessed = getTabsBeingProcessed();
         if (tabsBeingProcessed.size <= 0) return;
-        const tabHandler = new TabHandler();
-        tabHandler.removeTabFile(tabFileName);
         tabsBeingProcessed.delete(tabFileName);
         setTabsBeingProcessed(tabsBeingProcessed);
     }

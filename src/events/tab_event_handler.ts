@@ -11,9 +11,7 @@ import { pathUtils } from "../utils/path_utils";
 import { generateSettings } from "../settings";
 import { RepoState } from "../utils/repo_state_utils";
 import { UserState } from "../utils/user_utils";
-import { CodeSyncLogger } from "../logger";
 import { TabValidator } from "../codesyncd/validators/tab_validator";
-import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 
 export class tabEventHandler {
 	repoPath = "";
@@ -45,7 +43,6 @@ export class tabEventHandler {
 		const configUtils = new ConfigUtils();
 		const repoId = configUtils.getRepoIdByPath(this.repoPath);
 		if (!repoId) return
-
 		// Get list of current tabs
 		const openTabs = vscode.window.tabGroups.all;
 		const tabs: ITabFile[] = openTabs.flatMap(tabGroup => 
@@ -56,7 +53,6 @@ export class tabEventHandler {
 				// @ts-ignore
 				const tabFilePath = tab.input.uri.path;
 				const splitPath = tabFilePath.split(`${this.repoPath}${path.sep}`);
-				
 				if (splitPath.length === 2) {
 					// Get file ID using path
 					const fileId = configUtils.getFileIdByPath(this.repoPath, this.branch, tabFilePath);
@@ -65,14 +61,13 @@ export class tabEventHandler {
 				} else {
 					return null;
 				}
-
-			})
+			}
+		)
 		).filter((tab): tab is ITabFile => tab !== null); // Filter out null values
 		// If no tabs found
 		if (tabs.length === 0) return;
 		// Adding to buffer
 		this.addToBuffer(repoId, createdAt, tabs);
-
 	}
 
 	addToBuffer = (repoId: number, createdAt: string, tabs: ITabFile[]) => {

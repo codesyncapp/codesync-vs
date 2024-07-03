@@ -720,14 +720,14 @@ describe("bufferHandler", () => {
         addTabToBuffer();
         const tabsHandler = new TabsHandler();
         const tabFiles = await tabsHandler.getYMLFiles();
-        const tabData = tabsHandler.groupTabData(tabFiles.files);
-        const webSocketEvents = new SocketEvents(statusBarItem, null, "ACCESS_TOKEN", true, tabFiles);
+        const tabData = tabsHandler.getTabsData(tabFiles.files);
+        const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
         const msg = {
             type: 'utf8',
             utf8Data: JSON.stringify({
                 type: "tab_processed",
                 status: 200,
-                file_name: "file_1.js"
+                file_name: tabData[0].file_name
             })
         };
         const handled = await webSocketEvents.onMessage(msg);

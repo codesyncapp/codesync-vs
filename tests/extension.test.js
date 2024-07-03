@@ -4,7 +4,9 @@ import vscode from "vscode";
 import yaml from "js-yaml";
 import untildify from "untildify";
 
+import {pathUtils} from "../src/utils/path_utils";
 import {activate} from "../src/extension";
+import {DEFAULT_BRANCH} from "../src/constants";
 import {
     contextVariables,
     COMMAND,
@@ -58,6 +60,8 @@ describe("Extension: activate", () => {
         email: TEST_EMAIL,
     };
     let mockTabs;
+    let tabsRepo;
+    let pathUtilsObj;
 
     beforeEach(() => {
         fetch.resetMocks();
@@ -70,9 +74,11 @@ describe("Extension: activate", () => {
         setWorkspaceFolders(repoPath);
         untildify.mockReturnValue(baseRepoPath);
         global.IS_CODESYNC_TEST_MODE = true;
-
+        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
+        tabsRepo = pathUtilsObj.getTabsRepo();
         fs.mkdirSync(repoPath, {recursive: true});
         fs.mkdirSync(baseRepoPath, {recursive: true});
+        fs.mkdirSync(tabsRepo, {recursive:true});
 
         createSystemDirectories();
         mockTabs = [
@@ -289,6 +295,98 @@ describe("Extension: activate", () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
     });
 
+    test("With deactivated user, repo is disconnected", async () => {
+        addUser(baseRepoPath);
+        fetchMock.mockResponseOnce(JSON.stringify({error: {message: "INVALID_ACCESS_TOKEN"}}));
+        const _configData = {...configData};
+        _configData.repos[repoPath].is_disconnected = true;
+        fs.writeFileSync(configPath, yaml.dump(_configData));
+        console.log(`[With deactivated user, repo is disconnected], _configData: ${JSON.stringify(_configData)}`);
+        await activate(vscode.ExtensionContext);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
+        // showLogin should be true
+        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(false);
+        // showConnectRepoView should be true
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.showConnectRepoView);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
+        // isSubDir should be false
+        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.isSubDir);
+        expect(vscode.commands.executeCommand.mock.calls[2][2]).toStrictEqual(false);
+        // isSyncIgnored should be false
+        expect(vscode.commands.executeCommand.mock.calls[3][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[3][1]).toStrictEqual(contextVariables.isSyncIgnored);
+        expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
+        expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(true);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
+        expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
+        expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(true);
+        // Should show Reconnect Msg
+        const msg = getDisconnectedRepoMsg(repoPath);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION_BUTTON.RECONNECT_REPO);
+    });
+
+    test("With active user, repo is disconnected", async () => {
+        addUser(baseRepoPath);
+        const _configData = {...configData};
+        _configData.repos[repoPath].is_disconnected = true;
+        fs.writeFileSync(configPath, yaml.dump(_configData));
+        await activate(vscode.ExtensionContext);
+        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
+        // showLogin should be true
+        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
+        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(false);
+        // showConnectRepoView should be true
+        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.showConnectRepoView);
+        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
+        // isSubDir should be false
+        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.isSubDir);
+        expect(vscode.commands.executeCommand.mock.calls[2][2]).toStrictEqual(false);
+        // isSyncIgnored should be false
+        expect(vscode.commands.executeCommand.mock.calls[3][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[3][1]).toStrictEqual(contextVariables.isSyncIgnored);
+        expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
+        expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
+        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
+        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
+        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
+        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
+        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(true);
+
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
+        // Should show Reconnect Msg
+        const msg = getDisconnectedRepoMsg(repoPath);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
+        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION_BUTTON.RECONNECT_REPO);
+    });
+
     test("With active user, repo not connected", async () => {
         addUser(baseRepoPath);
         await activate(vscode.ExtensionContext);
@@ -346,50 +444,6 @@ describe("Extension: activate", () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
     });
 
-    test("With active user, repo is disconnected", async () => {
-    Object.defineProperty(vscode.window.tabGroups, 'all', {
-        get: jest.fn(() => mockTabs),
-      });
-        addUser(baseRepoPath);
-        const _configData = {...configData};
-        _configData.repos[repoPath].is_disconnected = true;
-        fs.writeFileSync(configPath, yaml.dump(_configData));
-        await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
-        // showLogin should be true
-        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
-        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(false);
-        // showConnectRepoView should be true
-        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.showConnectRepoView);
-        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
-        // isSubDir should be false
-        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.isSubDir);
-        expect(vscode.commands.executeCommand.mock.calls[2][2]).toStrictEqual(false);
-        // isSyncIgnored should be false
-        expect(vscode.commands.executeCommand.mock.calls[3][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[3][1]).toStrictEqual(contextVariables.isSyncIgnored);
-        expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(false);
-        expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
-        expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
-        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
-        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
-        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
-        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(true);
-
-        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
-        // Should show Reconnect Msg
-        const msg = getDisconnectedRepoMsg(repoPath);
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
-        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION_BUTTON.RECONNECT_REPO);
-    });
-
     test("With deactivated user, repo is connected", async () => {
         fetch.resetMocks();
         fetchMock.mockResponse(JSON.stringify({error: {message: "INVALID_ACCESS_TOKEN"}}), {status: HttpStatusCodes.USER_ACCOUNT_DEACTIVATED});
@@ -434,59 +488,6 @@ describe("Extension: activate", () => {
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.ACCOUNT_DEACTIVATED);
         expect(vscode.window.showErrorMessage.mock.calls[0][1]).toStrictEqual(NOTIFICATION_BUTTON.REACTIVATE_ACCOUNT);
-    });
-
-    test("With deactivated user, repo is disconnected", async () => {
-    Object.defineProperty(vscode.window.tabGroups, 'all', {
-        get: jest.fn(() => mockTabs),
-      });
-        addUser(baseRepoPath);
-        fetchMock.mockResponseOnce(JSON.stringify({error: {message: "INVALID_ACCESS_TOKEN"}}));
-        const _configData = {...configData};
-        _configData.repos[repoPath].is_disconnected = true;
-        fs.writeFileSync(configPath, yaml.dump(_configData));
-        await activate(vscode.ExtensionContext);
-        expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
-        // showLogin should be true
-        expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual(contextVariables.showLogIn);
-        expect(vscode.commands.executeCommand.mock.calls[0][2]).toStrictEqual(false);
-        // showConnectRepoView should be true
-        expect(vscode.commands.executeCommand.mock.calls[1][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[1][1]).toStrictEqual(contextVariables.showConnectRepoView);
-        expect(vscode.commands.executeCommand.mock.calls[1][2]).toStrictEqual(false);
-        // isSubDir should be false
-        expect(vscode.commands.executeCommand.mock.calls[2][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[2][1]).toStrictEqual(contextVariables.isSubDir);
-        expect(vscode.commands.executeCommand.mock.calls[2][2]).toStrictEqual(false);
-        // isSyncIgnored should be false
-        expect(vscode.commands.executeCommand.mock.calls[3][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[3][1]).toStrictEqual(contextVariables.isSyncIgnored);
-        expect(vscode.commands.executeCommand.mock.calls[3][2]).toStrictEqual(false);
-        expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
-        expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
-        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
-        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
-        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
-        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(true);
-        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(0);
-        expect(vscode.commands.executeCommand.mock.calls[4][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[4][1]).toStrictEqual(contextVariables.codesyncActivated);
-        expect(vscode.commands.executeCommand.mock.calls[4][2]).toStrictEqual(true);
-        expect(vscode.commands.executeCommand.mock.calls[5][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[5][1]).toStrictEqual(contextVariables.upgradePricingPlan);
-        expect(vscode.commands.executeCommand.mock.calls[5][2]).toStrictEqual(false);
-        expect(vscode.commands.executeCommand.mock.calls[6][0]).toStrictEqual(contextVariables.setContext);
-        expect(vscode.commands.executeCommand.mock.calls[6][1]).toStrictEqual(contextVariables.isDisconnectedRepo);
-        expect(vscode.commands.executeCommand.mock.calls[6][2]).toStrictEqual(true);
-        // Should show Reconnect Msg
-        const msg = getDisconnectedRepoMsg(repoPath);
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-        expect(vscode.window.showErrorMessage.mock.calls[0][0]).toBe(msg);
-        expect(vscode.window.showErrorMessage.mock.calls[0][1]).toBe(NOTIFICATION_BUTTON.RECONNECT_REPO);
     });
 
     test("With user, current repo is a sub directory of a connected repo", async () => {
