@@ -105,6 +105,7 @@ export class SocketEvents {
             } else {
                 setDiffsBeingProcessed(currentDiffs);
             }
+
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
         }
 
@@ -113,11 +114,12 @@ export class SocketEvents {
         errorCount = 0;   
         const tabsHandler = new TabsHandler(this.repoTabs, this.accessToken);
         const validTabsData = await tabsHandler.run();
-        if (!validTabsData) return;
+        if (!validTabsData?.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+        // @ts-ignore
         validTabs = validTabs.concat(validTabsData);
         // Keep track of tabs in State
         const currentTabs = new Set(
-            validTabs.flatMap(validTab => validTab.tabs.map(tab => tab.path))
+            validTabs.map(validTab => validTab.file_name)
           );
         let tabsBeingProcessed = getTabsBeingProcessed();
         if (tabsBeingProcessed.size) {
@@ -148,12 +150,13 @@ export class SocketEvents {
         setDiffsBeingProcessed(diffsBeingProcessed);
     }
 
-    async onTabProcessed(tabFilePath: string) {
+    async onTabProcessed(tabFileName: string) {
+        const tabHandler = new TabHandler();
+        tabHandler.removeTabFile(tabFileName);
         // Remove tab from tabsBeingProcessed
         const tabsBeingProcessed = getTabsBeingProcessed();
         if (tabsBeingProcessed.size <= 0) return;
-        const tab_handler = new TabHandler();
-        tab_handler.cleanTabFile(tabFilePath);
+        tabsBeingProcessed.delete(tabFileName);
         setTabsBeingProcessed(tabsBeingProcessed);
     }
 

@@ -5,7 +5,7 @@ import { glob } from 'glob';
 
 import { getDiffsBeingProcessed, isValidDiff, getRandomIndex } from '../utils';
 import { CodeSyncLogger } from '../../logger';
-import { IFileToDiff, IRepoDiffs, ITabYML, IUser } from '../../interface';
+import { IFileToDiff, IRepoDiffs, ITabFile, ITabYML, IUser } from '../../interface';
 import { DAY, DIFF_FILES_PER_ITERATION, FORCE_CONNECT_WEBSOCKET_AFTER, RETRY_WEBSOCKET_CONNECTION_AFTER } from "../../constants";
 import { generateSettings } from "../../settings";
 import { getDefaultIgnorePatterns, readYML, shouldIgnorePath } from '../../utils/common';
@@ -21,14 +21,14 @@ export class bufferHandler {
 	/*
 	 * Each file in .diffs directory contains data like:
 
-        repo_path: /Users/basit/projects/codesync/codesync
-        branch: plugins
-        path: codesync/init.py
-        diff: |
-         @@ -14070,8 +14070,10 @@
-             pass%0A
-         +#
-        created_at: '2021-01-01 11:49:36.121'
+		repo_path: /Users/basit/projects/codesync/codesync
+		branch: plugins
+		path: codesync/init.py
+		diff: |
+		 @@ -14070,8 +14070,10 @@
+			 pass%0A
+		 +#
+		created_at: '2021-01-01 11:49:36.121'
 
 	   Each file in .tabs directory contains data like:
 
@@ -73,36 +73,36 @@ export class bufferHandler {
 	configJSON: any;
 	defaultIgnorePatterns: string[];
 	instanceUUID: string;
-	activeUser: IUser|null;
+	activeUser: IUser | null;
 	// Log run msg after 2 minutes
 	LOG_BUFFER_HANDLER_RUN_AFTER = 5 * 60 * 1000;
-	
+
 
 	constructor(statusBarItem: vscode.StatusBarItem) {
 		this.statusBarItem = statusBarItem;
 		this.settings = generateSettings();
 		this.configJSON = readYML(this.settings.CONFIG_PATH);
-        this.defaultIgnorePatterns = getDefaultIgnorePatterns();
+		this.defaultIgnorePatterns = getDefaultIgnorePatterns();
 		this.instanceUUID = CodeSyncState.get(CODESYNC_STATES.INSTANCE_UUID);
 		this.activeUser = null;
 	}
 	getDiffFiles = async () => {
 		const diffsBeingProcessed = getDiffsBeingProcessed();
-        const invalidDiffFiles = await glob("**", { 
+		const invalidDiffFiles = await glob("**", {
 			ignore: "*.yml",
 			nodir: true,
 			dot: true,
-            cwd: this.settings.DIFFS_REPO
-        });
-		
+			cwd: this.settings.DIFFS_REPO
+		});
+
 		// Clean invalid diff Files
 		invalidDiffFiles.forEach(invalidDiffFile => {
 			const filePath = path.join(this.settings.DIFFS_REPO, invalidDiffFile);
 			removeFile(filePath, "cleaningInvalidDiffFiles");
 		});
 
-        const diffs = await glob("*.yml", { 
-            cwd: this.settings.DIFFS_REPO,
+		const diffs = await glob("*.yml", {
+			cwd: this.settings.DIFFS_REPO,
 			maxDepth: 1,
 			nodir: true,
 			dot: true,
@@ -113,9 +113,9 @@ export class bufferHandler {
 		let randomIndex = undefined;
 		for (let index = 0; index < Math.min(DIFF_FILES_PER_ITERATION, diffs.length); index++) {
 			do {
-				randomIndex = getRandomIndex( diffs.length );
+				randomIndex = getRandomIndex(diffs.length);
 			}
-			while ( usedIndices.includes( randomIndex ) );
+			while (usedIndices.includes(randomIndex));
 			usedIndices.push(randomIndex);
 			randomDiffFiles.push(diffs[randomIndex]);
 		}
@@ -155,7 +155,7 @@ export class bufferHandler {
 				removeFile(filePath, "getDiffFiles");
 				return false;
 			}
-			
+
 			if (!(diffData.branch in configRepo.branches)) {
 				// TODO: Look into syncing offline branch
 				// Removing diffs of non-synced branch if diff was created 5 days ago and plan limit is not reached
@@ -165,13 +165,13 @@ export class bufferHandler {
 					if (repoLimitsState.planLimitReached) {
 						CodeSyncLogger.error(
 							`Keeping diff: Branch=${diffData.branch} is not synced. Repo=${diffData.repo_path}`,
-							"", 
+							"",
 							configRepo.email
 						);
 					} else {
 						CodeSyncLogger.error(
 							`Removing diff: Branch=${diffData.branch} is not synced. Repo=${diffData.repo_path}`,
-							"", 
+							"",
 							configRepo.email
 						);
 						removeFile(filePath, "getDiffFiles");
@@ -231,25 +231,35 @@ export class bufferHandler {
 		}
 
 		if (!canConnect) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-
 		CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, true);
-		
+
 		try {
 			// Check if we have an active user
 			this.activeUser = new UserState().getUser();
 			if (!this.activeUser) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
 			const diffs = await this.getDiffFiles();
-			if (!diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
-			const repoDiffs = this.groupRepoDiffs(diffs.files);
 			// Get tabs data
-			const tabs_handler = new TabsHandler
-			const tabYMLFiles = await tabs_handler.getYMLFiles();
-			if (!tabYMLFiles.files.length) return;		
-			if (canSendSocketData) CodeSyncLogger.debug(`Processing ${tabYMLFiles.files.length}/${tabYMLFiles.count} tabs, uuid=${this.instanceUUID}`);
-			const repoTabs = tabs_handler.groupTabData(tabYMLFiles.files);
+			const tabsHandler = new TabsHandler();
+			const tabYMLFiles = await tabsHandler.getYMLFiles();
+			let tabsData: ITabYML[] = [];
+			let repoDiffs: IRepoDiffs[] = [];
+
+			if (canSendSocketData) {
+				if (tabYMLFiles.files.length > 0) {
+					CodeSyncLogger.debug(`Processing ${tabYMLFiles.files.length}/${tabYMLFiles.count} tabs, uuid=${this.instanceUUID}`);
+					tabsData = tabsHandler.getTabsData(tabYMLFiles.files);
+				}
+
+				if (diffs.files.length > 0) {
+					CodeSyncLogger.debug(`Processing ${diffs.files.length}/${diffs.count} diffs, uuid=${this.instanceUUID}`);
+					repoDiffs = this.groupRepoDiffs(diffs.files);
+				}
+			}
+
+			if (!tabYMLFiles.files.length && !diffs.files.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);;
+
 			// Create Websocket client
-			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs, repoTabs);
+			const webSocketClient = new SocketClient(this.statusBarItem, this.activeUser.access_token, repoDiffs, tabsData);
 			webSocketClient.connect(canSendSocketData);
 		} catch (e) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment

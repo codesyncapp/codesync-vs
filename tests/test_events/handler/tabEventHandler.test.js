@@ -10,19 +10,17 @@ import {
     Config,
     getConfigFilePath,
 } from "../../helpers/helpers";
+
+import {bufferHandler} from "../../../src/codesyncd/handlers/buffer_handler";
 import { readYML } from "../../../src/utils/common";
+import { ConfigUtils } from "../../../src//utils/config_utils";
 import { VSCODE } from "../../../src/constants";
 import { pathUtils } from "../../../src/utils/path_utils";
 import { tabEventHandler } from "../../../src/events/tab_event_handler";
-import { createSystemDirectories } from "../../../src/utils/setup_utils";
+import { createSystemDirectories, generateRandomNumber } from "../../../src/utils/setup_utils";
 
-
-// Helper method that asserts that no tabs were recorded
-const assertNoTabsRecorded = (tabsRepo) => {
-    // Verify no tab file should be generated
-    let tabFiles = fs.readdirSync(tabsRepo);
-    expect(tabFiles).toHaveLength(0);    
-}
+let tabFilePath2;
+const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 
 describe("addTab", () => {
 	const repoPath = randomRepoPath();
@@ -43,20 +41,33 @@ describe("addTab", () => {
         fs.mkdirSync(tabsRepo, { recursive: true });
         createSystemDirectories();   
         untildify.mockReturnValue(baseRepoPath);
-        const returnedPath = untildify();
     });
 
     afterEach(() => {
         fs.rmSync(repoPath, { recursive: true, force: true });
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
-    
+
+    const assertTabFilesCount = (tabsCount = 0) => {
+        let tabFiles = fs.readdirSync(tabsRepo);
+        expect(tabFiles).toHaveLength(tabsCount);
+        return true;
+    }
+
+    // No file should be created if no tab event occured
+    test("No tab", async () => {
+        configUtil.addRepo();
+        const handler = new bufferHandler(statusBarItem);
+        await handler.run();
+        assertTabFilesCount();
+    });
+
     // Skips case when repo exists
     test("Should be skipped if repo does not exist",() => {
         const handler = new tabEventHandler();
         handler.handleTabChangeEvent();
         // Verify no tab file should be generated
-        assertNoTabsRecorded(tabsRepo)   
+        assertTabFilesCount()   
         });
 
     //  Skips cases where repo exists, but is not connected
@@ -64,8 +75,7 @@ describe("addTab", () => {
         const handler = new tabEventHandler(repoPath);
         handler.handleTabChangeEvent();
         // Verify no tab file should be generated
-        assertNoTabsRecorded(tabsRepo)   
-
+        assertTabFilesCount()   
     })
 
     // Skip case where repo is connected, but user account is not valid
@@ -75,7 +85,7 @@ describe("addTab", () => {
         const handler = new tabEventHandler(repoPath);
         handler.handleTabChangeEvent(false);
         // Verify no tab file should be generated
-        assertNoTabsRecorded(tabsRepo)   
+        assertTabFilesCount()   
     })
 
     // Skip case where user account is not valid, but repo is not connected 
@@ -84,7 +94,7 @@ describe("addTab", () => {
         const handler = new tabEventHandler(repoPath);
         handler.handleTabChangeEvent();
         // Verify no tab file should be generated
-        assertNoTabsRecorded(tabsRepo)
+        assertTabFilesCount()   
     })
 
     // Should skip if not opened/closed event
@@ -96,7 +106,7 @@ describe("addTab", () => {
         // Pass isTabEvent=false, which means changeEvent.changed.length > 0
         handler.handleTabChangeEvent(false);
         // Verify no tab file should be generated
-        assertNoTabsRecorded(tabsRepo)
+        assertTabFilesCount()   
     })
 
     // Skip if invalid repo id
@@ -107,9 +117,10 @@ describe("addTab", () => {
         const handler = new tabEventHandler(invalid_repo_path);
         handler.handleTabChangeEvent(true);
         // Verify no tab file should be generated
-        assertNoTabsRecorded(tabsRepo)
+        assertTabFilesCount()   
     })
 
+    // Should create file in positive case
     test("Tabs data in positive case", () => {
         const createdAt = new Date();
         configUtil.addRepo();
@@ -125,14 +136,16 @@ describe("addTab", () => {
                                     uri: {
                                         path: newFilePath1,
                                 }
-                            }
+                            },
+                            isActive: true,
                         },
                         {
                             input: {
                                     uri: {
                                         path: newFilePath2,
                                 }
-                            }
+                            },
+                            isActive: false,
                         },
                     ]
                 }
@@ -147,6 +160,8 @@ describe("addTab", () => {
         expect(tabFiles).toHaveLength(1);
         const tabFilePath = path.join(tabsRepo, tabFiles[0]);
         const tabData = readYML(tabFilePath);
+        const filePath1 = newFilePath1.split(path.join(repoPath, path.sep));
+        const filePath2 = newFilePath2.split(path.join(repoPath, path.sep));
         // Assert source == 'vscode'
         expect(tabData.source).toEqual(VSCODE);
         // Assert created_at value of tab file and testing value to be in range of 1 second
@@ -155,8 +170,8 @@ describe("addTab", () => {
         expect(tabData.repository_id).toEqual(repo_id);
         // Assert tabs
         expect(tabData.tabs[0].file_id).toBe(tab1_fileId);
-        expect(tabData.tabs[0].path).toBe(newFilePath1);
+        expect(tabData.tabs[0].path).toBe(filePath1[1]);
         expect(tabData.tabs[1].file_id).toBeNull();
-        expect(tabData.tabs[1].path).toBe(newFilePath2);
+        expect(tabData.tabs[1].path).toBe(filePath2[1]);
     });
 })

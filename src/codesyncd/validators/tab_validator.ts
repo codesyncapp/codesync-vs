@@ -1,17 +1,8 @@
-/*
-class TabValidator:
-	validateRepoID()
-	validate_yml_file()
-	group_data()
-*/
-
 import { REQUIRED_KEYS_TAB_FILE_YML, TAB_SIZE_LIMIT, VSCODE } from "../../constants";
 import { ITabYML } from "../../interface";
 import { CodeSyncLogger } from "../../logger";
 import { generateSettings } from "../../settings";
 import { readYML } from "../../utils/common";
-import { ConfigUtils } from "../../utils/config_utils";
-import { removeFile } from "../../utils/file_utils";
 import { UserState } from "../../utils/user_utils";
 
 export class TabValidator {
@@ -24,20 +15,14 @@ export class TabValidator {
 
 	}
 
-	validateRepo(tabFile: ITabYML, tabData: string, filePath: string, repoId: number) {
-		const config_utils = new ConfigUtils();
-		const repo_path = config_utils.getRepoPathByRepoId(repoId);
-		const configRepo = this.configJSON.repos[repo_path];
+	validateRepo( repoPath: string ) {
+		const configRepo = this.configJSON.repos[repoPath];
 		if (!configRepo) {
-			CodeSyncLogger.info(`Removing tab: Skipping invalid tab: ${tabFile}`, "", tabData);
-			removeFile(filePath, "getTabFiles");
 			return false;
 		}
 		const repoEmail = configRepo.email;
 		// Remove tab if repo is disconnected
 		if (configRepo.is_disconnected) {
-			CodeSyncLogger.error(`Removing tab: Repo ${repo_path} is disconnected`);
-			removeFile(filePath, "getTabFiles");
 			return false;
 		}
 		// Validate repo belongs to logged-in user
@@ -45,13 +30,6 @@ export class TabValidator {
 		if ( !activeUser || activeUser?.email !== repoEmail ) return false;
 		
 		return true;
-	}
-	
-	validateRepoId(tabData: ITabYML, repo_id: number | null) {
-		if(tabData.repository_id === repo_id) {
-			return true;
-		}
-		return false;
 	}
 
 	validateYMLFile(tabData: ITabYML){
