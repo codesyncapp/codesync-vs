@@ -11,7 +11,6 @@ import { pathUtils } from "../utils/path_utils";
 import { generateSettings } from "../settings";
 import { RepoState } from "../utils/repo_state_utils";
 import { UserState } from "../utils/user_utils";
-import { TabValidator } from "../codesyncd/validators/tab_validator";
 
 export class tabEventHandler {
 	repoPath = "";
@@ -36,7 +35,7 @@ export class tabEventHandler {
 	}
 
 	handleTabChangeEvent = (isTabEvent: boolean = true) => {
-		if (!this.repoPath || !isTabEvent) return;
+		if (!this.repoPath || !isTabEvent || !this.shouldProceed) return;
 		// Record timestamp
 		const createdAt = formatDatetime(new Date().getTime());
 		// For the current open repoPath, get the repo_id and from config File
@@ -47,8 +46,6 @@ export class tabEventHandler {
 		const openTabs = vscode.window.tabGroups.all;
 		const tabs: ITabFile[] = openTabs.flatMap(tabGroup => 
 			tabGroup.tabs.map(tab => {
-				const tabValidator = new TabValidator();
-				if (!tabValidator.validateRepo(this.repoPath)) return;
 				// Get path of tab
 				// @ts-ignore
 				const tabFilePath = tab.input.uri.path;

@@ -17,8 +17,6 @@ import { CodeSyncLogger } from "./logger";
 import { CODESYNC_STATES, CodeSyncState } from './utils/state_utils';
 import { RepoState } from './utils/repo_state_utils';
 import { tabEventHandler } from './events/tab_event_handler';
-import { ConfigUtils } from './utils/config_utils';
-
 
 export async function activate(context: vscode.ExtensionContext) {
 	const uuid = uuidv4();
@@ -40,10 +38,6 @@ export async function activate(context: vscode.ExtensionContext) {
 				repoPath = RepoState.getParentRepo();
 				CodeSyncLogger.debug(`Parent repo: ${repoPath}`);
 			}
-			const configUtils = new ConfigUtils();
-			const config = configUtils.config;
-			if (config.repos[repoPath].is_disconnected) return;
-			
 			// Capturing initial tabs
 			const handler = new tabEventHandler(repoPath);
 			// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
