@@ -35,7 +35,7 @@ export class tabEventHandler {
 	}
 
 	handleTabChangeEvent = (isTabEvent: boolean = true) => {
-		if (!this.repoPath || !isTabEvent || !this.shouldProceed) return;
+		if (!isTabEvent || !this.shouldProceed) return;
 		// Record timestamp
 		const createdAt = formatDatetime(new Date().getTime());
 		// For the current open repoPath, get the repo_id and from config File
