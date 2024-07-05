@@ -13,7 +13,7 @@ import {
 
 import {bufferHandler} from "../../../src/codesyncd/handlers/buffer_handler";
 import { readYML } from "../../../src/utils/common";
-import { ConfigUtils } from "../../../src//utils/config_utils";
+import { formatDatetime } from '../../../src/utils/common';
 import { VSCODE } from "../../../src/constants";
 import { pathUtils } from "../../../src/utils/path_utils";
 import { tabEventHandler } from "../../../src/events/tab_event_handler";
@@ -103,8 +103,10 @@ describe("addTab", () => {
         configUtil.addRepo();
         addUser(baseRepoPath, true);
         const handler = new tabEventHandler(repoPath);
+        // Record timestamp
+        const createdAt = formatDatetime(new Date().getTime());
         // Pass isTabEvent=false, which means changeEvent.changed.length > 0
-        handler.handleTabChangeEvent(false);
+        handler.handleTabChangeEvent(createdAt, false);
         // Verify no tab file should be generated
         assertTabFilesCount()   
     })
@@ -122,7 +124,7 @@ describe("addTab", () => {
 
     // Should create file in positive case
     test("Tabs data in positive case", () => {
-        const createdAt = new Date();
+        const tabCreationTime = new Date();
         configUtil.addRepo();
         addUser(baseRepoPath, true);
         const config_data = readYML(configPath);
@@ -154,7 +156,9 @@ describe("addTab", () => {
             get: jest.fn(() => mockTabs),
           });
         const handler = new tabEventHandler(repoPath);
-        handler.handleTabChangeEvent()
+        // Record timestamp
+        const createdAt = formatDatetime(new Date().getTime());
+        handler.handleTabChangeEvent(createdAt)
         let tabFiles = fs.readdirSync(tabsRepo)
         // Assert file should be created
         expect(tabFiles).toHaveLength(1);
@@ -165,7 +169,7 @@ describe("addTab", () => {
         // Assert source == 'vscode'
         expect(tabData.source).toEqual(VSCODE);
         // Assert created_at value of tab file and testing value to be in range of 1 second
-        expect((new Date(tabData.created_at)).getTime() - (createdAt).getTime()).toBeLessThanOrEqual(1000);
+        expect((new Date(tabData.created_at)).getTime() - (tabCreationTime).getTime()).toBeLessThanOrEqual(1000);
         // Assert repo_id
         expect(tabData.repository_id).toEqual(repo_id);
         // Assert tabs

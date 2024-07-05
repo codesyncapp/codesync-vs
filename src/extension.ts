@@ -17,6 +17,7 @@ import { CodeSyncLogger } from "./logger";
 import { CODESYNC_STATES, CodeSyncState } from './utils/state_utils';
 import { RepoState } from './utils/repo_state_utils';
 import { tabEventHandler } from './events/tab_event_handler';
+import { formatDatetime } from './utils/common';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const uuid = uuidv4();
@@ -40,8 +41,10 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 			// Capturing initial tabs
 			const handler = new tabEventHandler(repoPath);
+			// Record timestamp
+			const createdAt = formatDatetime(new Date().getTime());
 			// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
-			setTimeout(() => handler.handleTabChangeEvent(), 1);
+			setTimeout(() => handler.handleTabChangeEvent(createdAt), 1);
 		}
 
 		// Register workspace events
@@ -97,15 +100,17 @@ export async function activate(context: vscode.ExtensionContext) {
                     const oldPath = CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH);					
 					// @ts-ignore
 					const filePath = changeEvent.changed[0]?.input?.uri.path;
-					if(filePath !== CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH)) {
+					if(filePath !== oldPath) {
                         fileChanged = true;
                         CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, filePath);
                     }
                 }
-                const isTabEvent = fileChanged || changeEvent.opened.length > 0 || changeEvent.closed.length > 0
+				const isTabEvent = fileChanged || changeEvent.opened.length > 0 || changeEvent.closed.length > 0
 				const handler = new tabEventHandler(repoPath);
+				// Record timestamp
+				const createdAt = formatDatetime(new Date().getTime());
 				// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
-				setTimeout(() => handler.handleTabChangeEvent(isTabEvent), 1);
+				setTimeout(() => handler.handleTabChangeEvent(createdAt, isTabEvent), 1);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
