@@ -34,10 +34,8 @@ export class tabEventHandler {
 		this.pathUtils = new pathUtils(this.repoPath, this.branch);
 	}
 
-	handleTabChangeEvent = (isTabEvent: boolean = true) => {
+	handleTabChangeEvent = (createdAt: string, isTabEvent: boolean = true) => {
 		if (!isTabEvent || !this.shouldProceed) return;
-		// Record timestamp
-		const createdAt = formatDatetime(new Date().getTime());
 		// For the current open repoPath, get the repo_id and from config File
 		const configUtils = new ConfigUtils();
 		const repoId = configUtils.getRepoIdByPath(this.repoPath);
