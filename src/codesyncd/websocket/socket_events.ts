@@ -203,10 +203,10 @@ export class SocketEvents {
                         this.onPaymentRequired();
                         return true;
                     case HttpStatusCodes.INVALID_USAGE:
-                        this.onTabProcessed(resp.tab_path);
+                        this.onTabProcessed(resp.file_name);
                         return true;
                     case HttpStatusCodes.FORBIDDEN:
-                        this.onTabProcessed(resp.tab_path);
+                        this.onTabProcessed(resp.file_name);
                         return true;
                     default:
                         return false;
