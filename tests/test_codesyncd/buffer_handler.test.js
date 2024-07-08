@@ -170,41 +170,6 @@ describe("bufferHandler", () => {
         return true;
     };
 
-    const generateMockTabs = (tabPath1 = tabFilePath1) => {
-        return [
-            {
-                tabs: [
-                    {
-                        input: {
-                                uri: {
-                                    path: tabPath1,
-                            }
-                        },
-                        isActive: true,
-                    },
-                    {
-                        input: {
-                                uri: {
-                                    path: tabFilePath2,
-                            }
-                        },
-                        isActive: false,
-                    },
-                ]
-            }
-        ]
-    }
-
-    const addTab = (tabPath1 = tabFilePath1) => {
-        const tabHandler = new tabEventHandler(repoPath)
-        // Add tabs to buffer
-        const mockTabs = generateMockTabs(tabPath1);
-        Object.defineProperty(vscode.window.tabGroups, 'all', {
-            get: jest.fn(() => mockTabs),
-        });
-        tabHandler.handleTabChangeEvent()
-    }
-
     const addTabToBuffer = () => {
         const configUtils = new ConfigUtils;
         const repoId = configUtils.getRepoIdByPath(repoPath);
@@ -733,8 +698,79 @@ describe("bufferHandler", () => {
         const handled = await webSocketEvents.onMessage(msg);
         expect(handled).toBe(true);
         if (tabFiles.files.length) await waitFor(2);
-        expect(assertTabFilesCount()).toBe(true);
-        expect(fs.existsSync(tabFilePath1)).toBe(false);
+        // YML file should be deleted
+        assertTabFilesCount();
+        expect(fs.existsSync(path.join(tabsRepo, tabFiles.files[0]))).toBe(false);
+    });
+
+    test("SocketEvents: onMessage, Tab not sent (invalid usage)", async () => {
+        addRepo();
+        addTabToBuffer();
+        const tabsHandler = new TabsHandler();
+        const tabFiles = await tabsHandler.getYMLFiles();
+        const tabData = tabsHandler.getTabsData(tabFiles.files);
+        const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
+        const msg = {
+            type: 'utf8',
+            utf8Data: JSON.stringify({
+                type: "tab_processed",
+                status: 400,
+                file_name: tabData[0].file_name
+            })
+        };
+        const handled = await webSocketEvents.onMessage(msg);
+        expect(handled).toBe(true);
+        if (tabFiles.files.length) await waitFor(2);
+        // YML file should be deleted
+        assertTabFilesCount();
+        expect(fs.existsSync(path.join(tabsRepo, tabFiles.files[0]))).toBe(false);
+    });
+
+    test("SocketEvents: onMessage, Tab not sent (forbidden)", async () => {
+        addRepo();
+        addTabToBuffer();
+        const tabsHandler = new TabsHandler();
+        const tabFiles = await tabsHandler.getYMLFiles();
+        const tabData = tabsHandler.getTabsData(tabFiles.files);
+        const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
+        const msg = {
+            type: 'utf8',
+            utf8Data: JSON.stringify({
+                type: "tab_processed",
+                status: 403,
+                file_name: tabData[0].file_name
+            })
+        };
+        const handled = await webSocketEvents.onMessage(msg);
+        expect(handled).toBe(true);
+        if (tabFiles.files.length) await waitFor(2);
+        // YML file should be deleted
+        assertTabFilesCount();
+        expect(fs.existsSync(path.join(tabsRepo, tabFiles.files[0]))).toBe(false);
+    });
+
+    test("SocketEvents: onMessage, Tab not sent (payment required)", async () => {
+        addRepo();
+        addTabToBuffer();
+        const tabsHandler = new TabsHandler();
+        const tabFiles = await tabsHandler.getYMLFiles();
+        // console.log(`tabFiles: ${JSON.stringify(tabFiles.files[0])}`);
+        const tabData = tabsHandler.getTabsData(tabFiles.files);
+        const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
+        const msg = {
+            type: 'utf8',
+            utf8Data: JSON.stringify({
+                type: "tab_processed",
+                status: 402,
+                file_name: tabData[0].file_name
+            })
+        };
+        const handled = await webSocketEvents.onMessage(msg);
+        expect(handled).toBe(true);
+        if (tabFiles.files.length) await waitFor(2);
+        // YML file should not be deleted
+        assertTabFilesCount(1);
+        expect(fs.existsSync(path.join(tabsRepo, tabFiles.files[0]))).toBe(true);
     });
 
 });

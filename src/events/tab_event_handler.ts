@@ -11,6 +11,7 @@ import { pathUtils } from "../utils/path_utils";
 import { generateSettings } from "../settings";
 import { RepoState } from "../utils/repo_state_utils";
 import { UserState } from "../utils/user_utils";
+import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 
 export class tabEventHandler {
 	repoPath = "";
@@ -35,7 +36,7 @@ export class tabEventHandler {
 	}
 
 	handleTabChangeEvent = (createdAt: string, isTabEvent: boolean = true) => {
-		if (!isTabEvent || !this.shouldProceed) return;
+		if (!isTabEvent || !this.shouldProceed) return CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, false);
 		// For the current open repoPath, get the repo_id and from config File
 		const configUtils = new ConfigUtils();
 		const repoId = configUtils.getRepoIdByPath(this.repoPath);
