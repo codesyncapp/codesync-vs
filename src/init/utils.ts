@@ -13,12 +13,13 @@ import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload } from '../interface';
 import { uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT, contextVariables } from '../constants';
-import { getGlobIgnorePatterns, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
+import { getGlobIgnorePatterns, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns, formatDatetime } from '../utils/common';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { s3UploaderUtils } from './s3_uploader';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import gitCommitInfo from 'git-commit-info';
 import { RepoPlanLimitsState, RepoState } from '../utils/repo_state_utils';
+import { tabEventHandler } from '../events/tab_event_handler';
 
 export class initUtils {
 	repoPath: string;
@@ -251,6 +252,14 @@ export class initUtils {
 		// Upload to s3
 		await this.uploadRepoToS3(branch, json.response, syncingBranchKey);
 
+		// Capture tabs for newly connected repo
+		if (!repoId) {
+		const handler = new tabEventHandler(this.repoPath);
+		// Record timestamp
+		const createdAt = formatDatetime(new Date().getTime());
+		// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
+		setTimeout(() => handler.handleTabChangeEvent(createdAt), 1);
+		}
 		return true;
 	}
 }
