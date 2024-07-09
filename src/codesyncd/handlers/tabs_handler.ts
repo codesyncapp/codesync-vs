@@ -120,7 +120,6 @@ export class TabsHandler {
     
     
 	sendTabsToServer(webSocketConnection: any, tabEventsToSend: ITabYML[]) {
-		// Send tab to server
 		webSocketConnection.send(JSON.stringify({'tabs': tabEventsToSend}));
 	}
 }
