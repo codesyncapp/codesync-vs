@@ -19,7 +19,7 @@ import { s3UploaderUtils } from './s3_uploader';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import gitCommitInfo from 'git-commit-info';
 import { RepoPlanLimitsState, RepoState } from '../utils/repo_state_utils';
-import { tabEventHandler } from '../events/tab_event_handler';
+import { captureTabs } from '../utils/tab_utils';
 
 export class initUtils {
 	repoPath: string;
@@ -253,13 +253,7 @@ export class initUtils {
 		await this.uploadRepoToS3(branch, json.response, syncingBranchKey);
 
 		// Capture tabs for newly connected repo
-		if (!repoId) {
-		const handler = new tabEventHandler(this.repoPath);
-		// Record timestamp
-		const createdAt = formatDatetime(new Date().getTime());
-		// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
-		setTimeout(() => handler.handleTabChangeEvent(createdAt), 1);
-		}
+		if (!repoId) captureTabs(this.repoPath);
 		return true;
 	}
 }
