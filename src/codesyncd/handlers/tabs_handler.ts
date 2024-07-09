@@ -49,7 +49,7 @@ export class TabsHandler {
 
     getYMLFiles = async () => {
         const tabsBeingProcessed = getTabsBeingProcessed();
-        // Discard all files that aren't of .YML 
+        // Discard all files that aren't of type .YML 
         const invalidTabFiles = await glob("**", { 
 			ignore: "*.yml",
 			nodir: true,
