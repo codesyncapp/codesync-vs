@@ -62,7 +62,6 @@ export const TAB_FILES_PER_ITERATION = 15;
 export const REQUIRED_KEYS_TAB_FILE_YML = ['repository_id', 'created_at', 'file_name', 'tabs', 'source']
 export const TAB_SIZE_LIMIT = 16 * 1000 * 1000;
 
-
 // Error msgs
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
 

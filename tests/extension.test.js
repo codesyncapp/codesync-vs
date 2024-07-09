@@ -301,7 +301,6 @@ describe("Extension: activate", () => {
         const _configData = {...configData};
         _configData.repos[repoPath].is_disconnected = true;
         fs.writeFileSync(configPath, yaml.dump(_configData));
-        console.log(`[With deactivated user, repo is disconnected], _configData: ${JSON.stringify(_configData)}`);
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
         // showLogin should be true
@@ -347,7 +346,7 @@ describe("Extension: activate", () => {
     });
 
     test("With active user, repo is disconnected", async () => {
-        addUser(baseRepoPath);
+        addUser(baseRepoPath, true);
         const _configData = {...configData};
         _configData.repos[repoPath].is_disconnected = true;
         fs.writeFileSync(configPath, yaml.dump(_configData));
@@ -388,7 +387,7 @@ describe("Extension: activate", () => {
     });
 
     test("With active user, repo not connected", async () => {
-        addUser(baseRepoPath);
+        addUser(baseRepoPath, true);
         await activate(vscode.ExtensionContext);
         // Should show Welcome msg
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
@@ -417,7 +416,7 @@ describe("Extension: activate", () => {
     test("With active user, repo is connected", async () => {
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-        addUser(baseRepoPath);
+        addUser(baseRepoPath, true);
         await activate(vscode.ExtensionContext);
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
         // showLogin should be true
@@ -534,7 +533,7 @@ describe("Extension: activate", () => {
         const subDirName = "directory";
         const configUtil = new Config(repoPath, configPath);
         configUtil.addRepo();
-        addUser(baseRepoPath);
+        addUser(baseRepoPath, true);
         // Add subDir to .syncignore
         const syncignorePath = path.join(repoPath, SYNCIGNORE);
         fs.writeFileSync(syncignorePath, subDirName);

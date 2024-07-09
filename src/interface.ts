@@ -63,7 +63,6 @@ export interface IDiffToSend {
 	'platform': string
 }
 
-
 export interface IRepoInfo {
 	last_synced_at: string;
 }
