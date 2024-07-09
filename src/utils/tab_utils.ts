@@ -9,7 +9,6 @@ export const removeTabFile = (filePath: string, funcName: string) => {
 		// @ts-ignore
 		CodeSyncLogger.error(`${funcName}: Error deleting file`, err);
 	});
-
 };
 
 export const captureTabs = (repoPath: string, isTabEvent: boolean = true) => {
