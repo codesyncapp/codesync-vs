@@ -3,12 +3,12 @@
 import vscode from 'vscode';
 
 import { eventHandler } from "./events/event_handler";
-import { 
+import {
 	createStatusBarItem,
-	registerCommands, 
-	registerGitListener, 
-	setInitialContext, 
-	setupCodeSync, 
+	registerCommands,
+	registerGitListener,
+	setInitialContext,
+	setupCodeSync,
 	uuidv4
 } from "./utils/setup_utils";
 import { pathUtils } from "./utils/path_utils";
@@ -16,8 +16,7 @@ import { recallDaemon } from "./codesyncd/codesyncd";
 import { CodeSyncLogger } from "./logger";
 import { CODESYNC_STATES, CodeSyncState } from './utils/state_utils';
 import { RepoState } from './utils/repo_state_utils';
-import { tabEventHandler } from './events/tab_event_handler';
-import { formatDatetime } from './utils/common';
+import { captureTabs } from './utils/tab_utils';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const uuid = uuidv4();
@@ -40,11 +39,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				CodeSyncLogger.debug(`Parent repo: ${repoPath}`);
 			}
 			// Capturing initial tabs
-			const handler = new tabEventHandler(repoPath);
-			// Record timestamp
-			const createdAt = formatDatetime(new Date().getTime());
-			// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
-			setTimeout(() => handler.handleTabChangeEvent(createdAt), 1);
+			captureTabs(repoPath);
 		}
 
 		// Register workspace events
@@ -96,21 +91,17 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.tabGroups.onDidChangeTabs(changeEvent => {
 			try {
 				let fileChanged = false;
-                if(changeEvent.changed.length > 0){
-                    const oldPath = CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH);					
+				if (changeEvent.changed.length > 0) {
+					const oldPath = CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH);
 					// @ts-ignore
 					const filePath = changeEvent.changed[0]?.input?.uri.path;
-					if(filePath !== oldPath) {
-                        fileChanged = true;
-                        CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, filePath);
-                    }
-                }
+					if (filePath !== oldPath) {
+						fileChanged = true;
+						CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, filePath);
+					}
+				}
 				const isTabEvent = fileChanged || changeEvent.opened.length > 0 || changeEvent.closed.length > 0
-				const handler = new tabEventHandler(repoPath);
-				// Record timestamp
-				const createdAt = formatDatetime(new Date().getTime());
-				// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
-				setTimeout(() => handler.handleTabChangeEvent(createdAt, isTabEvent), 1);
+				captureTabs(repoPath, isTabEvent);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
