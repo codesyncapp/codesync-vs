@@ -59,7 +59,6 @@ describe("Extension: activate", () => {
     const user = {
         email: TEST_EMAIL,
     };
-    let mockTabs;
     let tabsRepo;
     let pathUtilsObj;
 
@@ -81,26 +80,6 @@ describe("Extension: activate", () => {
         fs.mkdirSync(tabsRepo, {recursive:true});
 
         createSystemDirectories();
-        mockTabs = [
-            {
-                tabs: [
-                    {
-                        input: {
-                                uri: {
-                                    path: "newFilePath1",
-                            }
-                        }
-                    },
-                    {
-                        input: {
-                                uri: {
-                                    path: "newFilePath2",
-                            }
-                        }
-                    },
-                ]
-            }
-        ]
     });
 
     afterEach(() => {

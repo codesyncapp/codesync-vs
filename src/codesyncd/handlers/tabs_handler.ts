@@ -13,29 +13,17 @@ import { TabValidator } from "../validators/tab_validator";
 import { TabHandler } from "./tab_handler";
 
 export class TabsHandler {
-    tabYmlFiles : ITabYML[];
-    accessToken: string;
 
     settings: any;
-    configJSON: any;
-    configRepo: any;
 
-    constructor(repoTab: ITabYML[] | null = null, accessToken: string | null = null) {
-        // @ts-ignore
-        this.accessToken = accessToken;
-        // @ts-ignore
-        this.tabYmlFiles = repoTab;
-        this.settings = generateSettings();
-        this.configJSON = readYML(this.settings.CONFIG_PATH);
-    }
+    constructor() {}
 
-    async run() {
+    static run(tabYmlFiles: ITabYML[]) {
         const validTabs: ITabYML[] = [];
         let tabsSize = 0;
-        if ( !this.tabYmlFiles ) return;
-        for (const tabYMLFile of this.tabYmlFiles ) {
-            const tabHandler = new TabHandler();
-            const tabToSend = tabHandler.createTabToSend(tabYMLFile);
+        if ( !tabYmlFiles ) return;
+        for (const tabYMLFile of tabYmlFiles ) {
+            const tabToSend = TabHandler.createTabToSend(tabYMLFile);
             tabsSize += JSON.stringify(tabToSend).length;
             if (tabsSize < TAB_SIZE_LIMIT) {
                 validTabs.push(tabToSend);
@@ -47,24 +35,25 @@ export class TabsHandler {
         return validTabs;
     }
 
-    getYMLFiles = async () => {
-        const tabsBeingProcessed = getTabsBeingProcessed();
+    static getYMLFiles = async () => {
+        const settings = generateSettings();
+
         // Discard all files that aren't of type .YML 
         const invalidTabFiles = await glob("**", { 
 			ignore: "*.yml",
 			nodir: true,
 			dot: true,
-            cwd: this.settings.TABS_PATH
+            cwd: settings.TABS_PATH
         });
 
         invalidTabFiles.forEach(invalidTabFile => {
-            const filePath = path.join(this.settings.TABS_PATH, invalidTabFile);
+            const filePath = path.join(settings.TABS_PATH, invalidTabFile);
             removeFile(filePath, "cleaningInvalidTabFiles");
         })
 
         // Get valid files
         const tabs = await glob("*.yml", { 
-            cwd: this.settings.TABS_PATH,
+            cwd: settings.TABS_PATH,
 			maxDepth: 1,
 			nodir: false,
 			dot: false,
@@ -85,7 +74,7 @@ export class TabsHandler {
         }
 
         randomTabFiles = randomTabFiles.filter((tabFile) => {
-            const filePath = path.join(this.settings.TABS_PATH, tabFile);
+            const filePath = path.join(settings.TABS_PATH, tabFile);
             const tabData = readYML(filePath);
             const tabValidator = new TabValidator();
             // Validating structure
@@ -103,9 +92,11 @@ export class TabsHandler {
         }
     }
 
-    getTabsData = (tabFiles: string[]) => {
+    static getTabsData = (tabFiles: string[]) => {
+        const settings = generateSettings();
+
         const tabsData: ITabYML[] = tabFiles.map(tabFileName => {
-            const filePath = path.join(this.settings.TABS_PATH, tabFileName);
+            const filePath = path.join(settings.TABS_PATH, tabFileName);
             const tabData: ITabYML = readYML(filePath);
             return {
                 repository_id: tabData.repository_id,
@@ -119,7 +110,7 @@ export class TabsHandler {
     }        
     
     
-	sendTabsToServer(webSocketConnection: any, tabEventsToSend: ITabYML[]) {
+	static sendTabsToServer(webSocketConnection: any, tabEventsToSend: ITabYML[]) {
 		webSocketConnection.send(JSON.stringify({'tabs': tabEventsToSend}));
 	}
 }

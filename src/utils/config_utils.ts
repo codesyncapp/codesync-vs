@@ -1,7 +1,8 @@
 import fs from 'fs';
+import path from 'path';
+
 import { generateSettings } from "../settings";
 import { readYML } from "./common";
-import path from 'path';
 
 export class ConfigUtils {
 	config: any;
