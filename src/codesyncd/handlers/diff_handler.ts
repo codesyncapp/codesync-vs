@@ -127,8 +127,8 @@ export class DiffHandler {
     static removeDiffFile(diffFilePath: string) {
         const settings = generateSettings();
         const relative = path.relative(settings.DIFFS_REPO, diffFilePath);
-        const is_relative = isRelativePath(relative);
-        if (!(is_relative && fs.existsSync(diffFilePath))) return;
+        const isRelative = isRelativePath(relative);
+        if (!(isRelative && fs.existsSync(diffFilePath))) return;
         removeFile(diffFilePath, "removeDiffFile");
     }
 }
