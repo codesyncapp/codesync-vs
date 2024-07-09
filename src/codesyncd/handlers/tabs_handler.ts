@@ -13,9 +13,7 @@ import { TabValidator } from "../validators/tab_validator";
 import { TabHandler } from "./tab_handler";
 
 export class TabsHandler {
-    // @ts-ignore
     tabYmlFiles : ITabYML[];
-    // @ts-ignore
     accessToken: string;
 
     settings: any;
