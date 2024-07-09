@@ -110,12 +110,11 @@ export class SocketEvents {
         }
 
         // Send tabs
-        let validTabs: ITabYML[] = [];
+        const validTabs: ITabYML[] = [];
         errorCount = 0;   
-        const tabsHandler = new TabsHandler(this.repoTabs, this.accessToken);
-        const validTabsData = await tabsHandler.run();
+        const validTabsData = TabsHandler.run(this.repoTabs);
         if (!validTabsData?.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-        validTabs = validTabs.concat(validTabsData);
+        validTabs.concat(validTabsData);
         // Keep track of tabs in State
         const currentTabs = new Set(
             validTabs.map(validTab => validTab.file_name)
@@ -128,8 +127,7 @@ export class SocketEvents {
         }
         if (validTabs.length) {
             CodeSyncLogger.debug(`Sending ${validTabs.length} tabs`);
-            const tabs_handler = new TabsHandler(this.repoTabs, this.accessToken);
-            tabs_handler.sendTabsToServer(this.connection, validTabs)
+            TabsHandler.sendTabsToServer(this.connection, validTabs)
         }
         CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
@@ -150,8 +148,8 @@ export class SocketEvents {
     }
 
     async onTabProcessed(tabFileName: string) {
-        const tabHandler = new TabHandler();
-        tabHandler.removeTabFile(tabFileName);
+        if (!this.canSendSocketData) return;
+        TabHandler.removeTabFile(tabFileName);
         // Remove tab from tabsBeingProcessed
         const tabsBeingProcessed = getTabsBeingProcessed();
         if (tabsBeingProcessed.size <= 0) return;

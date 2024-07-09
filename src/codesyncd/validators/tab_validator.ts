@@ -16,9 +16,7 @@ export class TabValidator {
 
 	validateRepo( repoPath: string ) {
 		const configRepo = this.configJSON.repos[repoPath];
-		if (!configRepo) {
-			return false;
-		}
+		if (!configRepo) return false;
 		const repoEmail = configRepo.email;
 		// Remove tab if repo is disconnected
 		if (configRepo.is_disconnected)	return false;

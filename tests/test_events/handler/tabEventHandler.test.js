@@ -19,7 +19,6 @@ import { pathUtils } from "../../../src/utils/path_utils";
 import { tabEventHandler } from "../../../src/events/tab_event_handler";
 import { createSystemDirectories, generateRandomNumber } from "../../../src/utils/setup_utils";
 
-let tabFilePath2;
 const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 
 describe("addTab", () => {

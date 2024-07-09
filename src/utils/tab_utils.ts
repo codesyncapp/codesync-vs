@@ -4,6 +4,7 @@ import { tabEventHandler } from "../events/tab_event_handler";
 import { formatDatetime } from "./common";
 
 export const removeTabFile = (filePath: string, funcName: string) => {
+	if (!filePath) return;
 	fs.unlink(filePath, err => {
 		if (!err) return false;
 		// @ts-ignore

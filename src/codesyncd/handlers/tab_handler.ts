@@ -10,7 +10,7 @@ export class TabHandler {
 	
 	constructor() {}
 	
-	createTabToSend(tabData: ITabYML) {
+	static createTabToSend(tabData: ITabYML) {
 		return {
 			repository_id : tabData.repository_id,
 			created_at : tabData.created_at,
@@ -20,7 +20,7 @@ export class TabHandler {
 			};
 	}
 
-	removeTabFile(tabFileName: string) {
+	static removeTabFile(tabFileName: string) {
 		const settings = generateSettings();
 		const tabFilePath = path.join(settings.TABS_PATH, tabFileName);
 		const relative = path.relative(settings.TABS_PATH, tabFilePath);

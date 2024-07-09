@@ -13,7 +13,7 @@ import { checkServerDown } from '../utils/api_utils';
 import { IFileToUpload } from '../interface';
 import { uploadRepoToServer } from '../utils/upload_utils';
 import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT, contextVariables } from '../constants';
-import { getGlobIgnorePatterns, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns, formatDatetime } from '../utils/common';
+import { getGlobIgnorePatterns, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { s3UploaderUtils } from './s3_uploader';
 import { trackRepoHandler } from '../handlers/commands_handler';

@@ -683,9 +683,8 @@ describe("bufferHandler", () => {
     test("SocketEvents: onMessage, Tab sent successfully", async () => {
         addRepo();
         addTabToBuffer();
-        const tabsHandler = new TabsHandler();
-        const tabFiles = await tabsHandler.getYMLFiles();
-        const tabData = tabsHandler.getTabsData(tabFiles.files);
+        const tabFiles = await TabsHandler.getYMLFiles();
+        const tabData = TabsHandler.getTabsData(tabFiles.files);
         const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
         const msg = {
             type: 'utf8',
@@ -706,9 +705,8 @@ describe("bufferHandler", () => {
     test("SocketEvents: onMessage, Tab not sent (invalid usage)", async () => {
         addRepo();
         addTabToBuffer();
-        const tabsHandler = new TabsHandler();
-        const tabFiles = await tabsHandler.getYMLFiles();
-        const tabData = tabsHandler.getTabsData(tabFiles.files);
+        const tabFiles = await TabsHandler.getYMLFiles();
+        const tabData = TabsHandler.getTabsData(tabFiles.files);
         const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
         const msg = {
             type: 'utf8',
@@ -729,9 +727,8 @@ describe("bufferHandler", () => {
     test("SocketEvents: onMessage, Tab not sent (forbidden)", async () => {
         addRepo();
         addTabToBuffer();
-        const tabsHandler = new TabsHandler();
-        const tabFiles = await tabsHandler.getYMLFiles();
-        const tabData = tabsHandler.getTabsData(tabFiles.files);
+        const tabFiles = await TabsHandler.getYMLFiles();
+        const tabData = TabsHandler.getTabsData(tabFiles.files);
         const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
         const msg = {
             type: 'utf8',
@@ -752,10 +749,8 @@ describe("bufferHandler", () => {
     test("SocketEvents: onMessage, Tab not sent (payment required)", async () => {
         addRepo();
         addTabToBuffer();
-        const tabsHandler = new TabsHandler();
-        const tabFiles = await tabsHandler.getYMLFiles();
-        // console.log(`tabFiles: ${JSON.stringify(tabFiles.files[0])}`);
-        const tabData = tabsHandler.getTabsData(tabFiles.files);
+        const tabFiles = await TabsHandler.getYMLFiles();
+        const tabData = TabsHandler.getTabsData(tabFiles.files);
         const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
         const msg = {
             type: 'utf8',

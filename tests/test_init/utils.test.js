@@ -254,28 +254,6 @@ describe("uploadRepo",  () => {
         "file_1.js": null,
     };
     expectedConfig[NESTED_PATH] = null;
-    const mockTabs = [
-        {
-            tabs: [
-                {
-                    input: {
-                            uri: {
-                                path: 'newFilePath1',
-                        }
-                    },
-                    isActive: true,
-                },
-                {
-                    input: {
-                            uri: {
-                                path: 'newFilePath2',
-                        }
-                    },
-                    isActive: false,
-                },
-            ]
-        }
-    ]
 
     beforeEach(() => {
         fetch.resetMocks();
@@ -327,10 +305,6 @@ describe("uploadRepo",  () => {
 
     test("repo In Config",  async () => {
         isOnline.mockReturnValue(true);
-        Object.defineProperty(vscode.window.tabGroups, 'all', {
-            get: jest.fn(() => mockTabs),
-        });
-
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
         const itemPaths = await initUtilsObj.getSyncablePaths();
@@ -376,9 +350,6 @@ describe("uploadRepo",  () => {
     });
 
     test("repo Not In Config",  async () => {
-        Object.defineProperty(vscode.window.tabGroups, 'all', {
-            get: jest.fn(() => mockTabs),
-          });    
         const configUtil = new Config(repoPath, configPath);
         configUtil.removeRepo();
         const initUtilsObj = new initUtils(repoPath);

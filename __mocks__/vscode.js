@@ -22,7 +22,28 @@ const window = {
         then: jest.fn()
     })),
     tabGroups: {
-        all: jest.fn(),
+        all: [
+            {
+                tabs: [
+                    {
+                        input: {
+                                uri: {
+                                    path: 'newFilePath1',
+                            }
+                        },
+                        isActive: true,
+                    },
+                    {
+                        input: {
+                                uri: {
+                                    path: 'newFilePath2',
+                            }
+                        },
+                        isActive: false,
+                    },
+                ]
+            }
+        ],
         onDidChangeTabs: jest.fn(),
   },
 };

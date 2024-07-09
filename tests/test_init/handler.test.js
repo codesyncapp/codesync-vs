@@ -267,32 +267,6 @@ describe("initHandler: Syncing Branch", () => {
     });
 
     test("Should sync branch", async () => {
-        const mockTabs = [
-            {
-                tabs: [
-                    {
-                        input: {
-                                uri: {
-                                    path: 'newFilePath1',
-                            }
-                        },
-                        isActive: true,
-                    },
-                    {
-                        input: {
-                                uri: {
-                                    path: 'newFilePath2',
-                            }
-                        },
-                        isActive: false,
-                    },
-                ]
-            }
-        ]
-    Object.defineProperty(vscode.window.tabGroups, 'all', {
-        get: jest.fn(() => mockTabs),
-      });
-
         isOnline.mockReturnValue(true);
         fs.writeFileSync(filePath, DUMMY_FILE_CONTENT);
         fetchMock
