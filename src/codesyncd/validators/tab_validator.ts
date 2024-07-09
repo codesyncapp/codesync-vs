@@ -1,6 +1,5 @@
 import { REQUIRED_KEYS_TAB_FILE_YML, TAB_SIZE_LIMIT, VSCODE } from "../../constants";
 import { ITabYML } from "../../interface";
-import { CodeSyncLogger } from "../../logger";
 import { generateSettings } from "../../settings";
 import { readYML } from "../../utils/common";
 import { UserState } from "../../utils/user_utils";
@@ -22,13 +21,11 @@ export class TabValidator {
 		}
 		const repoEmail = configRepo.email;
 		// Remove tab if repo is disconnected
-		if (configRepo.is_disconnected) {
-			return false;
-		}
+		if (configRepo.is_disconnected)	return false;
 		// Validate repo belongs to logged-in user
 		const activeUser = new UserState().getUser();
 		if ( !activeUser || activeUser?.email !== repoEmail ) return false;
-		
+		// If validation passes
 		return true;
 	}
 
