@@ -110,11 +110,11 @@ export class SocketEvents {
         }
 
         // Send tabs
-        const validTabs: ITabYML[] = [];
+        let validTabs: ITabYML[] = [];
         errorCount = 0;   
         const validTabsData = TabsHandler.run(this.repoTabs);
         if (!validTabsData?.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
-        validTabs.concat(validTabsData);
+        validTabs = validTabs.concat(validTabsData);
         // Keep track of tabs in State
         const currentTabs = new Set(
             validTabs.map(validTab => validTab.file_name)
