@@ -201,11 +201,11 @@ export class SocketEvents {
                         return true;
                     case HttpStatusCodes.INVALID_USAGE:
                         this.onTabProcessed(resp.file_name);
-                        console.log(`Tab Event rejected by server, status_code=${HttpStatusCodes.INVALID_USAGE}`);
+                        CodeSyncLogger.info(`Tab Event rejected by server, status_code=${HttpStatusCodes.INVALID_USAGE}`);
                         return true;
                     case HttpStatusCodes.FORBIDDEN:
                         this.onTabProcessed(resp.file_name);
-                        console.log(`Tab Event rejected by server, status_code=${HttpStatusCodes.FORBIDDEN}`);
+                        CodeSyncLogger.info(`Tab Event rejected by server, status_code=${HttpStatusCodes.FORBIDDEN}`);
                         return true;
                     default:
                         return false;
