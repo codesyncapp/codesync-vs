@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial tabs state is captured automatically on IDE opening
 - In addition to that, tab state is recorded for tab switches & tabs opening/closing
 
-
 ## [3.47.0] - 2024-05-02
 - Handling callbacks for Login/Logout from Web
 - Added access_token validation in logout callback
