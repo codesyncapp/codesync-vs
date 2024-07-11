@@ -5,8 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [3.48.0] - 2024-07-10
-- Capturing tabs data 
-- Created a new directory `~/.codesync/.tabs`
+- Added a new feature of capturing tabs data 
+- Initial tabs state is captured automatically on IDE opening
+- In addition to that, tab state is recorded for tab switches & tabs opening/closing
+
 
 ## [3.47.0] - 2024-05-02
 - Handling callbacks for Login/Logout from Web

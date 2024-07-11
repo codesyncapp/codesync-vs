@@ -14,15 +14,11 @@ import { TabHandler } from "./tab_handler";
 
 export class TabsHandler {
 
-    settings: any;
-
-    constructor() {}
-
     static run(tabYmlFiles: ITabYML[]) {
         const validTabs: ITabYML[] = [];
         let tabsSize = 0;
-        if ( !tabYmlFiles ) return;
-        for (const tabYMLFile of tabYmlFiles ) {
+        if (!tabYmlFiles) return;
+        for (const tabYMLFile of tabYmlFiles) {
             const tabToSend = TabHandler.createTabToSend(tabYMLFile);
             tabsSize += JSON.stringify(tabToSend).length;
             if (tabsSize < TAB_SIZE_LIMIT) {
@@ -39,10 +35,10 @@ export class TabsHandler {
         const settings = generateSettings();
 
         // Discard all files that aren't of type .YML 
-        const invalidTabFiles = await glob("**", { 
-			ignore: "*.yml",
-			nodir: true,
-			dot: true,
+        const invalidTabFiles = await glob("**", {
+            ignore: "*.yml",
+            nodir: true,
+            dot: true,
             cwd: settings.TABS_PATH
         });
 
@@ -52,23 +48,23 @@ export class TabsHandler {
         })
 
         // Get valid files
-        const tabs = await glob("*.yml", { 
+        const tabs = await glob("*.yml", {
             cwd: settings.TABS_PATH,
-			maxDepth: 1,
-			nodir: false,
-			dot: false,
-		});
+            maxDepth: 1,
+            nodir: false,
+            dot: false,
+        });
 
         // Randomly pick X tab files 
         let randomTabFiles = [];
         const usedIndices = <any>[];
-		let randomIndex = undefined;
+        let randomIndex = undefined;
 
         for (let index = 0; index < Math.min(TAB_FILES_PER_ITERATION, tabs.length); index++) {
             do {
-                randomIndex = getRandomIndex( tabs.length );
+                randomIndex = getRandomIndex(tabs.length);
             }
-            while (usedIndices.includes( randomIndex ));
+            while (usedIndices.includes(randomIndex));
             usedIndices.push(randomIndex);
             randomTabFiles.push(tabs[randomIndex]);
         }
@@ -107,10 +103,10 @@ export class TabsHandler {
             };
         });
         return tabsData;
-    }        
-    
-    
-	static sendTabsToServer(webSocketConnection: any, tabEventsToSend: ITabYML[]) {
-		webSocketConnection.send(JSON.stringify({'tabs': tabEventsToSend}));
-	}
+    }
+
+
+    static sendTabsToServer(webSocketConnection: any, tabEventsToSend: ITabYML[]) {
+        webSocketConnection.send(JSON.stringify({ 'tabs': tabEventsToSend }));
+    }
 }
