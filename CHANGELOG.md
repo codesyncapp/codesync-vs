@@ -8,8 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Capturing tabs data 
 - Created a new directory `~/.codesync/.tabs`
 
-
-
 ## [3.47.0] - 2024-05-02
 - Handling callbacks for Login/Logout from Web
 - Added access_token validation in logout callback
