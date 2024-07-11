@@ -702,7 +702,7 @@ describe("bufferHandler", () => {
         expect(fs.existsSync(path.join(tabsRepo, tabFiles.files[0]))).toBe(false);
     });
 
-    test("SocketEvents: onMessage, Tab not sent (invalid usage)", async () => {
+    test("SocketEvents: onMessage, Tab event was rejected (invalid usage)", async () => {
         addRepo();
         addTabToBuffer();
         const tabFiles = await TabsHandler.getYMLFiles();
@@ -724,7 +724,7 @@ describe("bufferHandler", () => {
         expect(fs.existsSync(path.join(tabsRepo, tabFiles.files[0]))).toBe(false);
     });
 
-    test("SocketEvents: onMessage, Tab not sent (forbidden)", async () => {
+    test("SocketEvents: onMessage, Tab event was rejected (forbidden)", async () => {
         addRepo();
         addTabToBuffer();
         const tabFiles = await TabsHandler.getYMLFiles();
@@ -746,7 +746,7 @@ describe("bufferHandler", () => {
         expect(fs.existsSync(path.join(tabsRepo, tabFiles.files[0]))).toBe(false);
     });
 
-    test("SocketEvents: onMessage, Tab not sent (payment required)", async () => {
+    test("SocketEvents: onMessage, Tab event was rejected (payment required)", async () => {
         addRepo();
         addTabToBuffer();
         const tabFiles = await TabsHandler.getYMLFiles();

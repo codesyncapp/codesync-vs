@@ -7,9 +7,7 @@ import { removeTabFile } from "../../utils/tab_utils";
 import { isRelativePath } from "../utils";
 
 export class TabHandler {
-	
-	constructor() {}
-	
+		
 	static createTabToSend(tabData: ITabYML) {
 		return {
 			repository_id : tabData.repository_id,

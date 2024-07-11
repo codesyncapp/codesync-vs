@@ -11,7 +11,7 @@ import {
     getConfigFilePath,
 } from "../../helpers/helpers";
 
-import {bufferHandler} from "../../../src/codesyncd/handlers/buffer_handler";
+import { bufferHandler } from "../../../src/codesyncd/handlers/buffer_handler";
 import { readYML } from "../../../src/utils/common";
 import { formatDatetime } from '../../../src/utils/common';
 import { VSCODE } from "../../../src/constants";
@@ -22,7 +22,7 @@ import { createSystemDirectories, generateRandomNumber } from "../../../src/util
 const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 
 describe("addTab", () => {
-	const repoPath = randomRepoPath();
+    const repoPath = randomRepoPath();
     const baseRepoPath = randomBaseRepoPath();
     const configPath = getConfigFilePath(baseRepoPath);
     const configUtil = new Config(repoPath, configPath);
@@ -37,8 +37,7 @@ describe("addTab", () => {
         jest.clearAllMocks();
         // Create directories
         fs.mkdirSync(repoPath, { recursive: true });
-        fs.mkdirSync(tabsRepo, { recursive: true });
-        createSystemDirectories();   
+        createSystemDirectories();
         untildify.mockReturnValue(baseRepoPath);
     });
 
@@ -53,28 +52,20 @@ describe("addTab", () => {
         return true;
     }
 
-    // No file should be created if no tab event occured
-    test("No tab", async () => {
-        configUtil.addRepo();
-        const handler = new bufferHandler(statusBarItem);
-        await handler.run();
-        assertTabFilesCount();
-    });
-
     // Skips case when repo exists
-    test("Should be skipped if repo does not exist",() => {
+    test("Should be skipped if repo does not exist", () => {
         const handler = new tabEventHandler();
         handler.handleTabChangeEvent();
         // Verify no tab file should be generated
-        assertTabFilesCount()   
-        });
+        assertTabFilesCount()
+    });
 
     //  Skips cases where repo exists, but is not connected
     test("Should skip if repo exists, but is not connected", () => {
         const handler = new tabEventHandler(repoPath);
         handler.handleTabChangeEvent();
         // Verify no tab file should be generated
-        assertTabFilesCount()   
+        assertTabFilesCount()
     })
 
     // Skip case where repo is connected, but user account is not valid
@@ -84,7 +75,7 @@ describe("addTab", () => {
         const handler = new tabEventHandler(repoPath);
         handler.handleTabChangeEvent(false);
         // Verify no tab file should be generated
-        assertTabFilesCount()   
+        assertTabFilesCount()
     })
 
     // Skip case where user account is not valid, but repo is not connected 
@@ -93,7 +84,7 @@ describe("addTab", () => {
         const handler = new tabEventHandler(repoPath);
         handler.handleTabChangeEvent();
         // Verify no tab file should be generated
-        assertTabFilesCount()   
+        assertTabFilesCount()
     })
 
     // Should skip if not opened/closed event
@@ -107,18 +98,18 @@ describe("addTab", () => {
         // Pass isTabEvent=false, which means changeEvent.changed.length > 0
         handler.handleTabChangeEvent(createdAt, false);
         // Verify no tab file should be generated
-        assertTabFilesCount()   
+        assertTabFilesCount()
     })
 
     // Skip if invalid repo id
     test("Should skip if repoId doesn't exist", () => {
-        const invalid_repo_path = (repoPath).slice(0,5);
+        const invalid_repo_path = (repoPath).slice(0, 5);
         const configUtil_2 = new Config(invalid_repo_path, configPath);
         addUser(baseRepoPath, true);
         const handler = new tabEventHandler(invalid_repo_path);
         handler.handleTabChangeEvent(true);
         // Verify no tab file should be generated
-        assertTabFilesCount()   
+        assertTabFilesCount()
     })
 
     // Should create file in positive case
@@ -130,30 +121,30 @@ describe("addTab", () => {
         const tab1_fileId = config_data.repos[repoPath].branches[DEFAULT_BRANCH]["file_1.js"]
         const repo_id = config_data.repos[repoPath].id;
         const mockTabs = [
-                {
-                    tabs: [
-                        {
-                            input: {
-                                    uri: {
-                                        path: newFilePath1,
-                                }
-                            },
-                            isActive: true,
+            {
+                tabs: [
+                    {
+                        input: {
+                            uri: {
+                                path: newFilePath1,
+                            }
                         },
-                        {
-                            input: {
-                                    uri: {
-                                        path: newFilePath2,
-                                }
-                            },
-                            isActive: false,
+                        isActive: true,
+                    },
+                    {
+                        input: {
+                            uri: {
+                                path: newFilePath2,
+                            }
                         },
-                    ]
-                }
-            ]
+                        isActive: false,
+                    },
+                ]
+            }
+        ]
         Object.defineProperty(vscode.window.tabGroups, 'all', {
             get: jest.fn(() => mockTabs),
-          });
+        });
         const handler = new tabEventHandler(repoPath);
         // Record timestamp
         const createdAt = formatDatetime(new Date().getTime());

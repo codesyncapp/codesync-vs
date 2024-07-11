@@ -73,12 +73,8 @@ describe("Extension: activate", () => {
         setWorkspaceFolders(repoPath);
         untildify.mockReturnValue(baseRepoPath);
         global.IS_CODESYNC_TEST_MODE = true;
-        pathUtilsObj = new pathUtils(repoPath, DEFAULT_BRANCH);
-        tabsRepo = pathUtilsObj.getTabsRepo();
         fs.mkdirSync(repoPath, {recursive: true});
         fs.mkdirSync(baseRepoPath, {recursive: true});
-        fs.mkdirSync(tabsRepo, {recursive:true});
-
         createSystemDirectories();
     });
 
