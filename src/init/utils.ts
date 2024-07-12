@@ -252,8 +252,8 @@ export class initUtils {
 		// Upload to s3
 		await this.uploadRepoToS3(branch, json.response, syncingBranchKey);
 
-		// Capture tabs for newly connected repo
-		if (!repoId) captureTabs(this.repoPath);
+		// Capture tabs for newly connected repo/branch
+		captureTabs(this.repoPath);
 		return true;
 	}
 }
