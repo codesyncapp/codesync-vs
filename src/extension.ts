@@ -3,12 +3,12 @@
 import vscode from 'vscode';
 
 import { eventHandler } from "./events/event_handler";
-import { 
+import {
 	createStatusBarItem,
-	registerCommands, 
-	registerGitListener, 
-	setInitialContext, 
-	setupCodeSync, 
+	registerCommands,
+	registerGitListener,
+	setInitialContext,
+	setupCodeSync,
 	uuidv4
 } from "./utils/setup_utils";
 import { pathUtils } from "./utils/path_utils";
@@ -16,7 +16,8 @@ import { recallDaemon } from "./codesyncd/codesyncd";
 import { CodeSyncLogger } from "./logger";
 import { CODESYNC_STATES, CodeSyncState } from './utils/state_utils';
 import { RepoState } from './utils/repo_state_utils';
-
+import { captureTabs } from './utils/tab_utils';
+import { BRANCH_SYNC_TIMEOUT } from './constants';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const uuid = uuidv4();
@@ -37,8 +38,11 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (RepoState.isSubDir()) {
 				repoPath = RepoState.getParentRepo();
 				CodeSyncLogger.debug(`Parent repo: ${repoPath}`);
-			}	
+			}
+			// Capturing initial tabs
+			captureTabs(repoPath);
 		}
+
 		// Register workspace events
 		vscode.workspace.onDidChangeTextDocument(changeEvent => {
 			try {
@@ -83,6 +87,31 @@ export async function activate(context: vscode.ExtensionContext) {
 				CodeSyncLogger.error("Failed handling renameEvent", e.stack);
 			}
 		});
+
+		// Register tab change event
+		vscode.window.tabGroups.onDidChangeTabs(changeEvent => {
+			// Return if any branch is being synced
+			const isBranchSyncInProcess = CodeSyncState.canSkipRun(CODESYNC_STATES.IS_SYNCING_BRANCH, BRANCH_SYNC_TIMEOUT);
+			if (isBranchSyncInProcess) return false;
+			try {
+				let fileChanged = false;
+				if (changeEvent.changed.length > 0) {
+					const oldPath = CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH);
+					// @ts-ignore
+					const filePath = changeEvent.changed[0]?.input?.uri.path;
+					if (filePath !== oldPath) {
+						fileChanged = true;
+						CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, filePath);
+					}
+				}
+				const isTabEvent = fileChanged || changeEvent.opened.length > 0 || changeEvent.closed.length > 0
+				captureTabs(repoPath, isTabEvent);
+			} catch (e) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				CodeSyncLogger.error("Failed handling tabChangeEvent", e.stack);
+			}
+		})
 
 		// Do not run daemon in case of tests
 		if ((global as any).IS_CODESYNC_TEST_MODE) return;

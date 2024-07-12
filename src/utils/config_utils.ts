@@ -1,4 +1,6 @@
 import fs from 'fs';
+import path from 'path';
+
 import { generateSettings } from "../settings";
 import { readYML } from "./common";
 
@@ -22,4 +24,20 @@ export class ConfigUtils {
 		});
 		return repoPath || "";
 	}
+
+	getRepoIdByPath = (repoPath: string): number | null => {
+		if (!this.isConfigValid()) return null;
+		const repoBranchConfig = this.config.repos[repoPath]; 
+		if (!repoBranchConfig) return null;
+		return repoBranchConfig.id;
+	}
+
+	getFileIdByPath = (repoPath: string, branchName: string, fileName: string): number | null => {
+		if (!this.isConfigValid()) return null;
+		const repoBranchConfig = this.config.repos[repoPath].branches[branchName];
+		if (!repoBranchConfig) return null;
+		const fileRelPath = fileName.split(`${repoPath}${path.sep}`)[1];
+		return repoBranchConfig[fileRelPath] || null;
+	}
 }
+

@@ -3,7 +3,7 @@ import os from "os";
 import path from "path";
 
 import {IDiff, IDiffToSend} from "../../interface";
-import {cleanUpDeleteDiff, getDIffForDeletedFile, getDiffsBeingProcessed, handleNewFileUpload, setDiffsBeingProcessed} from "../utils";
+import {cleanUpDeleteDiff, getDIffForDeletedFile, getDiffsBeingProcessed, handleNewFileUpload, isRelativePath, setDiffsBeingProcessed} from "../utils";
 import {generateSettings} from "../../settings";
 import {readYML} from "../../utils/common";
 import {CodeSyncLogger} from "../../logger";
@@ -127,7 +127,7 @@ export class DiffHandler {
     static removeDiffFile(diffFilePath: string) {
         const settings = generateSettings();
         const relative = path.relative(settings.DIFFS_REPO, diffFilePath);
-        const isRelative = relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+        const isRelative = isRelativePath(relative);
         if (!(isRelative && fs.existsSync(diffFilePath))) return;
         removeFile(diffFilePath, "removeDiffFile");
     }
