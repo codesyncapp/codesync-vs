@@ -288,7 +288,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.7",
-    "@babel/preset-env": "^7.23.8",
+    "@babel/preset-env": "^7.24.7",
     "@babel/preset-typescript": "^7.23.3",
     "@types/cors": "^2.8.17",
     "@types/current-git-branch": "^1.1.1",
