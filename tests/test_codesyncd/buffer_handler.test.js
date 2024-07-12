@@ -25,11 +25,14 @@ import {
 } from "../helpers/helpers";
 import {bufferHandler} from "../../src/codesyncd/handlers/buffer_handler";
 import {eventHandler} from "../../src/events/event_handler";
+import {tabEventHandler} from "../../src/events/tab_event_handler";
 import {SocketClient} from "../../src/codesyncd/websocket/socket_client";
 import {SocketEvents} from "../../src/codesyncd/websocket/socket_events";
 import {readYML} from "../../src/utils/common";
 import {VSCODE} from "../../src/constants";
 import {LockUtils} from "../../src/utils/lock_utils";
+import { ConfigUtils } from "../../src/utils/config_utils";
+import { TabsHandler } from "../../src/codesyncd/handlers/tabs_handler";
 
 
 describe("bufferHandler", () => {
@@ -41,11 +44,15 @@ describe("bufferHandler", () => {
     let shadowRepoBranchPath;
     let originalsRepoBranchPath;
     let diffsRepo;
+    let tabsRepo;
 
     let newFilePath;
     let shadowFilePath;
     let originalsFilePath;
     let renameDiff;
+
+    let tabFilePath1;
+    let tabFilePath2;
 
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     const fileRelPath = "file_1.js";
@@ -79,11 +86,15 @@ describe("bufferHandler", () => {
         shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
         originalsRepoBranchPath = pathUtilsObj.getOriginalsRepoBranchPath();
         diffsRepo = pathUtilsObj.getDiffsRepo();
+        tabsRepo = pathUtilsObj.getTabsRepo();
     
         newFilePath = path.join(repoPath, newRelPath);
         shadowFilePath = path.join(shadowRepoBranchPath, fileRelPath);
         originalsFilePath = path.join(originalsRepoBranchPath, fileRelPath);
         renameDiff = JSON.stringify({old_rel_path: fileRelPath, new_rel_path: newRelPath});
+
+        tabFilePath1 = path.join(repoPath, "file_1.js");
+        tabFilePath2 = path.join(repoPath, "file2.txt");
 
         CodeSyncState.set(CODESYNC_STATES.POPULATE_BUFFER_LOCK_ACQUIRED, true);
         CodeSyncState.set(CODESYNC_STATES.DIFFS_SEND_LOCK_ACQUIRED, true);
@@ -158,6 +169,34 @@ describe("bufferHandler", () => {
         expect(diffFiles).toHaveLength(diffsCount);
         return true;
     };
+
+    const addTabToBuffer = () => {
+        const configUtils = new ConfigUtils;
+        const repoId = configUtils.getRepoIdByPath(repoPath);
+        const fileId1 = configUtils.getFileIdByPath(repoPath, "default", tabFilePath1);
+        const fileId2 = configUtils.getFileIdByPath(repoPath, "default", tabFilePath2);
+        const tabs = [
+            {
+                file_id: fileId1,
+                path: tabFilePath1,
+                is_active_tab: true,
+            },
+            {
+                file_id: fileId2,
+                path: tabFilePath2,
+                is_active_tab: false,
+            }
+        ];
+        
+        const tabHandler = new tabEventHandler(repoPath);
+        tabHandler.addToBuffer(repoId, toString(new Date().getTime()), tabs);
+    }
+
+    const assertTabFilesCount = (tabsCount = 0) => {
+        let tabFiles = fs.readdirSync(tabsRepo);
+        expect(tabFiles).toHaveLength(tabsCount);
+        return true;
+    }
 
     test("No config.yml", async () => {
         fs.rmSync(configPath);
@@ -617,7 +656,7 @@ describe("bufferHandler", () => {
         expect(assertDiffsCount(1)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(true);
 
-        // Diff synced successfullt 
+        // Diff synced successfully
         const syncMsg = {
             type: 'utf8',
             utf8Data: JSON.stringify({
@@ -632,4 +671,101 @@ describe("bufferHandler", () => {
         expect(assertDiffsCount(0)).toBe(true);
         expect(fs.existsSync(diffFilePath)).toBe(false);
     });
+
+    test("Server is up, 1 valid tab event", async () => {
+        addRepo();
+        addTabToBuffer();
+        const handler = new bufferHandler(statusBarItem);
+        await handler.run();
+        assertTabFilesCount(1);
+    })
+
+    test("SocketEvents: onMessage, Tab sent successfully", async () => {
+        addRepo();
+        addTabToBuffer();
+        const tabFiles = await TabsHandler.getYMLFiles();
+        const tabData = TabsHandler.getTabsData(tabFiles.files);
+        const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
+        const msg = {
+            type: 'utf8',
+            utf8Data: JSON.stringify({
+                type: "tab_processed",
+                status: 200,
+                file_name: tabData[0].file_name
+            })
+        };
+        const handled = await webSocketEvents.onMessage(msg);
+        expect(handled).toBe(true);
+        if (tabFiles.files.length) await waitFor(2);
+        // YML file should be deleted
+        assertTabFilesCount();
+        expect(fs.existsSync(path.join(tabsRepo, tabFiles.files[0]))).toBe(false);
+    });
+
+    test("SocketEvents: onMessage, Tab event was rejected (invalid usage)", async () => {
+        addRepo();
+        addTabToBuffer();
+        const tabFiles = await TabsHandler.getYMLFiles();
+        const tabData = TabsHandler.getTabsData(tabFiles.files);
+        const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
+        const msg = {
+            type: 'utf8',
+            utf8Data: JSON.stringify({
+                type: "tab_processed",
+                status: 400,
+                file_name: tabData[0].file_name
+            })
+        };
+        const handled = await webSocketEvents.onMessage(msg);
+        expect(handled).toBe(true);
+        if (tabFiles.files.length) await waitFor(2);
+        // YML file should be deleted
+        assertTabFilesCount();
+        expect(fs.existsSync(path.join(tabsRepo, tabFiles.files[0]))).toBe(false);
+    });
+
+    test("SocketEvents: onMessage, Tab event was rejected (forbidden)", async () => {
+        addRepo();
+        addTabToBuffer();
+        const tabFiles = await TabsHandler.getYMLFiles();
+        const tabData = TabsHandler.getTabsData(tabFiles.files);
+        const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
+        const msg = {
+            type: 'utf8',
+            utf8Data: JSON.stringify({
+                type: "tab_processed",
+                status: 403,
+                file_name: tabData[0].file_name
+            })
+        };
+        const handled = await webSocketEvents.onMessage(msg);
+        expect(handled).toBe(true);
+        if (tabFiles.files.length) await waitFor(2);
+        // YML file should be deleted
+        assertTabFilesCount();
+        expect(fs.existsSync(path.join(tabsRepo, tabFiles.files[0]))).toBe(false);
+    });
+
+    test("SocketEvents: onMessage, Tab event was rejected (payment required)", async () => {
+        addRepo();
+        addTabToBuffer();
+        const tabFiles = await TabsHandler.getYMLFiles();
+        const tabData = TabsHandler.getTabsData(tabFiles.files);
+        const webSocketEvents = new SocketEvents(statusBarItem, [], "ACCESS_TOKEN", true, tabData);
+        const msg = {
+            type: 'utf8',
+            utf8Data: JSON.stringify({
+                type: "tab_processed",
+                status: 402,
+                file_name: tabData[0].file_name
+            })
+        };
+        const handled = await webSocketEvents.onMessage(msg);
+        expect(handled).toBe(true);
+        if (tabFiles.files.length) await waitFor(2);
+        // YML file should not be deleted
+        assertTabFilesCount(1);
+        expect(fs.existsSync(path.join(tabsRepo, tabFiles.files[0]))).toBe(true);
+    });
+
 });

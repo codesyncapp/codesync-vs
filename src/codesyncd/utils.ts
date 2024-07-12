@@ -241,3 +241,19 @@ export const getDiffsBeingProcessed = () => {
 export const setDiffsBeingProcessed = (diffs: Set<string>) => {
 	CodeSyncState.set(CODESYNC_STATES.DIFFS_BEING_PROCESSED, diffs);
 };
+
+export const getTabsBeingProcessed = () => {
+	const tabsInState = CodeSyncState.get(CODESYNC_STATES.TABS_BEING_PROCESSED);
+	return tabsInState || new Set();
+};
+
+export const setTabsBeingProcessed = (tabs: Set<string>) => {
+	CodeSyncState.set(CODESYNC_STATES.TABS_BEING_PROCESSED, tabs);
+};
+
+export const getRandomIndex = (length: number) => Math.floor( Math.random() * length );
+
+export const isRelativePath = (filePath :string ) => {
+	return filePath && !filePath.startsWith('..') && !path.isAbsolute(filePath);
+}
+

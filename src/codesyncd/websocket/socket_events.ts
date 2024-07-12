@@ -3,21 +3,23 @@ import vscode from "vscode";
 
 import {contextVariables, ERROR_SENDING_DIFFS, HttpStatusCodes, STATUS_BAR_MSGS} from "../../constants";
 import {CodeSyncLogger, logErrorMsg} from "../../logger";
-import {IDiff, IDiffToSend, IRepoDiffs, IWebSocketMessage} from "../../interface";
+import {IDiff, IDiffToSend, IRepoDiffs, ITabYML, IWebSocketMessage} from "../../interface";
 import {DiffHandler} from "../handlers/diff_handler";
 import {DiffsHandler} from "../handlers/diffs_handler";
-import {getDiffsBeingProcessed, setDiffsBeingProcessed, statusBarMsgs} from "../utils";
+import {getDiffsBeingProcessed, getTabsBeingProcessed, setDiffsBeingProcessed, setTabsBeingProcessed, statusBarMsgs} from "../utils";
 import {markUsersInactive} from "../../utils/auth_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
 import { PlanLimitsHandler } from "../../utils/pricing_utils";
 import { readYML } from "../../utils/common";
 import { RepoPlanLimitsState } from "../../utils/repo_state_utils";
 import { UserState } from "../../utils/user_utils";
-
+import { TabsHandler } from "../handlers/tabs_handler";
+import { TabHandler } from "../handlers/tab_handler";
 
 const EVENT_TYPES = {
     AUTH: 'auth',
-    SYNC: 'sync'
+    SYNC: 'sync',
+    TAB_PROCESSED: "tab_processed"
 };
 
 let errorCount = 0;
@@ -26,17 +28,25 @@ export class SocketEvents {
     connection: any;
     statusBarItem: any;
     repoDiffs: IRepoDiffs[];
+    repoTabs: ITabYML[];
     accessToken: string;
     statusBarMsgsHandler: any;
-    canSendDiffs: boolean;
+    canSendSocketData: boolean;
 
-    constructor(statusBarItem: vscode.StatusBarItem, repoDiffs: IRepoDiffs[], accessToken: string, canSendDiffs=false) {
+    constructor(
+        statusBarItem: vscode.StatusBarItem,
+        repoDiffs: IRepoDiffs[],
+        accessToken: string,
+        canSendSocketData = false,
+        repoTabs: ITabYML[],
+    ) {
         this.connection = (global as any).socketConnection;
         this.statusBarItem = statusBarItem;
         this.repoDiffs = repoDiffs;
         this.accessToken = accessToken;
         this.statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
-        this.canSendDiffs = canSendDiffs;
+        this.canSendSocketData = canSendSocketData;
+        this.repoTabs = repoTabs;
     }
 
     onInvalidAuth() {
@@ -74,7 +84,7 @@ export class SocketEvents {
         userState.setValidAccount();
         const statusBarMsg = this.statusBarMsgsHandler.getMsg();
         this.statusBarMsgsHandler.update(statusBarMsg);
-        if (!this.canSendDiffs) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+        if (!this.canSendSocketData) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
         // Send diffs
         let validDiffs: IDiffToSend[] = [];
         errorCount = 0;
@@ -95,13 +105,35 @@ export class SocketEvents {
             } else {
                 setDiffsBeingProcessed(currentDiffs);
             }
+
             this.connection.send(JSON.stringify({"diffs": validDiffs}));
+        }
+
+        // Send tabs
+        let validTabs: ITabYML[] = [];
+        errorCount = 0;   
+        const validTabsData = TabsHandler.run(this.repoTabs);
+        if (!validTabsData?.length) return CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
+        validTabs = validTabs.concat(validTabsData);
+        // Keep track of tabs in State
+        const currentTabs = new Set(
+            validTabs.map(validTab => validTab.file_name)
+          );
+        let tabsBeingProcessed = getTabsBeingProcessed();
+        if (tabsBeingProcessed.size) {
+            tabsBeingProcessed = new Set([...tabsBeingProcessed, ...currentTabs]);
+        } else {
+            setTabsBeingProcessed(currentTabs);
+        }
+        if (validTabs.length) {
+            CodeSyncLogger.debug(`Sending ${validTabs.length} tabs`);
+            TabsHandler.sendTabsToServer(this.connection, validTabs)
         }
         CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
 
     onSyncSuccess(diffFilePath: string) {
-        if (!this.canSendDiffs) return;
+        if (!this.canSendSocketData) return;
         if (!fs.existsSync(diffFilePath)) return;
         // Reset Plan Limits
         const diffData = <IDiff>readYML(diffFilePath);
@@ -113,6 +145,22 @@ export class SocketEvents {
         if (!diffsBeingProcessed.size) return;
         diffsBeingProcessed.delete(diffFilePath);
         setDiffsBeingProcessed(diffsBeingProcessed);
+    }
+
+    async onTabProcessed(tabFileName: string) {
+        if (!this.canSendSocketData) return;
+        TabHandler.removeTabFile(tabFileName);
+        // Remove tab from tabsBeingProcessed
+        const tabsBeingProcessed = getTabsBeingProcessed();
+        if (tabsBeingProcessed.size <= 0) return;
+        tabsBeingProcessed.delete(tabFileName);
+        setTabsBeingProcessed(tabsBeingProcessed);
+    }
+
+    async onPaymentRequired() {
+        const canAvailTrial = CodeSyncState.get(CODESYNC_STATES.CAN_AVAIL_TRIAL);
+        const msg = canAvailTrial ? STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN_FOR_FREE : STATUS_BAR_MSGS.UPGRADE_PRICING_PLAN;
+        this.statusBarMsgsHandler.update(msg);
     }
 
     async onMessage(message: IWebSocketMessage) {
@@ -134,12 +182,31 @@ export class SocketEvents {
                 }
             case EVENT_TYPES.SYNC:
                 switch (resp.status) {
-                    case 200:
+                    case HttpStatusCodes.OK:
                         this.onSyncSuccess(resp.diff_file_path);
                         return true;
                     case HttpStatusCodes.PAYMENT_REQUIRED:
                         await this.onRepoSizeLimitReached(resp.repo_id); 
                         return true;    
+                    default:
+                        return false;
+                }
+            case EVENT_TYPES.TAB_PROCESSED:
+                switch (resp.status) {
+                    case HttpStatusCodes.OK:
+                        this.onTabProcessed(resp.file_name);
+                        return true;
+                    case HttpStatusCodes.PAYMENT_REQUIRED:
+                        this.onPaymentRequired();
+                        return true;
+                    case HttpStatusCodes.INVALID_USAGE:
+                        this.onTabProcessed(resp.file_name);
+                        CodeSyncLogger.error(`Tab Event rejected by server, status_code=${HttpStatusCodes.INVALID_USAGE}`);
+                        return true;
+                    case HttpStatusCodes.FORBIDDEN:
+                        this.onTabProcessed(resp.file_name);
+                        CodeSyncLogger.error(`Tab Event rejected by server, status_code=${HttpStatusCodes.FORBIDDEN}`);
+                        return true;
                     default:
                         return false;
                 }

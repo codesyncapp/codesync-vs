@@ -19,6 +19,7 @@ import { s3UploaderUtils } from './s3_uploader';
 import { trackRepoHandler } from '../handlers/commands_handler';
 import gitCommitInfo from 'git-commit-info';
 import { RepoPlanLimitsState, RepoState } from '../utils/repo_state_utils';
+import { captureTabs } from '../utils/tab_utils';
 
 export class initUtils {
 	repoPath: string;
@@ -251,6 +252,8 @@ export class initUtils {
 		// Upload to s3
 		await this.uploadRepoToS3(branch, json.response, syncingBranchKey);
 
+		// Capture tabs for newly connected repo/branch
+		captureTabs(this.repoPath);
 		return true;
 	}
 }

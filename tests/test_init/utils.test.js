@@ -305,7 +305,6 @@ describe("uploadRepo",  () => {
 
     test("repo In Config",  async () => {
         isOnline.mockReturnValue(true);
-
         // Generate ItemPaths
         const initUtilsObj = new initUtils(repoPath);
         const itemPaths = await initUtilsObj.getSyncablePaths();

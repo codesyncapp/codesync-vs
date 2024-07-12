@@ -57,6 +57,11 @@ export const REQUIRED_DIR_RENAME_DIFF_KEYS = ['old_path', 'new_path'];
 export const DIFF_SIZE_LIMIT = 16 * 1000 * 1000;
 export const SEQUENCE_MATCHER_RATIO = 0.8;
 
+// Tab utils
+export const TAB_FILES_PER_ITERATION = 15;
+export const REQUIRED_KEYS_TAB_FILE_YML = ['repository_id', 'created_at', 'file_name', 'tabs', 'source']
+export const TAB_SIZE_LIMIT = 16 * 1000 * 1000;
+
 // Error msgs
 export const CONNECTION_ERROR_MESSAGE = 'Error => Server is not available. Please try again in a moment';
 
