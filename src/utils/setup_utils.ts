@@ -35,7 +35,7 @@ import { GitExtension } from '../git';
 import { CODESYNC_STATES, CodeSyncState } from './state_utils';
 import { RepoState } from './repo_state_utils';
 import { UserState } from './user_utils';
-import { authHandler, logoutHandler, reactivateAccountHandler } from '../handlers/user_commands';
+import { authHandler, logoutHandler, reactivateAccountHandler, requestADemoHandler } from '../handlers/user_commands';
 
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
@@ -269,7 +269,8 @@ export const setInitialContext = () => {
 };
 
 export const registerCommands = (context: vscode.ExtensionContext) => {
-	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, authHandler));	
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, authHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerRequestADemo, requestADemoHandler));	
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerLogout, logoutHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSync, connectRepoHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerDisconnectRepo, disconnectRepoHandler));
