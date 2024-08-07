@@ -7,7 +7,6 @@ import { generateWebUrl } from './url_utils';
 import { authHandler, requestADemoHandler } from '../handlers/user_commands';
 import { getCanAwailTrial } from './pricing_utils';
 
-
 export const showSignUpButtons = () => {
 	vscode.window.showInformationMessage(
 		NOTIFICATION.WELCOME_MSG, ...[
