@@ -161,7 +161,9 @@ export class statusBarMsgs {
 			let command = undefined;
 			switch (text) {
 				case STATUS_BAR_MSGS.AUTHENTICATION_FAILED:
-					command = COMMAND.triggerSignUp;
+					// command = COMMAND.triggerSignUp;
+					// redirect user to 'request a demo' page on clicking link in status bar
+					command = COMMAND.triggerRequestADemo;
 					break;
 				case STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED:
 					command = COMMAND.reactivateAccount;
@@ -202,8 +204,9 @@ export class statusBarMsgs {
 		const user = new UserState().get();
 		// Login is in process
 		if (user.isWaitingForLogin) {
-			const authInProcess = CodeSyncState.canSkipRun(CODESYNC_STATES.USER.AUTHENTICATION_INITIATED_AT, AUTHENTICATION_TIMEOUT);
-			if (authInProcess) return STATUS_BAR_MSGS.WAITING_FOR_LOGIN;
+			//commented these line, redirecting user to /request-a-demo url dont wait for any callback/action or response
+			// const authInProcess = CodeSyncState.canSkipRun(CODESYNC_STATES.USER.AUTHENTICATION_INITIATED_AT, AUTHENTICATION_TIMEOUT);
+			// if (authInProcess) return STATUS_BAR_MSGS.WAITING_FOR_LOGIN;
 			userState.setInvalidAccount();
 			return STATUS_BAR_MSGS.AUTHENTICATION_FAILED;
 		}
