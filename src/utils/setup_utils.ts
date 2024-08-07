@@ -270,7 +270,6 @@ export const setInitialContext = () => {
 
 export const registerCommands = (context: vscode.ExtensionContext) => {
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSignUp, authHandler));
-	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerRequestADemo, requestADemoHandler));	
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerLogout, logoutHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerSync, connectRepoHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerDisconnectRepo, disconnectRepoHandler));
@@ -282,6 +281,7 @@ export const registerCommands = (context: vscode.ExtensionContext) => {
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.viewActivity, viewActivityHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.reactivateAccount, reactivateAccountHandler));
 	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerReconnectRepo, reconnectRepoHandler));
+	context.subscriptions.push(vscode.commands.registerCommand(COMMAND.triggerRequestADemo, requestADemoHandler));	
 };
 
 export const createStatusBarItem = (context: vscode.ExtensionContext) => {
