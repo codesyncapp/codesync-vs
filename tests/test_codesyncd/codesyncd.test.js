@@ -116,7 +116,6 @@ describe("codesyncd: recallDaemon", () => {
         const userState = new UserState();
         userState.set(false, false);
         recallDaemon(statusBarItem);
-        // expect(assertCommon(STATUS_BAR_MSGS.AUTHENTICATION_FAILED, COMMAND.triggerSignUp)).toBe(true);
         expect(assertCommon(STATUS_BAR_MSGS.AUTHENTICATION_FAILED, COMMAND.triggerRequestADemo)).toBe(true);
         
     });

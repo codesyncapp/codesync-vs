@@ -19,7 +19,7 @@ import {
     getDirectorySyncIgnoredMsg,
     HttpStatusCodes
 } from "../src/constants";
-import { authHandler, reactivateAccountHandler, logoutHandler } from "../src/handlers/user_commands";
+import { authHandler, requestDemoUrl, reactivateAccountHandler, logoutHandler } from "../src/handlers/user_commands";
 import {
     connectRepoHandler,
     trackFileHandler,
@@ -90,7 +90,7 @@ describe("Extension: activate", () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.LOGIN);
-        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.REQUEST_A_DEMO);
+        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.REQUEST_DEMO);
         expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.IGNORE);
         // Output of setInitialContext
         expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(7);
@@ -166,7 +166,7 @@ describe("Extension: activate", () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.LOGIN);
-        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.REQUEST_A_DEMO);
+        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.REQUEST_DEMO);
         expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.IGNORE);
     });
 
@@ -209,7 +209,6 @@ describe("Extension: activate", () => {
         expect(vscode.commands.registerCommand).toHaveBeenCalledTimes(Object.keys(COMMAND).length);
         expect(vscode.commands.registerCommand.mock.calls[0][0]).toStrictEqual(COMMAND.triggerSignUp);
         expect(vscode.commands.registerCommand.mock.calls[0][1]).toStrictEqual(authHandler);
-        // expect(vscode.commands.registerCommand.mock.calls[1][0]).toStrictEqual(COMMAND.triggerRequestADemo);
         expect(vscode.commands.registerCommand.mock.calls[1][0]).toStrictEqual(COMMAND.triggerLogout);
         expect(vscode.commands.registerCommand.mock.calls[1][1]).toStrictEqual(logoutHandler);
         expect(vscode.commands.registerCommand.mock.calls[2][0]).toStrictEqual(COMMAND.triggerSync);
@@ -232,6 +231,8 @@ describe("Extension: activate", () => {
         expect(vscode.commands.registerCommand.mock.calls[10][1]).toStrictEqual(reactivateAccountHandler);
         expect(vscode.commands.registerCommand.mock.calls[11][0]).toStrictEqual(COMMAND.triggerReconnectRepo);
         expect(vscode.commands.registerCommand.mock.calls[11][1]).toStrictEqual(reconnectRepoHandler);
+        expect(vscode.commands.registerCommand.mock.calls[12][0]).toStrictEqual(COMMAND.triggerRequestADemo);
+        expect(vscode.commands.registerCommand.mock.calls[12][1]).toStrictEqual(requestDemoUrl);
     });
 
     test("createStatusBarItem: Fresh Setup, no user, no repo opened", async () => {
@@ -269,7 +270,7 @@ describe("Extension: activate", () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(NOTIFICATION.WELCOME_MSG);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.LOGIN);
-        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.REQUEST_A_DEMO);
+        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.REQUEST_DEMO);
         expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.IGNORE);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
     });

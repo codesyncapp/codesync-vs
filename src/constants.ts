@@ -77,7 +77,7 @@ export const NOTIFICATION_BUTTON = {
 // Notification Messages
 export const NOTIFICATION = {
 	LOGIN: "Login",
-	REQUEST_A_DEMO: "Request a demo",
+	REQUEST_DEMO: "Request a demo",
 	CONNECT: "Connect",
 	IGNORE: 'Ignore',
 	YES: "Yes",
@@ -286,7 +286,7 @@ export const HttpStatusCodes = {
 export const WebPaths = {
 	PRICING: "/pricing",
 	AUTH: "/signup",
-	REQUEST_A_DEMO: "/request-a-demo",
+	REQUEST_DEMO: "/request-a-demo",
 	LOGOUT: "/logout",
 	USER_PROFILE_SETTINGS: "/settings"
 };

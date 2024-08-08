@@ -32,7 +32,7 @@
       },
       {
         "command": "codesync.signup",
-        "title": "Authenticate",
+        "title": "Login",
         "category": "CodeSync"
       },
       {

@@ -64,7 +64,7 @@ describe("generateRequestADemoUrl",  () => {
     const url = generateRequestADemoUrl();
 
     test("url should have valid path",  async () => {
-        expect(url.includes(WebPaths.REQUEST_A_DEMO)).toBe(true);
+        expect(url.includes(WebPaths.REQUEST_DEMO)).toBe(true);
     });
 
     test("url should have valid domain",  async () => {
@@ -80,7 +80,7 @@ describe("generateRequestADemoUrl",  () => {
         expect(url).not.toBeNull();
         expect(url).toBeDefined();
 
-        const expectedUrl = WEB_APP_URL + WebPaths.REQUEST_A_DEMO;
+        const expectedUrl = WEB_APP_URL + WebPaths.REQUEST_DEMO;
         expect(url).toEqual(`${appendGAparams(expectedUrl)}`);
     });
 });

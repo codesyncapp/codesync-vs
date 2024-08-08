@@ -11,10 +11,8 @@ export const authHandler = (skipAskConnect=false) => {
 	userState.setWaitingForLogin();
 	vscode.env.openExternal(vscode.Uri.parse(authUrl));
 };
-export const requestADemoHandler = () => {
+export const requestDemoUrl = () => {
 	const authUrl = generateRequestADemoUrl();
-	const userState = new UserState();
-	userState.setWaitingForLogin();
 	vscode.env.openExternal(vscode.Uri.parse(authUrl));
 };
 
