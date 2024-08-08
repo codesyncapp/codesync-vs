@@ -11,7 +11,7 @@ import {
 } from "../../src/utils/auth_utils";
 import { logoutHandler } from "../../src/handlers/user_commands";
 import { Auth0URLs, contextVariables, NOTIFICATION, WebPaths } from "../../src/constants";
-import { createRedirectUri, generateWebUrl, generateRequestADemoUrl, appendGAparams } from "../../src/utils/url_utils";
+import { createRedirectUri, generateWebUrl, generateRequestDemoUrl, appendGAparams } from "../../src/utils/url_utils";
 import { WEB_APP_URL } from "../../src/settings";
 import {
     addUser,
@@ -60,8 +60,8 @@ describe("createRedirectUri",  () => {
     });
 });
 
-describe("generateRequestADemoUrl",  () => {
-    const url = generateRequestADemoUrl();
+describe("generateRequestDemoUrl",  () => {
+    const url = generateRequestDemoUrl();
 
     test("url should have valid path",  async () => {
         expect(url.includes(WebPaths.REQUEST_DEMO)).toBe(true);

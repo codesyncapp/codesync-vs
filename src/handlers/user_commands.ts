@@ -1,6 +1,6 @@
 import vscode from 'vscode';
 import { Auth0URLs, NOTIFICATION, WebPaths } from "../constants";
-import { createRedirectUri, generateAuthUrl, generateLogoutUrl, generateRequestADemoUrl, generateWebUrl } from "../utils/url_utils";
+import { createRedirectUri, generateAuthUrl, generateLogoutUrl, generateRequestDemoUrl, generateWebUrl } from "../utils/url_utils";
 import { UserState } from '../utils/user_utils';
 
 
@@ -12,7 +12,7 @@ export const authHandler = (skipAskConnect=false) => {
 	vscode.env.openExternal(vscode.Uri.parse(authUrl));
 };
 export const requestDemoUrl = () => {
-	const authUrl = generateRequestADemoUrl();
+	const authUrl = generateRequestDemoUrl();
 	vscode.env.openExternal(vscode.Uri.parse(authUrl));
 };
 

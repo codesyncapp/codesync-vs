@@ -16,7 +16,7 @@ export const generateAuthUrl = () => {
 	return authUrl;
 };
 
-export const generateRequestADemoUrl = () => {
+export const generateRequestDemoUrl = () => {
 	// https://codesync.com/request-a-demo?utm_medium=plugin&utm_source=vscode
 	return generateWebUrl(WebPaths.REQUEST_DEMO);
 };
