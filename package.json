@@ -26,8 +26,13 @@
   "contributes": {
     "commands": [
       {
+        "command": "codesync.requestDemo",
+        "title": "Request a demo",
+        "category": "CodeSync"
+      },
+      {
         "command": "codesync.signup",
-        "title": "Authenticate",
+        "title": "Login",
         "category": "CodeSync"
       },
       {
@@ -151,7 +156,7 @@
       },
       {
         "view": "codesync-signup",
-        "contents": "Login to CodeSync.\n[Login](command:codesync.signup)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
+        "contents": "Login to CodeSync.\n[Request a demo](command:codesync.requestDemo)\n[Login](command:codesync.signup)\nTo learn more about how to use CodeSync in VS Code [read our docs](https://codesync.com/install)."
       },
       {
         "view": "codesync-deactivated-account",
@@ -222,6 +227,11 @@
         }
       ],
       "codesync-submenu": [
+        {
+          "group": "navigation",
+          "command": "codesync.requestDemo",
+          "when": "workbenchState != empty && showLogIn"
+        },
         {
           "group": "navigation",
           "command": "codesync.signup",

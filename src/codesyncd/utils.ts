@@ -161,7 +161,8 @@ export class statusBarMsgs {
 			let command = undefined;
 			switch (text) {
 				case STATUS_BAR_MSGS.AUTHENTICATION_FAILED:
-					command = COMMAND.triggerSignUp;
+					// redirect user to 'request a demo' page on clicking link in status bar
+					command = COMMAND.triggerRequestADemo;
 					break;
 				case STATUS_BAR_MSGS.ACCOUNT_DEACTIVATED:
 					command = COMMAND.reactivateAccount;

@@ -11,7 +11,8 @@ import {
 } from "../../src/utils/auth_utils";
 import { logoutHandler } from "../../src/handlers/user_commands";
 import { Auth0URLs, contextVariables, NOTIFICATION, WebPaths } from "../../src/constants";
-import { createRedirectUri, generateWebUrl} from "../../src/utils/url_utils";
+import { createRedirectUri, generateWebUrl, generateRequestDemoUrl, appendGAparams } from "../../src/utils/url_utils";
+import { WEB_APP_URL } from "../../src/settings";
 import {
     addUser,
     getUserFilePath,
@@ -59,6 +60,30 @@ describe("createRedirectUri",  () => {
     });
 });
 
+describe("generateRequestDemoUrl",  () => {
+    const url = generateRequestDemoUrl();
+
+    test("url should have valid path",  async () => {
+        expect(url.includes(WebPaths.REQUEST_DEMO)).toBe(true);
+    });
+
+    test("url should have valid domain",  async () => {
+        expect(url.includes(WEB_APP_URL)).toBe(true);
+    });
+
+    test("url should have proper params",  async () => {
+        expect(url.includes("utm_medium=plugin")).toBe(true);
+        expect(url.includes("utm_source=vscode")).toBe(true);
+    });
+
+    test("url should have proper pattern",  async () => {
+        expect(url).not.toBeNull();
+        expect(url).toBeDefined();
+
+        const expectedUrl = WEB_APP_URL + WebPaths.REQUEST_DEMO;
+        expect(url).toEqual(`${appendGAparams(expectedUrl)}`);
+    });
+});
 
 describe("logoutHandler",  () => {
     let userFilePath = '';
