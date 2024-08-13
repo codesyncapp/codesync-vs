@@ -95,6 +95,7 @@ export const NOTIFICATION = {
 	DISCONNECT_REPO: "Dicsonnect",
 	DISCONNECT_PARENT_REPO: "Dicsonnect parent repo",
 	WELCOME_MSG: "Welcome to CodeSync!",
+	REQUEST_MSG_FOR_DEMO: "You needs to Submit the form on Webapp",
 	REACTIVATED_SUCCESS: "Successfully reactivated your account",
 	CONNECT_REPO: "Connect your repo with CodeSync",
 	CHOOSE_ACCOUNT: "Choose account to sync your repo",

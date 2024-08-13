@@ -14,6 +14,16 @@ export const authHandler = (skipAskConnect=false) => {
 export const requestDemoUrl = () => {
 	const authUrl = generateRequestDemoUrl();
 	vscode.env.openExternal(vscode.Uri.parse(authUrl));
+
+	vscode.window.showInformationMessage(
+		NOTIFICATION.REQUEST_MSG_FOR_DEMO, ...[
+		NOTIFICATION.REQUEST_DEMO,
+		NOTIFICATION.IGNORE
+	]).then(async selection => {
+		if (selection === NOTIFICATION.REQUEST_DEMO) {
+			requestDemoUrl();
+		}
+	});
 };
 
 export const logoutHandler = () => {
