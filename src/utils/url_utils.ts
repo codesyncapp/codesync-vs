@@ -16,6 +16,11 @@ export const generateAuthUrl = () => {
 	return authUrl;
 };
 
+export const generateRequestDemoUrl = () => {
+	// https://codesync.com/request-a-demo?utm_medium=plugin&utm_source=vscode
+	return generateWebUrl(WebPaths.REQUEST_DEMO);
+};
+
 export const generateLogoutUrl = (access_token: string) => {
 	// https://codesync.com/logout?utm_medium=plugin&utm_source=vscode&access_token=ACCESS_TOKEN&logout-callback=http://localhost:53381/logout-callback
 	const redirectURI = createRedirectUri(Auth0URLs.LOGOUT_CALLBACK_PATH);

@@ -1,6 +1,6 @@
 import vscode from 'vscode';
 import { Auth0URLs, NOTIFICATION, WebPaths } from "../constants";
-import { createRedirectUri, generateAuthUrl, generateLogoutUrl, generateWebUrl } from "../utils/url_utils";
+import { createRedirectUri, generateAuthUrl, generateLogoutUrl, generateRequestDemoUrl, generateWebUrl } from "../utils/url_utils";
 import { UserState } from '../utils/user_utils';
 
 
@@ -11,7 +11,11 @@ export const authHandler = (skipAskConnect=false) => {
 	userState.setWaitingForLogin();
 	vscode.env.openExternal(vscode.Uri.parse(authUrl));
 };
-
+export const requestDemoUrl = () => {
+	const authUrl = generateRequestDemoUrl();
+	vscode.env.openExternal(vscode.Uri.parse(authUrl));
+	vscode.window.showInformationMessage(NOTIFICATION.REQUEST_MSG_FOR_DEMO);
+};
 
 export const logoutHandler = () => {
 	const userState = new UserState();

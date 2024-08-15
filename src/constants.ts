@@ -77,6 +77,7 @@ export const NOTIFICATION_BUTTON = {
 // Notification Messages
 export const NOTIFICATION = {
 	LOGIN: "Login",
+	REQUEST_DEMO: "Request a demo",
 	CONNECT: "Connect",
 	IGNORE: 'Ignore',
 	YES: "Yes",
@@ -94,6 +95,7 @@ export const NOTIFICATION = {
 	DISCONNECT_REPO: "Dicsonnect",
 	DISCONNECT_PARENT_REPO: "Dicsonnect parent repo",
 	WELCOME_MSG: "Welcome to CodeSync!",
+	REQUEST_MSG_FOR_DEMO: "Please submit the Sign-Up Request Form on Webapp. We will notify you once your request is approved.",
 	REACTIVATED_SUCCESS: "Successfully reactivated your account",
 	CONNECT_REPO: "Connect your repo with CodeSync",
 	CHOOSE_ACCOUNT: "Choose account to sync your repo",
@@ -200,6 +202,7 @@ export const STATUS_BAR_MSGS = {
 
 export const COMMAND = {
 	triggerSignUp: 'codesync.signup',
+	triggerRequestADemo: 'codesync.requestDemo',
 	reactivateAccount: 'codesync.accountReactivate',
 	triggerLogout: 'codesync.logout',
 	triggerSync: 'codesync.sync',
@@ -284,6 +287,7 @@ export const HttpStatusCodes = {
 export const WebPaths = {
 	PRICING: "/pricing",
 	AUTH: "/signup",
+	REQUEST_DEMO: "/request-a-demo",
 	LOGOUT: "/logout",
 	USER_PROFILE_SETTINGS: "/settings"
 };
