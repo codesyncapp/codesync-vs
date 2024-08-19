@@ -4,18 +4,20 @@ import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConne
 import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
 import { UserState } from './user_utils';
 import { generateWebUrl } from './url_utils';
-import { authHandler } from '../handlers/user_commands';
+import { authHandler, requestDemoUrl } from '../handlers/user_commands';
 import { getCanAwailTrial } from './pricing_utils';
-
 
 export const showSignUpButtons = () => {
 	vscode.window.showInformationMessage(
 		NOTIFICATION.WELCOME_MSG, ...[
 		NOTIFICATION.LOGIN,
+		NOTIFICATION.REQUEST_DEMO,
 		NOTIFICATION.IGNORE
 	]).then(async selection => {
 		if (selection === NOTIFICATION.LOGIN) {
 			authHandler();
+		} else if (selection === NOTIFICATION.REQUEST_DEMO) {
+			requestDemoUrl();
 		}
 	});
 };

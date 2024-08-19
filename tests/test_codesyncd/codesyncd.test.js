@@ -116,14 +116,15 @@ describe("codesyncd: recallDaemon", () => {
         const userState = new UserState();
         userState.set(false, false);
         recallDaemon(statusBarItem);
-        expect(assertCommon(STATUS_BAR_MSGS.AUTHENTICATION_FAILED, COMMAND.triggerSignUp)).toBe(true);
+        expect(assertCommon(STATUS_BAR_MSGS.AUTHENTICATION_FAILED, COMMAND.triggerRequestADemo)).toBe(true);
+        
     });
 
     test("No active user", async () => {
         fs.rmSync(userFilePath);
         addUser(baseRepoPath, false);
         recallDaemon(statusBarItem);
-        expect(assertCommon(STATUS_BAR_MSGS.AUTHENTICATION_FAILED, COMMAND.triggerSignUp)).toBe(true);
+        expect(assertCommon(STATUS_BAR_MSGS.AUTHENTICATION_FAILED, COMMAND.triggerRequestADemo)).toBe(true);
     });
 
     test("No repo opened", () => {
@@ -232,7 +233,7 @@ describe("updateStatusBarItem", () => {
         const statusBarMsgsHandler = new statusBarMsgs(statusBarItem);
         statusBarMsgsHandler.update(STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
         expect(statusBarItem.text).toEqual(STATUS_BAR_MSGS.AUTHENTICATION_FAILED);
-        expect(statusBarItem.command).toEqual(COMMAND.triggerSignUp);
+        expect(statusBarItem.command).toEqual(COMMAND.triggerRequestADemo);
     });
 
     test('Connect Repo', () => {
