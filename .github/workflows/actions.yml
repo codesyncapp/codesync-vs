@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '20.11.0'
+          node-version: '16.20.2'
       - name: Find PR number 
         uses: jwalton/gh-find-current-pr@v1.3.2
         id: findPr
@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '20.11.0'
+          node-version: '16.20.2'
       - name: Install dependencies
         run: yarn install
       - name: Run Tests
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '20.11.0'
+          node-version: '16.20.2'
       - name: Install dependencies
         run: yarn install
       - name: Run Tests
