@@ -16,6 +16,8 @@ CodeSync's AI-generated summaries offer a fast and efficient way to stay on top 
 
 
 **Data Security**
+
+
 We support both cloud and self-hosting via AWS (on-prem). If you’d like your data and infrastructure to be within your own AWS account, [contact us](mailto:support@codesync.com) us for a free trial of the on-prem option. 
 
 CodeSync is SOC-2 compliant and ensures the highest standards of security, privacy and encryption.
