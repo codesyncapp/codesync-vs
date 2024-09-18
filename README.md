@@ -1,34 +1,30 @@
-**CodeSync: Unravel the Story of Your Code in a Glance.**
+**AI-Powered Coding Summaries: Stay Synced Without the Overhead.**
 
-CodeSync for VS Code uniquely blends the power of playback technology with the convenience of modern IDEs, offering a groundbreaking approach to code management and review. Our advanced playback feature allows developers to navigate through the history of code changes visually, providing an unparalleled understanding of code evolution and enhancing the quality of code reviews.
+CodeSync's AI-generated summaries offer a fast and efficient way to stay on top of your team's development progress. Whether you're a developer reviewing pull requests or a manager needing daily updates, CodeSync delivers clear, human-readable coding overviews directly from your IDE. No more manual tracking or sifting through code reviews—our summaries keep your entire team aligned, without the distractions. Integrate seamlessly with GitHub and Slack to streamline your workflow. Available now for JetBrains and VS Code!
 
 **Key Features**
+- **AI-Generated Pull Request Summaries:** Get concise, actionable overviews of pull requests, making code reviews quicker and easier. Reduce time spent digging into details by seeing the bigger picture immediately.
+- **Daily Team Summaries in Slack:** Keep everyone aligned with non-intrusive daily summaries posted in team channels. Perfect for quick stand-ups or catching up after a busy day.
+- **Seamless GitHub Integration:** Automatically generate summaries for every commit and pull request, so you never miss key changes or updates in your codebase.
+- **Developer-Friendly:** Stay in your flow—access pull request summaries and progress updates directly in your IDE without switching tools or reviewing long code histories.
+- **Manager and Executive Reporting:** Get high-level overviews of team progress. Track deliverables, spot blockers, and review progress toward business outcomes with biweekly and quarterly reports.
 
-- **Innovative Code Playback**: Witness the progression of your codebase with our dynamic playback feature, visualizing each change in a user-friendly timeline.
-- **Collaboration Boost**: Facilitate team discussions and education by sharing visual code histories, promoting better understanding and teamwork.
-- **GitHub Pull Request Integration**: Elevate code reviews by replaying GitHub Pull Requests, gaining insight into the developer's reasoning and approach.
-- **Seamless IDE Integration**: Effortlessly merge CodeSync into your VS Code environment, complementing and enriching your existing coding workflow.
-- **Data Privacy**: The CodeSync IDE plugin collects and sends the following data: code, diff timestamps, repository names, file paths, timezone to show activity alert, etc. <br>
-CodeSync is SOC-2 compliant and ensures the highest standards of security, privacy and encryption. [Contact us](mailto:support@codesync.com) for our SOC-2 report. <br>
-We support both cloud and self-hosting via AWS. If you’d like your data and infrastructure to be on your own AWS account, contact us for a free trial of the self-hosted option.
+**Benefits for Each Persona**
+- **Developers:** _Quick insights at your fingertips, without leaving your IDE_. Focus on coding, not status updates. Let CodeSync handle the summaries, so you can spend less time managing pull requests and more time building great software.
+- **Managers:** _AI-powered summaries save you from manually following up with the team_. Get clear, actionable reports on team progress without diving into the code. Stay aligned with project timelines, identify blockers early, and keep communication efficient.
+- **Executives:** _Turn raw data into valuable business insights effortlessly_. Understand development progress at a glance. Quarterly reports tie technical achievements directly to business outcomes, giving you a clear picture of ROI and team efficiency.
 
-**Getting Started**
 
-1. **Effortless Installation**: Click 'Install' to integrate CodeSync into your VS Code.
-2. **Customize Your Experience**: Choose your preferred hosting method and configure settings to suit your workflow.
-3. **Revitalize Code Reviews**: If you’re part of a team, utilize the GitHub PR integration and playback feature for more insightful and efficient code analysis.
+**Data Security**
+We support both cloud and self-hosting via AWS (on-prem). If you’d like your data and infrastructure to be within your own AWS account, [contact us](mailto:support@codesync.com) us for a free trial of the on-prem option. 
 
-**Documentation and Support**
+CodeSync is SOC-2 compliant and ensures the highest standards of security, privacy and encryption.
 
-- Detailed [User Guides](https://www.codesync.com/install)
-- Helpful [Tutorials and FAQs](https://www.codesync.com/install)
-- Responsive [Customer Support](https://calendly.com/codesync/codesync-demo)
+The CodeSync IDE plugin collects and sends the following data: code, diff timestamps, repository names, file paths, timezone to show activity alert, etc. <br>
 
-**User Testimonials**
 
-"CodeSync's playback feature has revolutionized how we approach code reviews and retrospectives." - *_Laura Nguyen, Software Engineer_*
-
-"Being able to visually track our code's evolution has greatly enhanced our team's understanding and collaboration." - *_Ryan Patel, DevOps Manager_*
+[Try CodeSync’s AI-powered summaries today](https://www.codesync.com/request-a-demo) and streamline your workflow!
+Free for 14 days. Available for JetBrains IDEs and VS Code.
 
 **Stay Informed**  
 - Connect with us on [Discord](https://discord.com/invite/3daCMNZNTa) and [LinkedIn](https://www.linkedin.com/company/codesyncapp/).
@@ -36,6 +32,9 @@ We support both cloud and self-hosting via AWS. If you’d like your data and in
 
 **Visuals**
 
-![Repo Playback (Replaying your changes)](https://codesync-images.s3.amazonaws.com/playback-dark-theme.gif)
+<video width="600" controls>
+  <source src="https://codesync-images.s3.amazonaws.com/public/homePage/ai_powered.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 *_Discover the power of visual code analysis with CodeSync. Install now for a transformative coding experience!_*
