@@ -51,7 +51,7 @@ export class tabEventHandler {
 				if (!tab.input || !tab.input?.uri || !tab.input?.uri.path) return null;
 				// Get path of tab
 				// @ts-ignore
-				const tabFilePath = tab.input.uri.path;
+				const tabFilePath = tab.input?.uri.path;
 				const splitPath = tabFilePath.split(`${this.repoPath}${path.sep}`);
 				if (splitPath.length === 2) {
 					// Get file ID using path
