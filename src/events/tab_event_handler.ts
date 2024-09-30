@@ -46,8 +46,8 @@ export class tabEventHandler {
 	try {	
 			const tabs: ITabFile[] = openTabs.flatMap(tabGroup => 
 			tabGroup.tabs.map(tab => {
-				// Get path of tab
 				if (!tab.input) return null;
+				// Get path of tab
 				// @ts-ignore
 				const tabFilePath = tab.input.uri.path;
 				const splitPath = tabFilePath.split(`${this.repoPath}${path.sep}`);
