@@ -170,7 +170,7 @@ describe("addTab", () => {
     });
 
      // Should discard invalid tab and send nothing
-     test.only("Discard unrecognized tab and send nothing", () => {
+     test("Discard unrecognized tab and send nothing", () => {
         /*
         - Should discard invalid tab
         - Should not create .yml file
