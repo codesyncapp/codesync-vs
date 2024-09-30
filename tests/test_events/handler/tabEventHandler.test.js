@@ -260,6 +260,7 @@ describe("addTab", () => {
         // Assert repo_id
         expect(tabData.repository_id).toEqual(repo_id);
         // Assert tabs
+        expect(tabData.tabs).toHaveLength(2);
         expect(tabData.tabs[0].file_id).toBe(tab1_fileId);
         expect(tabData.tabs[0].path).toBe(filePath1[1]);
         expect(tabData.tabs[1].file_id).toBeNull();
