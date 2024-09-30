@@ -43,9 +43,11 @@ export class tabEventHandler {
 		if (!repoId) return
 		// Get list of current tabs
 		const openTabs = vscode.window.tabGroups.all;
-		const tabs: ITabFile[] = openTabs.flatMap(tabGroup => 
+	try {	
+			const tabs: ITabFile[] = openTabs.flatMap(tabGroup => 
 			tabGroup.tabs.map(tab => {
 				// Get path of tab
+				if (!tab.input) return null;
 				// @ts-ignore
 				const tabFilePath = tab.input.uri.path;
 				const splitPath = tabFilePath.split(`${this.repoPath}${path.sep}`);
@@ -64,6 +66,9 @@ export class tabEventHandler {
 		if (tabs.length === 0) return;
 		// Adding to buffer
 		this.addToBuffer(repoId, createdAt, tabs);
+	} catch(error) {
+		console.error(`[handleTabChangeEvent] Error processing tabs, error: ${error}`);
+	}
 	}
 
 	addToBuffer = (repoId: number, createdAt: string, tabs: ITabFile[]) => {
