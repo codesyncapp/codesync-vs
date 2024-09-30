@@ -170,8 +170,9 @@ describe("addTab", () => {
     });
 
      // Should discard invalid tab and send nothing
-     test("Discard unrecognized tab and send nothing", () => {
+     test("Invalid tab, undefined input value", () => {
         /*
+        Invalid tab with undefined input value
         - Should discard invalid tab
         - Should not create .yml file
         - Should not send any data
@@ -199,6 +200,77 @@ describe("addTab", () => {
         // Assert file should not be created
         expect(tabFiles).toHaveLength(0);
     });
+
+
+     // Should discard invalid tab and send nothing
+     test("Invalid tab, undefined uri value", () => {
+        /*
+        Invalid tab with undefined uri value
+        - Should discard invalid tab
+        - Should not create .yml file
+        - Should not send any data
+        */
+        configUtil.addRepo();
+        addUser(baseRepoPath, true);
+        const mockTabs = [
+            {
+                tabs: [
+                    {
+                        input: {
+                            uri: undefined
+                        },
+                        isActive: false,
+                    },
+                ]
+            }
+        ]
+        Object.defineProperty(vscode.window.tabGroups, 'all', {
+            get: jest.fn(() => mockTabs),
+        });
+        const handler = new tabEventHandler(repoPath);
+        // Record timestamp
+        const createdAt = formatDatetime(new Date().getTime());
+        handler.handleTabChangeEvent(createdAt)
+        let tabFiles = fs.readdirSync(tabsRepo)
+        // Assert file should not be created
+        expect(tabFiles).toHaveLength(0);
+    });
+
+// Should discard invalid tab and send nothing
+test("Invalid tab, undefined path value", () => {
+    /*
+    Invalid tab with undefined path value
+    - Should discard invalid tab
+    - Should not create .yml file
+    - Should not send any data
+    */
+    configUtil.addRepo();
+    addUser(baseRepoPath, true);
+    const mockTabs = [
+        {
+            tabs: [
+                {
+                    input: {
+                        uri: {
+                            path: undefined
+                        },
+                    },
+                    isActive: false,
+                },
+            ]
+        }
+    ]
+    Object.defineProperty(vscode.window.tabGroups, 'all', {
+        get: jest.fn(() => mockTabs),
+    });
+    const handler = new tabEventHandler(repoPath);
+    // Record timestamp
+    const createdAt = formatDatetime(new Date().getTime());
+    handler.handleTabChangeEvent(createdAt)
+    let tabFiles = fs.readdirSync(tabsRepo)
+    // Assert file should not be created
+    expect(tabFiles).toHaveLength(0);
+});
 
      // Should discard invalid tab and send valid tabs
      test("Discard unrecognized tab and send valid tabs", () => {

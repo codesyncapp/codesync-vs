@@ -12,6 +12,7 @@ import { generateSettings } from "../settings";
 import { RepoState } from "../utils/repo_state_utils";
 import { UserState } from "../utils/user_utils";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
+import { CodeSyncLogger } from "../logger";
 
 export class tabEventHandler {
 	repoPath = "";
@@ -46,7 +47,8 @@ export class tabEventHandler {
 	try {	
 			const tabs: ITabFile[] = openTabs.flatMap(tabGroup => 
 			tabGroup.tabs.map(tab => {
-				if (!tab.input) return null;
+				// @ts-ignore
+				if (!tab.input || !tab.input?.uri || !tab.input?.uri.path) return null;
 				// Get path of tab
 				// @ts-ignore
 				const tabFilePath = tab.input.uri.path;
@@ -67,7 +69,7 @@ export class tabEventHandler {
 		// Adding to buffer
 		this.addToBuffer(repoId, createdAt, tabs);
 	} catch(error) {
-		console.error(`[handleTabChangeEvent] Error processing tabs, error: ${error}`);
+		CodeSyncLogger.error(`[handleTabChangeEvent] Error processing tabs, error: ${error}`);
 	}
 	}
 
