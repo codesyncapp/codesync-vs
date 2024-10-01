@@ -98,20 +98,26 @@ export async function activate(context: vscode.ExtensionContext) {
 				if (changeEvent.changed.length > 0) {
 					const oldPath = CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH);
 					// @ts-ignore
+					if (!changeEvent.changed[0]?.input ||
+						// @ts-ignore
+						!changeEvent.changed[0]?.input?.uri ||
+						// @ts-ignore
+						!changeEvent.changed[0]?.input?.uri.path) return;
+					// @ts-ignore
 					const filePath = changeEvent.changed[0]?.input?.uri.path;
 					if (filePath !== oldPath) {
 						fileChanged = true;
 						CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, filePath);
 					}
 				}
-				const isTabEvent = fileChanged || changeEvent.opened.length > 0 || changeEvent.closed.length > 0
+				const isTabEvent = fileChanged || changeEvent.opened.length > 0 || changeEvent.closed.length > 0;
 				captureTabs(repoPath, isTabEvent);
 			} catch (e) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				CodeSyncLogger.error("Failed handling tabChangeEvent", e.stack);
 			}
-		})
+		});
 
 		// Do not run daemon in case of tests
 		if ((global as any).IS_CODESYNC_TEST_MODE) return;

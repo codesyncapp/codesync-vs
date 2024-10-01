@@ -12,6 +12,7 @@ import { generateSettings } from "../settings";
 import { RepoState } from "../utils/repo_state_utils";
 import { UserState } from "../utils/user_utils";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
+import { CodeSyncLogger } from "../logger";
 
 export class tabEventHandler {
 	repoPath = "";
@@ -43,11 +44,14 @@ export class tabEventHandler {
 		if (!repoId) return
 		// Get list of current tabs
 		const openTabs = vscode.window.tabGroups.all;
-		const tabs: ITabFile[] = openTabs.flatMap(tabGroup => 
+	try {	
+			const tabs: ITabFile[] = openTabs.flatMap(tabGroup => 
 			tabGroup.tabs.map(tab => {
+				// @ts-ignore
+				if (!tab.input || !tab.input?.uri || !tab.input?.uri.path) return null;
 				// Get path of tab
 				// @ts-ignore
-				const tabFilePath = tab.input.uri.path;
+				const tabFilePath = tab.input?.uri.path;
 				const splitPath = tabFilePath.split(`${this.repoPath}${path.sep}`);
 				if (splitPath.length === 2) {
 					// Get file ID using path
@@ -64,6 +68,10 @@ export class tabEventHandler {
 		if (tabs.length === 0) return;
 		// Adding to buffer
 		this.addToBuffer(repoId, createdAt, tabs);
+	} catch(e) {
+		// @ts-ignore
+		CodeSyncLogger.error("Failed handling tabChangeEvent", e.stack);
+	}
 	}
 
 	addToBuffer = (repoId: number, createdAt: string, tabs: ITabFile[]) => {
