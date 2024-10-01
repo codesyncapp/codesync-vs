@@ -68,8 +68,9 @@ export class tabEventHandler {
 		if (tabs.length === 0) return;
 		// Adding to buffer
 		this.addToBuffer(repoId, createdAt, tabs);
-	} catch(error) {
-		CodeSyncLogger.error(`[handleTabChangeEvent] Error processing tabs, error: ${error}`);
+	} catch(e) {
+		// @ts-ignore
+		CodeSyncLogger.error("Failed handling tabChangeEvent", e.stack);
 	}
 	}
 
