@@ -123,3 +123,35 @@ export interface ITabFile {
 	path: string;
 	is_active_tab: boolean;
 }
+
+export interface ITabInput {
+	uri: { path: string };  // Assuming 'uri' has a 'path' property
+}
+  
+export interface ITab {
+	input?: ITabInput;  // Assuming 'input' is optional
+	uri?: { path: string };  // Assuming 'uri' is optional
+}
+
+export interface ISystemConfig {
+	ROOT_REPO: string;
+	API_HOST: string;
+	API_BASE_URL: string;
+	SOCKET_HOST: string;
+	WEBAPP_HOST: string;
+	CW_LOGS_GROUP: string;
+	AWS_REGION: string;
+}
+
+export interface IApiRoutes {
+	HEALTHCHECK: string;
+	FILES: string;
+	REPO_INIT: string;
+	REPOS: string;
+	USERS: string;
+	REACTIVATE_ACCOUNT: string;
+	USER_SUBSCRIPTION: string;
+	DIFFS_WEBSOCKET: string;
+	TEAM_ACTIVITY: string;
+	USER_PRICING: string;
+}

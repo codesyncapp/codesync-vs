@@ -8,7 +8,7 @@ import {
 import untildify from "untildify";
 
 import {getUserFilePath, randomBaseRepoPath, TEST_EMAIL, TEST_USER} from "./helpers/helpers";
-import {LOGS_METADATA, PLUGIN_USER} from "../src/settings";
+import {systemConfig, PLUGIN_USER} from "../src/settings";
 import {CodeSyncLogger} from "../src/logger";
 import {addPluginUser} from "../src/utils/setup_utils";
 
@@ -43,7 +43,7 @@ describe("putLogEvent",  () => {
         await addPluginUser();
         CodeSyncLogger.error(errMsg);
         expect(CloudWatchLogsClient.mock.calls[0][0]).toStrictEqual({
-            region: LOGS_METADATA.AWS_REGION,
+            region: systemConfig.AWS_REGION,
             credentials: {
                 accessKeyId: "IAM_ACCESS_KEY",
                 secretAccessKey: "IAM_SECRET_KEY",
@@ -51,7 +51,7 @@ describe("putLogEvent",  () => {
         });
         expect(PutLogEventsCommand).toHaveBeenCalledTimes(1);
         const params = PutLogEventsCommand.mock.calls[0][0];
-        expect(params.logGroupName).toStrictEqual(LOGS_METADATA.GROUP);
+        expect(params.logGroupName).toStrictEqual(systemConfig.CW_LOGS_GROUP);
         expect(params.logStreamName).toStrictEqual(PLUGIN_USER.logStream);
         const CWMsg = JSON.parse(params.logEvents[0].message);
         ["msg", "type", "source", "version", "platform", "mac_address"].forEach(key => {
@@ -72,7 +72,7 @@ describe("putLogEvent",  () => {
         const errMsg = "Error message";
         await CodeSyncLogger.error(errMsg, "", TEST_EMAIL);
         expect(CloudWatchLogsClient.mock.calls[0][0]).toStrictEqual({
-            region: LOGS_METADATA.AWS_REGION,
+            region: systemConfig.AWS_REGION,
             credentials: {
                 accessKeyId: TEST_USER.iam_access_key,
                 secretAccessKey: TEST_USER.iam_secret_key,
@@ -80,7 +80,7 @@ describe("putLogEvent",  () => {
         });
         expect(PutLogEventsCommand).toHaveBeenCalledTimes(1);
         const params = PutLogEventsCommand.mock.calls[0][0];
-        expect(params.logGroupName).toStrictEqual(LOGS_METADATA.GROUP);
+        expect(params.logGroupName).toStrictEqual(systemConfig.CW_LOGS_GROUP);
         expect(params.logStreamName).toStrictEqual(TEST_EMAIL);
         const CWMsg = JSON.parse(params.logEvents[0].message);
         ["msg", "type", "source", "version", "platform", "mac_address"].forEach(key => {
