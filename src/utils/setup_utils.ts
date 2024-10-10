@@ -26,7 +26,7 @@ import {
 	disconnectRepoHandler,
 	reconnectRepoHandler
  } from '../handlers/commands_handler';
-import { generateSettings, PLUGIN_USER } from "../settings";
+import { generateSettings, PLUGIN_USER, systemConfig } from "../settings";
 import { initExpressServer } from "../server/server";
 import { getPluginUser, getSyncignore } from './s3_utils';
 import { pathUtils } from './path_utils';
@@ -36,6 +36,7 @@ import { CODESYNC_STATES, CodeSyncState } from './state_utils';
 import { RepoState } from './repo_state_utils';
 import { UserState } from './user_utils';
 import { authHandler, logoutHandler, reactivateAccountHandler, requestDemoUrl } from '../handlers/user_commands';
+import { ISystemConfig } from '../interface';
 
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
@@ -306,4 +307,28 @@ export const uuidv4 = () => {
         }
         return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
+};
+
+export const getSystemConfig = (): ISystemConfig => {
+	/*
+		{
+			ROOT_REPO: '~/.codesync',
+			API_HOST: "https://api.codesync.com",
+			SOCKET_HOST: "wss://api.codesync.com",
+			WEBAPP_HOST: "https://www.codesync.com",
+			CW_LOGS_GROUP: "client-logs",
+			AWS_REGION: "us-east-1"
+		};
+	*/
+	const settings = generateSettings();
+	if (!fs.existsSync(settings.ON_PREM_CONFIG)) return systemConfig;
+	try {
+		const onPremConfig = JSON.parse(fs.readFileSync(settings.ON_PREM_CONFIG, 'utf8'));
+		const _systemConfig = { ...systemConfig, ...onPremConfig };
+		_systemConfig.API_BASE_URL = onPremConfig.API_HOST ? `${onPremConfig.API_HOST}/v1` : `${systemConfig.API_HOST}/v1`;
+		return _systemConfig;
+	} catch (e) {
+		console.log("Error parsing on_prem_config.json file");
+		return systemConfig;
+	}
 };

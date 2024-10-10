@@ -3,7 +3,7 @@ import yaml from "js-yaml";
 import untildify from "untildify";
 import fetchMock from "jest-fetch-mock";
 
-import {API_ROUTES} from "../../src/constants";
+import {apiRoutes} from "../../src/constants";
 import {
     checkServerDown,
     createUserWithApi
@@ -36,24 +36,25 @@ describe('checkServerDown', () => {
     });
 
     test("with status: true", async () => {
+        console.log(11);
         fetchMock.mockResponseOnce(JSON.stringify({status: true}));
         const isServerDown = await checkServerDown();
         expect(isServerDown).toBe(false);
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.HEALTHCHECK);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(apiRoutes().HEALTHCHECK);
     });
 
     test("with status: false", async () => {
         fetchMock.mockResponseOnce(JSON.stringify({status: false}));
         const isServerDown = await checkServerDown();
         expect(isServerDown).toBe(true);
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.HEALTHCHECK);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(apiRoutes().HEALTHCHECK);
     });
 
     test("will null response", async () => {
         fetchMock.mockResponseOnce(null);
         const isServerDown = await checkServerDown();
         expect(isServerDown).toBe(true);
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.HEALTHCHECK);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(apiRoutes().HEALTHCHECK);
     });
 });
 
@@ -65,7 +66,7 @@ describe("createUserWithApi",  () => {
     });
 
     const assertAPICall = (token="ACCESS_TOKEN") => {
-        expect(fetch.mock.calls[0][0]).toStrictEqual(API_ROUTES.USERS);
+        expect(fetch.mock.calls[0][0]).toStrictEqual(apiRoutes().USERS);
         const options = fetch.mock.calls[0][1];
         expect(options.method).toStrictEqual("POST");
         expect(options.headers).toStrictEqual({

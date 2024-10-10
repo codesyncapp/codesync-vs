@@ -18,6 +18,7 @@ import { CODESYNC_STATES, CodeSyncState } from './utils/state_utils';
 import { RepoState } from './utils/repo_state_utils';
 import { captureTabs } from './utils/tab_utils';
 import { BRANCH_SYNC_TIMEOUT } from './constants';
+import { ITab } from './interface';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const uuid = uuidv4();
@@ -97,14 +98,9 @@ export async function activate(context: vscode.ExtensionContext) {
 				let fileChanged = false;
 				if (changeEvent.changed.length > 0) {
 					const oldPath = CodeSyncState.get(CODESYNC_STATES.ACTIVE_TAB_PATH);
-					// @ts-ignore
-					if (!changeEvent.changed[0]?.input ||
-						// @ts-ignore
-						!changeEvent.changed[0]?.input?.uri ||
-						// @ts-ignore
-						!changeEvent.changed[0]?.input?.uri.path) return;
-					// @ts-ignore
-					const filePath = changeEvent.changed[0]?.input?.uri.path;
+					const changedPath = changeEvent.changed[0] as ITab;
+					if (!changedPath?.input?.uri?.path) return;
+					const filePath = changedPath.input.uri.path;
 					if (filePath !== oldPath) {
 						fileChanged = true;
 						CodeSyncState.set(CODESYNC_STATES.ACTIVE_TAB_PATH, filePath);

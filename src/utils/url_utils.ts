@@ -1,5 +1,7 @@
-import { TIMEZONE, VERSION, VSCODE, Auth0URLs, API_BASE_URL, WebPaths } from "../constants";
-import { WEB_APP_URL } from "../settings";
+import { TIMEZONE, VERSION, VSCODE, Auth0URLs, WebPaths } from "../constants";
+import { WEBAPP_HOST } from "../settings";
+import { getSystemConfig } from "./setup_utils";
+
 
 export const createRedirectUri = (path=Auth0URLs.LOGIN_CALLBACK_PATH) => {
     const port = (global as any).port;
@@ -32,7 +34,7 @@ export const generateLogoutUrl = (access_token: string) => {
 	return authUrl;
 };
 
-export const generateServerUrl = (urlPath: string, baseUrl=API_BASE_URL, addTimezone=false) => {
+const generateBackendUrl = (urlPath: string, baseUrl: string, addTimezone=false) => {
 	const _url = new URL(`${baseUrl}${urlPath}`);
 	_url.searchParams.append("source", VSCODE);
 	_url.searchParams.append("v", VERSION);
@@ -42,8 +44,23 @@ export const generateServerUrl = (urlPath: string, baseUrl=API_BASE_URL, addTime
 	return _url.href;
 };
 
+export const generateApiUrl = (urlPath: string, addTimezone=false) => {
+	const apiBaseUrl = getSystemConfig().API_BASE_URL;
+	return generateBackendUrl(urlPath, apiBaseUrl, addTimezone);
+};
+
+export const generateApiHostUrl = (urlPath: string) => {
+	const baseUrl = getSystemConfig().API_HOST;
+	return generateBackendUrl(urlPath, baseUrl);
+};
+
+export const generateSocketUrl = (urlPath: string) => {
+	const socketUrl = getSystemConfig().SOCKET_HOST;
+	return generateBackendUrl(urlPath, socketUrl);
+};
+
 export const generateWebUrl = (urlPath="", additionalParams: any=null,) => {
-	const url = `${WEB_APP_URL}${urlPath}`;
+	const url = `${WEBAPP_HOST}${urlPath}`;
 	const _url = appendGAparams(url);
 	if (additionalParams) {
 		Object.keys(additionalParams).forEach(key => {

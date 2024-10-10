@@ -31,7 +31,7 @@ import {
     getRepoDisconnectedMsg,
     getRepoReconnectedMsg
 } from "../../src/constants";
-import {WEB_APP_URL} from "../../src/settings";
+import {systemConfig} from "../../src/settings";
 import {readYML} from "../../src/utils/common";
 import { authHandler } from "../../src/handlers/user_commands";
 
@@ -381,7 +381,7 @@ describe("trackRepoHandler",  () => {
         fs.writeFileSync(configPath, yaml.dump(configData));
         const playbackLink = trackRepoHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
-        expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
+        expect(playbackLink.startsWith(systemConfig.WEBAPP_HOST)).toBe(true);
     });
 
     test("With nested directory", async () => {
@@ -396,7 +396,7 @@ describe("trackRepoHandler",  () => {
         new RepoState(subDir).setSubDirState();
         const playbackLink = trackRepoHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
-        expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
+        expect(playbackLink.startsWith(systemConfig.WEBAPP_HOST)).toBe(true);
     });
 });
 

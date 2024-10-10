@@ -8,7 +8,7 @@ import {
     CONNECTION_ERROR_MESSAGE,
     SOCKET_CONNECT_ERROR_CODES,
     SOCKET_ERRORS,
-    API_ROUTES,
+    apiRoutes,
     STATUS_BAR_MSGS
 } from "../../constants";
 import { CodeSyncState, CODESYNC_STATES } from "../../utils/state_utils";
@@ -85,7 +85,7 @@ export class SocketClient {
             that.registerConnectionEvents(connection, canSendDiffs);
         });
 
-        let url = `${API_ROUTES.DIFFS_WEBSOCKET}&token=${this.accessToken}`;
+        let url = `${apiRoutes().DIFFS_WEBSOCKET}&token=${this.accessToken}`;
         if (!canSendDiffs) {
             url += '&auth_only=1';
         }

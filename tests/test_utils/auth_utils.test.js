@@ -12,7 +12,7 @@ import {
 import { logoutHandler } from "../../src/handlers/user_commands";
 import { Auth0URLs, contextVariables, NOTIFICATION, WebPaths } from "../../src/constants";
 import { createRedirectUri, generateWebUrl, generateRequestDemoUrl, appendGAparams } from "../../src/utils/url_utils";
-import { WEB_APP_URL } from "../../src/settings";
+import { systemConfig } from "../../src/settings";
 import {
     addUser,
     getUserFilePath,
@@ -68,7 +68,7 @@ describe("generateRequestDemoUrl",  () => {
     });
 
     test("url should have valid domain",  async () => {
-        expect(url.includes(WEB_APP_URL)).toBe(true);
+        expect(url.includes(systemConfig.WEBAPP_HOST)).toBe(true);
     });
 
     test("url should have proper params",  async () => {
@@ -80,7 +80,7 @@ describe("generateRequestDemoUrl",  () => {
         expect(url).not.toBeNull();
         expect(url).toBeDefined();
 
-        const expectedUrl = WEB_APP_URL + WebPaths.REQUEST_DEMO;
+        const expectedUrl = systemConfig.WEBAPP_HOST + WebPaths.REQUEST_DEMO;
         expect(url).toEqual(`${appendGAparams(expectedUrl)}`);
     });
 });
