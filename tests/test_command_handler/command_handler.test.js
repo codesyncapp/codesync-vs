@@ -36,10 +36,13 @@ import {readYML} from "../../src/utils/common";
 import { authHandler } from "../../src/handlers/user_commands";
 
 describe("authHandler",  () => {
+
+    const baseRepoPath = randomBaseRepoPath();
     
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
     });
 
     test("authHandler:skipAskConnect=false",  () => {

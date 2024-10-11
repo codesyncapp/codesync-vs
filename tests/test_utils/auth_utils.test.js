@@ -12,7 +12,6 @@ import {
 import { logoutHandler } from "../../src/handlers/user_commands";
 import { Auth0URLs, contextVariables, NOTIFICATION, WebPaths } from "../../src/constants";
 import { createRedirectUri, generateWebUrl, generateRequestDemoUrl, appendGAparams } from "../../src/utils/url_utils";
-import { systemConfig } from "../../src/settings";
 import {
     addUser,
     getUserFilePath,
@@ -26,9 +25,11 @@ import {
 } from "../helpers/helpers";
 import { readYML } from "../../src/utils/common";
 import { initExpressServer } from "../../src/server/server";
+import { getSystemConfig } from "../../src/utils/setup_utils";
 
 
 describe("isPortAvailable",  () => {
+
     test("random free port", async () => {
         expect(await isPortAvailable(59402)).toBe(true);
     });
@@ -40,6 +41,7 @@ describe("isPortAvailable",  () => {
 });
 
 describe("initExpressServer",  () => {
+
     test("initExpressServer",  () => {
         const port = 1234;
         global.port = port;
@@ -51,6 +53,14 @@ describe("initExpressServer",  () => {
 });
 
 describe("createRedirectUri",  () => {
+
+    const baseRepoPath = randomBaseRepoPath();
+    
+    beforeEach(() => {
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
+    });
+
     test("createRedirectUri",  () => {
         const port = 1234;
         global.port = port;
@@ -61,14 +71,23 @@ describe("createRedirectUri",  () => {
 });
 
 describe("generateRequestDemoUrl",  () => {
-    const url = generateRequestDemoUrl();
+
+    const baseRepoPath = randomBaseRepoPath();
+    let url = "";
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
+        url = generateRequestDemoUrl();
+    });
+
 
     test("url should have valid path",  async () => {
         expect(url.includes(WebPaths.REQUEST_DEMO)).toBe(true);
     });
 
     test("url should have valid domain",  async () => {
-        expect(url.includes(systemConfig.WEBAPP_HOST)).toBe(true);
+        expect(url.includes(getSystemConfig().WEBAPP_HOST)).toBe(true);
     });
 
     test("url should have proper params",  async () => {
@@ -80,7 +99,7 @@ describe("generateRequestDemoUrl",  () => {
         expect(url).not.toBeNull();
         expect(url).toBeDefined();
 
-        const expectedUrl = systemConfig.WEBAPP_HOST + WebPaths.REQUEST_DEMO;
+        const expectedUrl = getSystemConfig().WEBAPP_HOST + WebPaths.REQUEST_DEMO;
         expect(url).toEqual(`${appendGAparams(expectedUrl)}`);
     });
 });
@@ -90,6 +109,7 @@ describe("logoutHandler",  () => {
     const baseRepoPath = randomBaseRepoPath();
 
     beforeEach(() => {
+        jest.clearAllMocks();
         untildify.mockReturnValue(baseRepoPath);
         fs.mkdirSync(baseRepoPath, {recursive: true});
         userFilePath = addUser(baseRepoPath);
@@ -188,8 +208,15 @@ describe("createUser",  () => {
     });
 });
 
-
 describe("askAndTriggerSignUp",  () => {
+
+    const baseRepoPath = randomBaseRepoPath();
+    
+    beforeEach(() => {
+        jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
+    });
+
     test("askAndTriggerSignUp", () => {
         askAndTriggerSignUp();
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);

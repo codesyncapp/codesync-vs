@@ -58,7 +58,7 @@ export const generateSocketUrl = (urlPath: string) => {
 	return generateBackendUrl(urlPath, socketUrl);
 };
 
-export const generateWebUrl = (urlPath="", additionalParams: any=null,) => {
+export const generateWebUrl = (urlPath="", additionalParams: any=null) => {
 	const webappHost = getSystemConfig().WEBAPP_HOST;
 	const url = `${webappHost}${urlPath}`;
 	const _url = appendGAparams(url);
