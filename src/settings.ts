@@ -5,7 +5,7 @@ import { stagingConfig } from "./config/staging";
 import { devConfig } from "./config/dev";
 
 // Set this to true for Development
-const DEBUG = true;
+const DEBUG = false;
 const useStaging = false;
 const DevConfig = {
     ROOT_REPO: useStaging ? stagingConfig.ROOT_REPO: devConfig.ROOT_REPO,

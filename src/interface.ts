@@ -127,7 +127,7 @@ export interface ITabFile {
 export interface ITabInput {
 	uri: { path: string };  // Assuming 'uri' has a 'path' property
 }
-  
+
 export interface ITab {
 	input?: ITabInput;  // Assuming 'input' is optional
 	uri?: { path: string };  // Assuming 'uri' is optional

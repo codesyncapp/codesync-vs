@@ -14,10 +14,10 @@ import {
     getConfigFilePath,
     Config,
     setWorkspaceFolders,
-    USER_REPO_CAN_AVAIL_TRIAL, 
-    USER_REPO_PLAN_INFO,
-    ORG_REPO_PLAN_INFO,
-    ORG_REPO_CAN_AVAIL_TRIAL
+    getUserRepoCanAvailTrial, 
+    getUserRepoPlanInfo,
+    getOrgPlanInfo,
+    getOrgRepoCanAvailTrial
 } from "../helpers/helpers";
 import {uploadFile, uploadFileTos3, uploadFileToServer, uploadRepoToServer} from "../../src/utils/upload_utils";
 import { generateApiUrl } from "../../src/utils/url_utils";
@@ -156,7 +156,7 @@ describe('uploadRepoToServer: Payment Errors', () => {
     test('Payment Required: Brnach Upload for currently opened User Repo', async () => {        
         fetchMock
             .mockResponseOnce(JSON.stringify(REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED })
-            .mockResponseOnce(JSON.stringify(USER_REPO_PLAN_INFO));
+            .mockResponseOnce(JSON.stringify((getUserRepoPlanInfo())));
         const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath }, repoId);
         expect(res.error).toBeTruthy();
         expect(res.response).toStrictEqual({});
@@ -180,7 +180,7 @@ describe('uploadRepoToServer: Payment Errors', () => {
     test('Payment Required: Brnach Upload for UserRepo, canAvtailTrial', async () => {        
         fetchMock
             .mockResponseOnce(JSON.stringify(REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED })
-            .mockResponseOnce(JSON.stringify(USER_REPO_CAN_AVAIL_TRIAL));
+            .mockResponseOnce(JSON.stringify(getUserRepoCanAvailTrial()));
         const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath }, repoId);
         expect(res.error).toBeTruthy();
         expect(res.response).toStrictEqual({});
@@ -204,7 +204,7 @@ describe('uploadRepoToServer: Payment Errors', () => {
     test('Payment Required: Brnach Upload for currently opened Org Repo', async () => {        
         fetchMock
             .mockResponseOnce(JSON.stringify(REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED })
-            .mockResponseOnce(JSON.stringify(ORG_REPO_PLAN_INFO));
+            .mockResponseOnce(JSON.stringify(getOrgPlanInfo()));
         const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath }, repoId);
         expect(res.error).toBeTruthy();
         expect(res.response).toStrictEqual({});
@@ -227,7 +227,7 @@ describe('uploadRepoToServer: Payment Errors', () => {
     test('Payment Required: Brnach Upload for OrgRepo, canAvailTrial', async () => {        
         fetchMock
             .mockResponseOnce(JSON.stringify(REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED })
-            .mockResponseOnce(JSON.stringify(ORG_REPO_CAN_AVAIL_TRIAL));
+            .mockResponseOnce(JSON.stringify(getOrgRepoCanAvailTrial()));
         const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath }, repoId);
         expect(res.error).toBeTruthy();
         expect(res.response).toStrictEqual({});
@@ -252,7 +252,7 @@ describe('uploadRepoToServer: Payment Errors', () => {
         setWorkspaceFolders(currentRepoPath);
         fetchMock
             .mockResponseOnce(JSON.stringify(REPO_UPLOAD_402), { status: HttpStatusCodes.PAYMENT_REQUIRED })
-            .mockResponseOnce(JSON.stringify(ORG_REPO_CAN_AVAIL_TRIAL));
+            .mockResponseOnce(JSON.stringify(getOrgRepoCanAvailTrial()));
         const res = await uploadRepoToServer("ACCESS_TOKEN", { repo_path: repoPath }, repoId);
         expect(res.error).toBeTruthy();
         expect(res.response).toStrictEqual({});

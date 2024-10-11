@@ -7,9 +7,8 @@ import {readYML, readFile} from "../../src/utils/common";
 import {diff_match_patch} from "diff-match-patch";
 import {pathUtils} from "../../src/utils/path_utils";
 import {UserState} from "../../src/utils/user_utils";
-import {generateRandomNumber} from "../../src/utils/setup_utils";
+import {generateRandomNumber, getSystemConfig} from "../../src/utils/setup_utils";
 import {DEFAULT_BRANCH, VSCODE, WebPaths} from "../../src/constants";
-import {systemConfig} from "../../src/settings";
 import {ErrorCodes} from "../../src/utils/common";
 
 export function getRandomString(length) {
@@ -94,26 +93,39 @@ export const PRIVATE_REPO_UPLOAD_402 = {
         error_code: ErrorCodes.PRIVATE_REPO_COUNT_LIMIT_REACHED
     }
 };
-export const ORG_REPO_PLAN_INFO = {
-    is_org_repo: true,
-    can_avail_trial: false,
-    pricing_url: `${systemConfig.WEBAPP_HOST}${WebPaths.PRICING}`
+
+export const getOrgPlanInfo = () => {
+    return {
+        is_org_repo: true,
+        can_avail_trial: false,
+        pricing_url: `${getSystemConfig().WEBAPP_HOST}${WebPaths.PRICING}`
+    };
 };
-export const USER_REPO_PLAN_INFO = {
-    is_org_repo: false,
-    can_avail_trial: false,
-    pricing_url: `${systemConfig.WEBAPP_HOST}${WebPaths.PRICING}`
+
+export const getUserRepoPlanInfo = () => {
+    return {
+        is_org_repo: false,
+        can_avail_trial: false,
+        pricing_url: `${getSystemConfig().WEBAPP_HOST}${WebPaths.PRICING}`    
+    };
 };
-export const ORG_REPO_CAN_AVAIL_TRIAL = {
-    is_org_repo: true,
-    can_avail_trial: true,
-    pricing_url: `${systemConfig.WEBAPP_HOST}${WebPaths.PRICING}`
+
+export const getOrgRepoCanAvailTrial = () => {
+    return {
+        is_org_repo: true,
+        can_avail_trial: true,
+        pricing_url: `${getSystemConfig().WEBAPP_HOST}${WebPaths.PRICING}`    
+    };
 };
-export const USER_REPO_CAN_AVAIL_TRIAL = {
-    is_org_repo: false,
-    can_avail_trial: true,
-    pricing_url: `${systemConfig.WEBAPP_HOST}${WebPaths.PRICING}`
+
+export const getUserRepoCanAvailTrial = () => {
+    return {
+        is_org_repo: false,
+        can_avail_trial: true,
+        pricing_url: `${getSystemConfig().WEBAPP_HOST}${WebPaths.PRICING}`
+    };
 };
+
 export const FILE_UPLOAD_404 = {error: {message: "Branch not found"}};
 export const FILE_UPLOAD_403 = {error: {message: "Unauthorized for given repo"}};
 export const INTERNAL_SERVER_ERROR = {error: {message: "Internal Server Error"}};
