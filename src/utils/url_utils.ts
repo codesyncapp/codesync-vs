@@ -1,5 +1,4 @@
 import { TIMEZONE, VERSION, VSCODE, Auth0URLs, WebPaths } from "../constants";
-import { WEBAPP_HOST } from "../settings";
 import { getSystemConfig } from "./setup_utils";
 
 
@@ -60,7 +59,8 @@ export const generateSocketUrl = (urlPath: string) => {
 };
 
 export const generateWebUrl = (urlPath="", additionalParams: any=null,) => {
-	const url = `${WEBAPP_HOST}${urlPath}`;
+	const webappHost = getSystemConfig().WEBAPP_HOST;
+	const url = `${webappHost}${urlPath}`;
 	const _url = appendGAparams(url);
 	if (additionalParams) {
 		Object.keys(additionalParams).forEach(key => {

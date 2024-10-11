@@ -13,7 +13,6 @@ import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { createUserWithApi } from "../utils/api_utils";
 import { UserState } from "../utils/user_utils";
-import { WEBAPP_HOST } from "../settings";
 import { generateWebUrl } from "../utils/url_utils";
 
 export const initExpressServer = () => {

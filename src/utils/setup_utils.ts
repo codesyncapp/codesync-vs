@@ -38,6 +38,8 @@ import { UserState } from './user_utils';
 import { authHandler, logoutHandler, reactivateAccountHandler, requestDemoUrl } from '../handlers/user_commands';
 import { ISystemConfig } from '../interface';
 
+let SYSTEM_CONFIG = <ISystemConfig>{};
+
 export const createSystemDirectories = () => {
 	const settings = generateSettings();
 	// Create system directories
@@ -312,23 +314,27 @@ export const uuidv4 = () => {
 export const getSystemConfig = (): ISystemConfig => {
 	/*
 		{
-			ROOT_REPO: '~/.codesync',
+			ROOT_REPO: "~/.codesync",
 			API_HOST: "https://api.codesync.com",
+			API_BASE_URL: "https://api.codesync.com/v1",
 			SOCKET_HOST: "wss://api.codesync.com",
 			WEBAPP_HOST: "https://www.codesync.com",
 			CW_LOGS_GROUP: "client-logs",
 			AWS_REGION: "us-east-1"
 		};
 	*/
+	if (SYSTEM_CONFIG.API_HOST && SYSTEM_CONFIG.WEBAPP_HOST) return SYSTEM_CONFIG;
+	SYSTEM_CONFIG = {...systemConfig};
 	const settings = generateSettings();
-	if (!fs.existsSync(settings.ON_PREM_CONFIG)) return systemConfig;
+	if (!fs.existsSync(settings.ON_PREM_CONFIG)) return SYSTEM_CONFIG;
 	try {
 		const onPremConfig = JSON.parse(fs.readFileSync(settings.ON_PREM_CONFIG, 'utf8'));
 		const _systemConfig = { ...systemConfig, ...onPremConfig };
 		_systemConfig.API_BASE_URL = onPremConfig.API_HOST ? `${onPremConfig.API_HOST}/v1` : `${systemConfig.API_HOST}/v1`;
-		return _systemConfig;
+		SYSTEM_CONFIG = {..._systemConfig};
+		return SYSTEM_CONFIG;
 	} catch (e) {
-		console.log("Error parsing on_prem_config.json file");
-		return systemConfig;
+		CodeSyncLogger.error("Error parsing on_prem_config.json file");
+		return SYSTEM_CONFIG;
 	}
 };

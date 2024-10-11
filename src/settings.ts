@@ -15,17 +15,7 @@ const DevConfig = {
     CW_LOGS_GROUP: useStaging ? stagingConfig.CW_LOGS_GROUP: devConfig.CW_LOGS_GROUP,
     AWS_REGION: useStaging ? stagingConfig.AWS_REGION: devConfig.AWS_REGION,
 };
-
-// const ProdConfig = {
-//     ROOT_REPO: onPrem ? '~/.codesync-on-prem' : '~/.codesync',
-//     API_HOST: onPrem ? "http://codesync-api-lb-iy6rm5-366877061.us-east-1.elb.amazonaws.com": "https://api.codesync.com",
-//     SOCKET_HOST: onPrem ? "ws:///codesync-api-lb-iy6rm5-366877061.us-east-1.elb.amazonaws.com": "wss://api.codesync.com",
-//     WEBAPP_HOST: onPrem ? "http://codesync-webapp-lb-iy6rm5-1152117582.us-east-1.elb.amazonaws.com": "https://www.codesync.com",
-//     CW_LOGS_GROUP: onPrem ? "/codesync/plugin-logs" : "client-logs",
-//     AWS_REGION: onPrem ? "us-east-1" : "us-east-1"
-// };
 export const API_HOST = DEBUG ? DevConfig.API_HOST: prodConfig.API_HOST;
-export const WEBAPP_HOST = DEBUG ? DevConfig.WEBAPP_HOST : prodConfig.WEBAPP_HOST;
 
 export const systemConfig = {
     ROOT_REPO: DEBUG ? DevConfig.ROOT_REPO : prodConfig.ROOT_REPO,
@@ -33,8 +23,8 @@ export const systemConfig = {
     API_BASE_URL: `${API_HOST}/v1`,
     SOCKET_HOST: DEBUG ? DevConfig.WEBSOCKET_HOST : prodConfig.SOCKET_HOST,
     WEBAPP_HOST: DEBUG ? DevConfig.WEBAPP_HOST : prodConfig.WEBAPP_HOST,
-    CW_LOGS_GROUP: DEBUG ? DevConfig.AWS_REGION : prodConfig.AWS_REGION,
-    AWS_REGION: DEBUG ? DevConfig.CW_LOGS_GROUP : prodConfig.CW_LOGS_GROUP
+    CW_LOGS_GROUP: DEBUG ? DevConfig.CW_LOGS_GROUP : prodConfig.CW_LOGS_GROUP,
+    AWS_REGION: DEBUG ? DevConfig.AWS_REGION : prodConfig.AWS_REGION
 };
 
 const LOG_STREAM = DEBUG ? "codesync-dev-common-logs" : "codesync-common-logs";
