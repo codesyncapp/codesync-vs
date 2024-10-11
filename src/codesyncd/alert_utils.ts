@@ -1,7 +1,7 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
 import vscode from 'vscode';
-import { API_ROUTES, ECONNREFUSED, NOTIFICATION, RETRY_TEAM_ACTIVITY_REQUEST_AFTER, STATUS_BAR_MSGS } from "../constants";
+import { ECONNREFUSED, NOTIFICATION, RETRY_TEAM_ACTIVITY_REQUEST_AFTER, STATUS_BAR_MSGS } from "../constants";
 import { viewActivityHandler } from '../handlers/commands_handler';
 import { IRepoInfo, IUser } from "../interface";
 import { CodeSyncLogger } from '../logger';
@@ -24,7 +24,6 @@ export class Alerts {
 			},
 			showAfter: 24 * 60 * 60 * 1000, // 24 hours
 			hideAfter: 30 * 60 * 1000, // 30 min
-			api: API_ROUTES.TEAM_ACTIVITY
 		}
 	}
 

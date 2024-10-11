@@ -1,24 +1,32 @@
 import path from "path";
 import untildify from "untildify";
+import { prodConfig } from "./config/prod";
+import { stagingConfig } from "./config/staging";
+import { devConfig } from "./config/dev";
 
 // Set this to true for Development
 const DEBUG = false;
 const useStaging = false;
 const DevConfig = {
-    ROOT_REPO: useStaging ? '~/.codesync-staging': '~/.codesync-local',
-    WEBSOCKET_HOST: useStaging ? 'wss://api-staging.codesync.com': 'ws://localhost:8000',
-    CODESYNC_HOST: useStaging ? 'https://api-staging.codesync.com': 'http://localhost:8000',
-    WEB_APP_URL: useStaging ? "https://staging.codesync.com": "http://localhost:3000"
+    ROOT_REPO: useStaging ? stagingConfig.ROOT_REPO: devConfig.ROOT_REPO,
+    API_HOST: useStaging ? stagingConfig.API_HOST: devConfig.API_HOST,
+    WEBAPP_HOST: useStaging ? stagingConfig.WEBAPP_HOST: devConfig.WEBAPP_HOST,
+    WEBSOCKET_HOST: useStaging ? stagingConfig.SOCKET_HOST: devConfig.SOCKET_HOST,
+    CW_LOGS_GROUP: useStaging ? stagingConfig.CW_LOGS_GROUP: devConfig.CW_LOGS_GROUP,
+    AWS_REGION: useStaging ? stagingConfig.AWS_REGION: devConfig.AWS_REGION,
+};
+export const API_HOST = DEBUG ? DevConfig.API_HOST: prodConfig.API_HOST;
+
+export const systemConfig = {
+    ROOT_REPO: DEBUG ? DevConfig.ROOT_REPO : prodConfig.ROOT_REPO,
+    API_HOST: API_HOST,
+    API_BASE_URL: `${API_HOST}/v1`,
+    SOCKET_HOST: DEBUG ? DevConfig.WEBSOCKET_HOST : prodConfig.SOCKET_HOST,
+    WEBAPP_HOST: DEBUG ? DevConfig.WEBAPP_HOST : prodConfig.WEBAPP_HOST,
+    CW_LOGS_GROUP: DEBUG ? DevConfig.CW_LOGS_GROUP : prodConfig.CW_LOGS_GROUP,
+    AWS_REGION: DEBUG ? DevConfig.AWS_REGION : prodConfig.AWS_REGION
 };
 
-const ROOT_REPO_NAME = DEBUG ? DevConfig.ROOT_REPO : '~/.codesync';
-export const CODESYNC_WEBSOCKET_HOST = DEBUG ? DevConfig.WEBSOCKET_HOST : "wss://api.codesync.com";
-export const CODESYNC_HOST = DEBUG ? DevConfig.CODESYNC_HOST: "https://api.codesync.com";
-export const WEB_APP_URL = DEBUG ? DevConfig.WEB_APP_URL : "https://www.codesync.com";
-export const LOGS_METADATA = {
-    AWS_REGION: 'us-east-1',
-    GROUP: DEBUG ? 'client-logs-dev' : 'client-logs'
-};
 const LOG_STREAM = DEBUG ? "codesync-dev-common-logs" : "codesync-common-logs";
 const PLUGIN_USER_URL = DEBUG ? "https://codesync-public.s3.amazonaws.com/plugin-dev-user.json" : "https://codesync-public.s3.amazonaws.com/plugin-user.json";
 export const PLUGIN_USER = { 
@@ -61,7 +69,7 @@ export const generateSettings = () => {
         user.yml (User credentials)
     */
     // System Directories for CodeSync
-    const rootRepo = untildify(ROOT_REPO_NAME);
+    const rootRepo = untildify(systemConfig.ROOT_REPO);
     const systemDirectories = {
         CODESYNC_ROOT: rootRepo,
         DIFFS_REPO: path.join(rootRepo, ".diffs", ".vscode"),
@@ -72,6 +80,7 @@ export const generateSettings = () => {
         LOCKS_REPO: path.join(rootRepo, ".locks"),
         S3_UPLOADER: path.join(rootRepo, ".s3_uploader"),
         CONFIG_PATH: path.join(rootRepo, "config.yml"),
+        ON_PREM_CONFIG: path.join(rootRepo, "on_prem_config.json"),
         USER_PATH: path.join(rootRepo, "user.yml"),
         SEQUENCE_TOKEN_PATH: path.join(rootRepo, "sequence_token.yml"),
         SYNCIGNORE_PATH: path.join(rootRepo, "syncignore.yml"),
