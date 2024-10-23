@@ -1,11 +1,11 @@
 import fetch from "node-fetch";
 
-import { API_ROUTES } from "../constants";
+import { apiRoutes } from "../constants";
 
 
 export const checkServerDown = async () => {
 	let isDown = false;
-	const response = <any>await fetch(API_ROUTES.HEALTHCHECK)
+	const response = <any>await fetch(apiRoutes().HEALTHCHECK)
 		.then(res => res.json())
 		.then(json => json)
 		.catch(err => {
@@ -19,7 +19,7 @@ export const createUserWithApi = async (accessToken: string) => {
 	let error = "";
 	let email = "";
 	let statusCode = 200;
-	const response = <any>await fetch(API_ROUTES.USERS, {
+	const response = <any>await fetch(apiRoutes().USERS, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ export const getTeamActivity = async (accessToken: string) => {
 	let is_team_activity = false;
 	let activities = <any>[];
 	const response = <any>await fetch(
-		API_ROUTES.TEAM_ACTIVITY, {
+		apiRoutes().TEAM_ACTIVITY, {
 		headers: {
 			'Content-Type': 'application/json',
 			'Authorization': `Basic ${accessToken}`
@@ -79,7 +79,7 @@ export const getTeamActivity = async (accessToken: string) => {
 export const getUserSubcription = async (accessToken: string) => {
 	let error = "";
 
-	let response = <any>await fetch(API_ROUTES.USER_PRICING, {
+	let response = <any>await fetch(apiRoutes().USER_PRICING, {
 		headers: {
 			'Authorization': `Basic ${accessToken}`
 		},

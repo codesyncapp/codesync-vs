@@ -1,16 +1,20 @@
 import fetchMock from "jest-fetch-mock";
+import untildify from "untildify";
 import { updateRepo} from "../../src/utils/sync_repo_utils";
 import { API_PATH } from "../../src/constants";
-import { generateServerUrl } from "../../src/utils/url_utils";
-import { INVALID_TOKEN_JSON } from "../helpers/helpers";
+import { generateApiUrl } from "../../src/utils/url_utils";
+import { INVALID_TOKEN_JSON, randomBaseRepoPath } from "../helpers/helpers";
 
 describe('updateRepo', () => {
+    const baseRepoPath = randomBaseRepoPath();
+    
     beforeEach(() => {
         fetch.resetMocks();
+        untildify.mockReturnValue(baseRepoPath);
     });
 
     const assertAPICall = (token="ACCESS_TOKEN") => {
-        const url = generateServerUrl(`${API_PATH.REPOS}/REPO_ID`);
+        const url = generateApiUrl(`${API_PATH.REPOS}/REPO_ID`);
         expect(fetch.mock.calls[0][0]).toStrictEqual(url);
         const options = fetch.mock.calls[0][1];
         expect(options.method).toStrictEqual("PATCH");

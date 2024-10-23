@@ -19,7 +19,7 @@ import {
     writeTestRepoFiles,
     NESTED_PATH
 } from "../helpers/helpers";
-import {API_ROUTES, DEFAULT_BRANCH, VSCODE, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
+import {apiRoutes, DEFAULT_BRANCH, VSCODE, NOTIFICATION, SYNCIGNORE} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {pathUtils} from "../../src/utils/path_utils";
@@ -387,7 +387,7 @@ describe("uploadRepo",  () => {
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.REPO_CONNECTED);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(0);
         // Assert API call
-        expect(fetch.mock.calls[1][0]).toStrictEqual(API_ROUTES.REPO_INIT);
+        expect(fetch.mock.calls[1][0]).toStrictEqual(apiRoutes().REPO_INIT);
         const options = fetch.mock.calls[1][1];
         expect(options.method).toStrictEqual('POST');
         expect(options.headers).toStrictEqual({

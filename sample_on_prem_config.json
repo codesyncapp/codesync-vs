@@ -1,0 +1,7 @@
+{
+	"API_HOST": "https://api-staging.codesync.com", 
+	"SOCKET_HOST": "wss://api-staging.codesync.com",
+	"WEBAPP_HOST": "https://staging.codesync.com",
+	"AWS_REGION": "us-east-1",
+	"CW_LOGS_GROUP": "/codesync/plugin-logs"
+}

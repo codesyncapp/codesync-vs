@@ -2,7 +2,7 @@ import fs from 'fs';
 import FormData from "form-data";
 import fetch from "node-fetch";
 import { isBinaryFileSync } from "isbinaryfile";
-import { API_ROUTES, HttpStatusCodes } from "../constants";
+import { apiRoutes, HttpStatusCodes } from "../constants";
 import { PlanLimitsHandler } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
 import { s3UploaderUtils } from '../init/s3_uploader';
@@ -34,7 +34,7 @@ export const uploadRepoToServer = async (accessToken: string, data: any, repoId=
 	let errorCode = 0;
 	let statusCode = 200;
 	let response = await fetch(
-		API_ROUTES.REPO_INIT, {
+		apiRoutes().REPO_INIT, {
 			method: 'POST',
 			body: JSON.stringify(data),
 			headers: {
@@ -86,7 +86,7 @@ export const uploadFile = async (accessToken: string, data: any, repoPath: strin
 	let error = "";
 	let statusCode = 200;
 	let response = await fetch(
-		API_ROUTES.FILES, {
+		apiRoutes().FILES, {
 			method: 'POST',
 			body: JSON.stringify(data),
 			headers: {

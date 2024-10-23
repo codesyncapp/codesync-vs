@@ -14,8 +14,9 @@ import {
 	VERSION
 } from './constants';
 import { readYML, isEmpty } from './utils/common';
-import { generateSettings, LOGS_METADATA, PLUGIN_USER } from "./settings";
+import { generateSettings, PLUGIN_USER } from "./settings";
 import { UserState } from './utils/user_utils';
+import { getSystemConfig } from './utils/setup_utils';
 
 let macAddress = "";
 macaddress.one().then(mac => macAddress = mac);
@@ -114,7 +115,7 @@ const putLogEvent = async (msg: string, eventType: string, additionalMsg="", log
 		}
 	}
 
-	const logGroupName = LOGS_METADATA.GROUP;
+	const logGroupName = getSystemConfig().CW_LOGS_GROUP;
 	const logStreamName = email;
 
 	const CWEventMsg = {
@@ -165,7 +166,7 @@ export const logErrorMsg = (msg: string, errCount: number) => {
 const __createClient = (accessKeyId: string, secretAccessKey: string) => {
 	const config: CloudWatchLogsClientConfig =
 		{
-			region: LOGS_METADATA.AWS_REGION,
+			region: getSystemConfig().AWS_REGION,
 			credentials: {
 				accessKeyId,
 				secretAccessKey

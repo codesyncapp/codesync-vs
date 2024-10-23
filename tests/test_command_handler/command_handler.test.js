@@ -31,15 +31,18 @@ import {
     getRepoDisconnectedMsg,
     getRepoReconnectedMsg
 } from "../../src/constants";
-import {WEB_APP_URL} from "../../src/settings";
+import {getSystemConfig} from "../../src/utils/setup_utils";
 import {readYML} from "../../src/utils/common";
 import { authHandler } from "../../src/handlers/user_commands";
 
 describe("authHandler",  () => {
+
+    const baseRepoPath = randomBaseRepoPath();
     
     beforeEach(() => {
         fetch.resetMocks();
         jest.clearAllMocks();
+        untildify.mockReturnValue(baseRepoPath);
     });
 
     test("authHandler:skipAskConnect=false",  () => {
@@ -381,7 +384,7 @@ describe("trackRepoHandler",  () => {
         fs.writeFileSync(configPath, yaml.dump(configData));
         const playbackLink = trackRepoHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
-        expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
+        expect(playbackLink.startsWith(getSystemConfig().WEBAPP_HOST)).toBe(true);
     });
 
     test("With nested directory", async () => {
@@ -396,7 +399,7 @@ describe("trackRepoHandler",  () => {
         new RepoState(subDir).setSubDirState();
         const playbackLink = trackRepoHandler();
         expect(vscode.env.openExternal).toHaveBeenCalledTimes(1);
-        expect(playbackLink.startsWith(WEB_APP_URL)).toBe(true);
+        expect(playbackLink.startsWith(getSystemConfig().WEBAPP_HOST)).toBe(true);
     });
 });
 
