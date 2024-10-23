@@ -3,11 +3,8 @@
 import path from "path";
 import vscode from 'vscode';
 
-import {
-	CODESYNC_WEBSOCKET_HOST,
-	CODESYNC_HOST
-} from "./settings";
-import { generateServerUrl } from "./utils/url_utils";
+import { generateApiUrl, generateApiHostUrl, generateSocketUrl } from "./utils/url_utils";
+import { IApiRoutes } from "./interface";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -23,23 +20,24 @@ export const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5 * 1000;
 
-export const API_BASE_URL = `${CODESYNC_HOST}/v1`;
 export const API_PATH = {
 	REPOS: "/repos"
 };
-export const API_ROUTES = {
-	HEALTHCHECK: generateServerUrl("/healthcheck", CODESYNC_HOST),
-	FILES: generateServerUrl("/files"),
-	REPO_INIT: generateServerUrl("/init"),
-	REPOS: generateServerUrl(API_PATH.REPOS),
-	USERS: generateServerUrl("/users"),
-	REACTIVATE_ACCOUNT: generateServerUrl("/users/reactivate"),
-	USER_SUBSCRIPTION: generateServerUrl("/users/subscription"),
-	DIFFS_WEBSOCKET: generateServerUrl("/v2/websocket", CODESYNC_WEBSOCKET_HOST),
-	TEAM_ACTIVITY: generateServerUrl("/team_activity", API_BASE_URL, true),
-	USER_PRICING : generateServerUrl("/pricing/subscription")
-};
 
+export const apiRoutes = (): IApiRoutes => {
+	return {
+		HEALTHCHECK: generateApiHostUrl("/healthcheck"),
+		FILES: generateApiUrl("/files"),
+		REPO_INIT: generateApiUrl("/init"),
+		REPOS: generateApiUrl(API_PATH.REPOS),
+		USERS: generateApiUrl("/users"),
+		REACTIVATE_ACCOUNT: generateApiUrl("/users/reactivate"),
+		USER_SUBSCRIPTION: generateApiUrl("/users/subscription"),
+		DIFFS_WEBSOCKET: generateSocketUrl("/v2/websocket"),
+		TEAM_ACTIVITY: generateApiUrl("/team_activity", true),
+		USER_PRICING: generateApiUrl("/pricing/subscription")
+	};
+};
 // Auth0
 export const MIN_PORT = 49152;
 export const MAX_PORT = 65535;
@@ -59,7 +57,7 @@ export const SEQUENCE_MATCHER_RATIO = 0.8;
 
 // Tab utils
 export const TAB_FILES_PER_ITERATION = 15;
-export const REQUIRED_KEYS_TAB_FILE_YML = ['repository_id', 'created_at', 'file_name', 'tabs', 'source']
+export const REQUIRED_KEYS_TAB_FILE_YML = ['repository_id', 'created_at', 'file_name', 'tabs', 'source'];
 export const TAB_SIZE_LIMIT = 16 * 1000 * 1000;
 
 // Error msgs
@@ -131,8 +129,8 @@ export const NOTIFICATION = {
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {
-    const repoName = path.basename(repoPath);
-    return `Repo "${repoName}" ${NOTIFICATION.REPO_IN_SYNC}`;
+	const repoName = path.basename(repoPath);
+	return `Repo "${repoName}" ${NOTIFICATION.REPO_IN_SYNC}`;
 };
 
 export const getDisconnectedRepoMsg = (repoPath: string) => {
@@ -141,22 +139,22 @@ export const getDisconnectedRepoMsg = (repoPath: string) => {
 };
 
 export const getRepoDisconnectedMsg = (repoPath: string) => {
-    const repoName = path.basename(repoPath);
-    return `Repo "${repoName}" disconnected successfully`;
+	const repoName = path.basename(repoPath);
+	return `Repo "${repoName}" disconnected successfully`;
 };
 
 export const getRepoReconnectedMsg = (repoPath: string) => {
-    const repoName = path.basename(repoPath);
-    return `Repo "${repoName}" reconnected successfully`;
+	const repoName = path.basename(repoPath);
+	return `Repo "${repoName}" reconnected successfully`;
 };
 
 export const getUpgradePlanMsg = (repoPath: string, isNewPrivateRepo: boolean) => {
-	const title = isNewPrivateRepo ? NOTIFICATION.PRIVATE_REPO_COUNT_LIMIT_REACHED: `${NOTIFICATION.FREE_TIER_LIMIT_REACHED} ${repoPath}`;
+	const title = isNewPrivateRepo ? NOTIFICATION.PRIVATE_REPO_COUNT_LIMIT_REACHED : `${NOTIFICATION.FREE_TIER_LIMIT_REACHED} ${repoPath}`;
 	return `${title}. ${NOTIFICATION.UPGRADE_PRICING_PLAN}`;
 };
 
 export const getConnectRepoMsgAfterJoin = (email: string) => {
-    return `Successfully logged in to CodeSync with ${email}. Let's connect your repo`;
+	return `Successfully logged in to CodeSync with ${email}. Let's connect your repo`;
 };
 
 export const getSubDirectoryInSyncMsg = (repoPath: string, parentPath: string) => {
@@ -165,7 +163,7 @@ export const getSubDirectoryInSyncMsg = (repoPath: string, parentPath: string) =
 };
 
 export const getDirectorySyncIgnoredMsg = (repoPath: string, parentPath: string) => {
-    const subDirName = path.basename(repoPath);
+	const subDirName = path.basename(repoPath);
 	return `Directory ${subDirName} is syncignored by parent repo at ${parentPath}. To sync this directory, remove it from .syncignore`;
 };
 

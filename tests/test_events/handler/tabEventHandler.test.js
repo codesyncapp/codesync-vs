@@ -168,4 +168,175 @@ describe("addTab", () => {
         expect(tabData.tabs[1].file_id).toBeNull();
         expect(tabData.tabs[1].path).toBe(filePath2[1]);
     });
+
+     // Should discard invalid tab and send nothing
+     test("Invalid tab, undefined input value", () => {
+        /*
+        Invalid tab with undefined input value
+        - Should discard invalid tab
+        - Should not create .yml file
+        - Should not send any data
+        */
+        configUtil.addRepo();
+        addUser(baseRepoPath, true);
+        const mockTabs = [
+            {
+                tabs: [
+                    {
+                        input: undefined,
+                        isActive: false,
+                    },
+                ]
+            }
+        ]
+        Object.defineProperty(vscode.window.tabGroups, 'all', {
+            get: jest.fn(() => mockTabs),
+        });
+        const handler = new tabEventHandler(repoPath);
+        // Record timestamp
+        const createdAt = formatDatetime(new Date().getTime());
+        handler.handleTabChangeEvent(createdAt)
+        let tabFiles = fs.readdirSync(tabsRepo)
+        // Assert file should not be created
+        expect(tabFiles).toHaveLength(0);
+    });
+
+
+     // Should discard invalid tab and send nothing
+     test("Invalid tab, undefined uri value", () => {
+        /*
+        Invalid tab with undefined uri value
+        - Should discard invalid tab
+        - Should not create .yml file
+        - Should not send any data
+        */
+        configUtil.addRepo();
+        addUser(baseRepoPath, true);
+        const mockTabs = [
+            {
+                tabs: [
+                    {
+                        input: {
+                            uri: undefined
+                        },
+                        isActive: false,
+                    },
+                ]
+            }
+        ]
+        Object.defineProperty(vscode.window.tabGroups, 'all', {
+            get: jest.fn(() => mockTabs),
+        });
+        const handler = new tabEventHandler(repoPath);
+        // Record timestamp
+        const createdAt = formatDatetime(new Date().getTime());
+        handler.handleTabChangeEvent(createdAt)
+        let tabFiles = fs.readdirSync(tabsRepo)
+        // Assert file should not be created
+        expect(tabFiles).toHaveLength(0);
+    });
+
+// Should discard invalid tab and send nothing
+test("Invalid tab, undefined path value", () => {
+    /*
+    Invalid tab with undefined path value
+    - Should discard invalid tab
+    - Should not create .yml file
+    - Should not send any data
+    */
+    configUtil.addRepo();
+    addUser(baseRepoPath, true);
+    const mockTabs = [
+        {
+            tabs: [
+                {
+                    input: {
+                        uri: {
+                            path: undefined
+                        },
+                    },
+                    isActive: false,
+                },
+            ]
+        }
+    ]
+    Object.defineProperty(vscode.window.tabGroups, 'all', {
+        get: jest.fn(() => mockTabs),
+    });
+    const handler = new tabEventHandler(repoPath);
+    // Record timestamp
+    const createdAt = formatDatetime(new Date().getTime());
+    handler.handleTabChangeEvent(createdAt)
+    let tabFiles = fs.readdirSync(tabsRepo)
+    // Assert file should not be created
+    expect(tabFiles).toHaveLength(0);
+});
+
+     // Should discard invalid tab and send valid tabs
+     test("Discard unrecognized tab and send valid tabs", () => {
+        /*
+        - Should discard invalid tab
+        - Should create .yml file
+        - Should send any data for valid tabs
+        */
+        const tabCreationTime = new Date();
+        configUtil.addRepo();
+        addUser(baseRepoPath, true);
+        const config_data = readYML(configPath);
+        const tab1_fileId = config_data.repos[repoPath].branches[DEFAULT_BRANCH]["file_1.js"]
+        const repo_id = config_data.repos[repoPath].id;
+        const mockTabs = [
+            {
+                tabs: [
+                    {
+                        input: {
+                            uri: {
+                                path: newFilePath1,
+                            }
+                        },
+                        isActive: true,
+                    },
+                    {
+                        input: {
+                            uri: {
+                                path: newFilePath2,
+                            }
+                        },
+                        isActive: false,
+                    },
+                    {
+                        input: undefined,
+                        isActive: false,
+                    },
+                ]
+            }
+        ]
+        Object.defineProperty(vscode.window.tabGroups, 'all', {
+            get: jest.fn(() => mockTabs),
+        });
+        const handler = new tabEventHandler(repoPath);
+        // Record timestamp
+        const createdAt = formatDatetime(new Date().getTime());
+        handler.handleTabChangeEvent(createdAt)
+        let tabFiles = fs.readdirSync(tabsRepo)
+        // Assert file should be created
+        expect(tabFiles).toHaveLength(1);
+        const tabFilePath = path.join(tabsRepo, tabFiles[0]);
+        const tabData = readYML(tabFilePath);
+        const filePath1 = newFilePath1.split(path.join(repoPath, path.sep));
+        const filePath2 = newFilePath2.split(path.join(repoPath, path.sep));
+        // Assert source == 'vscode'
+        expect(tabData.source).toEqual(VSCODE);
+        // Assert created_at value of tab file and testing value to be in range of 1 second
+        expect((new Date(tabData.created_at)).getTime() - (tabCreationTime).getTime()).toBeLessThanOrEqual(1000);
+        // Assert repo_id
+        expect(tabData.repository_id).toEqual(repo_id);
+        // Assert tabs
+        expect(tabData.tabs).toHaveLength(2);
+        expect(tabData.tabs[0].file_id).toBe(tab1_fileId);
+        expect(tabData.tabs[0].path).toBe(filePath1[1]);
+        expect(tabData.tabs[1].file_id).toBeNull();
+        expect(tabData.tabs[1].path).toBe(filePath2[1]);
+    });
+
 })
