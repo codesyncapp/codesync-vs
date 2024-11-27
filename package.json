@@ -1,7 +1,7 @@
 {
   "name": "codesync",
   "displayName": "CodeSync",
-  "description": "Stream code to the cloud. Save it forever. Play it back later. No commits needed.",
+  "description": "CodeSync's AI-generated summaries provide clear, insightful coding overviews directly in your IDE, keeping your team aligned without manual tracking. Seamlessly integrate with GitHub and Slack to streamline your workflow.",
   "icon": "images/icon.png",
   "version": "4.3.0",
   "publisher": "codesync",

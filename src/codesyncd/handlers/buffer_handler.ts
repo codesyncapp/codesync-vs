@@ -214,7 +214,7 @@ export class bufferHandler {
 		const isRunning = CodeSyncState.get(CODESYNC_STATES.BUFFER_HANDLER_RUNNING);
 		const skipLog = CodeSyncState.canSkipRun(CODESYNC_STATES.BUFFER_HANDLER_LOGGED_AT, this.LOG_BUFFER_HANDLER_RUN_AFTER);
 		if (!skipLog) {
-			CodeSyncLogger.debug(`bufferHandler:run, uuid=${this.instanceUUID}`);
+			CodeSyncLogger.debug(`bufferHandler:run, isRunning=${isRunning}, uuid=${this.instanceUUID}`);
 			CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_LOGGED_AT, new Date().getTime());
 		}
 		if (isRunning) return;
