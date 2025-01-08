@@ -58,7 +58,7 @@ export const initExpressServer = () => {
         const userState = new UserState();
 		const activeUser = userState.getUser();
         if (activeUser && activeUser.email !== userResponse.email) return res.send(msgs.TOKEN_VERIFICATION_FAILED);
-        postSuccessLogout();
+        await postSuccessLogout();
         const redirectURL = generateWebUrl("", {type: "logout"});
         // http://localhost:3000/?utm_medium=plugin&utm_source=vscode&type=logout
         res.redirect(redirectURL);
