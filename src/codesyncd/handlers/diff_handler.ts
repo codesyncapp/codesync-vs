@@ -8,7 +8,7 @@ import {generateSettings} from "../../settings";
 import {readYML} from "../../utils/common";
 import {CodeSyncLogger} from "../../logger";
 import {pathUtils} from "../../utils/path_utils";
-import {initUtils} from "../../init/utils";
+import {initUtils} from "../../connect_repo/utils";
 import {VSCODE} from "../../constants";
 import { removeFile } from "../../utils/file_utils";
 

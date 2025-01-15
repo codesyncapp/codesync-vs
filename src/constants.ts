@@ -31,6 +31,7 @@ export const apiRoutes = (): IApiRoutes => {
 		REPO_INIT: generateApiUrl("/init"),
 		REPOS: generateApiUrl(API_PATH.REPOS),
 		USERS: generateApiUrl("/users"),
+		USER_ORGANIZATIONS: generateApiUrl("/orgs"),
 		REACTIVATE_ACCOUNT: generateApiUrl("/users/reactivate"),
 		USER_SUBSCRIPTION: generateApiUrl("/users/subscription"),
 		DIFFS_WEBSOCKET: generateSocketUrl("/v2/websocket"),
@@ -69,7 +70,8 @@ export const NOTIFICATION_BUTTON = {
 	TRY_PRO_FOR_FREE: "Try Pro plan for free",
 	TRY_TEAM_FOR_FREE: "Try Team plan for free",
 	UPGRADE_TO_PRO: "Upgrade to Pro plan",
-	UPGRADE_TO_TEAM: "Upgrade to Team plan"
+	UPGRADE_TO_TEAM: "Upgrade to Team plan",
+	REPO_IS_PERSONAL: "Repo is perosnal"
 };
 
 // Notification Messages
@@ -107,7 +109,7 @@ export const NOTIFICATION = {
 	UPGRADE_ORG_PLAN: "Please upgrade your Organization's plan to continue using CodeSync",
 	UPGRADE_TO_PRO: "Upgrade to Pro plan",
 	TRY_PRO_FOR_FREE: "Try Pro plan for free",
-	INIT_CANCELLED: "Init process was cancelled",
+	CONNECT_REPO_CANCELLED: "'Connect Repo' process was cancelled",
 	NO_VALID_ACCOUNT: "No valid account found",
 	WAITING_FOR_LOGIN_CONFIRMATION: "Waiting for login confirmation from CodeSync...",
 	REPO_IN_SYNC: "is in sync with CodeSync.",
@@ -125,7 +127,9 @@ export const NOTIFICATION = {
 	SIGNUP_FAILED: "Sign up to CodeSync failed!",
 	ACCOUNT_DEACTIVATED: "Your account has been deactivated. Please click 'Reactivate Account' below to resume syncing.",
 	FREE_TIER_LIMIT_REACHED: "We hope you've found CodeSync useful. You'have hit the limit of Free tier for repo",
-	PRIVATE_REPO_COUNT_LIMIT_REACHED: "In the Free plan, you can have just one Private Repository"
+	PRIVATE_REPO_COUNT_LIMIT_REACHED: "In the Free plan, you can have just one Private Repository",
+	ASK_ORG_REPO: "Would you like to add this repository to any of the following organizations?",
+	ASK_TEAM_REPO: "Which team should this repository be added to?"
 };
 
 export const getRepoInSyncMsg = (repoPath: string) => {

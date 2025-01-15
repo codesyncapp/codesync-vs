@@ -1,11 +1,13 @@
 import vscode from 'vscode';
-import { initHandler } from '../init/init_handler';
+import { initHandler } from '../connect_repo/connect_repo_handler';
 import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON, getUpgradePlanMsg, WebPaths} from '../constants';
 import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
 import { UserState } from './user_utils';
 import { generateWebUrl } from './url_utils';
 import { authHandler, requestDemoUrl } from '../handlers/user_commands';
 import { getCanAwailTrial } from './pricing_utils';
+import { getOrgTeams, getUserOrganizations } from './api_utils';
+import { CodeSyncLogger } from '../logger';
 
 export const showSignUpButtons = () => {
 	vscode.window.showInformationMessage(
@@ -90,6 +92,7 @@ export const showChooseAccount = async (repoPath: string) => {
 	// });
 };
 
+
 export const askPublicPrivate = async (repoPath: string) => {
 	const msg = getPublicPrivateMsg(repoPath);
 	const buttonSelected = await vscode.window.showInformationMessage(msg, { modal: true }, ...[
@@ -98,6 +101,52 @@ export const askPublicPrivate = async (repoPath: string) => {
 	]).then(selection => selection);
 	return buttonSelected;
 };
+
+
+export const askPersonalOrOrgRepo = async (accessToken: string) => {
+	let orgId = null;
+	let teamId = null;
+	const respJson = {
+		orgId, 
+		teamId,
+		isCancelled: false,
+		error: false
+	};
+	const orgResponse = await getUserOrganizations(accessToken);
+	if (orgResponse.error) {
+		CodeSyncLogger.error("Error getting user orgs from the API", orgResponse.error);
+		respJson.error = true;
+		return respJson;
+	}
+	const orgNames = orgResponse.orgs.map((org: { name: string; }) => org.name);
+	const selectedOrg = await vscode.window.showInformationMessage(
+		NOTIFICATION.ASK_ORG_REPO, { modal: true }, NOTIFICATION_BUTTON.REPO_IS_PERSONAL, ...orgNames
+	).then(selection => selection);
+	if (!selectedOrg) {
+		respJson.isCancelled = true;
+		return respJson;
+	}
+	if (selectedOrg === NOTIFICATION_BUTTON.REPO_IS_PERSONAL) return respJson;
+	orgId = orgResponse.orgs.filter((org: { name: string, id: number; }) => org.name === selectedOrg)[0].id;
+	// Get the Org Teams
+	const teamResponse = await getOrgTeams(accessToken, orgId);
+	if (teamResponse.error) {
+		CodeSyncLogger.error("Error getting org teams from the API", teamResponse.error);
+		respJson.error = true;
+		return respJson;
+	}
+	const teamNames = teamResponse.teams.map((team: { name: string; }) => team.name);
+	const selectedTeam = await vscode.window.showInformationMessage(
+		NOTIFICATION.ASK_TEAM_REPO, { modal: true }, ...teamNames
+	).then(selection => selection);
+	if (selectedTeam) {
+		teamId = teamResponse.teams.filter((team: { name: string, id: number; }) => team.name === selectedTeam)[0].id;
+	}
+	respJson.orgId = orgId;
+	respJson.teamId = teamId;
+	return respJson;
+};
+
 
 export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) => {
 	const msg = getDirectorySyncIgnoredMsg(repoPath, parentRepoPath);

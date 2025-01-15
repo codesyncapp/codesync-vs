@@ -155,7 +155,7 @@ export class initUtils {
 	}
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
-					userEmail: string, isPublic=false, repoId=null) {
+					userEmail: string, isPublic=false, repoId=null, orgId=null, teamId=null) {
 		// Check plan limits
 		const repoLimitsState = new RepoPlanLimitsState(this.repoPath).get();
 		if (repoLimitsState.planLimitReached && !repoLimitsState.canRetry) return false;
@@ -176,7 +176,9 @@ export class initUtils {
 		if (!repoState.IS_CONNECTED) {
 			configJSON.repos[this.repoPath] = {
 				branches: {},
-				email: userEmail
+				email: userEmail,
+				orgId: orgId,
+				teamId: teamId
 			};
 			configJSON.repos[this.repoPath].branches[branch] = branchFiles;
 			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(configJSON));
@@ -212,7 +214,9 @@ export class initUtils {
 			commit_hash,
 			files_data: JSON.stringify(filesData),
 			source: VSCODE,
-			platform: os.platform()
+			platform: os.platform(),
+			org_id: configJSON.repos[this.repoPath].orgId,
+			team_id: configJSON.repos[this.repoPath].teamId
 		};
 
 		const json = await uploadRepoToServer(token, data, repoId);
@@ -254,6 +258,5 @@ export class initUtils {
 
 		// Capture tabs for newly connected repo/branch
 		captureTabs(this.repoPath);
-		return true;
 	}
 }

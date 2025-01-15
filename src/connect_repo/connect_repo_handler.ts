@@ -11,7 +11,7 @@ import {
 import { initUtils } from './utils';
 import { IUser } from '../interface';
 import { pathUtils } from "../utils/path_utils";
-import { askPublicPrivate } from '../utils/notifications';
+import { askPersonalOrOrgRepo, askPublicPrivate } from '../utils/notifications';
 import { isAccountActive } from '../utils/auth_utils';
 import { checkServerDown } from "../utils/api_utils";
 import { getBranch, readFile } from "../utils/common";
@@ -83,18 +83,17 @@ export class initHandler {
 		// Opening .syncignore
 		return await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
 			return await vscode.window.showTextDocument(a, 1, false).then(async e => {
-				const buttonSelected = await askPublicPrivate(this.repoPath);
-				if (!buttonSelected) {
-					vscode.window.showWarningMessage(NOTIFICATION.INIT_CANCELLED);
+				const json = await askPersonalOrOrgRepo(this.accessToken);
+				if (json.isCancelled) {
+					vscode.window.showWarningMessage(NOTIFICATION.CONNECT_REPO_CANCELLED);
 					return false;
 				}
-				const isPublic = buttonSelected == NOTIFICATION.PUBLIC;
-				return await this.postPublicPrivate(user.email, isPublic);
+				return await this.postPublicPrivate(user.email, false, json.orgId, json.teamId);
 			});
 		});
 	};
 
-	postPublicPrivate = async (userEmail: string, isPublic: boolean) => {
+	postPublicPrivate = async (userEmail: string, isPublic = false, orgId = null, teamId = null) => {
 		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, new Date().getTime());
 		const initUtilsObj = new initUtils(this.repoPath, this.viaDaemon);
 		// get item paths to upload and copy in respective repos
@@ -108,7 +107,9 @@ export class initHandler {
 		const shadowRepoBranchPath = pathUtilsObj.getShadowRepoBranchPath();
 		initUtilsObj.copyFilesTo(filePaths, shadowRepoBranchPath);
 		// Upload repo/branch
-		const uploaded = await initUtilsObj.uploadRepo(this.branch, this.accessToken, itemPaths, userEmail, isPublic);
+		const uploaded = await initUtilsObj.uploadRepo(this.branch, this.accessToken, 
+			itemPaths, userEmail, isPublic, null, orgId, teamId
+		);
 		return uploaded;
 	};
 }

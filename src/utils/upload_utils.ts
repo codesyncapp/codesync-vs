@@ -5,7 +5,7 @@ import { isBinaryFileSync } from "isbinaryfile";
 import { apiRoutes, HttpStatusCodes } from "../constants";
 import { PlanLimitsHandler } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
-import { s3UploaderUtils } from '../init/s3_uploader';
+import { s3UploaderUtils } from '../connect_repo/s3_uploader';
 import { RepoPlanLimitsState } from './repo_state_utils';
 
 
