@@ -131,9 +131,10 @@ describe("logoutHandler",  () => {
         expect(vscode.commands.executeCommand.mock.calls[0][0]).toStrictEqual("setContext");
         expect(vscode.commands.executeCommand.mock.calls[0][1]).toStrictEqual("showLogIn");
         expect(vscode.commands.executeCommand.mock.calls[0][2]).toBe(true);
-        await waitFor(1);
-        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        await waitFor(2);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(2);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toStrictEqual(NOTIFICATION.LOGGED_OUT_SUCCESSFULLY);
+        expect(vscode.window.showInformationMessage.mock.calls[1][0]).toStrictEqual(NOTIFICATION.WELCOME_MSG);
     });
 });
 

@@ -31,7 +31,7 @@ import {
 import {DEFAULT_BRANCH} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
 import {pathUtils} from "../../src/utils/path_utils";
-import {s3UploaderUtils} from "../../src/init/s3_uploader";
+import {s3UploaderUtils} from "../../src/connect_repo/s3_uploader";
 
 
 describe("isValidDiff",  () => {

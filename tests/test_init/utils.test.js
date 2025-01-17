@@ -5,7 +5,7 @@ import yaml from "js-yaml";
 import vscode from "vscode";
 import isOnline from 'is-online';
 import untildify from 'untildify';
-import {initUtils} from "../../src/init/utils";
+import {initUtils} from "../../src/connect_repo/utils";
 
 import {
     ANOTHER_TEST_EMAIL,
@@ -24,7 +24,7 @@ import {readYML} from "../../src/utils/common";
 import fetchMock from "jest-fetch-mock";
 import {pathUtils} from "../../src/utils/path_utils";
 import { createSystemDirectories, generateRandomNumber } from "../../src/utils/setup_utils";
-import { s3UploaderUtils } from "../../src/init/s3_uploader";
+import { s3UploaderUtils } from "../../src/connect_repo/s3_uploader";
 
 
 describe("getSyncablePaths",  () => {

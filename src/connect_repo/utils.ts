@@ -258,5 +258,6 @@ export class initUtils {
 
 		// Capture tabs for newly connected repo/branch
 		captureTabs(this.repoPath);
+		return true;
 	}
 }
