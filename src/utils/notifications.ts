@@ -1,3 +1,4 @@
+import path from 'path';
 import vscode from 'vscode';
 import { initHandler } from '../connect_repo/connect_repo_handler';
 import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON, getUpgradePlanMsg, WebPaths} from '../constants';
@@ -6,7 +7,7 @@ import { UserState } from './user_utils';
 import { generateWebUrl } from './url_utils';
 import { authHandler, requestDemoUrl } from '../handlers/user_commands';
 import { getCanAwailTrial } from './pricing_utils';
-import { getOrgTeams, getUserOrganizations } from './api_utils';
+import { getOrgTeams, getRepoAvailableOrganizations } from './api_utils';
 import { CodeSyncLogger } from '../logger';
 
 export const showSignUpButtons = () => {
@@ -103,7 +104,8 @@ export const askPublicPrivate = async (repoPath: string) => {
 };
 
 
-export const askPersonalOrOrgRepo = async (accessToken: string) => {
+export const askPersonalOrOrgRepo = async (accessToken: string, repoPath: string) => {
+	const repoName = path.basename(repoPath);
 	let orgId = null;
 	let teamId = null;
 	const respJson = {
@@ -112,12 +114,13 @@ export const askPersonalOrOrgRepo = async (accessToken: string) => {
 		isCancelled: false,
 		error: false
 	};
-	const orgResponse = await getUserOrganizations(accessToken);
+	const orgResponse = await getRepoAvailableOrganizations(accessToken, repoName);
 	if (orgResponse.error) {
 		CodeSyncLogger.error("Error getting user orgs from the API", orgResponse.error);
 		respJson.error = true;
 		return respJson;
 	}
+	if (orgResponse.orgs.length === 0) return respJson;
 	const orgNames = orgResponse.orgs.map((org: { name: string; }) => org.name);
 	const selectedOrg = await vscode.window.showInformationMessage(
 		NOTIFICATION.ASK_ORG_REPO, { modal: true }, NOTIFICATION_BUTTON.REPO_IS_PERSONAL, ...orgNames
@@ -128,6 +131,7 @@ export const askPersonalOrOrgRepo = async (accessToken: string) => {
 	}
 	if (selectedOrg === NOTIFICATION_BUTTON.REPO_IS_PERSONAL) return respJson;
 	orgId = orgResponse.orgs.filter((org: { name: string, id: number; }) => org.name === selectedOrg)[0].id;
+	respJson.orgId = orgId;
 	// Get the Org Teams
 	const teamResponse = await getOrgTeams(accessToken, orgId);
 	if (teamResponse.error) {
@@ -135,6 +139,7 @@ export const askPersonalOrOrgRepo = async (accessToken: string) => {
 		respJson.error = true;
 		return respJson;
 	}
+	if (teamResponse.teams.length === 0) return respJson;
 	const teamNames = teamResponse.teams.map((team: { name: string; }) => team.name);
 	const selectedTeam = await vscode.window.showInformationMessage(
 		NOTIFICATION.ASK_TEAM_REPO, { modal: true }, ...teamNames

@@ -76,24 +76,24 @@ export class initHandler {
 
 		// Only ask for public/private in case of Repo Sync. Do not ask for Branch Sync.
 		if (this.viaDaemon) {
-			return await this.postPublicPrivate(user.email, false);
+			return await this.postOrgSelection(user.email, false);
 		}
 		// Open .syncignore and ask public/private info
 		const setting: vscode.Uri = vscode.Uri.parse("file:" + syncignorePath);
 		// Opening .syncignore
 		return await vscode.workspace.openTextDocument(setting).then(async (a: vscode.TextDocument) => {
 			return await vscode.window.showTextDocument(a, 1, false).then(async e => {
-				const json = await askPersonalOrOrgRepo(this.accessToken);
+				const json = await askPersonalOrOrgRepo(this.accessToken, this.repoPath);
 				if (json.isCancelled) {
 					vscode.window.showWarningMessage(NOTIFICATION.CONNECT_REPO_CANCELLED);
 					return false;
 				}
-				return await this.postPublicPrivate(user.email, false, json.orgId, json.teamId);
+				return await this.postOrgSelection(user.email, false, json.orgId, json.teamId);
 			});
 		});
 	};
 
-	postPublicPrivate = async (userEmail: string, isPublic = false, orgId = null, teamId = null) => {
+	postOrgSelection = async (userEmail: string, isPublic = false, orgId = null, teamId = null) => {
 		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, new Date().getTime());
 		const initUtilsObj = new initUtils(this.repoPath, this.viaDaemon);
 		// get item paths to upload and copy in respective repos

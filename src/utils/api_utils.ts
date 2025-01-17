@@ -101,11 +101,11 @@ export const getUserSubcription = async (accessToken: string) => {
 };
 
 
-export const getUserOrganizations = async (accessToken: string) => {
+export const getRepoAvailableOrganizations = async (accessToken: string, repoName: string) => {
 	let error = "";
 	let orgs = <any>[];
-	const response = <any>await fetch(
-		apiRoutes().USER_ORGANIZATIONS, {
+	const url = `${apiRoutes().USER_ORGANIZATIONS}&repo_name=${repoName}`;
+	const response = <any>await fetch(url, {
 		headers: {
 			'Content-Type': 'application/json',
 			'Authorization': `Basic ${accessToken}`
