@@ -2,7 +2,7 @@ import path from 'path';
 import vscode from 'vscode';
 import { initHandler } from '../connect_repo/connect_repo_handler';
 import { getPublicPrivateMsg, getDirectorySyncIgnoredMsg, NOTIFICATION, getConnectRepoMsgAfterJoin, getDisconnectedRepoMsg, NOTIFICATION_BUTTON, getUpgradePlanMsg, WebPaths} from '../constants';
-import { trackRepoHandler, openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
+import { openSyncIgnoreHandler, disconnectRepoHandler, reconnectRepoHandler } from '../handlers/commands_handler';
 import { UserState } from './user_utils';
 import { generateWebUrl } from './url_utils';
 import { authHandler, requestDemoUrl } from '../handlers/user_commands';
@@ -157,13 +157,9 @@ export const showSyncIgnoredRepo = (repoPath: string, parentRepoPath: string) =>
 	const msg = getDirectorySyncIgnoredMsg(repoPath, parentRepoPath);
 	vscode.window.showInformationMessage(msg, 
 		NOTIFICATION.OPEN_SYNCIGNORE, 
-		NOTIFICATION.TRACK_PARENT_REPO, 
 		NOTIFICATION.DISCONNECT_PARENT_REPO).then(async selection => {
 		if (!selection) return;
 		switch (selection) {
-			case NOTIFICATION.TRACK_PARENT_REPO:
-				trackRepoHandler();
-				break;
 			case NOTIFICATION.OPEN_SYNCIGNORE:
 				openSyncIgnoreHandler();
 				break;

@@ -183,7 +183,6 @@ describe("setupCodeSync",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const msg = getRepoInSyncMsg(repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
-        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_IT);
         fs.rmSync(userFilePath);
     });
 
@@ -199,7 +198,6 @@ describe("setupCodeSync",  () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
         const msg = getSubDirectoryInSyncMsg(subDir, repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
-        expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
         fs.rmSync(userFilePath);
     });
 
@@ -218,8 +216,7 @@ describe("setupCodeSync",  () => {
         const msg = getDirectorySyncIgnoredMsg(subDir, repoPath);
         expect(vscode.window.showInformationMessage.mock.calls[0][0]).toBe(msg);
         expect(vscode.window.showInformationMessage.mock.calls[0][1]).toBe(NOTIFICATION.OPEN_SYNCIGNORE);
-        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.TRACK_PARENT_REPO);
-        expect(vscode.window.showInformationMessage.mock.calls[0][3]).toBe(NOTIFICATION.DISCONNECT_PARENT_REPO);
+        expect(vscode.window.showInformationMessage.mock.calls[0][2]).toBe(NOTIFICATION.DISCONNECT_PARENT_REPO);
         fs.rmSync(userFilePath);
     });
 

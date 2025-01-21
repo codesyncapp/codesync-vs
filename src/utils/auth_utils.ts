@@ -9,7 +9,6 @@ import {readYML} from './common';
 import {showConnectRepo} from "./notifications";
 import {createUserWithApi} from "./api_utils";
 import {generateSettings} from "../settings";
-import {trackRepoHandler} from "../handlers/commands_handler";
 import {contextVariables, ECONNREFUSED, getRepoInSyncMsg, HttpStatusCodes, NOTIFICATION, NOTIFICATION_BUTTON} from "../constants";
 import { CodeSyncLogger } from "../logger";
 import { pathUtils } from "./path_utils";
@@ -64,14 +63,7 @@ export const postSuccessLogin = (userEmail: string, accessToken: string) => {
         return showConnectRepo(repoPath, userEmail, accessToken);
     }
     // Show notification that repo is in sync
-    vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath), ...[
-        NOTIFICATION.TRACK_IT
-    ]).then(selection => {
-        if (!selection) { return; }
-        if (selection === NOTIFICATION.TRACK_IT) {
-            trackRepoHandler();
-        }
-    });
+    vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
 };
 
 const postDeactivatedAccount = (userEmail: string, accessToken: string) => {

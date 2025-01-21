@@ -71,7 +71,7 @@ export const NOTIFICATION_BUTTON = {
 	TRY_TEAM_FOR_FREE: "Try Team plan for free",
 	UPGRADE_TO_PRO: "Upgrade to Pro plan",
 	UPGRADE_TO_TEAM: "Upgrade to Team plan",
-	REPO_IS_PERSONAL: "Repo is perosnal"
+	REPO_IS_PERSONAL: "Repo is personal"
 };
 
 // Notification Messages
