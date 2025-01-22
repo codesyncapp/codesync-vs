@@ -7,7 +7,7 @@ export const removeTabFile = (filePath: string, funcName: string) => {
 	if (!fs.existsSync(filePath)) return;
 		fs.unlink(filePath, err => {
 		if (!err) return false;
-		// @ts-ignore
+		// @ts-expect-error
 		CodeSyncLogger.error(`${funcName}: Error deleting file`, err);
 	});
 };
@@ -18,5 +18,4 @@ export const captureTabs = (repoPath: string, isTabEvent: boolean = true) => {
 	const createdAt = formatDatetime(new Date().getTime());
 	// Adding setTimeout here since 'isActive' key in tabs was not being properly assigned
 	setTimeout(() => handler.handleTabChangeEvent(createdAt, isTabEvent), 1);
-}
-
+};

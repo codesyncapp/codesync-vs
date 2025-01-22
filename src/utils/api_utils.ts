@@ -1,6 +1,7 @@
 import fetch from "node-fetch";
 
 import { apiRoutes } from "../constants";
+import { generateApiUrl } from "./url_utils";
 
 
 export const checkServerDown = async () => {
@@ -95,6 +96,58 @@ export const getUserSubcription = async (accessToken: string) => {
 	}
 	return {
 		response,
+		error
+	};
+};
+
+
+export const getRepoAvailableOrganizations = async (accessToken: string, repoName: string) => {
+	let error = "";
+	let orgs = <any>[];
+	const url = `${apiRoutes().USER_ORGANIZATIONS}&repo_name=${repoName}`;
+	const response = <any>await fetch(url, {
+		headers: {
+			'Content-Type': 'application/json',
+			'Authorization': `Basic ${accessToken}`
+		}
+	})
+		.then(res => res.json())
+		.then(json => json)
+		.catch(err => error = err);
+	if (response.error) {
+		error = response.error.message;
+	} else {
+		orgs = response.orgs;
+	}
+
+	return {
+		orgs,
+		error
+	};
+};
+
+export const getOrgTeams = async (accessToken: string, orgId: number) => {
+	let error = "";
+	let teams = <any>[];
+	const orgTeamsUrl = generateApiUrl(`/orgs/${orgId}/teams`);
+	const response = <any>await fetch(
+		orgTeamsUrl, {
+		headers: {
+			'Content-Type': 'application/json',
+			'Authorization': `Basic ${accessToken}`
+		}
+	})
+		.then(res => res.json())
+		.then(json => json)
+		.catch(err => error = err);
+	if (response.error) {
+		error = response.error.message;
+	} else {
+		teams = response.teams;
+	}
+
+	return {
+		teams,
 		error
 	};
 };

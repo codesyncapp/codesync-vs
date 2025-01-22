@@ -6,7 +6,7 @@ import isOnline from 'is-online';
 import untildify from 'untildify';
 import { DEFAULT_BRANCH, GITIGNORE, NOTIFICATION, SYNCIGNORE } from "../../src/constants";
 import fetchMock from "jest-fetch-mock";
-import { initHandler } from "../../src/init/init_handler";
+import { initHandler } from "../../src/connect_repo/connect_repo_handler";
 import {
     Config,
     DUMMY_FILE_CONTENT,
@@ -27,7 +27,7 @@ import { pathUtils } from "../../src/utils/path_utils";
 import { readYML, readFile } from "../../src/utils/common";
 import { createSystemDirectories } from "../../src/utils/setup_utils";
 import { CodeSyncState, CODESYNC_STATES } from "../../src/utils/state_utils";
-import { s3UploaderUtils } from "../../src/init/s3_uploader";
+import { s3UploaderUtils } from "../../src/connect_repo/s3_uploader";
 
 
 describe("initHandler: connectRepo", () => {
