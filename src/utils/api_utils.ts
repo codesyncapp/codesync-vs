@@ -130,7 +130,6 @@ export const getOrgTeams = async (accessToken: string, orgId: number) => {
 	let error = "";
 	let teams = <any>[];
 	const orgTeamsUrl = generateApiUrl(`/orgs/${orgId}/teams`);
-	console.log("url", orgTeamsUrl);
 	const response = <any>await fetch(
 		orgTeamsUrl, {
 		headers: {
