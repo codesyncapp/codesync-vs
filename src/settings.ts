@@ -3,6 +3,7 @@ import untildify from "untildify";
 import { prodConfig } from "./config/prod";
 import { stagingConfig } from "./config/staging";
 import { devConfig } from "./config/dev";
+import { formatDatetime } from "./utils/common";
 
 // Set this to true for Development
 const DEBUG = false;
@@ -70,8 +71,10 @@ export const generateSettings = () => {
     */
     // System Directories for CodeSync
     const rootRepo = untildify(systemConfig.ROOT_REPO);
+    const backupRepo = untildify(`${systemConfig.ROOT_REPO}-${formatDatetime()}`);
     const systemDirectories = {
         CODESYNC_ROOT: rootRepo,
+        BACKUP_ROOT: backupRepo, 
         DIFFS_REPO: path.join(rootRepo, ".diffs", ".vscode"),
         TABS_PATH: path.join(rootRepo, ".tabs", ".vscode"),
         ORIGINALS_REPO: path.join(rootRepo, ".originals"),

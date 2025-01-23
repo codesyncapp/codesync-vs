@@ -31,7 +31,7 @@ import {
 import {DEFAULT_BRANCH} from "../../src/constants";
 import {readYML} from "../../src/utils/common";
 import {pathUtils} from "../../src/utils/path_utils";
-import {s3UploaderUtils} from "../../src/init/s3_uploader";
+import {s3UploaderUtils} from "../../src/connect_repo/s3_uploader";
 
 
 describe("isValidDiff",  () => {
@@ -276,18 +276,18 @@ describe("cleanUpDeleteDiff",  () => {
         fs.rmSync(baseRepoPath, { recursive: true, force: true });
     });
 
-    test("Should cleanup file from system directories",  () => {
+    test("Should cleanup file from system directories",  async () => {
         expect(fs.existsSync(shadowFilePath)).toBe(true);
         expect(fs.existsSync(originalsFilePath)).toBe(true);
         expect(fs.existsSync(cacheFilePath)).toBe(true);
         cleanUpDeleteDiff(repoPath, DEFAULT_BRANCH, fileRelPath, configData);
+        await waitFor(1);
         expect(fs.existsSync(shadowFilePath)).toBe(false);
         expect(fs.existsSync(originalsFilePath)).toBe(false);
         expect(fs.existsSync(cacheFilePath)).toBe(false);
         const config = readYML(configPath);
         expect(fileRelPath in config.repos[repoPath].branches[DEFAULT_BRANCH]).toBe(false);
     });
-
 });
 
 describe("getDIffForDeletedFile",  () => {

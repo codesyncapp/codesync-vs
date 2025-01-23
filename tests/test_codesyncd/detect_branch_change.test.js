@@ -9,7 +9,7 @@ import fetchMock from "jest-fetch-mock";
 import {DEFAULT_BRANCH} from "../../src/constants";
 import {pathUtils} from "../../src/utils/path_utils";
 import {readYML} from "../../src/utils/common";
-import {initUtils} from "../../src/init/utils";
+import {initUtils} from "../../src/connect_repo/utils";
 import {detectBranchChange} from "../../src/codesyncd/populate_buffer";
 import {CodeSyncState, CODESYNC_STATES} from "../../src/utils/state_utils";
 
@@ -172,7 +172,9 @@ describe("detectBranchChange", () => {
         _configData.repos[repoPath] = {
             id: generateRandomNumber(1, 100000),
             branches: {},
-            email: TEST_EMAIL
+            email: TEST_EMAIL,
+            orgId: null, 
+            teamId: null
         };
         _configData.repos[repoPath].branches[DEFAULT_BRANCH] = {
             "file_1.js": null

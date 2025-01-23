@@ -5,7 +5,7 @@ import vscode from 'vscode';
 import { globSync } from 'glob';
 
 import { IDiff } from "../interface";
-import { initUtils } from "../init/utils";
+import { initUtils } from "../connect_repo/utils";
 import { formatDatetime, getBranch, getDefaultIgnorePatterns, getSyncIgnoreItems, readFile, readYML, shouldIgnorePath } from "../utils/common";
 import { generateSettings } from "../settings";
 import { pathUtils } from "../utils/path_utils";

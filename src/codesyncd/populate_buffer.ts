@@ -5,9 +5,9 @@ import { glob } from 'glob';
 import {isBinaryFileSync} from "isbinaryfile";
 import stringSimilarity from "string-similarity";
 
-import {initUtils} from "../init/utils";
+import {initUtils} from "../connect_repo/utils";
 import {IFileToUpload} from "../interface";
-import {initHandler} from "../init/init_handler";
+import {initHandler} from "../connect_repo/connect_repo_handler";
 import {generateSettings} from "../settings";
 import {pathUtils} from "../utils/path_utils";
 import {
@@ -36,7 +36,7 @@ import {eventHandler} from "../events/event_handler";
 import { CodeSyncLogger } from "../logger";
 import { CODESYNC_STATES, CodeSyncState } from "../utils/state_utils";
 import { removeFile } from "../utils/file_utils";
-import { s3UploaderUtils } from "../init/s3_uploader";
+import { s3UploaderUtils } from "../connect_repo/s3_uploader";
 import { UserState } from "../utils/user_utils";
 
 

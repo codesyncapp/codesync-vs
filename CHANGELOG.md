@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.9.0] - 2025-01-21
+- Removed button "View this repo on the Web" from PopUps and Side Panel
+
+## [4.8.0] - 2025-01-17
+- Adding repository to Org/Team during "Connect Repository"
+
+## [4.7.0] - 2025-01-08
+- Resetting user session upon Logout
+
+## [4.6.0] - 2024-12-25
+- Switching off daily-activity-alert since we now have Slack Alerts enabled
+
+## [4.5.0] - 2024-11-27
+- Updated package description
+
 ## [4.3.0] - 2024-10-23
 - Supporting onPrem customers
 - Introducing on_prem_config.json that will point to OnPrem resources (Routes and URLs etc)

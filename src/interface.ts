@@ -149,6 +149,7 @@ export interface IApiRoutes {
 	REPO_INIT: string;
 	REPOS: string;
 	USERS: string;
+	USER_ORGANIZATIONS: string;
 	REACTIVATE_ACCOUNT: string;
 	USER_SUBSCRIPTION: string;
 	DIFFS_WEBSOCKET: string;

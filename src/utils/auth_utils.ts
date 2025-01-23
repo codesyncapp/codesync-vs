@@ -9,13 +9,13 @@ import {readYML} from './common';
 import {showConnectRepo} from "./notifications";
 import {createUserWithApi} from "./api_utils";
 import {generateSettings} from "../settings";
-import {trackRepoHandler} from "../handlers/commands_handler";
 import {contextVariables, ECONNREFUSED, getRepoInSyncMsg, HttpStatusCodes, NOTIFICATION, NOTIFICATION_BUTTON} from "../constants";
 import { CodeSyncLogger } from "../logger";
 import { pathUtils } from "./path_utils";
 import { RepoState } from "./repo_state_utils";
 import { UserState } from "./user_utils";
 import { authHandler, reactivateAccountHandler } from "../handlers/user_commands";
+import { createSystemDirectories, setupCodeSync } from "./setup_utils";
 
 
 export const isPortAvailable = async (port: number) => {
@@ -63,14 +63,7 @@ export const postSuccessLogin = (userEmail: string, accessToken: string) => {
         return showConnectRepo(repoPath, userEmail, accessToken);
     }
     // Show notification that repo is in sync
-    vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath), ...[
-        NOTIFICATION.TRACK_IT
-    ]).then(selection => {
-        if (!selection) { return; }
-        if (selection === NOTIFICATION.TRACK_IT) {
-            trackRepoHandler();
-        }
-    });
+    vscode.window.showInformationMessage(getRepoInSyncMsg(repoPath));
 };
 
 const postDeactivatedAccount = (userEmail: string, accessToken: string) => {
@@ -152,6 +145,19 @@ export const markUsersInactive = (notify=true) => {
 };
 
 
+export const resetUserSession = async () => {
+    const settings = generateSettings();
+    try {
+        fs.renameSync(settings.CODESYNC_ROOT, settings.BACKUP_ROOT);
+    } catch (e) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        CodeSyncLogger.error("Failed to reset root repo", e.stack);
+    }
+    const repoPath = pathUtils.getRootPath();
+    await setupCodeSync(repoPath);
+};
+
 export const askAndTriggerSignUp = () => {
     // Trigger sign up process
     vscode.window.showErrorMessage(
@@ -169,8 +175,10 @@ const parseJwt = (token: string) => {
     return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
 };
 
-export const postSuccessLogout = () => {
+export const postSuccessLogout = async () => {
     markUsersInactive();
+    // Rename system directory
+    await resetUserSession();
     if ((global as any).socketConnection) {
         (global as any).socketConnection.close();
         (global as any).socketConnection = null;

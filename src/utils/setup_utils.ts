@@ -191,18 +191,11 @@ export const showRepoStatusMsg = (repoPath: string) => {
 	if (repoState.IS_DISCONNECTED) return showDisconnectedRepo(repoPath);
 	if (!repoState.IS_CONNECTED) return showConnectRepo(repoPath);
 	let msg = getRepoInSyncMsg(repoPath);
-	let button = NOTIFICATION.TRACK_IT;
 	if (repoState.IS_SUB_DIR) {
-		button = NOTIFICATION.TRACK_PARENT_REPO;
 		msg = getSubDirectoryInSyncMsg(repoPath, repoState.PARENT_REPO_PATH);
 	}
 	// Show notification that repo is in sync
-	vscode.window.showInformationMessage(msg, button).then(selection => {
-		if (!selection) return;
-		if (selection === NOTIFICATION.TRACK_IT) {
-			trackRepoHandler();
-		}
-	});
+	vscode.window.showInformationMessage(msg);
 };
 
 const registerSyncIgnoreSaveEvent = (repoPath: string) => {

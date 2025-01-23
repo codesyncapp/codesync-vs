@@ -16,7 +16,6 @@ import { CONNECTION_ERROR_MESSAGE, VSCODE, NOTIFICATION, BRANCH_SYNC_TIMEOUT, co
 import { getGlobIgnorePatterns, readYML, getSyncIgnoreItems, shouldIgnorePath, getDefaultIgnorePatterns } from '../utils/common';
 import { CodeSyncState, CODESYNC_STATES } from '../utils/state_utils';
 import { s3UploaderUtils } from './s3_uploader';
-import { trackRepoHandler } from '../handlers/commands_handler';
 import gitCommitInfo from 'git-commit-info';
 import { RepoPlanLimitsState, RepoState } from '../utils/repo_state_utils';
 import { captureTabs } from '../utils/tab_utils';
@@ -143,19 +142,13 @@ export class initUtils {
 		CodeSyncState.set(CODESYNC_STATES.IS_SYNCING_BRANCH, false);
 		// Hide Connect Repo
 		vscode.commands.executeCommand('setContext', contextVariables.showConnectRepoView, false);
+		if (this.viaDaemon) return;
 		// Show success notification
-		if (!this.viaDaemon) {
-			vscode.window.showInformationMessage(NOTIFICATION.REPO_CONNECTED, ...[
-				NOTIFICATION.TRACK_IT
-			]).then(selection => {
-				if (!selection) return;
-				if (selection === NOTIFICATION.TRACK_IT) return trackRepoHandler();
-			});
-		}
+		vscode.window.showInformationMessage(NOTIFICATION.REPO_CONNECTED);
 	}
 
 	async uploadRepo(branch: string, token: string, itemPaths: IFileToUpload[],
-					userEmail: string, isPublic=false, repoId=null) {
+					userEmail: string, isPublic=false, repoId=null, orgId=null, teamId=null) {
 		// Check plan limits
 		const repoLimitsState = new RepoPlanLimitsState(this.repoPath).get();
 		if (repoLimitsState.planLimitReached && !repoLimitsState.canRetry) return false;
@@ -176,7 +169,9 @@ export class initUtils {
 		if (!repoState.IS_CONNECTED) {
 			configJSON.repos[this.repoPath] = {
 				branches: {},
-				email: userEmail
+				email: userEmail,
+				orgId: orgId,
+				teamId: teamId
 			};
 			configJSON.repos[this.repoPath].branches[branch] = branchFiles;
 			fs.writeFileSync(this.settings.CONFIG_PATH, yaml.dump(configJSON));
@@ -212,7 +207,9 @@ export class initUtils {
 			commit_hash,
 			files_data: JSON.stringify(filesData),
 			source: VSCODE,
-			platform: os.platform()
+			platform: os.platform(),
+			org_id: configJSON.repos[this.repoPath].orgId,
+			team_id: configJSON.repos[this.repoPath].teamId
 		};
 
 		const json = await uploadRepoToServer(token, data, repoId);
