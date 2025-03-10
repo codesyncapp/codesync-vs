@@ -35,7 +35,7 @@ Free for 14 days. Available for JetBrains IDEs and VS Code.
 **Visuals**
 
 <video width="600" controls>
-  <source src="https://codesync-images.s3.amazonaws.com/public/homePage/ai_powered.mp4" type="video/mp4">
+  <source src="https://dok9jc9tlzc4t.cloudfront.net/public/slack_demo.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
