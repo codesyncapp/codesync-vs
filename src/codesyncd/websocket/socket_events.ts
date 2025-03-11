@@ -127,7 +127,7 @@ export class SocketEvents {
         }
         if (validTabs.length) {
             CodeSyncLogger.debug(`Sending ${validTabs.length} tabs`);
-            TabsHandler.sendTabsToServer(this.connection, validTabs)
+            TabsHandler.sendTabsToServer(this.connection, validTabs);
         }
         CodeSyncState.set(CODESYNC_STATES.BUFFER_HANDLER_RUNNING, false);
     }
