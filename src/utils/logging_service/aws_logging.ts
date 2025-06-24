@@ -29,7 +29,6 @@ export const putLogEvent = async (
   if (additionalMsg) {
     eventMsg = `${msg}, ${additionalMsg}`;
   }
-  // console.log(eventMsg);
 
   let email = "";
   let accessKey = "";
@@ -62,7 +61,6 @@ export const putLogEvent = async (
   if (!(accessKey && secretKey && email)) {
     email = PLUGIN_USER.logStream;
     const pluginUser = users[email];
-    // console.log("xD pluginUser:", pluginUser);
     if (!pluginUser) return;
     accessKey = pluginUser.access_key;
     secretKey = pluginUser.secret_key;

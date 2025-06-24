@@ -29,7 +29,6 @@ export const putLogEvent = async (
   logName?: string
 ) => {
   const eventMsg = additionalMsg ? `${msg}, ${additionalMsg}` : msg;
-  console.log(eventMsg);
 
   let email = "";
   const settings = generateSettings();
