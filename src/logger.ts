@@ -15,7 +15,6 @@ const putLogEvent = async (
   additionalMsg = "",
   logStream?: string
 ) => {
-  console.log("xD: testing");
   if (isGCPEnabled) {
     return GCPputLogEvent(msg, eventType, additionalMsg, logStream);
   } else if (isAWSEnabled) {
