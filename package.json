@@ -1,9 +1,9 @@
 {
   "name": "codesync",
-  "displayName": "CodeSync",
+  "displayName": "CodeSync AI",
   "description": "CodeSync's AI-generated summaries provide clear, insightful coding overviews directly in your IDE, keeping your team aligned without manual tracking. Seamlessly integrate with GitHub and Slack to streamline your workflow.",
   "icon": "images/icon.png",
-  "version": "4.10.0",
+  "version": "4.10.1",
   "publisher": "codesync",
   "engines": {
     "vscode": "^1.86.0",
@@ -15,10 +15,14 @@
   ],
   "keywords": [
     "Productivity",
-    "Code Review",
-    "History Playback",
+    "Daily AI summaries",
+    "Standup automation",
+    "AI standup updates",
+    "AI sprint reviews",
+    "Code review",
     "Collaboration",
-    "SCM"
+    "Manager updates",
+    "Project management"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -72,7 +76,7 @@
       },
       {
         "command": "codesync.viewDashboard",
-        "title": "View Dashboard",
+        "title": "View Team Daily Updates",
         "category": "CodeSync"
       },
       {
