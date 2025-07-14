@@ -11,11 +11,12 @@ import { generateSettings } from "../settings";
 import { uuidv4 } from '../utils/setup_utils';
 import { removeFile } from '../utils/file_utils';
 import { pathUtils } from '../utils/path_utils';
-import { uploadFileTos3 } from '../utils/upload_utils';
+import { uploadFileTos3, uploadFileToGCS } from '../utils/upload_utils';
 import { CodeSyncLogger } from '../logger';
 import { CODESYNC_STATES, CodeSyncState } from '../utils/state_utils';
 import { IS3UploaderFile, IS3UploaderPreProcess } from '../interface';
 import { S3_UPLOADR_RETRY_AFTER } from '../constants';
+import { UserUtils } from "../utils/user_utils";
 
 
 export class s3UploaderUtils {
@@ -272,26 +273,46 @@ class s3Uploader extends s3UploaderUtils {
 		return await this.processTasks(0);
 	}
 
-	createTasks = async (content: IS3UploaderFile) => {
-		// Proceess the given file and create parallelTasks
-		const pathUtils_ = new pathUtils(this.repoPath, content.branch);
-		this.originalsRepoBranchPath = pathUtils_.getOriginalsRepoBranchPath();
-		const fileRelPaths = Object.keys(content.file_path_and_urls);
-		if (!fileRelPaths || isEmpty(content.file_path_and_urls)) return;
-		this.filePathAndURLs = <any>{};
-		// Skip files which don't exist in .originals or don't have URL
-		fileRelPaths.sort().forEach(fileRelPath => {
-			const originalsFilePath = path.join(this.originalsRepoBranchPath, fileRelPath);
-			if (!fs.existsSync(originalsFilePath)) return;
-			const presignedURL = content.file_path_and_urls[fileRelPath];
-			if (!presignedURL) return removeFile(originalsFilePath, "s3Uploader.deleting-originals-file");
-			this.filePathAndURLs[fileRelPath] = presignedURL;
-			this.tasks.push(async function (callback: any) {
-				const json = <any>await uploadFileTos3(originalsFilePath, presignedURL);
-				callback(json.error, originalsFilePath);
-			});
-		});
-	}
+  createTasks = async (content: IS3UploaderFile) => {
+    // Proceess the given file and create parallelTasks
+    const pathUtils_ = new pathUtils(this.repoPath, content.branch);
+    this.originalsRepoBranchPath = pathUtils_.getOriginalsRepoBranchPath();
+    const fileRelPaths = Object.keys(content.file_path_and_urls);
+    if (!fileRelPaths || isEmpty(content.file_path_and_urls)) return;
+    this.filePathAndURLs = <any>{};
+    // Skip files which don't exist in .originals or don't have URL
+    fileRelPaths.sort().forEach((fileRelPath) => {
+      const originalsFilePath = path.join(
+        this.originalsRepoBranchPath,
+        fileRelPath
+      );
+      if (!fs.existsSync(originalsFilePath)) return;
+      const presignedURL = content.file_path_and_urls[fileRelPath];
+      if (!presignedURL)
+        return removeFile(
+          originalsFilePath,
+          "s3Uploader.deleting-originals-file"
+        );
+      this.filePathAndURLs[fileRelPath] = presignedURL;
+      this.tasks.push(async function (callback: any) {
+        const userUtils = new UserUtils();
+        const activeUser: any = userUtils.getActiveUser();
+		let users = <any>{};
+		users = readYML(generateSettings().USER_PATH) || {};
+        let json: any = null;
+		let key: any= null;
+		if (activeUser && activeUser?.email in users) {
+           key = users[activeUser.email].gcp_private_key;
+    }
+        if (key) {
+          json = <any>await uploadFileToGCS(originalsFilePath, presignedURL);
+        } else {
+          json = <any>await uploadFileTos3(originalsFilePath, presignedURL);
+        }
+        callback(json.error, originalsFilePath);
+      });
+    });
+  };
 
 	processTasks = async (startIndex: number) => {
 		if (!await this.shouldProceed()) return;

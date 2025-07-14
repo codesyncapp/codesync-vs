@@ -2,10 +2,6 @@ import { putLogEvent as AWSputLogEvent } from "./utils/logging_service/aws_loggi
 import { putLogEvent as GCPputLogEvent } from "./utils/logging_service/gcp_logging";
 import { LOG_AFTER_X_TIMES } from "./constants";
 
-
-// const isGCPEnabled = process.env.GCP_LOGGING_ENABLED === "true";
-// const isAWSEnabled = process.env.AWS_LOGGING_ENABLED === "true";
-
 const isGCPEnabled = true;
 const isAWSEnabled = false;
 

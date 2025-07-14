@@ -6,7 +6,7 @@ import { devConfig } from "./config/dev";
 import { formatDatetime } from "./utils/common";
 
 // Set this to true for Development
-const DEBUG = false;
+const DEBUG = true;
 const useStaging = false;
 const DevConfig = {
     ROOT_REPO: useStaging ? stagingConfig.ROOT_REPO: devConfig.ROOT_REPO,
@@ -81,7 +81,8 @@ export const generateSettings = () => {
         SHADOW_REPO: path.join(rootRepo, ".shadow"),
         DELETED_REPO: path.join(rootRepo, ".deleted"),
         LOCKS_REPO: path.join(rootRepo, ".locks"),
-        S3_UPLOADER: path.join(rootRepo, ".s3_uploader"),
+        // S3_UPLOADER: path.join(rootRepo, ".s3_uploader"),
+        S3_UPLOADER: path.join(rootRepo, ".cloud_uploader"),
         CONFIG_PATH: path.join(rootRepo, "config.yml"),
         ON_PREM_CONFIG: path.join(rootRepo, "on_prem_config.json"),
         USER_PATH: path.join(rootRepo, "user.yml"),
