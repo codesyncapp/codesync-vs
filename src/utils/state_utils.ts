@@ -35,6 +35,7 @@ export const CODESYNC_STATES = {
         AUTHENTICATION_INITIATED_AT: "authInitiatedAt"
     },
     ACTIVE_TAB_PATH: "activeTabPath",
+    ACTIVE_CLOUD_SERVICE: null,
 };
 
 export class CodeSyncState {

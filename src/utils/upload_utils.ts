@@ -7,6 +7,7 @@ import { PlanLimitsHandler } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
 import { s3UploaderUtils } from '../connect_repo/s3_uploader';
 import { RepoPlanLimitsState } from './repo_state_utils';
+import { CodeSyncLogger } from '../logger';
 
 import * as https from "https";
 import * as http from "http";
@@ -186,6 +187,8 @@ export const uploadFileToGCS = async (filePath: string, signedUrl: any) => {
 			return resolve({ error: "Invalid signed URL" });
 		}
 
+		// console.log("CodeSync: signedUrl.url", signedUrl.url);
+		CodeSyncLogger.debug("CodeSync: signedUrl.url", signedUrl.url);
 		const { hostname, pathname, search, protocol } = urlParts;
 
 		const options: https.RequestOptions = {

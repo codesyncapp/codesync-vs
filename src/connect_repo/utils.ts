@@ -113,7 +113,7 @@ export class initUtils {
 
       // users = readYML(this.settings.USER_PATH) || {};
       if (activeUser && activeUser?.email in users) {
-        // users[activeUser.email].client_email = user.email;
+        users[activeUser.email].cloud_service = "gcp";
         users[activeUser.email].client_email = user.email;
         users[activeUser.email].gcp_private_key = user.gcp_private_key;
         users[activeUser.email].gcp_project_id = user.gcp_project_id;
@@ -132,11 +132,13 @@ export class initUtils {
         if (user.email in users) {
           users[user.email].access_key = iamUser.access_key;
           users[user.email].secret_key = iamUser.secret_key;
+          users[user.email].cloud_service = "aws";
         } else {
           users[user.email] = iamUser;
         }
       }
     }
+    console.log("CodeSync: users in IamUser", users);
     fs.writeFileSync(this.settings.USER_PATH, yaml.dump(users));
   }
 
@@ -176,7 +178,6 @@ export class initUtils {
     uploadResponse: any,
     syncingBranchKey: string
   ) {
-    console.log("CodeSync: Uploading to GCP");
     /* 
         Save URLs in YML file for GCS Uploader
       */
