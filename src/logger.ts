@@ -61,7 +61,8 @@ export class CodeSyncLogger {
 	  ERROR: Errors that cause a bad UX and should be fixed soon.
 	  CRITICAL: Errors that are blocking for the normal operation of the plugin and should be fixed immediately.
 	*/
-  private cloudService = <string>"";
+  private cloudService = <string | null>null;
+  // static cloudService: string;
 
   constructor() {
     console.log("CodeSync: Initializing CodeSyncLogger...");
@@ -72,7 +73,7 @@ export class CodeSyncLogger {
     const activeUser: any = userUtils.getActiveUser();
 
     if (!activeUser || !users) {
-      console.warn("⚠️ No active user or users data found.");
+      console.warn("CodeSync: ⚠️ No active user or users data found.");
       return;
     }
 
@@ -83,6 +84,7 @@ export class CodeSyncLogger {
   }
 
   static async debug(msg: string, additionalMsg = "", logStream?: string) {
+    // const cloudService = this.cloudService ?? "s";
     await putLogEvent(msg, logErrorMsgTypes.DEBUG, additionalMsg, logStream);
   }
 

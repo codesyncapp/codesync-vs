@@ -274,6 +274,7 @@ class s3Uploader extends s3UploaderUtils {
 	}
 
   createTasks = async (content: IS3UploaderFile) => {
+	CodeSyncLogger.debug(`CodeSync: createTasks`);
     // Proceess the given file and create parallelTasks
     const pathUtils_ = new pathUtils(this.repoPath, content.branch);
     this.originalsRepoBranchPath = pathUtils_.getOriginalsRepoBranchPath();
@@ -297,13 +298,17 @@ class s3Uploader extends s3UploaderUtils {
       this.tasks.push(async function (callback: any) {
         const userUtils = new UserUtils();
         const activeUser: any = userUtils.getActiveUser();
+		CodeSyncLogger.debug(`CodeSync: activeUser`, activeUser);
 		let users = <any>{};
 		users = readYML(generateSettings().USER_PATH) || {};
         let json: any = null;
 		let key: any= null;
 		if (activeUser && activeUser?.email in users) {
            key = users[activeUser.email].gcp_private_key;
+			CodeSyncLogger.debug(`CodeSync: key `, key);
     }
+
+		CodeSyncLogger.debug(`CodeSync: key before use`, key);
         if (key) {
           json = <any>await uploadFileToGCS(originalsFilePath, presignedURL);
         } else {

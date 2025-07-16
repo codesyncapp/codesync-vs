@@ -166,6 +166,7 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 };
 
 export const uploadFileToGCS = async (filePath: string, signedUrl: any) => {
+	CodeSyncLogger.debug("CodeSync: uploadFileToGCS");
 	if (!fs.existsSync(filePath)) {
 		return {
 			error: `uploadFileToGCS: File=${filePath} not found`

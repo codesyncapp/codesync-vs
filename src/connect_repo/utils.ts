@@ -138,7 +138,7 @@ export class initUtils {
         }
       }
     }
-    console.log("CodeSync: users in IamUser", users);
+    CodeSyncLogger.debug("CodeSync: users in IamUser", users);
     fs.writeFileSync(this.settings.USER_PATH, yaml.dump(users));
   }
 
