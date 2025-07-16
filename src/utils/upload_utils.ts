@@ -189,6 +189,7 @@ export const uploadFileToGCS = async (filePath: string, signedUrl: any) => {
 		}
 
 		// console.log("CodeSync: signedUrl.url", signedUrl.url);
+		// const a = new CodeSyncLogger();
 		CodeSyncLogger.debug("CodeSync: signedUrl.url", signedUrl.url);
 		const { hostname, pathname, search, protocol } = urlParts;
 
