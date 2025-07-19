@@ -20,6 +20,11 @@ export const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const DATETIME_FORMAT = 'UTC:yyyy-mm-dd HH:MM:ss.l';
 export const RESTART_DAEMON_AFTER = 5 * 1000;
 
+export const CLOUD_SERVICE = {
+	GCP: "GCP",
+	AWS: "AWS"
+};
+
 export const API_PATH = {
 	REPOS: "/repos"
 };

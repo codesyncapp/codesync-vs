@@ -1,24 +1,28 @@
-import fs from "fs";
-import yaml from "js-yaml";
 import { readYML } from "./utils/common";
+import { CLOUD_SERVICE } from "./constants";
+import { generateSettings } from "./settings";
+import { UserUtils } from "./utils/user_utils";
+import { LOG_AFTER_X_TIMES } from "./constants";
 import { putLogEvent as AWSputLogEvent } from "./utils/logging_service/aws_logging";
 import { putLogEvent as GCPputLogEvent } from "./utils/logging_service/gcp_logging";
-import { LOG_AFTER_X_TIMES } from "./constants";
-import { UserUtils } from "./utils/user_utils";
-import { IUser } from "./interface";
-import { generateSettings } from "./settings";
 
-const isGCPEnabled = true;
-const isAWSEnabled = false;
+const handleUser = () => {
+  let users = <any>{};
+  users = readYML(generateSettings().USER_PATH) || {};
 
-// let cachedUser: IUser | null = null;
+  const userUtils = new UserUtils();
+  const activeUser: any = userUtils.getActiveUser();
 
-// const getActiveUser = () => {
-//   if (cachedUser) return cachedUser;
-//   const userUtils = UserUtils.getInstance();
-//   cachedUser = userUtils.getActiveUser();
-//   return cachedUser;
-// };
+  if (!activeUser || !users) {
+    console.warn("⚠️ No active user or users data found.");
+    return;
+  }
+
+  if (activeUser && activeUser?.email in users) {
+    users[activeUser.email].user_email = activeUser.email;
+    return users[activeUser.email];
+  }
+};
 
 const putLogEvent = async (
   msg: string,
@@ -26,19 +30,19 @@ const putLogEvent = async (
   additionalMsg = "",
   logStream?: string
 ) => {
-  // const activeUser = getActiveUser();
+  const user = handleUser();
+  const { cloud_service } = user;
 
-  // if (!activeUser) {
-  //   console.warn("⚠️ Logging skipped: No active user.");
-  //   return;
-  // }
+  if (cloud_service === CLOUD_SERVICE.GCP) {
+    const info = {
+      projectId: user?.gcp_project_id,
+      clientEmail: user?.gcp_client_email,
+      privateKey: user?.gcp_private_key,
+      userEmail: user?.user_email,
+    };
 
-  const isGCPEnabled = true;
-  const isAWSEnabled = false;
-
-  if (isGCPEnabled) {
-    return GCPputLogEvent(msg, eventType, additionalMsg, logStream);
-  } else if (isAWSEnabled) {
+    return GCPputLogEvent(msg, eventType, additionalMsg, info, logStream);
+  } else if (cloud_service === CLOUD_SERVICE.AWS) {
     return AWSputLogEvent(msg, eventType, additionalMsg, logStream);
   } else {
     console.warn("⚠️ No logging provider enabled for active user.");
@@ -61,27 +65,6 @@ export class CodeSyncLogger {
 	  ERROR: Errors that cause a bad UX and should be fixed soon.
 	  CRITICAL: Errors that are blocking for the normal operation of the plugin and should be fixed immediately.
 	*/
-  private cloudService = <string | null>null;
-  // static cloudService: string;
-
-  constructor() {
-    console.log("CodeSync: Initializing CodeSyncLogger...");
-    let users = <any>{};
-    users = readYML(generateSettings().USER_PATH) || {};
-
-    const userUtils = new UserUtils();
-    const activeUser: any = userUtils.getActiveUser();
-
-    if (!activeUser || !users) {
-      console.warn("CodeSync: ⚠️ No active user or users data found.");
-      return;
-    }
-
-    console.log("CodeSync: Active user found", activeUser); 
-    if (activeUser && activeUser?.email in users) {
-      this.cloudService = users[activeUser.email].cloud_service;
-    }
-  }
 
   static async debug(msg: string, additionalMsg = "", logStream?: string) {
     // const cloudService = this.cloudService ?? "s";

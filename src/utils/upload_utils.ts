@@ -166,7 +166,6 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 };
 
 export const uploadFileToGCS = async (filePath: string, signedUrl: any) => {
-	CodeSyncLogger.debug("CodeSync: uploadFileToGCS");
 	if (!fs.existsSync(filePath)) {
 		return {
 			error: `uploadFileToGCS: File=${filePath} not found`
@@ -188,9 +187,6 @@ export const uploadFileToGCS = async (filePath: string, signedUrl: any) => {
 			return resolve({ error: "Invalid signed URL" });
 		}
 
-		// console.log("CodeSync: signedUrl.url", signedUrl.url);
-		// const a = new CodeSyncLogger();
-		CodeSyncLogger.debug("CodeSync: signedUrl.url", signedUrl.url);
 		const { hostname, pathname, search, protocol } = urlParts;
 
 		const options: https.RequestOptions = {

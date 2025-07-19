@@ -20,6 +20,7 @@ import gitCommitInfo from 'git-commit-info';
 import { RepoPlanLimitsState, RepoState } from '../utils/repo_state_utils';
 import { captureTabs } from '../utils/tab_utils';
 import { UserUtils } from "../utils/user_utils";
+import { CLOUD_SERVICE } from "../constants";
 
 export class initUtils {
 	repoPath: string;
@@ -113,8 +114,8 @@ export class initUtils {
 
       // users = readYML(this.settings.USER_PATH) || {};
       if (activeUser && activeUser?.email in users) {
-        users[activeUser.email].cloud_service = "gcp";
-        users[activeUser.email].client_email = user.email;
+        users[activeUser.email].cloud_service = CLOUD_SERVICE?.GCP;
+        users[activeUser.email].gcp_client_email = user.email;
         users[activeUser.email].gcp_private_key = user.gcp_private_key;
         users[activeUser.email].gcp_project_id = user.gcp_project_id;
       }
@@ -132,13 +133,13 @@ export class initUtils {
         if (user.email in users) {
           users[user.email].access_key = iamUser.access_key;
           users[user.email].secret_key = iamUser.secret_key;
-          users[user.email].cloud_service = "aws";
+          users[user.email].cloud_service = CLOUD_SERVICE?.AWS;
         } else {
           users[user.email] = iamUser;
         }
       }
     }
-    CodeSyncLogger.debug("CodeSync: users in IamUser", users);
+
     fs.writeFileSync(this.settings.USER_PATH, yaml.dump(users));
   }
 
