@@ -281,7 +281,7 @@ class s3Uploader extends s3UploaderUtils {
     if (!fileRelPaths || isEmpty(content.file_path_and_urls)) return;
     this.filePathAndURLs = <any>{};
     // Skip files which don't exist in .originals or don't have URL
-    fileRelPaths.sort().forEach((fileRelPath) => {
+    fileRelPaths.sort((a, b) => a.localeCompare(b)).forEach((fileRelPath) => {
       const originalsFilePath = path.join(
         this.originalsRepoBranchPath,
         fileRelPath
