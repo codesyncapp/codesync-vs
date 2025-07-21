@@ -7,7 +7,11 @@ import { PlanLimitsHandler } from './pricing_utils';
 import { formatDatetime, readFile } from './common';
 import { s3UploaderUtils } from '../connect_repo/s3_uploader';
 import { RepoPlanLimitsState } from './repo_state_utils';
+import { CodeSyncLogger } from '../logger';
 
+import * as https from "https";
+import * as http from "http";
+import { URL } from "url";
 
 export const uploadRepoToServer = async (accessToken: string, data: any, repoId=null) => {
 	/*
@@ -153,12 +157,70 @@ export const uploadFileTos3 = async (filePath: string, presignedUrl: any) => {
 		// Actual file has to be appended last.
 		formData.append("file", content);
 		formData.submit(presignedUrl.url, function(err, res) {
-			if (err) resolve({error: err});
+			if (err){
+				resolve({error: err});
+			}
 			resolve({error: null});
 		});
 	});
 };
 
+export const uploadFileToGCS = async (filePath: string, signedUrl: any) => {
+	if (!fs.existsSync(filePath)) {
+		return {
+			error: `uploadFileToGCS: File=${filePath} not found`
+		};
+	}
+
+	return await new Promise((resolve) => {
+		let content;
+		try {
+			content = fs.readFileSync(filePath);
+		} catch (e) {
+			return resolve({ error: `Could not read file: ${filePath}` });
+		}
+
+		let urlParts;
+		try {
+			urlParts = new URL(signedUrl.url);
+		} catch (e) {
+			return resolve({ error: "Invalid signed URL" });
+		}
+
+		const { hostname, pathname, search, protocol } = urlParts;
+
+		const options: https.RequestOptions = {
+			method: "PUT",
+			hostname,
+			path: pathname + search,
+			headers: {
+				"Content-Length": content.length,
+				"Content-Type": "application/octet-stream", // Match the content type used to generate the signed URL
+			}
+		};
+
+		const requestFn = protocol === "https:" ? https.request : http.request;
+
+		const req = requestFn(options, (res) => {
+			let body = "";
+			res.on("data", chunk => body += chunk);
+			res.on("end", () => {
+				if (res.statusCode === 200) {
+					resolve({ error: null });
+				} else {
+					resolve({ error: `GCS Upload failed: ${res.statusCode} - ${body}` });
+				}
+			});
+		});
+
+		req.on("error", err => {
+			resolve({ error: err });
+		});
+
+		req.write(content);
+		req.end();
+	});
+};
 
 export const uploadFileToServer = async (accessToken: string, repoId: number, branch: string, filePath: string,
 										relPath: string, addedAt: string, repoPath: string, commitHash: string|null) => {

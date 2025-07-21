@@ -174,8 +174,7 @@ export const setupCodeSync = async (repoPath: string) => {
 	}
 	// Check is accessToken is valid 
 	const isUserActive = await isAccountActive(activeUser.email, activeUser.access_token);
-	if (!isUserActive) return;
-	CodeSyncLogger.debug(`User's access token is active, user=${activeUser.email}`);		
+	if (!isUserActive) return;	
 	// Show Repo Status
 	showRepoStatusMsg(repoPath);
 };

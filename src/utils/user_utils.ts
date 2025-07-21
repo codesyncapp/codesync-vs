@@ -74,12 +74,20 @@ export class UserState {
 
 export class UserUtils {
 	users = <any>{};
+	// private static instance: UserUtils;
 
 	constructor() {
 		const settings = generateSettings();
 		if (!fs.existsSync(settings.USER_PATH)) return;
 		this.users = readYML(settings.USER_PATH) || {};
 	}
+
+//   public static getInstance() {
+//     if (!UserUtils.instance) {
+//       UserUtils.instance = new UserUtils();
+//     }
+//     return UserUtils.instance;
+//   }
 
 	isUserActive = (email: string) : boolean => {
 		if (!this.users) return false;
