@@ -8,9 +8,9 @@ Developers and managers can spend 30+ minutes daily on standup updates and sync 
 - **Manager and Executive Reporting:** Get high-level biweekly overviews of overall team progress and individual developer snapshots. Track deliverables, spot blockers, and review progress toward business outcomes with biweekly and quarterly reports.
 
 **Benefits for Each Persona**
-- **Developers:** _Quick insights at your fingertips, without leaving your IDE_. Focus on coding, not status updates. Let CodeSync AI handle the summaries, so you can spend less time managing pull requests and more time building great software.
-- **Managers:** _AI-powered summaries save you from manually following up with the team_. Get clear, actionable reports on team progress without diving into the code. Stay aligned with project timelines, identify blockers early, and keep communication efficient.
-- **Executives:** _Turn raw data into valuable business insights effortlessly_. Understand development progress at a glance. Quarterly reports tie technical achievements directly to business outcomes, giving you a clear picture of ROI and team efficiency.
+- **Developers:** _Quick insights at your fingertips, without leaving your IDE._ Focus on coding, not status updates. Let CodeSync AI handle the summaries, so you can spend less time in meetings and more time building great software.
+- **Managers:** _AI-powered summaries provide leading indicators of project success, without distracting the team._ Get clear, actionable reports on team progress without diving into the code or distracting developers from valuable focus time. Stay aligned with project timelines, identify blockers early, and keep communication efficient.
+- **Executives:** _Turn raw data into valuable business insights effortlessly._ Understand development progress at a glance. Quarterly reports tie technical achievements directly to business outcomes, giving you a clear picture of ROI and team efficiency.
 
 
 **Data Security**
@@ -24,7 +24,7 @@ The CodeSync IDE plugin collects and sends the following data: code, diff timest
 
 
 [Try CodeSync’s AI-powered summaries today](https://www.codesync.com/request-a-demo) and streamline your workflow!
-Free for 30 days. Available for JetBrains IDEs and VS Code.
+Free for 30 days, no credit card required.
 
 **Stay Informed**  
 - Connect with us on [Discord](https://discord.com/invite/3daCMNZNTa) and [LinkedIn](https://www.linkedin.com/company/codesyncapp/).
@@ -36,5 +36,3 @@ Free for 30 days. Available for JetBrains IDEs and VS Code.
   <source src="https://dok9jc9tlzc4t.cloudfront.net/public/slack_demo.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
-
-*_Discover the power of visual code analysis with CodeSync. Install now for a transformative coding experience!_*
