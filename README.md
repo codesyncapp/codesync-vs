@@ -1,6 +1,6 @@
 **AI-Powered Coding Summaries: Stay Synced Without the Overhead.**
 
-Developers and managers can spend 30+ minutes daily on standup updates and sync meetings. CodeSync's AI-generated summaries offer a fast and efficient way to stay on top of your team's development progress. Whether you're a developer keeping in sync with teammates or a manager ensuring the project is on track, CodeSync delivers clear, human-readable coding overviews directly from your IDE. No more manual tracking or sifting through code reviews — our summaries keep your entire team aligned, without the distractions. Integrate seamlessly with Slack to streamline your workflow. Available now for VS Code, JetBrains IDEs, and Cursor!
+Developers and managers can spend 30+ minutes daily on standup updates and sync meetings. CodeSync's AI-generated summaries offer a fast and efficient way to stay on top of your team's development progress. Whether you're a developer keeping up-to-date with your team's daily progress, or a manager needing biweekly updates, CodeSync delivers clear, human-readable coding overviews directly to where you need them. No more manual tracking or sifting through code reviews — our summaries keep your entire team aligned, without the distractions. Integrate seamlessly with Slack to streamline your workflow. Available now for VS Code, JetBrains IDEs, and Cursor!
 
 **Key Features**
 - **Daily AI Summaries in Slack:** Keep everyone aligned with non-intrusive daily summaries posted in team channels. Perfect for quick stand-ups or catching up after a busy day.
